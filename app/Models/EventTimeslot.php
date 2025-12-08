@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class EventTimeslot extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'event_id',
+        'start_at',
+        'capacity',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'start_at' => 'datetime',
+        'capacity' => 'integer',
+        'is_active' => 'boolean',
+    ];
+
+    /**
+     * イベントとのリレーション
+     */
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    /**
+     * 残枠数を取得
+     */
+    public function getRemainingCapacityAttribute()
+    {
+        $reservationCount = $this->event->reservations()
+            ->where('reservation_datetime', $this->start_at->format('Y-m-d H:i:s'))
+            ->count();
+        
+        return max(0, $this->capacity - $reservationCount);
+    }
+}
+

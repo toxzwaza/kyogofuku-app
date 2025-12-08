@@ -20,6 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'login_id',
         'password',
     ];
 
@@ -41,4 +42,28 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * 店舗との多対多リレーション
+     */
+    public function shops()
+    {
+        return $this->belongsToMany(Shop::class, 'shop_user');
+    }
+
+    /**
+     * 予約メモとのリレーション
+     */
+    public function reservationNotes()
+    {
+        return $this->hasMany(ReservationNote::class);
+    }
+
+    /**
+     * アクティビティログとのリレーション
+     */
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
 }

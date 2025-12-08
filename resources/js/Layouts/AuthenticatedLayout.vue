@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
@@ -21,8 +20,10 @@ const showingNavigationDropdown = ref(false);
                             <!-- Logo -->
                             <div class="shrink-0 flex items-center">
                                 <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
+                                    <img
+                                        src="/storage/logo/logo_b.png"
+                                        alt="京呉服 好一"
+                                        class="block h-9 w-auto"
                                     />
                                 </Link>
                             </div>
@@ -30,7 +31,19 @@ const showingNavigationDropdown = ref(false);
                             <!-- Navigation Links -->
                             <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                 <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                    Dashboard
+                                    ダッシュボード
+                                </NavLink>
+                                <NavLink :href="route('admin.events.index')" :active="route().current('admin.events.*')">
+                                    イベント管理
+                                </NavLink>
+                                <NavLink :href="route('admin.shops.index')" :active="route().current('admin.shops.*')">
+                                    店舗管理
+                                </NavLink>
+                                <NavLink :href="route('admin.users.index')" :active="route().current('admin.users.*')">
+                                    スタッフ管理
+                                </NavLink>
+                                <NavLink :href="route('admin.activity-logs.index')" :active="route().current('admin.activity-logs.*')">
+                                    ログ管理
                                 </NavLink>
                             </div>
                         </div>
@@ -113,7 +126,19 @@ const showingNavigationDropdown = ref(false);
                 >
                     <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                            Dashboard
+                            ダッシュボード
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*')">
+                            イベント管理
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.shops.index')" :active="route().current('admin.shops.*')">
+                            店舗管理
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.users.index')" :active="route().current('admin.users.*')">
+                            スタッフ管理
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.activity-logs.index')" :active="route().current('admin.activity-logs.*')">
+                            ログ管理
                         </ResponsiveNavLink>
                     </div>
 
