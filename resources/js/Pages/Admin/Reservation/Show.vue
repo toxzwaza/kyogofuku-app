@@ -22,6 +22,10 @@
             </div>
         </template>
 
+        <div v-if="$page.props.success" class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200">
+            {{ $page.props.success }}
+        </div>
+
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -168,10 +172,49 @@
                         </div>
                     </div>
 
-                    <!-- 右側: メモ機能 -->
+                    <!-- 右側: ステータス・メモ機能 -->
                     <div class="lg:col-span-1">
                         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
+                                <!-- ステータス登録 -->
+                                <div class="mb-6 pb-6 border-b border-gray-200">
+                                    <h3 class="text-lg font-semibold mb-4">対応ステータス</h3>
+                                    <div v-if="reservation.status" class="mb-3">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm text-gray-600">現在のステータス:</span>
+                                            <span :class="getStatusBadgeClass(reservation.status)" class="px-2 py-1 text-xs font-medium rounded-full">
+                                                {{ reservation.status }}
+                                            </span>
+                                        </div>
+                                        <div v-if="reservation.status_updated_by" class="mt-2 text-xs text-gray-500">
+                                            更新者: {{ reservation.status_updated_by.name }}
+                                        </div>
+                                    </div>
+                                    <form @submit.prevent="updateStatus">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">ステータス</label>
+                                            <select
+                                                v-model="statusForm.status"
+                                                required
+                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            >
+                                                <option value="未対応">未対応</option>
+                                                <option value="確認中">確認中</option>
+                                                <option value="返信待ち">返信待ち</option>
+                                                <option value="対応完了済み">対応完了済み</option>
+                                            </select>
+                                            <div v-if="statusForm.errors.status" class="mt-1 text-sm text-red-600">{{ statusForm.errors.status }}</div>
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            :disabled="statusForm.processing"
+                                            class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        >
+                                            {{ statusForm.processing ? '更新中...' : 'ステータスを更新' }}
+                                        </button>
+                                    </form>
+                                </div>
+
                                 <h3 class="text-lg font-semibold mb-4">メモ</h3>
                                 
                                 <!-- メモ登録フォーム -->
@@ -253,6 +296,23 @@ const formatDate = (dateString) => {
     return date.toLocaleDateString('ja-JP');
 };
 
+const statusForm = useForm({
+    status: props.reservation.status || '未対応',
+});
+
+const updateStatus = () => {
+    statusForm.patch(route('admin.reservations.status.update', props.reservation.id), {
+        onSuccess: (page) => {
+            // ステータス更新後、ページをリロードして最新の状態を取得
+            router.reload({ only: ['reservation'] });
+            // 成功メッセージを表示
+            if (page.props.success) {
+                alert(page.props.success);
+            }
+        },
+    });
+};
+
 const noteForm = useForm({
     content: '',
 });
@@ -270,5 +330,16 @@ const deleteNote = (noteId) => {
         router.delete(route('admin.reservations.notes.destroy', noteId));
     }
 };
+
+const getStatusBadgeClass = (status) => {
+    const classes = {
+        '未対応': 'bg-gray-100 text-gray-800',
+        '確認中': 'bg-yellow-100 text-yellow-800',
+        '返信待ち': 'bg-blue-100 text-blue-800',
+        '対応完了済み': 'bg-green-100 text-green-800',
+    };
+    return classes[status] || 'bg-gray-100 text-gray-800';
+};
+
 </script>
 

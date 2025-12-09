@@ -217,6 +217,45 @@ class EventReservationController extends Controller
     {
         $lineController = new LineWebhookController();
         
+        // イベントに関連する店舗を取得
+        $event->load('shops');
+        $shops = $event->shops;
+        
+        // 店舗が関連付けられていない場合は、.envのLINE_GROUP_IDを使用（後方互換性）
+        if ($shops->isEmpty()) {
+            Log::warning('イベントに関連する店舗が見つかりません。.envのLINE_GROUP_IDを使用します。', [
+                'event_id' => $event->id,
+            ]);
+            $this->sendLineNotificationToGroup($lineController, $event, $reservation, null);
+            return;
+        }
+        
+        // 各店舗のLINEグループIDに通知を送信
+        foreach ($shops as $shop) {
+            if (!empty($shop->line_group_id)) {
+                try {
+                    $this->sendLineNotificationToGroup($lineController, $event, $reservation, $shop->line_group_id);
+                } catch (\Exception $e) {
+                    Log::error('LINE通知の送信に失敗しました（店舗ID: ' . $shop->id . '）: ' . $e->getMessage(), [
+                        'shop_id' => $shop->id,
+                        'line_group_id' => $shop->line_group_id,
+                        'reservation_id' => $reservation->id,
+                    ]);
+                }
+            } else {
+                Log::warning('店舗にLINEグループIDが設定されていません。', [
+                    'shop_id' => $shop->id,
+                    'shop_name' => $shop->name,
+                ]);
+            }
+        }
+    }
+    
+    /**
+     * LINE通知を特定のグループIDに送信
+     */
+    private function sendLineNotificationToGroup(LineWebhookController $lineController, Event $event, EventReservation $reservation, $groupId = null)
+    {
         // フォーム種別の日本語表示名を取得
         $formTypeNames = [
             'reservation' => '予約フォーム',
@@ -333,8 +372,8 @@ class EventReservationController extends Controller
         $message .= "予約ID: #{$reservation->id}\n";
         $message .= "━━━━━━━━━━━━━━━━";
 
-        // LINE通知を送信
-        $lineController->pushToLineGroup($message);
+        // LINE通知を送信（グループIDを指定）
+        $lineController->pushToLineGroup($message, $groupId);
     }
 }
 

@@ -13,6 +13,10 @@
             </div>
         </template>
 
+        <div v-if="$page.props.success" class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200">
+            {{ $page.props.success }}
+        </div>
+
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- 予約枠統計情報（予約フォームの場合のみ） -->
@@ -141,10 +145,11 @@
                                         <div
                                             v-for="timeslot in dateGroup"
                                             :key="timeslot.id"
-                                            class="border border-gray-200 rounded-lg overflow-hidden"
+                                            :class="getTimeslotBorderClass(timeslot)"
+                                            class="border-2 rounded-lg overflow-hidden"
                                         >
                                             <!-- 時間枠ヘッダー -->
-                                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                            <div :class="getTimeslotHeaderClass(timeslot)" class="px-4 py-3 border-b border-gray-200">
                                                 <div class="flex justify-between items-center">
                                                     <div class="flex items-center space-x-4">
                                                         <span class="text-lg font-semibold text-gray-900">{{ formatTime(timeslot.start_at) }}</span>
@@ -201,6 +206,10 @@
                                                             <div class="flex items-center space-x-3 mb-2">
                                                                 <span class="text-lg font-semibold text-gray-900">{{ reservation.name }}</span>
                                                                 <span class="text-xs text-gray-500">ID: {{ reservation.id }}</span>
+                                                                <span v-if="reservation.status" :class="getStatusBadgeClass(reservation.status)" class="px-2 py-0.5 text-xs font-medium rounded-full">
+                                                                    {{ reservation.status }}<span v-if="reservation.status_updated_by">:{{ reservation.status_updated_by.name }}</span>
+                                                                </span>
+
                                                                 <span v-if="reservation.venue" class="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
                                                                     {{ reservation.venue.name }}
                                                                 </span>
@@ -289,12 +298,28 @@
                                                 </div>
                                                 <div class="text-xs text-gray-500">ID: {{ reservation.id }}</div>
                                             </div>
-                                            <span
-                                                class="px-2 py-1 text-xs font-medium rounded-full"
-                                                :class="getFormTypeBadgeClass(event.form_type)"
-                                            >
-                                                {{ getFormTypeLabel(event.form_type) }}
-                                            </span>
+                                            <div class="flex flex-col items-end space-y-1">
+                                                <span
+                                                    v-if="reservation.status"
+                                                    :class="getStatusBadgeClass(reservation.status)"
+                                                    class="px-2 py-1 text-xs font-medium rounded-full"
+                                                >
+                                                    {{ reservation.status }}<span v-if="reservation.status_updated_by">:{{ reservation.status_updated_by.name }}</span>
+                                                </span>
+                                                <span
+                                                    v-if="reservation.status_updated_by"
+                                                    class="px-2 py-1 text-xs font-medium rounded-full"
+                                                    :class="getStatusBadgeClass(reservation.status)"
+                                                >
+                                                    {{ reservation.status_updated_by.name }}
+                                                </span>
+                                                <span
+                                                    class="px-2 py-1 text-xs font-medium rounded-full"
+                                                    :class="getFormTypeBadgeClass(event.form_type)"
+                                                >
+                                                    {{ getFormTypeLabel(event.form_type) }}
+                                                </span>
+                                            </div>
                                         </div>
 
                                         <!-- 基本情報 -->
@@ -371,6 +396,8 @@
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス更新者</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">お名前</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">メール</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">電話番号</th>
@@ -412,6 +439,13 @@
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     <tr v-for="reservation in reservations.data" :key="reservation.id">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span v-if="reservation.status" :class="getStatusBadgeClass(reservation.status)" class="px-2 py-1 text-xs font-medium rounded-full">
+                                                {{ reservation.status }}<span v-if="reservation.status_updated_by">:{{ reservation.status_updated_by.name }}</span>
+                                            </span>
+                                            <span v-else class="text-sm text-gray-500">-</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.status_updated_by ? reservation.status_updated_by.name : '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.email }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.phone }}</td>
@@ -499,7 +533,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -509,6 +543,7 @@ const props = defineProps({
     reservations: Object,
     timeslotStats: Object,
     timeslotsWithReservations: Array,
+    success: String,
 });
 
 // 予約フォームの場合は日付表示をデフォルト、それ以外はカード表示をデフォルト
@@ -584,6 +619,34 @@ const getFormTypeBadgeClass = (formType) => {
     return classes[formType] || 'bg-gray-100 text-gray-800';
 };
 
+const getStatusBadgeClass = (status) => {
+    const classes = {
+        '未対応': 'bg-gray-100 text-gray-800',
+        '確認中': 'bg-yellow-100 text-yellow-800',
+        '返信待ち': 'bg-blue-100 text-blue-800',
+        '対応完了済み': 'bg-green-100 text-green-800',
+    };
+    return classes[status] || 'bg-gray-100 text-gray-800';
+};
+
+// 色分けロジックの修正版
+const getTimeslotStatus = (timeslot) => {
+    if (!timeslot.reservations || timeslot.reservations.length === 0) return null;
+    // 優先度順
+    const pri = ['未対応', '確認中', '返信待ち', '対応完了済み'];
+    for (const st of pri) {
+        if (timeslot.reservations.some(r => r.status === st)) return st;
+    }
+    return null;
+};
+// 時間枠全体の色
+const getTimeslotAllDone = (timeslot) => {
+  if (!timeslot.reservations || timeslot.reservations.length === 0) return false;
+  return timeslot.reservations.every(r => r.status === '対応完了済み');
+};
+const getTimeslotHeaderClass = (timeslot) => getTimeslotAllDone(timeslot) ? 'bg-green-100' : 'bg-gray-100';
+const getTimeslotBorderClass = (timeslot) => getTimeslotAllDone(timeslot) ? 'border-green-400' : 'border-gray-300';
+
 const deleteReservation = (id) => {
     if (confirm('本当に削除しますか？')) {
         router.delete(route('admin.reservations.destroy', id));
@@ -619,4 +682,10 @@ const adjustCapacity = async (timeslotId, amount) => {
         adjustingTimeslotId.value = null;
     }
 };
+
+onMounted(() => {
+    if (props.success) {
+        alert(props.success);
+    }
+});
 </script>

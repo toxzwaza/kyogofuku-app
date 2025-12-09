@@ -22,10 +22,14 @@ class LineWebhookController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    public function pushToLineGroup($message)
+    public function pushToLineGroup($message, $groupId = null)
     {
         $channelToken = env('LINE_CHANNEL_TOKEN');
-        $groupId = env('LINE_GROUP_ID');
+        
+        // グループIDが引数で渡されていない場合は、.envから取得（後方互換性のため）
+        if (empty($groupId)) {
+            $groupId = env('LINE_GROUP_ID');
+        }
 
         // トークンとグループIDが設定されているか確認
         if (empty($channelToken)) {
@@ -34,7 +38,7 @@ class LineWebhookController extends Controller
         }
 
         if (empty($groupId)) {
-            Log::error('LINE_GROUP_ID is not set in .env file');
+            Log::error('LINE_GROUP_ID is not provided and not set in .env file');
             throw new \Exception('LINE_GROUP_ID is not configured');
         }
 

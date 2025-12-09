@@ -14,6 +14,8 @@ class EventReservation extends Model
         'name',
         'email',
         'phone',
+        'status',
+        'status_updated_by_user_id',
         'request_method',
         'postal_code',
         'venue_id',
@@ -64,6 +66,14 @@ class EventReservation extends Model
     public function notes()
     {
         return $this->hasMany(ReservationNote::class, 'event_reservation_id');
+    }
+
+    /**
+     * ステータス更新者とのリレーション
+     */
+    public function statusUpdatedBy()
+    {
+        return $this->belongsTo(User::class, 'status_updated_by_user_id');
     }
 }
 

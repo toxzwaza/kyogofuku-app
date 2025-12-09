@@ -15,6 +15,7 @@ class Shop extends Model
         'phone',
         'image',
         'is_active',
+        'line_group_id',
     ];
 
     protected $casts = [

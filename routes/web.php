@@ -15,9 +15,11 @@ use App\Http\Controllers\Admin\VenueController as AdminVenueController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineTestController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SesInboundMailController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\SesTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,6 +77,9 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/reservations/{reservation}/notes', [AdminReservationController::class, 'storeNote'])->name('reservations.notes.store');
     Route::delete('/reservations/notes/{note}', [AdminReservationController::class, 'destroyNote'])->name('reservations.notes.destroy');
     
+    // 予約ステータス管理
+    Route::patch('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus'])->name('reservations.status.update');
+    
     // 予約枠管理
     Route::get('/events/{event}/timeslots', [AdminTimeslotController::class, 'index'])->name('events.timeslots.index');
     Route::get('/events/{event}/timeslots/create', [AdminTimeslotController::class, 'create'])->name('events.timeslots.create');
@@ -119,5 +124,12 @@ Route::post('/webhook/line', [LineWebhookController::class, 'handle']);
 Route::get('/test-line', function () {
     app()->call('App\Http\Controllers\LineTestController@test');
 });
+
+// Amazon SES テスト
+Route::get('/test-ses-mail', [SesTestController::class, 'send']);
+
+// SES受信メール　API
+Route::post('/inbound-mail', [SesInboundMailController::class, 'handle']);
+
 
 require __DIR__.'/auth.php';

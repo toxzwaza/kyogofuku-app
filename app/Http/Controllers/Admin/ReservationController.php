@@ -8,6 +8,7 @@ use App\Models\EventReservation;
 use App\Models\ReservationNote;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\ActivityLog;
 
 class ReservationController extends Controller
 {
@@ -16,7 +17,7 @@ class ReservationController extends Controller
      */
     public function index(Event $event)
     {
-        $reservations = EventReservation::with('venue')
+        $reservations = EventReservation::with(['venue', 'statusUpdatedBy'])
             ->where('event_id', $event->id)
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -33,7 +34,7 @@ class ReservationController extends Controller
             // 各予約枠に予約情報を紐付け
             $timeslotsWithReservations = $timeslots->map(function ($timeslot) use ($event, &$totalReserved) {
                 $timeslotReservations = $event->reservations()
-                    ->with('venue')
+                    ->with(['venue', 'statusUpdatedBy'])
                     ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
                     ->orderBy('created_at', 'asc')
                     ->get();
@@ -67,6 +68,11 @@ class ReservationController extends Controller
                             'considering_plans' => $reservation->considering_plans,
                             'referred_by_name' => $reservation->referred_by_name,
                             'inquiry_message' => $reservation->inquiry_message,
+                            'status' => $reservation->status,
+                            'status_updated_by' => $reservation->statusUpdatedBy ? [
+                                'id' => $reservation->statusUpdatedBy->id,
+                                'name' => $reservation->statusUpdatedBy->name,
+                            ] : null,
                             'created_at' => $reservation->created_at->format('Y-m-d H:i:s'),
                         ];
                     })->values(),
@@ -94,7 +100,7 @@ class ReservationController extends Controller
      */
     public function show(EventReservation $reservation)
     {
-        $reservation->load(['event', 'venue', 'notes.user']);
+        $reservation->load(['event', 'venue', 'notes.user', 'statusUpdatedBy']);
 
         return Inertia::render('Admin/Reservation/Show', [
             'reservation' => $reservation,
@@ -236,6 +242,41 @@ class ReservationController extends Controller
         $note->delete();
 
         return redirect()->back()->with('success', 'メモを削除しました。');
+    }
+
+    /**
+     * 予約ステータスを更新
+     */
+    public function updateStatus(Request $request, EventReservation $reservation)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:未対応,確認中,返信待ち,対応完了済み',
+        ]);
+
+        $oldStatus = $reservation->status;
+        $reservation->update([
+            'status' => $validated['status'],
+            'status_updated_by_user_id' => auth()->id(),
+        ]);
+
+        // ステータス変更をactivity_logsに記録
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'shop_id' => null,
+            'action_type' => 'update',
+            'resource_type' => 'EventReservation',
+            'resource_id' => $reservation->id,
+            'route_name' => $request->route() ? $request->route()->getName() : null,
+            'url' => $request->fullUrl(),
+            'method' => $request->method(),
+            'description' => '予約ID:' . $reservation->id . ' ステータスを ' . ($oldStatus ?? '-') . '→' . $validated['status'] . ' に変更',
+            'old_values' => ['status' => $oldStatus],
+            'new_values' => ['status' => $validated['status']],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return redirect()->back()->with('success', 'ステータスを'.$validated['status'].'に更新しました。');
     }
 }
 

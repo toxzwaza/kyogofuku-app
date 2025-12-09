@@ -74,6 +74,18 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">LINEグループID</label>
+                                    <input
+                                        v-model="form.line_group_id"
+                                        type="text"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        placeholder="LINEグループIDを入力してください"
+                                    />
+                                    <p class="mt-1 text-sm text-gray-500">予約通知を送信するLINEグループのIDを設定します</p>
+                                    <div v-if="form.errors.line_group_id" class="mt-1 text-sm text-red-600">{{ form.errors.line_group_id }}</div>
+                                </div>
+
+                                <div>
                                     <label class="flex items-center">
                                         <input
                                             v-model="form.is_active"
@@ -122,6 +134,7 @@ const form = useForm({
     phone: '',
     image: null,
     is_active: true,
+    line_group_id: '',
 });
 
 const handleFileChange = (event) => {
