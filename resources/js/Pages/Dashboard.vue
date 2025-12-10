@@ -2379,12 +2379,12 @@ async function loadShopUsersForCreate(shopId) {
 /* モーダルアニメーション */
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.1s ease;
 }
 
 .modal-enter-active .relative,
 .modal-leave-active .relative {
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.1s ease, opacity 0.1s ease;
 }
 
 .modal-enter-from,
@@ -2394,7 +2394,7 @@ async function loadShopUsersForCreate(shopId) {
 
 .modal-enter-from .relative,
 .modal-leave-to .relative {
-  transform: scale(0.95) translateY(-20px);
+  transform: scale(0.98) translateY(-10px);
   opacity: 0;
 }
 </style>
