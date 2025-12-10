@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             EventTimeslotSeeder::class,
             EventReservationSeeder::class,
             ReservationNoteSeeder::class,
+            StaffScheduleSeeder::class,
         ]);
     }
 }

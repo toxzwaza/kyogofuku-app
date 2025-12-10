@@ -42,6 +42,9 @@ const showingNavigationDropdown = ref(false);
                                 <NavLink :href="route('admin.users.index')" :active="route().current('admin.users.*')">
                                     スタッフ管理
                                 </NavLink>
+                                <NavLink :href="route('admin.schedules.show')" :active="route().current('admin.schedules.*')">
+                                    スケジュール管理
+                                </NavLink>
                                 <NavLink :href="route('admin.activity-logs.index')" :active="route().current('admin.activity-logs.*')">
                                     ログ管理
                                 </NavLink>

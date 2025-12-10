@@ -287,6 +287,16 @@ class DashboardController extends Controller
         ->sortBy('reservation_datetime')
         ->values();
 
+        // 店舗一覧（スケジュール用）
+        $shops = Shop::where('is_active', true)->orderBy('name')->get();
+        $currentUser = $request->user();
+        $userShops = $currentUser ? $currentUser->shops()
+            ->where('shops.is_active', true)
+            ->select('shops.id', 'shops.name')
+            ->orderBy('shops.name')
+            ->get() : collect();
+        $users = User::orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'formTypeStats' => $formTypeStats,
@@ -304,6 +314,13 @@ class DashboardController extends Controller
             'staffStats' => $staffStats,
             'thisWeekReservations' => $thisWeekReservations,
             'nextWeekReservations' => $nextWeekReservations,
+            'shops' => $shops,
+            'userShops' => $userShops,
+            'users' => $users,
+            'currentUser' => $currentUser ? [
+                'id' => $currentUser->id,
+                'name' => $currentUser->name,
+            ] : null,
         ]);
     }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\TimeslotController as AdminTimeslotController;
 use App\Http\Controllers\Admin\ShopController as AdminShopController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VenueController as AdminVenueController;
+use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineTestController;
 use App\Http\Controllers\ProfileController;
@@ -116,6 +117,14 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/events/{event}/venues', [AdminVenueController::class, 'store'])->name('events.venues.store');
     Route::put('/venues/{venue}', [AdminVenueController::class, 'update'])->name('venues.update');
     Route::delete('/events/{event}/venues/{venue}', [AdminVenueController::class, 'destroy'])->name('events.venues.destroy');
+    
+    // スケジュール管理
+    Route::get('/schedules', [AdminScheduleController::class, 'show'])->name('schedules.show');
+    Route::get('/api/schedules', [AdminScheduleController::class, 'index'])->name('schedules.index');
+    Route::get('/api/schedules/shop-users', [AdminScheduleController::class, 'getShopUsers'])->name('schedules.shop-users');
+    Route::post('/api/schedules', [AdminScheduleController::class, 'store'])->name('schedules.store');
+    Route::put('/api/schedules/{schedule}', [AdminScheduleController::class, 'update'])->name('schedules.update');
+    Route::delete('/api/schedules/{schedule}', [AdminScheduleController::class, 'destroy'])->name('schedules.destroy');
 });
 
 

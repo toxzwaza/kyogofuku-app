@@ -20,3 +20,5 @@ class SesTestMail extends Mailable
             ->with(['messageContent' => $this->textMessage]);
     }
 }
+
+

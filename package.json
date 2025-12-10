@@ -18,6 +18,11 @@
         "vue": "^3.2.41"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.19",
+        "@fullcalendar/daygrid": "^6.1.19",
+        "@fullcalendar/interaction": "^6.1.19",
+        "@fullcalendar/timegrid": "^6.1.19",
+        "@fullcalendar/vue3": "^6.1.19",
         "chart.js": "^4.5.1",
         "vue-chartjs": "^5.3.3"
     }

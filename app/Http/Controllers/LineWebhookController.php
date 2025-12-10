@@ -28,7 +28,7 @@ class LineWebhookController extends Controller
         
         // グループIDが引数で渡されていない場合は、.envから取得（後方互換性のため）
         if (empty($groupId)) {
-            $groupId = env('LINE_GROUP_ID');
+        $groupId = env('LINE_GROUP_ID');
         }
 
         // トークンとグループIDが設定されているか確認
