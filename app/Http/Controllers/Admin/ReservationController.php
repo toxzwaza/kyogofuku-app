@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\ReservationNote;
+use App\Models\StaffSchedule;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\ActivityLog;
+use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
@@ -100,13 +103,31 @@ class ReservationController extends Controller
      */
     public function show(EventReservation $reservation)
     {
-        $reservation->load(['event', 'venue', 'notes.user', 'statusUpdatedBy']);
+        $reservation->load(['event', 'venue', 'notes.user', 'statusUpdatedBy', 'schedule']);
+        
+        $currentUser = auth()->user();
+        $userShops = $currentUser ? $currentUser->shops()
+            ->where('shops.is_active', true)
+            ->select('shops.id', 'shops.name')
+            ->orderBy('shops.name')
+            ->get() : collect();
 
         return Inertia::render('Admin/Reservation/Show', [
             'reservation' => $reservation,
             'event' => $reservation->event,
             'venues' => $reservation->event->venues()->where('is_active', true)->get(),
             'notes' => $reservation->notes()->with('user')->orderBy('created_at', 'desc')->get(),
+            'schedule' => $reservation->schedule,
+            'currentUser' => $currentUser ? [
+                'id' => $currentUser->id,
+                'name' => $currentUser->name,
+            ] : null,
+            'userShops' => $userShops->map(function($shop) {
+                return [
+                    'id' => $shop->id,
+                    'name' => $shop->name,
+                ];
+            }),
         ]);
     }
 
@@ -277,6 +298,63 @@ class ReservationController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'ステータスを'.$validated['status'].'に更新しました。');
+    }
+
+    /**
+     * 予約をスケジュールに追加
+     */
+    public function addToSchedule(Request $request, EventReservation $reservation)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after_or_equal:start_at',
+            'all_day' => 'boolean',
+            'participant_ids' => 'nullable|array',
+            'participant_ids.*' => 'exists:users,id',
+        ]);
+
+        // 既にスケジュールが存在する場合はエラー
+        if ($reservation->schedule) {
+            return redirect()->back()->with('error', 'この予約は既にスケジュールに追加されています。');
+        }
+
+        // スケジュールを作成
+        $schedule = StaffSchedule::create([
+            'user_id' => $validated['user_id'],
+            'event_reservation_id' => $reservation->id,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? '',
+            'start_at' => $validated['start_at'],
+            'end_at' => $validated['end_at'],
+            'all_day' => $validated['all_day'] ?? false,
+            'color' => '#3788d8',
+        ]);
+
+        // 作成者を参加者として追加
+        $participantIds = [$validated['user_id']];
+        if (!empty($validated['participant_ids'])) {
+            $participantIds = array_unique(array_merge($participantIds, $validated['participant_ids']));
+        }
+        $schedule->participantUsers()->sync($participantIds);
+
+        return redirect()->back()->with('success', 'スケジュールに追加しました。');
+    }
+
+    /**
+     * 予約をスケジュールから解除
+     */
+    public function removeFromSchedule(EventReservation $reservation)
+    {
+        if (!$reservation->schedule) {
+            return redirect()->back()->with('error', 'この予約はスケジュールに追加されていません。');
+        }
+
+        $reservation->schedule->delete();
+
+        return redirect()->back()->with('success', 'スケジュールから解除しました。');
     }
 }
 

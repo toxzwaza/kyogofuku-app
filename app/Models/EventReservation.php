@@ -75,5 +75,13 @@ class EventReservation extends Model
     {
         return $this->belongsTo(User::class, 'status_updated_by_user_id');
     }
+
+    /**
+     * スケジュールとのリレーション
+     */
+    public function schedule()
+    {
+        return $this->hasOne(StaffSchedule::class, 'event_reservation_id');
+    }
 }
 

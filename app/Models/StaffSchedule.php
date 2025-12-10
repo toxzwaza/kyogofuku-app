@@ -11,6 +11,7 @@ class StaffSchedule extends Model
 
     protected $fillable = [
         'user_id',
+        'event_reservation_id',
         'title',
         'description',
         'start_at',
@@ -48,5 +49,13 @@ class StaffSchedule extends Model
     {
         return $this->belongsToMany(User::class, 'schedule_participants', 'staff_schedule_id', 'user_id')
             ->withTimestamps();
+    }
+
+    /**
+     * 予約とのリレーション
+     */
+    public function reservation()
+    {
+        return $this->belongsTo(EventReservation::class, 'event_reservation_id');
     }
 }

@@ -9,7 +9,7 @@
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+            <div class="max-w-10xl mx-auto sm:px-6 lg:px-8 space-y-8">
                 <!-- 統計情報カード -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
@@ -32,8 +32,8 @@
             
             <!-- 横並びで2つのカレンダーを表示 -->
             <div class="flex gap-4 items-stretch">
-              <!-- 店舗単位カレンダー（60%幅） -->
-              <div style="flex: 0 0 60%; width: 60%;" class="flex flex-col">
+              <!-- 店舗単位カレンダー（70%幅） -->
+              <div style="flex: 0 0 70%; width: 70%;" class="flex flex-col">
                 <div class="mb-4">
                   <label class="block text-sm font-medium text-gray-700 mb-2">店舗単位</label>
                   <select
@@ -52,20 +52,49 @@
                 </div>
               </div>
 
-              <!-- ユーザー単位カレンダー（40%幅） -->
-              <div style="flex: 0 0 40%; width: 40%;" class="flex flex-col">
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">ユーザー単位</label>
-                  <select
-                    v-model="selectedUserId"
-                    @change="onUserChange"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                  >
-                    <option value="">ユーザーを選択</option>
-                    <option v-for="user in users" :key="user.id" :value="user.id">
-                      {{ user.name }}
-                    </option>
-                  </select>
+              <!-- ユーザー単位カレンダー（30%幅） -->
+              <div style="flex: 0 0 30%; width: 30%;" class="flex flex-col">
+                <div class="mb-4 space-y-2">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ユーザー単位</label>
+                    <select
+                      v-model="selectedUserId"
+                      @change="onUserChange"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    >
+                      <option value="">ユーザーを選択</option>
+                      <option v-for="user in users" :key="user.id" :value="user.id">
+                        {{ user.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">表示日付</label>
+                    <div class="flex items-center gap-2">
+                      <button
+                        @click="changeUserDate(-1)"
+                        type="button"
+                        class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium"
+                        title="一日前"
+                      >
+                        ←
+                      </button>
+                      <input
+                        v-model="selectedUserDate"
+                        type="date"
+                        @change="onUserDateChange"
+                        class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      />
+                      <button
+                        @click="changeUserDate(1)"
+                        type="button"
+                        class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium"
+                        title="一日後"
+                      >
+                        →
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div class="flex-1">
                   <FullCalendar ref="userCalendar" :options="userCalendarOptions" />
@@ -75,23 +104,59 @@
           </div>
         </div>
 
-        <!-- スケジュール詳細モーダル -->
+        <!-- スケジュールツールチップ -->
         <div
-          v-if="showScheduleDetail"
-          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-          @click.self="showScheduleDetail = false"
+          v-if="tooltip.visible"
+          :style="{
+            position: 'fixed',
+            left: tooltip.x + 'px',
+            top: tooltip.y + 'px',
+            zIndex: 9999,
+            pointerEvents: 'none',
+          }"
+          class="schedule-tooltip bg-gray-900 text-white text-xs rounded-lg shadow-lg p-3 max-w-xs"
         >
+          <div class="space-y-1">
+            <div class="font-semibold text-sm">{{ tooltip.title }}</div>
+            <div v-if="tooltip.user" class="text-gray-300">
+              作成者: {{ tooltip.user }}
+            </div>
+            <div v-if="tooltip.start" class="text-gray-300">
+              開始: {{ formatDateTime(tooltip.start) }}
+            </div>
+            <div v-if="tooltip.end" class="text-gray-300">
+              終了: {{ formatDateTime(tooltip.end) }}
+            </div>
+            <div v-if="tooltip.participants && tooltip.participants.length > 0" class="text-gray-300">
+              参加者: {{ tooltip.participants.map(p => p.name).join(', ') }}
+            </div>
+            <div v-if="tooltip.description" class="text-gray-300 mt-2 pt-2 border-t border-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
+              {{ tooltip.description }}
+            </div>
+          </div>
+        </div>
+
+        <!-- スケジュール詳細モーダル -->
+        <transition name="modal">
           <div
-            class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+            v-if="showScheduleDetail"
+            class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+            @click.self="showScheduleDetail = false"
           >
-            <div class="mt-3">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">
+            <div
+              class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <!-- ヘッダー -->
+              <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
                   スケジュール詳細
                 </h3>
                 <button
                   @click="showScheduleDetail = false"
-                  class="text-gray-400 hover:text-gray-600"
+                  class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
                 >
                   <svg
                     class="w-6 h-6"
@@ -109,144 +174,177 @@
                 </button>
               </div>
 
-              <div v-if="selectedScheduleDetail" class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"
-                    >タイトル</label
-                  >
-                  <p class="text-sm text-gray-900">
-                    {{ selectedScheduleDetail.title }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"
-                    >作成者</label
-                  >
-                  <p class="text-sm text-gray-900">
-                    {{ selectedScheduleDetail.user?.name || "-" }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"
-                    >参加者</label
-                  >
-                  <div
-                    v-if="
-                      selectedScheduleDetail.participants &&
-                      selectedScheduleDetail.participants.length > 0
-                    "
-                    class="flex flex-wrap gap-2"
-                  >
-                    <span
-                      v-for="participant in selectedScheduleDetail.participants"
-                      :key="participant.id"
-                      class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                    >
-                      {{ participant.name }}
-                    </span>
+              <!-- コンテンツ（スクロール可能） -->
+              <div v-if="selectedScheduleDetail" class="overflow-y-auto flex-1 px-6 py-5">
+                <div class="space-y-4">
+                  <!-- タイトル -->
+                  <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
+                    <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">
+                      タイトル
+                    </label>
+                    <p class="text-lg font-semibold text-gray-900">
+                      {{ selectedScheduleDetail.title }}
+                    </p>
                   </div>
-                  <p v-else class="text-sm text-gray-500">参加者なし</p>
-                </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"
-                    >開始日時</label
-                  >
-                  <p class="text-sm text-gray-900">
-                    {{ formatDateTime(selectedScheduleDetail.start) }}
-                  </p>
-                </div>
+                  <!-- 日時情報 -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        開始日時
+                      </label>
+                      <p class="text-sm font-medium text-gray-900">
+                        {{ formatDateTime(selectedScheduleDetail.start) }}
+                      </p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        終了日時
+                      </label>
+                      <p class="text-sm font-medium text-gray-900">
+                        {{ formatDateTime(selectedScheduleDetail.end) }}
+                      </p>
+                    </div>
+                  </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"
-                    >終了日時</label
-                  >
-                  <p class="text-sm text-gray-900">
-                    {{ formatDateTime(selectedScheduleDetail.end) }}
-                  </p>
-                </div>
+                  <!-- ステータス情報 -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        終日
+                      </label>
+                      <span
+                        :class="selectedScheduleDetail.allDay ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                      >
+                        {{ selectedScheduleDetail.allDay ? "終日" : "時間指定" }}
+                      </span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        色
+                      </label>
+                      <div class="flex items-center gap-2">
+                        <div
+                          class="w-8 h-8 rounded-lg shadow-sm border-2 border-gray-300"
+                          :style="{ backgroundColor: selectedScheduleDetail.color }"
+                        ></div>
+                        <span class="text-sm font-mono text-gray-700">{{
+                          selectedScheduleDetail.color
+                        }}</span>
+                      </div>
+                    </div>
+                  </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"
-                    >終日</label
-                  >
-                  <p class="text-sm text-gray-900">
-                    {{ selectedScheduleDetail.allDay ? "終日" : "時間指定" }}
-                  </p>
-                </div>
+                  <!-- 作成者 -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      作成者
+                    </label>
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <p class="text-sm font-medium text-gray-900">
+                        {{ selectedScheduleDetail.user?.name || "-" }}
+                      </p>
+                    </div>
+                  </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"
-                    >色</label
-                  >
-                  <div class="flex items-center space-x-2">
+                  <!-- 参加者 -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      参加者
+                    </label>
                     <div
-                      class="w-8 h-8 rounded"
-                      :style="{ backgroundColor: selectedScheduleDetail.color }"
-                    ></div>
-                    <span class="text-sm text-gray-900">{{
-                      selectedScheduleDetail.color
-                    }}</span>
+                      v-if="
+                        selectedScheduleDetail.participants &&
+                        selectedScheduleDetail.participants.length > 0
+                      "
+                      class="flex flex-wrap gap-2"
+                    >
+                      <span
+                        v-for="participant in selectedScheduleDetail.participants"
+                        :key="participant.id"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        {{ participant.name }}
+                      </span>
+                    </div>
+                    <p v-else class="text-sm text-gray-500 italic">参加者なし</p>
+                  </div>
+
+                  <!-- 説明 -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      説明
+                    </label>
+                    <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {{ selectedScheduleDetail.description || "-" }}
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1"
-                    >説明</label
-                  >
-                  <p class="text-sm text-gray-900 whitespace-pre-wrap">
-                    {{ selectedScheduleDetail.description || "-" }}
-                  </p>
-                </div>
-
-                <div class="flex justify-end space-x-2 pt-4">
-                  <button
-                    v-if="canEditSchedule(selectedScheduleDetail)"
-                    @click="startEditSchedule"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                  >
-                    編集
-                  </button>
-                  <button
-                    v-if="canEditSchedule(selectedScheduleDetail)"
-                    @click="deleteScheduleFromDashboard"
-                    class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                  >
-                    削除
-                  </button>
-                  <Link
-                    :href="route('admin.schedules.show')"
-                    class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
-                  >
-                    詳細管理へ
-                  </Link>
-                  <button
-                    @click="showScheduleDetail = false"
-                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                  >
-                    閉じる
-                  </button>
-                </div>
+              <!-- フッター（ボタン） -->
+              <div class="border-t border-gray-200 bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                <button
+                  @click="showScheduleDetail = false"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  閉じる
+                </button>
+                <Link
+                  :href="route('admin.schedules.show')"
+                  class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  詳細管理へ
+                </Link>
+                <button
+                  v-if="canEditSchedule(selectedScheduleDetail)"
+                  @click="deleteScheduleFromDashboard"
+                  class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  削除
+                </button>
+                <button
+                  v-if="canEditSchedule(selectedScheduleDetail)"
+                  @click="startEditSchedule"
+                  class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  編集
+                </button>
               </div>
             </div>
           </div>
-        </div>
+        </transition>
 
         <!-- スケジュール作成モーダル -->
-        <div
-          v-if="showCreateModal"
-          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-          @click.self="showCreateModal = false"
-        >
-          <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">新規スケジュール作成</h3>
+        <transition name="modal">
+          <div
+            v-if="showCreateModal"
+            class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+            @click.self="showCreateModal = false"
+          >
+            <div
+              class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <!-- ヘッダー -->
+              <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  新規スケジュール作成
+                </h3>
                 <button
                   @click="showCreateModal = false"
-                  class="text-gray-400 hover:text-gray-600"
+                  class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
                 >
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -254,163 +352,206 @@
                 </button>
               </div>
 
-              <form @submit.prevent="createScheduleFromDashboard" class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">タイトル <span class="text-red-500">*</span></label>
-                  <input
-                    v-model="createScheduleForm.title"
-                    type="text"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">開始日時 <span class="text-red-500">*</span></label>
-                  <input
-                    v-model="createScheduleForm.start_at"
-                    type="datetime-local"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">終了日時 <span class="text-red-500">*</span></label>
-                  <input
-                    v-model="createScheduleForm.end_at"
-                    type="datetime-local"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="flex items-center">
+              <!-- コンテンツ（スクロール可能） -->
+              <form @submit.prevent="createScheduleFromDashboard" class="overflow-y-auto flex-1 px-6 py-5">
+                <div class="space-y-4">
+                  <!-- タイトル -->
+                  <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
+                    <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">
+                      タイトル <span class="text-red-500">*</span>
+                    </label>
                     <input
-                      v-model="createScheduleForm.all_day"
-                      type="checkbox"
-                      class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      v-model="createScheduleForm.title"
+                      type="text"
+                      required
+                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      placeholder="スケジュールのタイトルを入力"
                     />
-                    <span class="ml-2 text-sm text-gray-700">終日</span>
-                  </label>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">色</label>
-                  <input
-                    v-model="createScheduleForm.color"
-                    type="color"
-                    class="w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">参加者</label>
-                  
-                  <!-- 店舗選択（参加者追加用） -->
-                  <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">店舗を選択して参加者を追加</label>
-                    <select
-                      v-model="selectedShopIdForCreate"
-                      @change="loadShopUsersForCreate(selectedShopIdForCreate)"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    >
-                      <option value="">店舗を選択してください</option>
-                      <option
-                        v-for="shop in userShops"
-                        :key="shop.id"
-                        :value="shop.id"
-                      >
-                        {{ shop.name }}
-                      </option>
-                    </select>
                   </div>
 
-                  <!-- 参加者追加済み一覧 -->
-                  <div v-if="addedParticipantsForCreate.length > 0" class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
-                    <div class="flex flex-wrap gap-2">
-                      <span
-                        v-for="participant in addedParticipantsForCreate"
-                        :key="participant.id"
-                        class="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
-                      >
-                        {{ participant.name }}
-                        <button
-                          type="button"
-                          @click="removeParticipantForCreate(participant.id)"
-                          class="ml-2 text-blue-600 hover:text-blue-800"
-                        >
-                          ×
-                        </button>
-                      </span>
+                  <!-- 日時情報 -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        開始日時 <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        v-model="createScheduleForm.start_at"
+                        type="datetime-local"
+                        required
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      />
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        終了日時 <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        v-model="createScheduleForm.end_at"
+                        type="datetime-local"
+                        required
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      />
                     </div>
                   </div>
 
-                  <!-- 店舗ユーザー一覧（チェックボックス） -->
-                  <div v-if="shopUsersForCreate.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3">
-                    <label
-                      v-for="user in shopUsersForCreate"
-                      :key="user.id"
-                      class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                    >
-                      <input
-                        type="checkbox"
-                        :value="user.id"
-                        :checked="isParticipantAddedForCreate(user.id)"
-                        @change="toggleParticipantForCreate(user.id, $event.target.checked)"
-                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                      <span class="text-sm text-gray-900">{{ user.name }}</span>
-                    </label>
+                  <!-- ステータス情報 -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        終日
+                      </label>
+                      <label class="flex items-center cursor-pointer">
+                        <input
+                          v-model="createScheduleForm.all_day"
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span class="ml-2 text-sm text-gray-700">終日予定として設定</span>
+                      </label>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        色
+                      </label>
+                      <div class="flex items-center gap-3">
+                        <input
+                          v-model="createScheduleForm.color"
+                          type="color"
+                          class="w-12 h-12 rounded-lg border-2 border-gray-300 shadow-sm cursor-pointer"
+                        />
+                        <span class="text-sm font-mono text-gray-700">{{ createScheduleForm.color }}</span>
+                      </div>
+                    </div>
                   </div>
-                  <p v-else-if="!selectedShopIdForCreate" class="text-sm text-gray-500">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
-                </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
-                  <textarea
-                    v-model="createScheduleForm.description"
-                    rows="3"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  ></textarea>
-                </div>
+                  <!-- 参加者 -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      参加者
+                    </label>
+                    
+                    <!-- 店舗選択（参加者追加用） -->
+                    <div class="mb-3">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">店舗を選択して参加者を追加</label>
+                      <select
+                        v-model="selectedShopIdForCreate"
+                        @change="loadShopUsersForCreate(selectedShopIdForCreate)"
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      >
+                        <option value="">店舗を選択してください</option>
+                        <option
+                          v-for="shop in userShops"
+                          :key="shop.id"
+                          :value="shop.id"
+                        >
+                          {{ shop.name }}
+                        </option>
+                      </select>
+                    </div>
 
-                <div class="flex justify-end space-x-2 pt-4">
-                  <button
-                    type="button"
-                    @click="showCreateModal = false"
-                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                  >
-                    キャンセル
-                  </button>
-                  <button
-                    type="submit"
-                    :disabled="createScheduleForm.processing"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
-                  >
-                    {{ createScheduleForm.processing ? '作成中...' : '作成' }}
-                  </button>
+                    <!-- 参加者追加済み一覧 -->
+                    <div v-if="addedParticipantsForCreate.length > 0" class="mb-3">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
+                      <div class="flex flex-wrap gap-2">
+                        <span
+                          v-for="participant in addedParticipantsForCreate"
+                          :key="participant.id"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          {{ participant.name }}
+                          <button
+                            type="button"
+                            @click="removeParticipantForCreate(participant.id)"
+                            class="ml-1 text-indigo-600 hover:text-indigo-800 font-bold"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- 店舗ユーザー一覧（チェックボックス） -->
+                    <div v-if="shopUsersForCreate.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">
+                      <label
+                        v-for="user in shopUsersForCreate"
+                        :key="user.id"
+                        class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="user.id"
+                          :checked="isParticipantAddedForCreate(user.id)"
+                          @change="toggleParticipantForCreate(user.id, $event.target.checked)"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span class="text-sm text-gray-900">{{ user.name }}</span>
+                      </label>
+                    </div>
+                    <p v-else-if="!selectedShopIdForCreate" class="text-sm text-gray-500 italic">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
+                  </div>
+
+                  <!-- 説明 -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      説明
+                    </label>
+                    <textarea
+                      v-model="createScheduleForm.description"
+                      rows="4"
+                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      placeholder="スケジュールの説明を入力（任意）"
+                    ></textarea>
+                  </div>
                 </div>
               </form>
+
+              <!-- フッター（ボタン） -->
+              <div class="border-t border-gray-200 bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  @click="showCreateModal = false"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="submit"
+                  :disabled="createScheduleForm.processing"
+                  @click="createScheduleFromDashboard"
+                  class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 transition-colors"
+                >
+                  {{ createScheduleForm.processing ? '作成中...' : '作成' }}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </transition>
 
         <!-- スケジュール編集モーダル -->
-        <div
-          v-if="showEditModal"
-          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-          @click.self="showEditModal = false"
-        >
-          <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">スケジュール編集</h3>
+        <transition name="modal">
+          <div
+            v-if="showEditModal"
+            class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+            @click.self="showEditModal = false"
+          >
+            <div
+              class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <!-- ヘッダー -->
+              <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  スケジュール編集
+                </h3>
                 <button
                   @click="showEditModal = false"
-                  class="text-gray-400 hover:text-gray-600"
+                  class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
                 >
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -418,149 +559,184 @@
                 </button>
               </div>
 
-              <form @submit.prevent="updateScheduleFromDashboard" class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">タイトル <span class="text-red-500">*</span></label>
-                  <input
-                    v-model="editScheduleForm.title"
-                    type="text"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">開始日時 <span class="text-red-500">*</span></label>
-                  <input
-                    v-model="editScheduleForm.start_at"
-                    type="datetime-local"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">終了日時 <span class="text-red-500">*</span></label>
-                  <input
-                    v-model="editScheduleForm.end_at"
-                    type="datetime-local"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="flex items-center">
+              <!-- コンテンツ（スクロール可能） -->
+              <form @submit.prevent="updateScheduleFromDashboard" class="overflow-y-auto flex-1 px-6 py-5">
+                <div class="space-y-4">
+                  <!-- タイトル -->
+                  <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
+                    <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">
+                      タイトル <span class="text-red-500">*</span>
+                    </label>
                     <input
-                      v-model="editScheduleForm.all_day"
-                      type="checkbox"
-                      class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      v-model="editScheduleForm.title"
+                      type="text"
+                      required
+                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      placeholder="スケジュールのタイトルを入力"
                     />
-                    <span class="ml-2 text-sm text-gray-700">終日</span>
-                  </label>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">色</label>
-                  <input
-                    v-model="editScheduleForm.color"
-                    type="color"
-                    class="w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">参加者</label>
-                  
-                  <!-- 店舗選択（参加者追加用） -->
-                  <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">店舗を選択して参加者を追加</label>
-                    <select
-                      v-model="selectedShopIdForEdit"
-                      @change="loadShopUsersForEdit(selectedShopIdForEdit)"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    >
-                      <option value="">店舗を選択してください</option>
-                      <option
-                        v-for="shop in userShops"
-                        :key="shop.id"
-                        :value="shop.id"
-                      >
-                        {{ shop.name }}
-                      </option>
-                    </select>
                   </div>
 
-                  <!-- 参加者追加済み一覧 -->
-                  <div v-if="addedParticipantsForEdit.length > 0" class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
-                    <div class="flex flex-wrap gap-2">
-                      <span
-                        v-for="participant in addedParticipantsForEdit"
-                        :key="participant.id"
-                        class="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
-                      >
-                        {{ participant.name }}
-                        <button
-                          type="button"
-                          @click="removeParticipantForEdit(participant.id)"
-                          class="ml-2 text-blue-600 hover:text-blue-800"
-                        >
-                          ×
-                        </button>
-                      </span>
+                  <!-- 日時情報 -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        開始日時 <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        v-model="editScheduleForm.start_at"
+                        type="datetime-local"
+                        required
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      />
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        終了日時 <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        v-model="editScheduleForm.end_at"
+                        type="datetime-local"
+                        required
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      />
                     </div>
                   </div>
 
-                  <!-- 店舗ユーザー一覧（チェックボックス） -->
-                  <div v-if="shopUsersForEdit.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3">
-                    <label
-                      v-for="user in shopUsersForEdit"
-                      :key="user.id"
-                      class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                    >
-                      <input
-                        type="checkbox"
-                        :value="user.id"
-                        :checked="isParticipantAddedForEdit(user.id)"
-                        @change="toggleParticipantForEdit(user.id, $event.target.checked)"
-                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                      <span class="text-sm text-gray-900">{{ user.name }}</span>
-                    </label>
+                  <!-- ステータス情報 -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        終日
+                      </label>
+                      <label class="flex items-center cursor-pointer">
+                        <input
+                          v-model="editScheduleForm.all_day"
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span class="ml-2 text-sm text-gray-700">終日予定として設定</span>
+                      </label>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        色
+                      </label>
+                      <div class="flex items-center gap-3">
+                        <input
+                          v-model="editScheduleForm.color"
+                          type="color"
+                          class="w-12 h-12 rounded-lg border-2 border-gray-300 shadow-sm cursor-pointer"
+                        />
+                        <span class="text-sm font-mono text-gray-700">{{ editScheduleForm.color }}</span>
+                      </div>
+                    </div>
                   </div>
-                  <p v-else-if="!selectedShopIdForEdit" class="text-sm text-gray-500">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
-                </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
-                  <textarea
-                    v-model="editScheduleForm.description"
-                    rows="3"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  ></textarea>
-                </div>
+                  <!-- 参加者 -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      参加者
+                    </label>
+                    
+                    <!-- 店舗選択（参加者追加用） -->
+                    <div class="mb-3">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">店舗を選択して参加者を追加</label>
+                      <select
+                        v-model="selectedShopIdForEdit"
+                        @change="loadShopUsersForEdit(selectedShopIdForEdit)"
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      >
+                        <option value="">店舗を選択してください</option>
+                        <option
+                          v-for="shop in userShops"
+                          :key="shop.id"
+                          :value="shop.id"
+                        >
+                          {{ shop.name }}
+                        </option>
+                      </select>
+                    </div>
 
-                <div class="flex justify-end space-x-2 pt-4">
-                  <button
-                    type="button"
-                    @click="showEditModal = false"
-                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                  >
-                    キャンセル
-                  </button>
-                  <button
-                    type="submit"
-                    :disabled="editScheduleForm.processing"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
-                  >
-                    {{ editScheduleForm.processing ? '更新中...' : '更新' }}
-                  </button>
+                    <!-- 参加者追加済み一覧 -->
+                    <div v-if="addedParticipantsForEdit.length > 0" class="mb-3">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
+                      <div class="flex flex-wrap gap-2">
+                        <span
+                          v-for="participant in addedParticipantsForEdit"
+                          :key="participant.id"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          {{ participant.name }}
+                          <button
+                            type="button"
+                            @click="removeParticipantForEdit(participant.id)"
+                            class="ml-1 text-indigo-600 hover:text-indigo-800 font-bold"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- 店舗ユーザー一覧（チェックボックス） -->
+                    <div v-if="shopUsersForEdit.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">
+                      <label
+                        v-for="user in shopUsersForEdit"
+                        :key="user.id"
+                        class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="user.id"
+                          :checked="isParticipantAddedForEdit(user.id)"
+                          @change="toggleParticipantForEdit(user.id, $event.target.checked)"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span class="text-sm text-gray-900">{{ user.name }}</span>
+                      </label>
+                    </div>
+                    <p v-else-if="!selectedShopIdForEdit" class="text-sm text-gray-500 italic">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
+                  </div>
+
+                  <!-- 説明 -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      説明
+                    </label>
+                    <textarea
+                      v-model="editScheduleForm.description"
+                      rows="4"
+                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      placeholder="スケジュールの説明を入力（任意）"
+                    ></textarea>
+                  </div>
                 </div>
               </form>
+
+              <!-- フッター（ボタン） -->
+              <div class="border-t border-gray-200 bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  @click="showEditModal = false"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  :disabled="editScheduleForm.processing"
+                  @click="updateScheduleFromDashboard"
+                  class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 transition-colors"
+                >
+                  {{ editScheduleForm.processing ? '更新中...' : '更新' }}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </transition>
 
                 <!-- フォームタイプ別の統計 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -1233,6 +1409,15 @@ const shopCalendar = ref(null);
 const userCalendar = ref(null);
 const selectedShopId = ref("");
 const selectedUserId = ref("");
+// ユーザー単位カレンダーの表示日付（デフォルトは今日）
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const date = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${date}`;
+};
+const selectedUserDate = ref(getTodayDateString());
 const shops = computed(() => props.shops || []);
 const userShops = computed(() => props.userShops || []);
 const users = computed(() => props.users || []);
@@ -1275,6 +1460,9 @@ onMounted(() => {
     }
     if (userCalendar.value && selectedUserId.value) {
       console.log('[Dashboard] ユーザー単位カレンダーをリフレッシュ');
+      // 初期日付を設定
+      const initialDate = new Date(selectedUserDate.value);
+      userCalendar.value.getApi().gotoDate(initialDate);
       userCalendar.value.getApi().refetchEvents();
     } else {
       console.warn('[Dashboard] ユーザー単位カレンダーのリフレッシュをスキップ:', {
@@ -1398,6 +1586,29 @@ function renderUserEventContent(arg) {
   return { domNodes: [container] };
 }
 
+// イベントホバー時の処理（店舗単位）
+function handleEventMouseEnter(mouseEnterInfo) {
+  const event = mouseEnterInfo.event;
+  const jsEvent = mouseEnterInfo.jsEvent;
+  
+  tooltip.value = {
+    visible: true,
+    x: jsEvent.clientX + 10,
+    y: jsEvent.clientY + 10,
+    title: event.title || '',
+    user: event.extendedProps.user?.name || '',
+    start: event.startStr || '',
+    end: event.endStr || '',
+    participants: event.extendedProps.participants || [],
+    description: event.extendedProps.description || '',
+  };
+}
+
+// イベントホバー終了時の処理
+function handleEventMouseLeave() {
+  tooltip.value.visible = false;
+}
+
 // 店舗単位カレンダーオプション
 const shopCalendarOptions = ref({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -1418,6 +1629,8 @@ const shopCalendarOptions = ref({
   eventClick: handleEventClick,
   eventDrop: handleEventDrop,
   eventResize: handleEventResize,
+  eventMouseEnter: handleEventMouseEnter,
+  eventMouseLeave: handleEventMouseLeave,
   events: loadShopSchedules,
   eventContent: renderShopEventContent,
 });
@@ -1434,8 +1647,8 @@ const getTodayRange = () => {
   return { start, end };
 };
 
-// ユーザー単位カレンダーオプション（今日のみ表示で固定、日表示）
-const userCalendarOptions = ref({
+// ユーザー単位カレンダーオプション（選択された日付を表示、日表示）
+const userCalendarOptions = computed(() => ({
   plugins: [timeGridPlugin],
   initialView: "timeGridDay",
   locale: jaLocale,
@@ -1449,17 +1662,20 @@ const userCalendarOptions = ref({
   selectable: false,
   weekends: true,
   eventClick: handleEventClick,
+  eventMouseEnter: handleEventMouseEnter,
+  eventMouseLeave: handleEventMouseLeave,
   events: loadUserSchedules,
   slotMinTime: "00:00:00",
   slotMaxTime: "24:00:00",
   slotDuration: "00:30:00",
-  validRange: (nowDate) => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const date = today.getDate();
+  validRange: () => {
+    // 選択された日付を使用
+    const selectedDate = new Date(selectedUserDate.value);
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const date = selectedDate.getDate();
     
-    // ローカルタイムゾーンで今日の日付を取得
+    // ローカルタイムゾーンで選択された日付を取得
     const start = new Date(year, month, date);
     const end = new Date(year, month, date + 1);
     
@@ -1472,7 +1688,7 @@ const userCalendarOptions = ref({
       end: endStr,
     };
   },
-});
+}));
 
 // 店舗単位スケジュール読み込み
 function loadShopSchedules(info, successCallback, failureCallback) {
@@ -1506,11 +1722,12 @@ function loadShopSchedules(info, successCallback, failureCallback) {
     });
 }
 
-// ユーザー単位スケジュール読み込み（今日のみ）
+// ユーザー単位スケジュール読み込み（選択された日付）
 function loadUserSchedules(info, successCallback, failureCallback) {
   console.log('[loadUserSchedules] 関数呼び出し');
   console.log('[loadUserSchedules] info:', info);
   console.log('[loadUserSchedules] selectedUserId:', selectedUserId.value);
+  console.log('[loadUserSchedules] selectedUserDate:', selectedUserDate.value);
   
   // ユーザーが選択されていない場合は空の配列を返す
   if (!selectedUserId.value) {
@@ -1521,13 +1738,13 @@ function loadUserSchedules(info, successCallback, failureCallback) {
     return;
   }
 
-  // 今日の日付範囲を取得
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const date = today.getDate();
+  // 選択された日付の範囲を取得
+  const selectedDate = new Date(selectedUserDate.value);
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth();
+  const date = selectedDate.getDate();
   
-  // ローカルタイムゾーンで今日の開始時刻と終了時刻を取得
+  // ローカルタイムゾーンで選択された日付の開始時刻と終了時刻を取得
   const startDate = new Date(year, month, date, 0, 0, 0);
   const endDate = new Date(year, month, date, 23, 59, 59);
   
@@ -1542,12 +1759,12 @@ function loadUserSchedules(info, successCallback, failureCallback) {
     return `${y}-${m}-${d}T${h}:${min}:${s}`;
   };
   
-  const todayStart = formatLocalDateTime(startDate);
-  const todayEnd = formatLocalDateTime(endDate);
+  const dateStart = formatLocalDateTime(startDate);
+  const dateEnd = formatLocalDateTime(endDate);
   
   const params = {
-    start: todayStart,
-    end: todayEnd,
+    start: dateStart,
+    end: dateEnd,
     mode: 'user',
     user_id: selectedUserId.value,
   };
@@ -1589,6 +1806,17 @@ const selectedScheduleDetail = ref(null);
 const showEditModal = ref(false);
 const showCreateModal = ref(false);
 const isEditingSchedule = ref(false);
+const tooltip = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  title: '',
+  user: '',
+  start: '',
+  end: '',
+  participants: [],
+  description: '',
+});
 const createScheduleForm = ref({
   title: '',
   description: '',
@@ -1719,18 +1947,34 @@ function startEditSchedule() {
 
 // スケジュール更新
 function updateScheduleFromDashboard() {
-  if (!selectedScheduleDetail.value) return;
+  if (!selectedScheduleDetail.value) {
+    console.error('selectedScheduleDetailが存在しません');
+    return;
+  }
+  
+  console.log('updateScheduleFromDashboard開始');
+  console.log('selectedScheduleDetail:', selectedScheduleDetail.value);
+  console.log('editScheduleForm:', editScheduleForm.value);
   
   editScheduleForm.value.processing = true;
   
   const updateData = {
-    ...editScheduleForm.value,
+    title: editScheduleForm.value.title,
+    description: editScheduleForm.value.description || '',
+    start_at: editScheduleForm.value.start_at,
+    end_at: editScheduleForm.value.end_at,
+    all_day: editScheduleForm.value.all_day,
+    color: editScheduleForm.value.color,
     user_id: selectedScheduleDetail.value.user?.id,
+    participant_ids: editScheduleForm.value.participant_ids || [],
   };
-  delete updateData.processing;
+  
+  console.log('更新データ:', updateData);
+  console.log('更新URL:', route('admin.schedules.update', selectedScheduleDetail.value.id));
   
   axios.put(route('admin.schedules.update', selectedScheduleDetail.value.id), updateData)
-    .then(() => {
+    .then((response) => {
+      console.log('更新成功:', response);
       showEditModal.value = false;
       isEditingSchedule.value = false;
       addedParticipantsForEdit.value = [];
@@ -1744,7 +1988,8 @@ function updateScheduleFromDashboard() {
     })
     .catch(error => {
       console.error('スケジュールの更新に失敗しました:', error);
-      alert('スケジュールの更新に失敗しました。');
+      console.error('エラー詳細:', error.response?.data || error.message);
+      alert('スケジュールの更新に失敗しました。' + (error.response?.data?.message || ''));
     })
     .finally(() => {
       editScheduleForm.value.processing = false;
@@ -1878,6 +2123,48 @@ function onUserChange() {
       userCalendar: !!userCalendar.value,
       selectedUserId: selectedUserId.value
     });
+  }
+}
+
+// ユーザー単位カレンダーの日付を変更（日数で加算/減算）
+function changeUserDate(days) {
+  if (!selectedUserDate.value) return;
+  
+  const currentDate = new Date(selectedUserDate.value);
+  currentDate.setDate(currentDate.getDate() + days);
+  
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const date = String(currentDate.getDate()).padStart(2, '0');
+  selectedUserDate.value = `${year}-${month}-${date}`;
+  
+  // カレンダーを更新
+  onUserDateChange();
+}
+
+// ユーザー単位カレンダーの日付変更時の処理
+function onUserDateChange() {
+  console.log('[onUserDateChange] 日付変更:', selectedUserDate.value);
+  if (userCalendar.value && selectedUserDate.value) {
+    // カレンダーの日付を変更
+    const selectedDate = new Date(selectedUserDate.value);
+    userCalendar.value.getApi().gotoDate(selectedDate);
+    // validRangeを更新
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const date = selectedDate.getDate();
+    const startStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    const endStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date + 1).padStart(2, '0')}`;
+    userCalendar.value.getApi().setOption('validRange', {
+      start: startStr,
+      end: endStr,
+    });
+    // スケジュールを再読み込み
+    userCalendar.value.getApi().refetchEvents();
+    // 高さを同期
+    setTimeout(() => {
+      syncCalendarHeights();
+    }, 300);
   }
 }
 
@@ -2070,5 +2357,44 @@ async function loadShopUsersForCreate(shopId) {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+/* ツールチップスタイル */
+.schedule-tooltip {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* モーダルアニメーション */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .relative,
+.modal-leave-active .relative {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .relative,
+.modal-leave-to .relative {
+  transform: scale(0.95) translateY(-20px);
+  opacity: 0;
 }
 </style>
