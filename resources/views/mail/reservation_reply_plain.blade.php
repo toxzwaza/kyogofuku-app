@@ -1,6 +1,6 @@
 {{ $emailThread->eventReservation->name }} 様
 
-{{ $message }}
+{{ $replyMessage }}
 
 --
 {{ config('app.name') }}

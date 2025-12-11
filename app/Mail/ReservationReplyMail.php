@@ -15,7 +15,7 @@ class ReservationReplyMail extends Mailable
     use Queueable, SerializesModels;
 
     public $emailThread;
-    public $message;
+    public $replyMessage;
     public $toEmail;
 
     /**
@@ -27,7 +27,7 @@ class ReservationReplyMail extends Mailable
     {
         $this->emailThread = $emailThread;
         $this->toEmail = $toEmail;
-        $this->message = $message;
+        $this->replyMessage = $message; // $messageはLaravelの内部変数と衝突するため$replyMessageに変更
     }
 
     /**

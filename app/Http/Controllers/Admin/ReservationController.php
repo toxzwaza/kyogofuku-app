@@ -460,7 +460,7 @@ class ReservationController extends Controller
 
                 $textBody = view('mail.reservation_reply_plain', [
                     'emailThread' => $emailThread,
-                    'message' => $validated['message'],
+                    'replyMessage' => $validated['message'],
                 ])->render();
 
                 Log::debug('メール本文生成成功', [
@@ -541,7 +541,7 @@ class ReservationController extends Controller
             
             $textBody = view('mail.reservation_reply_plain', [
                 'emailThread' => $mailable->emailThread,
-                'message' => $mailable->message,
+                'replyMessage' => $mailable->replyMessage,
             ])->render();
             
             Log::debug('メール本文生成', [
