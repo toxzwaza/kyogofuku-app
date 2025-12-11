@@ -364,6 +364,60 @@
                 </div>
               </div>
             </div>
+
+            <!-- 返信メール送信ブロック -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6">
+              <div class="p-6">
+                <h3 class="text-lg font-semibold mb-4">返信メール送信</h3>
+                
+                <form @submit.prevent="sendReplyEmail">
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        スレッド選択
+                      </label>
+                      <select
+                        v-model="replyForm.email_thread_id"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        required
+                      >
+                        <option value="">スレッドを選択してください</option>
+                        <option
+                          v-for="thread in emailThreads"
+                          :key="thread.id"
+                          :value="thread.id"
+                        >
+                          {{ thread.subject }} ({{ thread.emails ? thread.emails.length : 0 }}件)
+                        </option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        メッセージ
+                      </label>
+                      <textarea
+                        v-model="replyForm.message"
+                        rows="8"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="返信メッセージを入力してください"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <button
+                        type="submit"
+                        :disabled="replyForm.processing"
+                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150"
+                      >
+                        {{ replyForm.processing ? "送信中..." : "返信メールを送信" }}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
 
           <!-- 右側: ステータス・メモ機能 -->
@@ -943,12 +997,35 @@ function removeFromSchedule() {
   }
 }
 
+// 返信メールフォーム
+const replyForm = useForm({
+  email_thread_id: "",
+  message: "",
+});
+
+const sendReplyEmail = () => {
+  replyForm.post(
+    route("admin.reservations.reply-email", props.reservation.id),
+    {
+      onSuccess: () => {
+        replyForm.reset();
+        router.reload({ only: ["emailThreads"] });
+      },
+    }
+  );
+};
+
 // 初期化
 onMounted(() => {
   // デフォルトで最初の店舗を選択
   if (userShops.value.length > 0) {
     scheduleForm.selectedShopId = userShops.value[0].id;
     onShopChangeForSchedule();
+  }
+  
+  // メールスレッドが1つだけの場合は自動選択
+  if (props.emailThreads && props.emailThreads.length === 1) {
+    replyForm.email_thread_id = props.emailThreads[0].id;
   }
 });
 </script>

@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\EventReservation;
+use App\Models\EmailThread;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -10,22 +10,24 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ReservationConfirmationMail extends Mailable
+class ReservationReplyMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $reservation;
-    public $emailThreadId;
+    public $emailThread;
+    public $message;
+    public $toEmail;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct(EventReservation $reservation, $emailThreadId = null)
+    public function __construct(EmailThread $emailThread, $toEmail, $message)
     {
-        $this->reservation = $reservation;
-        $this->emailThreadId = $emailThreadId;
+        $this->emailThread = $emailThread;
+        $this->toEmail = $toEmail;
+        $this->message = $message;
     }
 
     /**
@@ -35,13 +37,9 @@ class ReservationConfirmationMail extends Mailable
      */
     public function envelope()
     {
-        $eventTitle = $this->reservation->event->title ?? 'イベント';
-        $baseSubject = "【{$eventTitle}】ご予約ありがとうございます";
-        
         // スレッド番号を件名に追加
-        $subject = $this->emailThreadId 
-            ? "[{$this->emailThreadId}] {$baseSubject}"
-            : $baseSubject;
+        $baseSubject = $this->emailThread->subject;
+        $subject = "[{$this->emailThread->id}] {$baseSubject}";
         
         return new Envelope(
             subject: $subject,
@@ -57,7 +55,7 @@ class ReservationConfirmationMail extends Mailable
     public function content()
     {
         return new Content(
-            text: 'mail.reservation_confirmation_plain',
+            text: 'mail.reservation_reply_plain',
         );
     }
 

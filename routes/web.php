@@ -85,6 +85,9 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/reservations/{reservation}/schedule', [AdminReservationController::class, 'addToSchedule'])->name('reservations.schedule.add');
     Route::delete('/reservations/{reservation}/schedule', [AdminReservationController::class, 'removeFromSchedule'])->name('reservations.schedule.remove');
     
+    // 予約メール返信
+    Route::post('/reservations/{reservation}/reply-email', [AdminReservationController::class, 'sendReplyEmail'])->name('reservations.reply-email');
+    
     // 予約枠管理
     Route::get('/events/{event}/timeslots', [AdminTimeslotController::class, 'index'])->name('events.timeslots.index');
     Route::get('/events/{event}/timeslots/create', [AdminTimeslotController::class, 'create'])->name('events.timeslots.create');

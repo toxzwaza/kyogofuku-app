@@ -403,8 +403,8 @@ class EventReservationController extends Controller
             ['subject' => "【{$reservation->event->title}】ご予約ありがとうございます"]
         );
 
-        // メールを送信
-        $mailable = new ReservationConfirmationMail($reservation);
+        // メールを送信（スレッドIDを渡す）
+        $mailable = new ReservationConfirmationMail($reservation, $emailThread->id);
         Mail::to($reservation->email)->send($mailable);
 
         // 送信したメールをデータベースに保存

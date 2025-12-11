@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Email;
 use App\Models\EmailAttachment;
+use App\Models\EmailThread;
+use App\Models\EventReservation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -56,6 +58,31 @@ class SesInboundMailController extends Controller
                     $from = $mimeMessage->getHeaderValue('From');
                     $to = $mimeMessage->getHeaderValue('To');
                     $messageId = $mail['messageId'] ?? null;
+                    
+                    // 件名からスレッド番号を抽出
+                    $emailThreadId = null;
+                    $eventReservationId = null;
+                    if (preg_match('/\[(\d+)\]/', $subject, $matches)) {
+                        $emailThreadId = (int)$matches[1];
+                        
+                        // スレッドIDからevent_reservation_idを取得
+                        $emailThread = EmailThread::find($emailThreadId);
+                        if ($emailThread) {
+                            $eventReservationId = $emailThread->event_reservation_id;
+                            Log::info('スレッド番号から予約を特定', [
+                                'email_thread_id' => $emailThreadId,
+                                'event_reservation_id' => $eventReservationId,
+                            ]);
+                        } else {
+                            Log::warning('スレッドが見つかりません', [
+                                'email_thread_id' => $emailThreadId,
+                            ]);
+                        }
+                    } else {
+                        Log::info('件名にスレッド番号が含まれていません', [
+                            'subject' => $subject,
+                        ]);
+                    }
                     
                     // 本文を取得
                     $textBody = $mimeMessage->getTextContent();
@@ -117,6 +144,8 @@ class SesInboundMailController extends Controller
                         'from' => $from,
                         'to' => $to,
                         'subject' => $subject,
+                        'event_reservation_id' => $eventReservationId,
+                        'email_thread_id' => $emailThreadId,
                         'text_body' => $textBody,
                         'html_body' => $htmlBody,
                         'raw_email' => $rawEmail,
