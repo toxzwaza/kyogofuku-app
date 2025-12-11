@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -e
+
+APP_CONTAINER=event_app
+
+echo "=== Git pull ==="
+git pull origin main
+
+echo "=== Composer install ==="
+docker exec -it ${APP_CONTAINER} composer install --no-dev --optimize-autoloader
+
+echo "=== Prepare .env ==="
+docker exec -it ${APP_CONTAINER} bash -lc 'if [ ! -f .env ]; then cp .env.example .env; fi'
+
+echo "=== APP_KEY generate ==="
+docker exec -it ${APP_CONTAINER} bash -lc 'php artisan key:generate --force || true'
+
+echo "=== Storage link ==="
+docker exec -it ${APP_CONTAINER} php artisan storage:link || true
+
+echo "=== Migrate ==="
+docker exec -it ${APP_CONTAINER} php artisan migrate:refresh --seed
+
+echo "=== npm build ==="
+docker exec -it ${APP_CONTAINER} bash -lc 'npm ci && npm run build'
+
+echo "=== Permission fix ==="
+docker exec -it ${APP_CONTAINER} bash -lc 'chown -R www-data:www-data storage bootstrap/cache'
+
+echo "=== DONE ==="
