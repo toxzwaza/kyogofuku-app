@@ -12,6 +12,11 @@ class SesInboundMailController extends Controller
     {
         Log::info('Inbound mail received:', $request->all());
 
+        // SubscriptionConfirmation の場合
+        if ($request->Type === 'SubscriptionConfirmation') {
+            Log::info('SNS Confirmation URL: ' . $request->SubscribeURL);
+        }
+
         return response()->json(['status' => 'ok']);
     }
 }
