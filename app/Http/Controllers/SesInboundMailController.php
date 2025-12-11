@@ -43,13 +43,13 @@ class SesInboundMailController extends Controller
                 }
                 
                 try {
-                    // MIME パース（ストリーム経由）
+                    // MIME パース（文字列からストリームを作成してパース）
                     $stream = fopen('php://memory', 'r+');
                     fwrite($stream, $rawEmail);
                     rewind($stream);
                     $parser = new MailMimeParser();
-                    $mimeMessage = $parser->parse($stream, false);
-                    fclose($stream);
+                    // 第2引数にtrueを指定すると、パーサーがストリームを管理して閉じてくれる
+                    $mimeMessage = $parser->parse($stream, true);
                     
                     // 基本情報
                     $subject = $mimeMessage->getHeaderValue('Subject');
@@ -57,17 +57,58 @@ class SesInboundMailController extends Controller
                     $to = $mimeMessage->getHeaderValue('To');
                     $messageId = $mail['messageId'] ?? null;
                     
-                    // 本文
+                    // 本文を取得
                     $textBody = $mimeMessage->getTextContent();
                     $htmlBody = $mimeMessage->getHtmlContent();
                     
-                    // 添付ファイル
+                    // 添付ファイルを取得
                     $attachments = [];
-                    foreach ($mimeMessage->getAllAttachmentParts() as $attachment) {
-                        $attachments[] = [
-                            'filename' => $attachment->getFilename(),
-                            'content' => $attachment->getContent(),
-                        ];
+                    $attachmentParts = $mimeMessage->getAllAttachmentParts();
+                    Log::info('Found attachments', ['count' => count($attachmentParts)]);
+                    
+                    foreach ($attachmentParts as $index => $attachment) {
+                        try {
+                            $filename = $attachment->getFilename();
+                            // ファイル名がない場合はデフォルト名を生成
+                            if (empty($filename)) {
+                                $mimeType = $attachment->getContentType() ?? 'application/octet-stream';
+                                $extension = 'bin';
+                                // 簡単なMIMEタイプから拡張子を推測
+                                if (strpos($mimeType, 'image/') === 0) {
+                                    $extension = explode('/', $mimeType)[1];
+                                } elseif (strpos($mimeType, 'application/pdf') === 0) {
+                                    $extension = 'pdf';
+                                }
+                                $filename = 'attachment_' . ($index + 1) . '_' . uniqid() . '.' . $extension;
+                            }
+                            
+                            // コンテンツを取得
+                            $content = $attachment->getContent();
+                            if ($content === null || $content === false) {
+                                Log::warning('Failed to get attachment content', [
+                                    'filename' => $filename,
+                                    'index' => $index,
+                                ]);
+                                continue;
+                            }
+                            
+                            $attachments[] = [
+                                'filename' => $filename,
+                                'content' => $content,
+                            ];
+                            
+                            Log::info('Attachment processed', [
+                                'filename' => $filename,
+                                'size' => strlen($content),
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Error processing attachment', [
+                                'index' => $index,
+                                'error' => $e->getMessage(),
+                            ]);
+                            // エラーが発生しても処理を続行
+                            continue;
+                        }
                     }
                     
                     // メールをデータベースに保存
@@ -84,24 +125,44 @@ class SesInboundMailController extends Controller
                     // 添付ファイルを保存
                     $attachmentFilenames = [];
                     foreach ($attachments as $attachment) {
-                        $filename = $attachment['filename'];
-                        if (empty($filename)) {
-                            // ファイル名がない場合はデフォルト名を生成
-                            $filename = 'attachment_' . uniqid() . '.bin';
+                        try {
+                            $filename = $attachment['filename'];
+                            $content = $attachment['content'];
+                            
+                            // ストレージに保存
+                            $storagePath = 'email-attachments/' . $email->id . '/' . $filename;
+                            $saved = Storage::put($storagePath, $content);
+                            
+                            if (!$saved) {
+                                Log::warning('Failed to save attachment to storage', [
+                                    'filename' => $filename,
+                                    'email_id' => $email->id,
+                                ]);
+                                continue;
+                            }
+                            
+                            // データベースに保存
+                            EmailAttachment::create([
+                                'email_id' => $email->id,
+                                'filename' => $filename,
+                                'path' => $storagePath,
+                            ]);
+                            
+                            $attachmentFilenames[] = $filename;
+                            Log::info('Attachment saved', [
+                                'filename' => $filename,
+                                'email_id' => $email->id,
+                                'path' => $storagePath,
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Error saving attachment', [
+                                'filename' => $attachment['filename'] ?? 'unknown',
+                                'email_id' => $email->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                            // エラーが発生しても処理を続行
+                            continue;
                         }
-                        
-                        // ストレージに保存
-                        $storagePath = 'email-attachments/' . $email->id . '/' . $filename;
-                        Storage::put($storagePath, $attachment['content']);
-                        
-                        // データベースに保存
-                        EmailAttachment::create([
-                            'email_id' => $email->id,
-                            'filename' => $filename,
-                            'path' => $storagePath,
-                        ]);
-                        
-                        $attachmentFilenames[] = $filename;
                     }
                     
                     // ログ出力
