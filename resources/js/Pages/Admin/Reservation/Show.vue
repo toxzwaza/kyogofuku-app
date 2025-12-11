@@ -1004,12 +1004,53 @@ const replyForm = useForm({
 });
 
 const sendReplyEmail = () => {
+  console.log('返信メール送信開始', {
+    reservation_id: props.reservation.id,
+    email_thread_id: replyForm.email_thread_id,
+    message_length: replyForm.message.length,
+  });
+
+  if (!replyForm.email_thread_id) {
+    console.error('スレッドIDが選択されていません');
+    alert('スレッドを選択してください');
+    return;
+  }
+
+  if (!replyForm.message || replyForm.message.trim() === '') {
+    console.error('メッセージが入力されていません');
+    alert('メッセージを入力してください');
+    return;
+  }
+
   replyForm.post(
     route("admin.reservations.reply-email", props.reservation.id),
     {
-      onSuccess: () => {
+      onSuccess: (page) => {
+        console.log('返信メール送信成功', page);
         replyForm.reset();
         router.reload({ only: ["emailThreads"] });
+        
+        // 成功メッセージを表示
+        if (page.props.flash?.success) {
+          alert(page.props.flash.success);
+        }
+      },
+      onError: (errors) => {
+        console.error('返信メール送信エラー', errors);
+        
+        // エラーメッセージを表示
+        if (errors.message) {
+          alert(errors.message);
+        } else if (errors.email_thread_id) {
+          alert('スレッドの選択に問題があります: ' + errors.email_thread_id[0]);
+        } else if (errors.message) {
+          alert('メッセージに問題があります: ' + errors.message[0]);
+        } else {
+          alert('返信メールの送信に失敗しました。ログを確認してください。');
+        }
+      },
+      onFinish: () => {
+        console.log('返信メール送信処理完了');
       },
     }
   );
