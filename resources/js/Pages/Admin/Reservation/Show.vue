@@ -301,6 +301,69 @@
                 </div>
               </div>
             </div>
+
+            <!-- メールやり取りブロック -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6">
+              <div class="p-6">
+                <h3 class="text-lg font-semibold mb-4">メールやり取り</h3>
+                
+                <div v-if="emailThreads && emailThreads.length > 0" class="space-y-6">
+                  <div
+                    v-for="thread in emailThreads"
+                    :key="thread.id"
+                    class="border border-gray-200 rounded-lg p-4"
+                  >
+                    <div class="mb-3">
+                      <h4 class="font-medium text-gray-900">{{ thread.subject }}</h4>
+                      <p class="text-xs text-gray-500 mt-1">
+                        作成日時: {{ formatDateTime(thread.created_at) }}
+                      </p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                      <div
+                        v-for="email in thread.emails"
+                        :key="email.id"
+                        class="border-l-4 pl-4"
+                        :class="email.from === reservation.email ? 'border-blue-500' : 'border-green-500'"
+                      >
+                        <div class="flex justify-between items-start mb-2">
+                          <div>
+                            <p class="text-sm font-medium text-gray-900">
+                              {{ email.from === reservation.email ? 'お客様' : '当店' }}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                              {{ email.from === reservation.email ? email.from : email.to }}
+                            </p>
+                          </div>
+                          <p class="text-xs text-gray-500">
+                            {{ formatDateTime(email.created_at) }}
+                          </p>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700 mb-1">
+                          {{ email.subject }}
+                        </p>
+                        <div class="text-sm text-gray-600 whitespace-pre-wrap mt-2">
+                          {{ email.text_body || email.html_body || '-' }}
+                        </div>
+                        <div v-if="email.attachments && email.attachments.length > 0" class="mt-2">
+                          <p class="text-xs text-gray-500 mb-1">添付ファイル:</p>
+                          <ul class="text-xs text-gray-600">
+                            <li v-for="attachment in email.attachments" :key="attachment.id">
+                              {{ attachment.filename }}
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div v-else class="text-sm text-gray-500 text-center py-8">
+                  メールのやり取りはありません
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- 右側: ステータス・メモ機能 -->
@@ -645,6 +708,10 @@ import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 
 const props = defineProps({
+  emailThreads: {
+    type: Array,
+    default: () => [],
+  },
   reservation: Object,
   event: Object,
   venues: Array,

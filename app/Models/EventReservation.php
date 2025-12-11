@@ -83,5 +83,21 @@ class EventReservation extends Model
     {
         return $this->hasOne(StaffSchedule::class, 'event_reservation_id');
     }
+
+    /**
+     * メールとのリレーション
+     */
+    public function emails()
+    {
+        return $this->hasMany(Email::class);
+    }
+
+    /**
+     * メールスレッドとのリレーション
+     */
+    public function emailThreads()
+    {
+        return $this->hasMany(EmailThread::class);
+    }
 }
 

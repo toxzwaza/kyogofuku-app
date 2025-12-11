@@ -103,7 +103,7 @@ class ReservationController extends Controller
      */
     public function show(EventReservation $reservation)
     {
-        $reservation->load(['event', 'venue', 'notes.user', 'statusUpdatedBy', 'schedule']);
+        $reservation->load(['event', 'venue', 'notes.user', 'statusUpdatedBy', 'schedule', 'emailThreads.emails']);
         
         $currentUser = auth()->user();
         $userShops = $currentUser ? $currentUser->shops()
@@ -112,12 +112,21 @@ class ReservationController extends Controller
             ->orderBy('shops.name')
             ->get() : collect();
 
+        // メールスレッドとメールを取得
+        $emailThreads = $reservation->emailThreads()
+            ->with(['emails' => function($query) {
+                $query->orderBy('created_at', 'asc');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return Inertia::render('Admin/Reservation/Show', [
             'reservation' => $reservation,
             'event' => $reservation->event,
             'venues' => $reservation->event->venues()->where('is_active', true)->get(),
             'notes' => $reservation->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'schedule' => $reservation->schedule,
+            'emailThreads' => $emailThreads,
             'currentUser' => $currentUser ? [
                 'id' => $currentUser->id,
                 'name' => $currentUser->name,

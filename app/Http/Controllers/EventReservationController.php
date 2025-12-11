@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ReservationConfirmationMail;
+use App\Models\Email;
+use App\Models\EmailThread;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
 use App\Http\Controllers\LineWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -139,6 +143,16 @@ class EventReservationController extends Controller
             $this->sendLineNotification($event, $reservation);
         } catch (\Exception $e) {
             Log::error('LINE通知の送信に失敗しました: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+                'event_id' => $event->id,
+            ]);
+        }
+
+        // 受付完了メールを送信（エラーが発生しても予約処理は続行）
+        try {
+            $this->sendReservationConfirmationEmail($reservation);
+        } catch (\Exception $e) {
+            Log::error('受付完了メールの送信に失敗しました: ' . $e->getMessage(), [
                 'reservation_id' => $reservation->id,
                 'event_id' => $event->id,
             ]);
@@ -374,6 +388,74 @@ class EventReservationController extends Controller
 
         // LINE通知を送信（グループIDを指定）
         $lineController->pushToLineGroup($message, $groupId);
+    }
+
+    /**
+     * 受付完了メールを送信し、データベースに保存
+     */
+    private function sendReservationConfirmationEmail(EventReservation $reservation)
+    {
+        $reservation->load('event');
+        
+        // メールスレッドを取得または作成
+        $emailThread = EmailThread::firstOrCreate(
+            ['event_reservation_id' => $reservation->id],
+            ['subject' => "【{$reservation->event->title}】ご予約ありがとうございます"]
+        );
+
+        // メールを送信
+        $mailable = new ReservationConfirmationMail($reservation);
+        Mail::to($reservation->email)->send($mailable);
+
+        // 送信したメールをデータベースに保存
+        // メールの生データを取得するため、Mailファサードのイベントを使用
+        // または、送信後にメール内容を再構築して保存
+        $rawEmail = $this->buildRawEmail($mailable, $reservation->email);
+        
+        Email::create([
+            'message_id' => 'reservation-confirmation-' . $reservation->id . '-' . now()->timestamp,
+            'from' => config('mail.from.address'),
+            'to' => $reservation->email,
+            'subject' => $mailable->envelope()->subject,
+            'text_body' => view('mail.reservation_confirmation_plain', ['reservation' => $reservation])->render(),
+            'html_body' => null,
+            'raw_email' => $rawEmail,
+            'event_reservation_id' => $reservation->id,
+            'email_thread_id' => $emailThread->id,
+        ]);
+
+        Log::info('受付完了メールを送信しました', [
+            'reservation_id' => $reservation->id,
+            'email' => $reservation->email,
+            'email_thread_id' => $emailThread->id,
+        ]);
+    }
+
+    /**
+     * メールの生データを構築
+     */
+    private function buildRawEmail($mailable, $to)
+    {
+        $envelope = $mailable->envelope();
+        $content = $mailable->content();
+        
+        $subject = $envelope->subject;
+        $from = config('mail.from.address');
+        $fromName = config('mail.from.name');
+        
+        $textBody = view('mail.reservation_confirmation_plain', ['reservation' => $mailable->reservation])->render();
+        
+        $rawEmail = "From: {$fromName} <{$from}>\r\n";
+        $rawEmail .= "To: {$to}\r\n";
+        $rawEmail .= "Subject: {$subject}\r\n";
+        $rawEmail .= "Reply-To: reply@reply.kyogofuku-hirata.jp\r\n";
+        $rawEmail .= "Date: " . now()->format('r') . "\r\n";
+        $rawEmail .= "MIME-Version: 1.0\r\n";
+        $rawEmail .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        $rawEmail .= "\r\n";
+        $rawEmail .= $textBody;
+        
+        return $rawEmail;
     }
 }
 

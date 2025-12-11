@@ -18,6 +18,8 @@ class Email extends Model
         'text_body',
         'html_body',
         'raw_email',
+        'event_reservation_id',
+        'email_thread_id',
     ];
 
     /**
@@ -26,5 +28,21 @@ class Email extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(EmailAttachment::class);
+    }
+
+    /**
+     * Get the event reservation that owns the email.
+     */
+    public function eventReservation()
+    {
+        return $this->belongsTo(EventReservation::class);
+    }
+
+    /**
+     * Get the email thread that owns the email.
+     */
+    public function emailThread()
+    {
+        return $this->belongsTo(EmailThread::class);
     }
 }
