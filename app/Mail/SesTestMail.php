@@ -17,6 +17,7 @@ class SesTestMail extends Mailable
     {
         return $this->subject('Amazon SES テストメール')
             ->text('mail.ses_test_plain')
+            ->replyTo('reply@reply.kyogofuku-hirata.jp')
             ->with(['messageContent' => $this->textMessage]);
     }
 }
