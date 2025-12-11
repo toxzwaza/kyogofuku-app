@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Email;
+use App\Models\EmailAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use ZBateson\MailMimeParser\MailMimeParser;
 
 class SesInboundMailController extends Controller
@@ -40,20 +43,21 @@ class SesInboundMailController extends Controller
                 }
                 
                 try {
-                    // MIME パース（文字列から一時ストリームを作成）
+                    // MIME パース（ストリーム経由）
                     $stream = fopen('php://memory', 'r+');
                     fwrite($stream, $rawEmail);
                     rewind($stream);
                     $parser = new MailMimeParser();
-                    $mimeMessage = $parser->parse($stream, true);
+                    $mimeMessage = $parser->parse($stream, false);
                     fclose($stream);
                     
                     // 基本情報
                     $subject = $mimeMessage->getHeaderValue('Subject');
                     $from = $mimeMessage->getHeaderValue('From');
                     $to = $mimeMessage->getHeaderValue('To');
+                    $messageId = $mail['messageId'] ?? null;
                     
-                    // 本文（txt / html）
+                    // 本文
                     $textBody = $mimeMessage->getTextContent();
                     $htmlBody = $mimeMessage->getHtmlContent();
                     
@@ -66,24 +70,50 @@ class SesInboundMailController extends Controller
                         ];
                     }
                     
-                    // ログ出力
-                    Log::info('Amazon SES Inbound Mail Received', [
-                        'message_id' => $mail['messageId'] ?? null,
-                        'source' => $mail['source'] ?? null,
-                        'destination' => $mail['destination'] ?? [],
-                        'timestamp' => $mail['timestamp'] ?? null,
+                    // メールをデータベースに保存
+                    $email = Email::create([
+                        'message_id' => $messageId,
                         'from' => $from,
                         'to' => $to,
                         'subject' => $subject,
-                        'date' => $mail['commonHeaders']['date'] ?? null,
-                        'spam_verdict' => $receipt['spamVerdict']['status'] ?? null,
-                        'virus_verdict' => $receipt['virusVerdict']['status'] ?? null,
-                        'spf_verdict' => $receipt['spfVerdict']['status'] ?? null,
-                        'dkim_verdict' => $receipt['dkimVerdict']['status'] ?? null,
-                        'dmarc_verdict' => $receipt['dmarcVerdict']['status'] ?? null,
                         'text_body' => $textBody,
                         'html_body' => $htmlBody,
-                        'attachments' => array_column($attachments, 'filename'),
+                        'raw_email' => $rawEmail,
+                    ]);
+                    
+                    // 添付ファイルを保存
+                    $attachmentFilenames = [];
+                    foreach ($attachments as $attachment) {
+                        $filename = $attachment['filename'];
+                        if (empty($filename)) {
+                            // ファイル名がない場合はデフォルト名を生成
+                            $filename = 'attachment_' . uniqid() . '.bin';
+                        }
+                        
+                        // ストレージに保存
+                        $storagePath = 'email-attachments/' . $email->id . '/' . $filename;
+                        Storage::put($storagePath, $attachment['content']);
+                        
+                        // データベースに保存
+                        EmailAttachment::create([
+                            'email_id' => $email->id,
+                            'filename' => $filename,
+                            'path' => $storagePath,
+                        ]);
+                        
+                        $attachmentFilenames[] = $filename;
+                    }
+                    
+                    // ログ出力
+                    Log::info('Amazon SES Inbound Mail Parsed', [
+                        'email_id' => $email->id,
+                        'message_id' => $messageId,
+                        'from' => $from,
+                        'to' => $to,
+                        'subject' => $subject,
+                        'text_body' => $textBody,
+                        'html_body' => $htmlBody,
+                        'attachments' => $attachmentFilenames,
                     ]);
                 } catch (\Exception $e) {
                     Log::error('Failed to parse email', [
