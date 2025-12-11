@@ -37,7 +37,19 @@ class SesInboundMailController extends Controller
                 // メール本文をBASE64デコード
                 $decodedContent = '';
                 if (!empty($content)) {
-                    $decodedContent = base64_decode($content);
+                    $decodedContent = base64_decode($content, true);
+                    if ($decodedContent === false) {
+                        Log::warning('Failed to decode base64 content');
+                        $decodedContent = '';
+                    }
+                }
+                
+                // デバッグ: デコードされたコンテンツの一部をログに出力
+                if (!empty($decodedContent)) {
+                    Log::debug('Decoded content preview', [
+                        'preview' => substr($decodedContent, 0, 500),
+                        'content_length' => strlen($decodedContent),
+                    ]);
                 }
                 
                 // メール本文を抽出
@@ -78,27 +90,44 @@ class SesInboundMailController extends Controller
         $body = '';
         
         // multipart/alternative の場合
-        if (preg_match('/Content-Type:\s*multipart\/alternative[^;]*boundary="([^"]+)"/i', $rawEmail, $matches)) {
+        if (preg_match('/Content-Type:\s*multipart\/alternative[^;]*boundary=["\']?([^"\'\s;]+)["\']?/i', $rawEmail, $matches)) {
             $boundary = $matches[1];
-            $parts = explode('--' . $boundary, $rawEmail);
+            Log::debug('Found multipart boundary', ['boundary' => $boundary]);
             
-            foreach ($parts as $part) {
+            // boundaryでパートを分割（最初と最後の空パートを除外）
+            $parts = preg_split('/\r?\n--' . preg_quote($boundary, '/') . '(?:--)?\r?\n/', $rawEmail);
+            
+            foreach ($parts as $index => $part) {
+                // 最初と最後のパートは通常ヘッダーなのでスキップ
+                if ($index === 0 || empty(trim($part))) {
+                    continue;
+                }
+                
+                Log::debug('Processing part', ['index' => $index, 'part_preview' => substr($part, 0, 200)]);
+                
                 // text/plain を優先的に取得
-                if (preg_match('/Content-Type:\s*text\/plain[^;]*charset="([^"]*)"/i', $part, $charsetMatch)) {
+                if (preg_match('/Content-Type:\s*text\/plain[^;]*charset=["\']?([^"\'\s;]+)["\']?/i', $part, $charsetMatch)) {
                     $charset = $charsetMatch[1] ?? 'UTF-8';
+                    Log::debug('Found text/plain part', ['charset' => $charset]);
+                    
+                    // ヘッダー部分を除去して本文を取得
+                    $bodyContent = preg_replace('/.*?\r?\n\r?\n/s', '', $part, 1);
+                    $bodyContent = trim($bodyContent);
+                    
                     if (preg_match('/Content-Transfer-Encoding:\s*base64/i', $part)) {
-                        // BASE64エンコードされた本文を抽出
-                        $encodedBody = preg_replace('/.*?\r?\n\r?\n(.*?)(\r?\n--|\z)/s', '$1', $part);
-                        $encodedBody = trim($encodedBody);
-                        $decodedBody = base64_decode($encodedBody);
+                        // BASE64エンコードされた本文をデコード
+                        $decodedBody = base64_decode($bodyContent, true);
                         if ($decodedBody !== false) {
                             $body = $this->convertEncoding($decodedBody, $charset);
+                            Log::debug('Decoded text/plain body', ['body_length' => strlen($body)]);
                             break; // text/plain が見つかったら終了
+                        } else {
+                            Log::warning('Failed to decode base64 text/plain');
                         }
                     } else {
                         // BASE64エンコードされていない場合
-                        $textBody = preg_replace('/.*?\r?\n\r?\n(.*?)(\r?\n--|\z)/s', '$1', $part);
-                        $body = trim($textBody);
+                        $body = $this->convertEncoding($bodyContent, $charset);
+                        Log::debug('Extracted text/plain body', ['body_length' => strlen($body)]);
                         break;
                     }
                 }
@@ -106,22 +135,33 @@ class SesInboundMailController extends Controller
             
             // text/plain が見つからなかった場合、text/html を取得
             if (empty($body)) {
-                foreach ($parts as $part) {
-                    if (preg_match('/Content-Type:\s*text\/html[^;]*charset="([^"]*)"/i', $part, $charsetMatch)) {
+                foreach ($parts as $index => $part) {
+                    if ($index === 0 || empty(trim($part))) {
+                        continue;
+                    }
+                    
+                    if (preg_match('/Content-Type:\s*text\/html[^;]*charset=["\']?([^"\'\s;]+)["\']?/i', $part, $charsetMatch)) {
                         $charset = $charsetMatch[1] ?? 'UTF-8';
+                        Log::debug('Found text/html part', ['charset' => $charset]);
+                        
+                        // ヘッダー部分を除去して本文を取得
+                        $bodyContent = preg_replace('/.*?\r?\n\r?\n/s', '', $part, 1);
+                        $bodyContent = trim($bodyContent);
+                        
                         if (preg_match('/Content-Transfer-Encoding:\s*base64/i', $part)) {
-                            $encodedBody = preg_replace('/.*?\r?\n\r?\n(.*?)(\r?\n--|\z)/s', '$1', $part);
-                            $encodedBody = trim($encodedBody);
-                            $decodedBody = base64_decode($encodedBody);
+                            $decodedBody = base64_decode($bodyContent, true);
                             if ($decodedBody !== false) {
                                 $body = $this->convertEncoding($decodedBody, $charset);
                                 // HTMLタグを除去してテキストのみにする
                                 $body = strip_tags($body);
+                                Log::debug('Decoded and stripped text/html body', ['body_length' => strlen($body)]);
                                 break;
+                            } else {
+                                Log::warning('Failed to decode base64 text/html');
                             }
                         } else {
-                            $htmlBody = preg_replace('/.*?\r?\n\r?\n(.*?)(\r?\n--|\z)/s', '$1', $part);
-                            $body = strip_tags(trim($htmlBody));
+                            $body = strip_tags($this->convertEncoding($bodyContent, $charset));
+                            Log::debug('Extracted and stripped text/html body', ['body_length' => strlen($body)]);
                             break;
                         }
                     }
@@ -129,18 +169,20 @@ class SesInboundMailController extends Controller
             }
         } else {
             // シンプルなテキストメールの場合
-            if (preg_match('/Content-Type:\s*text\/plain[^;]*charset="([^"]*)"/i', $rawEmail, $charsetMatch)) {
+            if (preg_match('/Content-Type:\s*text\/plain[^;]*charset=["\']?([^"\'\s;]+)["\']?/i', $rawEmail, $charsetMatch)) {
                 $charset = $charsetMatch[1] ?? 'UTF-8';
+                
+                // ヘッダー部分を除去して本文を取得
+                $bodyContent = preg_replace('/.*?\r?\n\r?\n/s', '', $rawEmail, 1);
+                $bodyContent = trim($bodyContent);
+                
                 if (preg_match('/Content-Transfer-Encoding:\s*base64/i', $rawEmail)) {
-                    $encodedBody = preg_replace('/.*?\r?\n\r?\n(.*?)(\r?\n--|\z)/s', '$1', $rawEmail);
-                    $encodedBody = trim($encodedBody);
-                    $decodedBody = base64_decode($encodedBody);
+                    $decodedBody = base64_decode($bodyContent, true);
                     if ($decodedBody !== false) {
                         $body = $this->convertEncoding($decodedBody, $charset);
                     }
                 } else {
-                    $body = preg_replace('/.*?\r?\n\r?\n(.*?)(\r?\n--|\z)/s', '$1', $rawEmail);
-                    $body = trim($body);
+                    $body = $this->convertEncoding($bodyContent, $charset);
                 }
             }
         }
