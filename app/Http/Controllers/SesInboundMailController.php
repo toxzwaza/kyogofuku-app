@@ -6,6 +6,7 @@ use App\Models\Email;
 use App\Models\EmailAttachment;
 use App\Models\EmailThread;
 use App\Models\EventReservation;
+use App\Http\Controllers\LineWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -205,6 +206,20 @@ class SesInboundMailController extends Controller
                         'html_body' => $htmlBody,
                         'attachments' => $attachmentFilenames,
                     ]);
+                    
+                    // LINE通知を送信（event_reservation_idが取得できている場合）
+                    if ($eventReservationId) {
+                        try {
+                            $this->sendLineNotificationForEmail($email, $eventReservationId, $from, $subject, $textBody, $attachmentFilenames);
+                        } catch (\Exception $e) {
+                            // LINE通知のエラーはログに記録するが、メール処理は続行
+                            Log::error('Failed to send LINE notification for email', [
+                                'email_id' => $email->id,
+                                'event_reservation_id' => $eventReservationId,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
                 } catch (\Exception $e) {
                     Log::error('Failed to parse email', [
                         'error' => $e->getMessage(),
@@ -216,5 +231,92 @@ class SesInboundMailController extends Controller
         }
     
         return response()->json(['status' => 'ok']);
+    }
+    
+    /**
+     * メール受信時にLINE通知を送信
+     */
+    private function sendLineNotificationForEmail(Email $email, $eventReservationId, $from, $subject, $textBody, $attachmentFilenames)
+    {
+        // EventReservationを取得
+        $reservation = EventReservation::with(['event.shops'])->find($eventReservationId);
+        if (!$reservation || !$reservation->event) {
+            Log::warning('EventReservation or Event not found for LINE notification', [
+                'event_reservation_id' => $eventReservationId,
+            ]);
+            return;
+        }
+        
+        $event = $reservation->event;
+        
+        // イベントに紐づく店舗を取得
+        $shops = $event->shops;
+        if ($shops->isEmpty()) {
+            Log::info('No shops found for event, skipping LINE notification', [
+                'event_id' => $event->id,
+            ]);
+            return;
+        }
+        
+        // メッセージを構築
+        $message = "━━━━━━━━━━━━━━━━\n";
+        $message .= "📧 メール受信通知\n";
+        $message .= "━━━━━━━━━━━━━━━━\n\n";
+        
+        $message .= "🎯 イベント名: {$event->title}\n";
+        $message .= "👤 お客様名: {$reservation->name}\n\n";
+        
+        $message .= "━━━━━━━━━━━━━━━━\n";
+        $message .= "📨 メール情報\n";
+        $message .= "━━━━━━━━━━━━━━━━\n";
+        $message .= "送信者: {$from}\n";
+        $message .= "件名: {$subject}\n";
+        
+        // 本文の最初の200文字を表示（改行を削除）
+        $bodyPreview = mb_substr(str_replace(["\r\n", "\r", "\n"], ' ', $textBody), 0, 200);
+        if (mb_strlen($textBody) > 200) {
+            $bodyPreview .= '...';
+        }
+        $message .= "本文: {$bodyPreview}\n";
+        
+        // 添付ファイルがある場合
+        if (!empty($attachmentFilenames)) {
+            $message .= "添付ファイル: " . implode('、', $attachmentFilenames) . "\n";
+        }
+        
+        $message .= "\n━━━━━━━━━━━━━━━━\n";
+        $message .= "予約ID: #{$reservation->id}\n";
+        $message .= "メールID: #{$email->id}\n";
+        $message .= "━━━━━━━━━━━━━━━━";
+        
+        // 各店舗のLINEグループに通知を送信
+        $lineController = new LineWebhookController();
+        foreach ($shops as $shop) {
+            if (!empty($shop->line_group_id)) {
+                try {
+                    $lineController->pushToLineGroup($message, $shop->line_group_id);
+                    Log::info('LINE notification sent for email', [
+                        'email_id' => $email->id,
+                        'shop_id' => $shop->id,
+                        'shop_name' => $shop->name,
+                        'line_group_id' => $shop->line_group_id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send LINE notification to shop', [
+                        'email_id' => $email->id,
+                        'shop_id' => $shop->id,
+                        'shop_name' => $shop->name,
+                        'line_group_id' => $shop->line_group_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // エラーが発生しても他の店舗への送信は続行
+                }
+            } else {
+                Log::info('Shop does not have line_group_id, skipping LINE notification', [
+                    'shop_id' => $shop->id,
+                    'shop_name' => $shop->name,
+                ]);
+            }
+        }
     }
 }

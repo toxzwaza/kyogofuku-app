@@ -47,8 +47,8 @@
                     </option>
                   </select>
                 </div>
-                <div class="flex-1">
-                  <FullCalendar ref="shopCalendar" :options="shopCalendarOptions" />
+                <div class="flex-1 min-h-0">
+                  <FullCalendar ref="shopCalendar" :options="shopCalendarOptions" class="h-full" />
                 </div>
               </div>
 
@@ -96,8 +96,8 @@
                     </div>
                   </div>
                 </div>
-                <div class="flex-1">
-                  <FullCalendar ref="userCalendar" :options="userCalendarOptions" />
+                <div class="flex-1 min-h-0">
+                  <FullCalendar ref="userCalendar" :options="userCalendarOptions" class="h-full" />
                 </div>
               </div>
             </div>
@@ -1302,7 +1302,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import StatCard from "../Components/StatCard.vue";
@@ -1422,6 +1422,18 @@ const shops = computed(() => props.shops || []);
 const userShops = computed(() => props.userShops || []);
 const users = computed(() => props.users || []);
 
+// リサイズイベントハンドラー
+let resizeTimeout = null;
+function handleResize() {
+  // デバウンス処理（リサイズが完了してから実行）
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
+  resizeTimeout = setTimeout(() => {
+    syncCalendarHeights();
+  }, 150);
+}
+
 // デフォルト値を設定
 onMounted(() => {
   console.log('[Dashboard] onMounted開始');
@@ -1444,6 +1456,9 @@ onMounted(() => {
   } else {
     console.warn('[Dashboard] currentUserが存在しません');
   }
+  
+  // リサイズイベントリスナーを追加
+  window.addEventListener('resize', handleResize);
   
   // カレンダーを初期読み込み（デフォルト値で絞り込み）
   // 少し待ってから実行（DOMの準備とデフォルト値の設定を待つ）
@@ -1478,6 +1493,14 @@ onMounted(() => {
   }, 200);
 });
 
+// クリーンアップ
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
+});
+
 // カレンダーの高さを同期する関数
 function syncCalendarHeights() {
   if (shopCalendar.value && userCalendar.value) {
@@ -1485,9 +1508,18 @@ function syncCalendarHeights() {
     const userCalendarEl = userCalendar.value.getApi().el;
     
     if (shopCalendarEl && userCalendarEl) {
+      // 店舗単位カレンダーの実際の高さを取得
       const shopHeight = shopCalendarEl.offsetHeight;
       if (shopHeight > 0) {
+        // ユーザー単位カレンダーの高さを店舗単位カレンダーに合わせる
         userCalendar.value.getApi().setOption('height', shopHeight);
+        // 少し待ってから再度確認（レンダリングが完了するまで待つ）
+        setTimeout(() => {
+          const updatedShopHeight = shopCalendarEl.offsetHeight;
+          if (updatedShopHeight > 0 && updatedShopHeight !== shopHeight) {
+            userCalendar.value.getApi().setOption('height', updatedShopHeight);
+          }
+        }, 100);
       }
     }
   }
@@ -1633,6 +1665,14 @@ const shopCalendarOptions = ref({
   eventMouseLeave: handleEventMouseLeave,
   events: loadShopSchedules,
   eventContent: renderShopEventContent,
+  viewDidMount: () => {
+    // ビューがマウントされた後に高さを同期
+    setTimeout(() => syncCalendarHeights(), 100);
+  },
+  eventsSet: () => {
+    // イベントが読み込まれた後に高さを同期
+    setTimeout(() => syncCalendarHeights(), 100);
+  },
 });
 
 // 今日の日付を取得（開始時刻と終了時刻）
@@ -1649,7 +1689,7 @@ const getTodayRange = () => {
 
 // ユーザー単位カレンダーオプション（選択された日付を表示、日表示）
 const userCalendarOptions = computed(() => ({
-  plugins: [timeGridPlugin],
+  plugins: [timeGridPlugin, interactionPlugin],
   initialView: "timeGridDay",
   locale: jaLocale,
   headerToolbar: {
@@ -1658,16 +1698,28 @@ const userCalendarOptions = computed(() => ({
     right: "",
   },
   height: "auto",
-  editable: false,
-  selectable: false,
+  editable: true,
+  selectable: true,
+  selectMirror: true,
   weekends: true,
+  select: handleUserDateSelect,
   eventClick: handleEventClick,
+  eventDrop: handleEventDrop,
+  eventResize: handleEventResize,
   eventMouseEnter: handleEventMouseEnter,
   eventMouseLeave: handleEventMouseLeave,
   events: loadUserSchedules,
   slotMinTime: "00:00:00",
   slotMaxTime: "24:00:00",
   slotDuration: "00:30:00",
+  viewDidMount: () => {
+    // ビューがマウントされた後に高さを同期
+    setTimeout(() => syncCalendarHeights(), 100);
+  },
+  eventsSet: () => {
+    // イベントが読み込まれた後に高さを同期
+    setTimeout(() => syncCalendarHeights(), 100);
+  },
   validRange: () => {
     // 選択された日付を使用
     const selectedDate = new Date(selectedUserDate.value);
@@ -1794,11 +1846,57 @@ function handleDateSelect(selectInfo) {
   const startDate = new Date(selectInfo.startStr);
   const endDate = new Date(selectInfo.endStr);
   
-  createScheduleForm.start_at = formatDateTimeLocal(startDate);
-  createScheduleForm.end_at = formatDateTimeLocal(endDate);
-  createScheduleForm.all_day = selectInfo.allDay;
+  createScheduleForm.value.start_at = formatDateTimeLocal(startDate);
+  createScheduleForm.value.end_at = formatDateTimeLocal(endDate);
+  createScheduleForm.value.all_day = selectInfo.allDay;
+  
+  // 参加者リストをクリアしてからログインユーザーをデフォルトで参加者として追加
+  addedParticipantsForCreate.value = [];
+  shopUsersForCreate.value = [];
+  selectedShopIdForCreate.value = '';
+  if (props.currentUser) {
+    addedParticipantsForCreate.value.push({
+      id: props.currentUser.id,
+      name: props.currentUser.name,
+    });
+    createScheduleForm.value.participant_ids = [props.currentUser.id];
+  } else {
+    createScheduleForm.value.participant_ids = [];
+  }
+  
   showCreateModal.value = true;
   shopCalendar.value.getApi().unselect();
+}
+
+// ユーザー単位カレンダーでの時間選択ハンドラー
+function handleUserDateSelect(selectInfo) {
+  const startDate = new Date(selectInfo.startStr);
+  const endDate = new Date(selectInfo.endStr);
+  
+  // 選択された時間で予定作成フォームを初期化
+  createScheduleForm.value.start_at = formatDateTimeLocal(startDate);
+  createScheduleForm.value.end_at = formatDateTimeLocal(endDate);
+  createScheduleForm.value.all_day = selectInfo.allDay;
+  
+  // 参加者リストをクリアしてからログインユーザーをデフォルトで参加者として追加
+  addedParticipantsForCreate.value = [];
+  shopUsersForCreate.value = [];
+  selectedShopIdForCreate.value = '';
+  if (props.currentUser) {
+    addedParticipantsForCreate.value.push({
+      id: props.currentUser.id,
+      name: props.currentUser.name,
+    });
+    createScheduleForm.value.participant_ids = [props.currentUser.id];
+  } else {
+    createScheduleForm.value.participant_ids = [];
+  }
+  
+  // 予定作成モーダルを表示
+  showCreateModal.value = true;
+  
+  // 選択状態を解除
+  userCalendar.value.getApi().unselect();
 }
 
 const showScheduleDetail = ref(false);
@@ -2037,16 +2135,33 @@ function handleEventDrop(dropInfo) {
     return;
   }
   
+  // 参加者情報を引き継ぐ
+  const participantIds = event.extendedProps.participants?.map(p => p.id) || [];
+  
   const scheduleData = {
     title: dropInfo.event.title,
     start_at: dropInfo.event.startStr,
     end_at: dropInfo.event.endStr,
     all_day: dropInfo.event.allDay,
     user_id: event.extendedProps.user?.id,
+    participant_ids: participantIds,
   };
 
   axios
     .put(route("admin.schedules.update", dropInfo.event.id), scheduleData)
+    .then(() => {
+      // 両方のカレンダーをリフレッシュ
+      if (shopCalendar.value) {
+        shopCalendar.value.getApi().refetchEvents();
+      }
+      if (userCalendar.value) {
+        userCalendar.value.getApi().refetchEvents();
+      }
+      // 高さを同期
+      setTimeout(() => {
+        syncCalendarHeights();
+      }, 300);
+    })
     .catch((error) => {
       console.error("スケジュールの更新に失敗しました:", error);
       alert("スケジュールの更新に失敗しました。");
@@ -2068,16 +2183,33 @@ function handleEventResize(resizeInfo) {
     return;
   }
   
+  // 参加者情報を引き継ぐ
+  const participantIds = event.extendedProps.participants?.map(p => p.id) || [];
+  
   const scheduleData = {
     title: resizeInfo.event.title,
     start_at: resizeInfo.event.startStr,
     end_at: resizeInfo.event.endStr,
     all_day: resizeInfo.event.allDay,
     user_id: event.extendedProps.user?.id,
+    participant_ids: participantIds,
   };
 
   axios
     .put(route("admin.schedules.update", resizeInfo.event.id), scheduleData)
+    .then(() => {
+      // 両方のカレンダーをリフレッシュ
+      if (shopCalendar.value) {
+        shopCalendar.value.getApi().refetchEvents();
+      }
+      if (userCalendar.value) {
+        userCalendar.value.getApi().refetchEvents();
+      }
+      // 高さを同期
+      setTimeout(() => {
+        syncCalendarHeights();
+      }, 300);
+    })
     .catch((error) => {
       console.error("スケジュールの更新に失敗しました:", error);
       alert("スケジュールの更新に失敗しました。");
@@ -2101,10 +2233,14 @@ const formatDate = (dateString) => {
 function onShopChange() {
   if (shopCalendar.value) {
     shopCalendar.value.getApi().refetchEvents();
-    // 高さを同期
+    // 高さを同期（イベント読み込み完了を待つ）
     setTimeout(() => {
       syncCalendarHeights();
     }, 300);
+    // 念のため、もう一度同期（レンダリング完了を待つ）
+    setTimeout(() => {
+      syncCalendarHeights();
+    }, 600);
   }
 }
 
@@ -2114,10 +2250,14 @@ function onUserChange() {
   if (userCalendar.value && selectedUserId.value) {
     console.log('[onUserChange] カレンダーをリフレッシュ');
     userCalendar.value.getApi().refetchEvents();
-    // 高さを同期
+    // 高さを同期（イベント読み込み完了を待つ）
     setTimeout(() => {
       syncCalendarHeights();
     }, 300);
+    // 念のため、もう一度同期（レンダリング完了を待つ）
+    setTimeout(() => {
+      syncCalendarHeights();
+    }, 600);
   } else {
     console.warn('[onUserChange] カレンダーのリフレッシュをスキップ:', {
       userCalendar: !!userCalendar.value,
@@ -2161,10 +2301,14 @@ function onUserDateChange() {
     });
     // スケジュールを再読み込み
     userCalendar.value.getApi().refetchEvents();
-    // 高さを同期
+    // 高さを同期（イベント読み込み完了を待つ）
     setTimeout(() => {
       syncCalendarHeights();
     }, 300);
+    // 念のため、もう一度同期（レンダリング完了を待つ）
+    setTimeout(() => {
+      syncCalendarHeights();
+    }, 600);
   }
 }
 
@@ -2396,5 +2540,18 @@ async function loadShopUsersForCreate(shopId) {
 .modal-leave-to .relative {
   transform: scale(0.98) translateY(-10px);
   opacity: 0;
+}
+
+/* カレンダーの高さを親要素いっぱいに設定 */
+:deep(.fc) {
+  height: 100% !important;
+}
+
+:deep(.fc-view-harness) {
+  height: 100% !important;
+}
+
+:deep(.fc-view-harness-active) {
+  height: 100% !important;
 }
 </style>
