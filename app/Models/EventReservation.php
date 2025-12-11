@@ -11,6 +11,7 @@ class EventReservation extends Model
 
     protected $fillable = [
         'event_id',
+        'document_id',
         'name',
         'email',
         'phone',
@@ -98,6 +99,14 @@ class EventReservation extends Model
     public function emailThreads()
     {
         return $this->hasMany(EmailThread::class);
+    }
+
+    /**
+     * 資料とのリレーション
+     */
+    public function document()
+    {
+        return $this->belongsTo(Document::class);
     }
 }
 

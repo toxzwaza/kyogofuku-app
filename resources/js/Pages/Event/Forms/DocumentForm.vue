@@ -3,6 +3,51 @@
         <h2 class="text-2xl font-bold mb-6">資料請求フォーム</h2>
 
         <div class="space-y-4">
+            <!-- 資料選択 -->
+            <div v-if="documents && documents.length > 0">
+                <label class="block text-sm font-medium text-gray-700 mb-2">請求する資料を選択 <span class="text-red-500">*</span></label>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    <label
+                        v-for="document in documents"
+                        :key="document.id"
+                        class="relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all"
+                        :class="form.document_id === document.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500' : 'border-gray-300 hover:border-gray-400'"
+                    >
+                        <input
+                            type="radio"
+                            :value="document.id"
+                            v-model="form.document_id"
+                            required
+                            class="sr-only"
+                        />
+                        <div class="aspect-square bg-gray-100 flex items-center justify-center">
+                            <img
+                                v-if="document.thumbnail_url"
+                                :src="document.thumbnail_url"
+                                :alt="document.name"
+                                class="w-full h-full object-cover"
+                            />
+                            <div v-else class="text-gray-400 text-xs text-center p-2">
+                                <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                PDF
+                            </div>
+                        </div>
+                        <div class="p-2 bg-white">
+                            <p class="text-xs font-medium text-gray-900 line-clamp-2">{{ document.name }}</p>
+                            <p v-if="document.description" class="text-xs text-gray-500 mt-1 line-clamp-2">{{ document.description }}</p>
+                        </div>
+                        <div v-if="form.document_id === document.id" class="absolute top-2 right-2 bg-indigo-500 text-white rounded-full p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                    </label>
+                </div>
+                <div v-if="form.errors.document_id" class="mt-1 text-sm text-red-600">{{ form.errors.document_id }}</div>
+            </div>
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">請求方法 <span class="text-red-500">*</span></label>
                 <select
@@ -134,11 +179,13 @@ import axios from 'axios';
 const props = defineProps({
     event: Object,
     selectedTimeslot: Object,
+    documents: Array,
 });
 
 const emit = defineEmits(['submitted', 'confirm']);
 
 const form = useForm({
+    document_id: '',
     request_method: '',
     name: '',
     furigana: '',

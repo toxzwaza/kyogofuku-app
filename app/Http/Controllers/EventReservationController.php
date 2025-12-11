@@ -35,6 +35,7 @@ class EventReservationController extends Controller
             $rules['request_method'] = 'required|in:郵送,デジタルカタログ';
             $rules['postal_code'] = 'nullable|string|max:10';
             $rules['privacy_agreed'] = 'required|boolean|accepted';
+            $rules['document_id'] = 'required|exists:documents,id';
         }
         
         // 予約フォームの場合
@@ -101,6 +102,7 @@ class EventReservationController extends Controller
 
         $reservation = EventReservation::create([
             'event_id' => $event->id,
+            'document_id' => $request->document_id,
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,

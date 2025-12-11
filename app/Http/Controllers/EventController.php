@@ -13,7 +13,7 @@ class EventController extends Controller
      */
     public function show(string $slug)
     {
-        $event = Event::with(['images', 'timeslots', 'shops', 'venues'])
+        $event = Event::with(['images', 'timeslots', 'shops', 'venues', 'documents'])
             ->where('slug', $slug)
             ->where('is_public', true)
             ->firstOrFail();
@@ -86,12 +86,26 @@ class EventController extends Controller
             })->values();
         }
 
+        // 資料情報（資料請求フォームの場合のみ）
+        $documents = [];
+        if ($event->form_type === 'document') {
+            $documents = $event->documents->load('images')->map(function ($document) {
+                return [
+                    'id' => $document->id,
+                    'name' => $document->name,
+                    'description' => $document->description,
+                    'thumbnail_url' => $document->thumbnail_url,
+                ];
+            })->values();
+        }
+
         return Inertia::render('Event/Show', [
             'event' => $event,
             'images' => $images,
             'timeslots' => $availableTimeslots,
             'shops' => $shops,
             'venues' => $venues,
+            'documents' => $documents,
             'isEnded' => $isEnded,
             'endDate' => $endDate,
             'canReserve' => $canReserve,

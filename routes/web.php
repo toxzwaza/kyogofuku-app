@@ -51,6 +51,10 @@ Route::post('/event/{event}/reserve', [EventReservationController::class, 'store
 Route::get('/event/{event}/reserve/success', [EventReservationController::class, 'success'])->name('event.reserve.success');
 Route::get('/api/postal-code/search', [PostalCodeController::class, 'search'])->name('api.postal-code.search');
 
+// 資料表示（turn.js用）
+Route::get('/document/{document}', [AdminEventController::class, 'showDocument'])->name('document.show');
+Route::get('/api/document/{document}/images', [AdminEventController::class, 'getDocumentImages'])->name('document.images');
+
 // Admin Routes
 Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
     // イベント一覧
@@ -132,6 +136,13 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/api/schedules', [AdminScheduleController::class, 'store'])->name('schedules.store');
     Route::put('/api/schedules/{schedule}', [AdminScheduleController::class, 'update'])->name('schedules.update');
     Route::delete('/api/schedules/{schedule}', [AdminScheduleController::class, 'destroy'])->name('schedules.destroy');
+    
+    // 資料管理
+    Route::post('/documents', [AdminEventController::class, 'storeDocument'])->name('documents.store');
+    Route::put('/documents/{document}', [AdminEventController::class, 'updateDocument'])->name('documents.update');
+    Route::delete('/documents/{document}', [AdminEventController::class, 'destroyDocument'])->name('documents.destroy');
+    Route::get('/api/documents', [AdminEventController::class, 'getDocuments'])->name('documents.index');
+    Route::put('/documents/{document}/image-order', [AdminEventController::class, 'updateDocumentImageOrder'])->name('documents.image-order');
 });
 
 

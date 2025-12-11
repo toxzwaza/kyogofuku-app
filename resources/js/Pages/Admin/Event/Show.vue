@@ -282,6 +282,340 @@
                                 開催店舗が登録されていません。
                             </div>
 
+                            <!-- 資料管理（資料請求フォームの場合のみ） -->
+                            <div v-if="event.form_type === 'document'" class="border-t border-gray-200 pt-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-semibold">資料管理</h3>
+                                    <button
+                                        @click="showAddDocumentForm = !showAddDocumentForm"
+                                        class="group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                    >
+                                        <svg v-if="!showAddDocumentForm" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        {{ showAddDocumentForm ? 'キャンセル' : '資料を追加' }}
+                                    </button>
+                                </div>
+
+                                <!-- 資料追加フォーム -->
+                                <div v-if="showAddDocumentForm" class="mb-6 p-4 bg-gray-50 rounded-lg">
+                                    <form @submit.prevent="uploadDocument">
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">資料名 <span class="text-red-500">*</span></label>
+                                                <input
+                                                    v-model="newDocument.name"
+                                                    type="text"
+                                                    required
+                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    placeholder="資料の名前を入力"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                                                <textarea
+                                                    v-model="newDocument.description"
+                                                    rows="2"
+                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    placeholder="資料の説明を入力（任意）"
+                                                ></textarea>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">PDFファイル <span class="text-red-500">*</span></label>
+                                                <input
+                                                    ref="pdfFileInput"
+                                                    type="file"
+                                                    accept=".pdf"
+                                                    @change="handlePdfFileChange"
+                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                />
+                                                <p class="mt-1 text-xs text-gray-500">PDFファイル（最大10MB）</p>
+                                                <div v-if="newDocument.pdfFile" class="mt-2 p-2 bg-gray-100 rounded">
+                                                    <p class="text-sm text-gray-700">{{ newDocument.pdfFile.name }}</p>
+                                                    <button
+                                                        type="button"
+                                                        @click="removePdfFile"
+                                                        class="mt-1 text-xs text-red-600 hover:text-red-800"
+                                                    >
+                                                        削除
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">サムネイル画像（任意）</label>
+                                                <input
+                                                    ref="thumbnailFileInput"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    @change="handleThumbnailFileChange"
+                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                />
+                                                <p class="mt-1 text-xs text-gray-500">サムネイル画像（JPEG、PNG、GIF、最大2MB）</p>
+                                                <div v-if="newDocument.thumbnailPreview" class="mt-2">
+                                                    <img
+                                                        :src="newDocument.thumbnailPreview"
+                                                        alt="サムネイルプレビュー"
+                                                        class="w-32 h-32 object-cover border border-gray-300 rounded"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        @click="removeThumbnailFile"
+                                                        class="mt-1 text-xs text-red-600 hover:text-red-800"
+                                                    >
+                                                        削除
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex justify-end space-x-3">
+                                                <button
+                                                    type="button"
+                                                    @click="showAddDocumentForm = false"
+                                                    class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                >
+                                                    キャンセル
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    :disabled="uploadingDocument || !newDocument.name || !newDocument.pdfFile"
+                                                    class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                                                >
+                                                    <span v-if="uploadingDocument" class="inline-flex items-center">
+                                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                        アップロード中...
+                                                    </span>
+                                                    <span v-else class="inline-flex items-center">
+                                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                        追加
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- 既存資料から選択（編集モードの場合のみ） -->
+                                <div v-if="isEditing" class="mb-6 p-4 border border-gray-300 rounded-lg">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-3">既存資料から選択</h4>
+                                    <div v-if="documents.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        <label
+                                            v-for="document in documents"
+                                            :key="document.id"
+                                            class="relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all"
+                                            :class="editForm.document_ids.includes(document.id) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                :value="document.id"
+                                                v-model="editForm.document_ids"
+                                                class="absolute top-2 right-2 w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                            />
+                                            <div class="aspect-square bg-gray-100 flex items-center justify-center">
+                                                <img
+                                                    v-if="document.thumbnail_url"
+                                                    :src="document.thumbnail_url"
+                                                    :alt="document.name"
+                                                    class="w-full h-full object-cover"
+                                                />
+                                                <div v-else class="text-gray-400 text-xs text-center p-2">
+                                                    <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                    PDF
+                                                </div>
+                                            </div>
+                                            <div class="p-2 bg-white">
+                                                <p class="text-xs font-medium text-gray-900 line-clamp-2">{{ document.name }}</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <p v-else class="text-sm text-gray-500">既存の資料がありません</p>
+                                    <div v-if="editForm.errors.document_ids" class="mt-1 text-sm text-red-600">{{ editForm.errors.document_ids }}</div>
+                                </div>
+
+                                <!-- 資料一覧 -->
+                                <div v-if="event.documents && event.documents.length > 0" class="space-y-4">
+                                    <div
+                                        v-for="document in event.documents"
+                                        :key="document.id"
+                                        class="p-4 border border-gray-200 rounded-lg"
+                                    >
+                                        <div v-if="!editingDocuments[document.id]">
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex-1 flex items-start space-x-4">
+                                                    <!-- サムネイル画像 -->
+                                                    <div class="flex-shrink-0">
+                                                        <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                                                            <img
+                                                                v-if="document.thumbnail_url"
+                                                                :src="document.thumbnail_url"
+                                                                :alt="document.name"
+                                                                class="w-full h-full object-cover"
+                                                            />
+                                                            <div v-else class="text-gray-400 text-xs text-center p-2">
+                                                                <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                </svg>
+                                                                PDF
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- 資料情報 -->
+                                                    <div class="flex-1">
+                                                        <h4 class="font-semibold text-gray-900">{{ document.name }}</h4>
+                                                        <p v-if="document.description" class="text-sm text-gray-600 mt-1">{{ document.description }}</p>
+                                                        <div class="mt-2 flex items-center space-x-4">
+                                                            <div v-if="document.pdf_path" class="text-xs text-gray-500">
+                                                                PDF: あり
+                                                            </div>
+                                                            <div v-if="document.thumbnail_path" class="text-xs text-gray-500">
+                                                                サムネイル: あり
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex space-x-2 ml-4">
+                                                    <button
+                                                        @click="startEditDocument(document)"
+                                                        class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                    >
+                                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                        編集
+                                                    </button>
+                                                    <button
+                                                        @click="deleteDocument(document.id)"
+                                                        class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg shadow-sm hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
+                                                    >
+                                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                        削除
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-else class="space-y-4">
+                                            <form @submit.prevent="updateDocument(document.id)">
+                                                <div class="space-y-3">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">資料名 <span class="text-red-500">*</span></label>
+                                                        <input
+                                                            v-model="editingDocumentForms[document.id].name"
+                                                            type="text"
+                                                            required
+                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                                                        <textarea
+                                                            v-model="editingDocumentForms[document.id].description"
+                                                            rows="2"
+                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        ></textarea>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">PDFファイル（変更する場合のみ）</label>
+                                                        <input
+                                                            type="file"
+                                                            accept=".pdf"
+                                                            @change="(e) => editingDocumentForms[document.id].pdfFile = e.target.files[0]"
+                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        />
+                                                        <p class="mt-1 text-xs text-gray-500">PDFファイル（最大10MB）</p>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">サムネイル画像（変更する場合のみ）</label>
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            @change="(e) => {
+                                                                const file = e.target.files[0];
+                                                                if (file) {
+                                                                    editingDocumentForms[document.id].thumbnailFile = file;
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (ev) => {
+                                                                        editingDocumentForms[document.id].thumbnailPreview = ev.target.result;
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                }
+                                                            }"
+                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        />
+                                                        <p class="mt-1 text-xs text-gray-500">サムネイル画像（JPEG、PNG、GIF、最大2MB）</p>
+                                                        <div v-if="editingDocumentForms[document.id].thumbnailPreview" class="mt-2">
+                                                            <img
+                                                                :src="editingDocumentForms[document.id].thumbnailPreview"
+                                                                alt="サムネイルプレビュー"
+                                                                class="w-32 h-32 object-cover border border-gray-300 rounded"
+                                                            />
+                                                        </div>
+                                                        <div v-if="document.thumbnail_path" class="mt-2">
+                                                            <label class="flex items-center">
+                                                                <input
+                                                                    v-model="editingDocumentForms[document.id].removeThumbnail"
+                                                                    type="checkbox"
+                                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                                />
+                                                                <span class="ml-2 text-sm text-gray-700">サムネイルを削除</span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex justify-end space-x-3">
+                                                        <button
+                                                            type="button"
+                                                            @click="cancelEditDocument(document.id)"
+                                                            class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                        >
+                                                            キャンセル
+                                                        </button>
+                                                        <button
+                                                            type="submit"
+                                                            :disabled="editingDocumentForms[document.id].processing"
+                                                            class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                                                        >
+                                                            <span v-if="editingDocumentForms[document.id].processing" class="inline-flex items-center">
+                                                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                </svg>
+                                                                更新中...
+                                                            </span>
+                                                            <span v-else class="inline-flex items-center">
+                                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                                更新
+                                                            </span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="text-sm text-gray-500">
+                                    資料が登録されていません。
+                                </div>
+                            </div>
+
                             <!-- 会場管理（予約フォームの場合のみ） -->
                             <div v-if="event.form_type === 'reservation'" class="border-t border-gray-200 pt-6">
                                 <div class="flex justify-between items-center mb-4">
@@ -541,17 +875,43 @@
 import { ref, reactive } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import axios from 'axios';
 
 const props = defineProps({
     event: Object,
     allVenues: Array,
     allShops: Array,
+    allDocuments: Array,
 });
 
 const isEditing = ref(false);
 const showAddVenueForm = ref(false);
 const editingVenues = reactive({});
 const editingVenueForms = reactive({});
+const showAddDocumentForm = ref(false);
+const editingDocuments = reactive({});
+const editingDocumentForms = reactive({});
+const documents = ref(props.allDocuments || []);
+
+// 資料一覧を更新
+const refreshDocuments = async () => {
+    try {
+        const response = await axios.get(route('admin.documents.index'));
+        documents.value = response.data || [];
+    } catch (error) {
+        console.error('資料一覧の取得に失敗しました:', error);
+    }
+};
+const pdfFileInput = ref(null);
+const thumbnailFileInput = ref(null);
+const uploadingDocument = ref(false);
+const newDocument = ref({
+    name: '',
+    description: '',
+    pdfFile: null,
+    thumbnailFile: null,
+    thumbnailPreview: null,
+});
 
 const editForm = useForm({
     title: props.event.title,
@@ -561,6 +921,7 @@ const editForm = useForm({
     end_at: props.event.end_at ? new Date(props.event.end_at).toISOString().split('T')[0] : '',
     is_public: props.event.is_public,
     shop_ids: props.event.shops ? props.event.shops.map(shop => shop.id) : [],
+    document_ids: props.event.documents ? props.event.documents.map(doc => doc.id) : [],
 });
 
 const newVenueForm = useForm({
@@ -644,6 +1005,7 @@ const startEdit = () => {
     editForm.end_at = props.event.end_at ? new Date(props.event.end_at).toISOString().split('T')[0] : '';
     editForm.is_public = props.event.is_public;
     editForm.shop_ids = props.event.shops ? props.event.shops.map(shop => shop.id) : [];
+    editForm.document_ids = props.event.documents ? props.event.documents.map(doc => doc.id) : [];
 };
 
 const cancelEdit = () => {
@@ -660,6 +1022,8 @@ const updateEvent = () => {
         preserveScroll: true,
         onSuccess: () => {
             isEditing.value = false;
+            // 資料一覧を更新
+            refreshDocuments();
         },
     });
 };
@@ -683,6 +1047,180 @@ const formatDate = (date) => {
         month: 'long',
         day: 'numeric',
     });
+};
+
+// 資料管理機能
+const handlePdfFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        newDocument.value.pdfFile = file;
+    }
+};
+
+const removePdfFile = () => {
+    newDocument.value.pdfFile = null;
+    if (pdfFileInput.value) {
+        pdfFileInput.value.value = '';
+    }
+};
+
+const handleThumbnailFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        newDocument.value.thumbnailFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            newDocument.value.thumbnailPreview = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const removeThumbnailFile = () => {
+    newDocument.value.thumbnailFile = null;
+    newDocument.value.thumbnailPreview = null;
+    if (thumbnailFileInput.value) {
+        thumbnailFileInput.value.value = '';
+    }
+};
+
+const uploadDocument = async () => {
+    if (!newDocument.value.name || !newDocument.value.pdfFile) {
+        return;
+    }
+
+    uploadingDocument.value = true;
+
+    try {
+        const formData = new FormData();
+        formData.append('name', newDocument.value.name);
+        formData.append('description', newDocument.value.description || '');
+        formData.append('pdf_file', newDocument.value.pdfFile);
+        
+        if (newDocument.value.thumbnailFile) {
+            formData.append('thumbnail_file', newDocument.value.thumbnailFile);
+        }
+
+        const response = await axios.post(route('admin.documents.store'), formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        if (response.data.success) {
+            // 資料一覧を更新
+            await refreshDocuments();
+            // フォームに選択状態で追加
+            if (!editForm.document_ids.includes(response.data.document.id)) {
+                editForm.document_ids.push(response.data.document.id);
+            }
+            // フォームをリセット
+            newDocument.value = {
+                name: '',
+                description: '',
+                pdfFile: null,
+                thumbnailFile: null,
+                thumbnailPreview: null,
+            };
+            if (pdfFileInput.value) {
+                pdfFileInput.value.value = '';
+            }
+            if (thumbnailFileInput.value) {
+                thumbnailFileInput.value.value = '';
+            }
+            showAddDocumentForm.value = false;
+        }
+    } catch (error) {
+        console.error('資料のアップロードに失敗しました:', error);
+        alert('資料のアップロードに失敗しました。');
+    } finally {
+        uploadingDocument.value = false;
+    }
+};
+
+const startEditDocument = (document) => {
+    editingDocuments[document.id] = true;
+    editingDocumentForms[document.id] = useForm({
+        name: document.name,
+        description: document.description || '',
+        pdfFile: null,
+        thumbnailFile: null,
+        thumbnailPreview: document.thumbnail_url || null,
+        removeThumbnail: false,
+    });
+};
+
+const cancelEditDocument = (documentId) => {
+    editingDocuments[documentId] = false;
+    delete editingDocumentForms[documentId];
+};
+
+const updateDocument = async (documentId) => {
+    const form = editingDocumentForms[documentId];
+    
+    try {
+        const formData = new FormData();
+        formData.append('name', form.name);
+        formData.append('description', form.description || '');
+        formData.append('_method', 'PUT');
+        
+        if (form.pdfFile) {
+            formData.append('pdf_file', form.pdfFile);
+        }
+        
+        if (form.thumbnailFile) {
+            formData.append('thumbnail_file', form.thumbnailFile);
+        }
+        
+        if (form.removeThumbnail) {
+            formData.append('remove_thumbnail', '1');
+        }
+
+        const response = await axios.post(route('admin.documents.update', documentId), formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        if (response.data.success) {
+            // 資料一覧を更新
+            await refreshDocuments();
+            // イベントの資料も更新
+            const eventDocIndex = props.event.documents.findIndex(d => d.id === documentId);
+            if (eventDocIndex !== -1) {
+                props.event.documents[eventDocIndex] = response.data.document;
+            }
+            editingDocuments[documentId] = false;
+            delete editingDocumentForms[documentId];
+        }
+    } catch (error) {
+        console.error('資料の更新に失敗しました:', error);
+        alert('資料の更新に失敗しました。');
+    }
+};
+
+const deleteDocument = async (documentId) => {
+    if (!confirm('本当に削除しますか？')) {
+        return;
+    }
+
+    try {
+        const response = await axios.delete(route('admin.documents.destroy', documentId));
+
+        if (response.data.success) {
+            // 資料一覧を更新
+            await refreshDocuments();
+            // フォームからも削除
+            editForm.document_ids = editForm.document_ids.filter(id => id !== documentId);
+            // イベントの資料からも削除
+            if (props.event.documents) {
+                props.event.documents = props.event.documents.filter(d => d.id !== documentId);
+            }
+        }
+    } catch (error) {
+        console.error('資料の削除に失敗しました:', error);
+        alert('資料の削除に失敗しました。');
+    }
 };
 </script>
 

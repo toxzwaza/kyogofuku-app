@@ -47,6 +47,7 @@
                     :is="formComponent"
                     :event="event"
                     :selected-timeslot="selectedTimeslot"
+                    :documents="documents"
                     @confirm="handleConfirm"
                 />
             </div>
@@ -170,6 +171,7 @@ const props = defineProps({
     timeslots: Array,
     shops: Array,
     venues: Array,
+    documents: Array,
     isEnded: Boolean,
     endDate: String,
     canReserve: Boolean,

@@ -65,5 +65,13 @@ class Event extends Model
         return $this->belongsToMany(Venue::class, 'event_venue');
     }
 
+    /**
+     * 資料との多対多リレーション
+     */
+    public function documents()
+    {
+        return $this->belongsToMany(Document::class, 'event_document');
+    }
+
 }
 
