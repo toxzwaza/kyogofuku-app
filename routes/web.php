@@ -51,7 +51,7 @@ Route::post('/event/{event}/reserve', [EventReservationController::class, 'store
 Route::get('/event/{event}/reserve/success', [EventReservationController::class, 'success'])->name('event.reserve.success');
 Route::get('/api/postal-code/search', [PostalCodeController::class, 'search'])->name('api.postal-code.search');
 
-// 資料表示（turn.js用）
+// 資料表示
 Route::get('/document/{document}', [AdminEventController::class, 'showDocument'])->name('document.show');
 Route::get('/api/document/{document}/images', [AdminEventController::class, 'getDocumentImages'])->name('document.images');
 

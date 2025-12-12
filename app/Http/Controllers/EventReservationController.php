@@ -397,7 +397,7 @@ class EventReservationController extends Controller
      */
     private function sendReservationConfirmationEmail(EventReservation $reservation)
     {
-        $reservation->load('event');
+        $reservation->load('event', 'document');
         
         // メールスレッドを取得または作成
         $emailThread = EmailThread::firstOrCreate(

@@ -14,10 +14,21 @@
 @if($reservation->venue)
 会場: {{ $reservation->venue->name ?? $reservation->venue }}
 @endif
+@if($reservation->event->form_type === 'document' && $reservation->request_method)
+希望方法: {{ $reservation->request_method }}
+@endif
 
 @if($reservation->inquiry_message)
 【お問い合わせ内容】
 {{ $reservation->inquiry_message }}
+@endif
+
+@if($reservation->event->form_type === 'document' && $reservation->request_method === 'デジタルカタログ' && $reservation->document_id)
+【デジタルカタログ】
+以下のリンクからデジタルカタログをご覧いただけます。
+
+{{ route('document.show', $reservation->document_id) }}
+
 @endif
 
 ご不明な点がございましたら、お気軽にお問い合わせください。
