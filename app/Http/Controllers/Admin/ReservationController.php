@@ -376,200 +376,112 @@ class ReservationController extends Controller
      */
     public function sendReplyEmail(Request $request, EventReservation $reservation)
     {
-        Log::info('返信メール送信処理を開始', [
-            'reservation_id' => $reservation->id,
-            'request_data' => $request->all(),
+        $validated = $request->validate([
+            'email_thread_id' => 'required|exists:email_threads,id',
+            'message' => 'required|string',
         ]);
 
-        try {
-            // バリデーション
-            Log::debug('バリデーション開始', [
-                'email_thread_id' => $request->input('email_thread_id'),
-                'message_length' => strlen($request->input('message', '')),
-            ]);
-
-            $validated = $request->validate([
-                'email_thread_id' => 'required|exists:email_threads,id',
-                'message' => 'required|string',
-            ]);
-
-            Log::info('バリデーション成功', [
-                'validated_data' => $validated,
-            ]);
-
-            // スレッドを取得
-            Log::debug('スレッド取得開始', [
-                'email_thread_id' => $validated['email_thread_id'],
-            ]);
-
-            $emailThread = EmailThread::findOrFail($validated['email_thread_id']);
-            
-            Log::info('スレッド取得成功', [
-                'email_thread_id' => $emailThread->id,
-                'event_reservation_id' => $emailThread->event_reservation_id,
-                'reservation_id' => $reservation->id,
-            ]);
-            
-            // スレッドがこの予約に紐づいているか確認
-            if ($emailThread->event_reservation_id !== $reservation->id) {
-                Log::warning('スレッドと予約の紐付け不一致', [
-                    'email_thread_id' => $emailThread->id,
-                    'thread_event_reservation_id' => $emailThread->event_reservation_id,
-                    'request_reservation_id' => $reservation->id,
-                ]);
-                return redirect()->back()->with('error', 'このスレッドはこの予約に紐づいていません。');
-            }
-
-            // メール送信準備
-            Log::debug('メール送信準備開始', [
-                'to_email' => $reservation->email,
-                'message_length' => strlen($validated['message']),
-            ]);
-
-            $mailable = new ReservationReplyMail($emailThread, $reservation->email, $validated['message']);
-            
-            Log::debug('Mailable作成成功', [
-                'subject' => $mailable->envelope()->subject,
-            ]);
-
-            // メールを送信
-            try {
-                Mail::to($reservation->email)->send($mailable);
-                Log::info('メール送信成功', [
-                    'to' => $reservation->email,
-                    'subject' => $mailable->envelope()->subject,
-                ]);
-            } catch (\Exception $mailException) {
-                Log::error('メール送信失敗', [
-                    'to' => $reservation->email,
-                    'error' => $mailException->getMessage(),
-                    'trace' => $mailException->getTraceAsString(),
-                ]);
-                throw $mailException;
-            }
-
-            // 送信したメールをデータベースに保存
-            Log::debug('メールデータベース保存開始');
-
-            try {
-                $rawEmail = $this->buildRawEmail($mailable, $reservation->email);
-                
-                Log::debug('生メールデータ構築成功', [
-                    'raw_email_length' => strlen($rawEmail),
-                ]);
-
-                $textBody = view('mail.reservation_reply_plain', [
-                    'emailThread' => $emailThread,
-                    'replyMessage' => $validated['message'],
-                ])->render();
-
-                Log::debug('メール本文生成成功', [
-                    'text_body_length' => strlen($textBody),
-                ]);
-
-                $email = Email::create([
-                    'message_id' => 'reservation-reply-' . $reservation->id . '-' . now()->timestamp,
-                    'from' => config('mail.from.address'),
-                    'to' => $reservation->email,
-                    'subject' => $mailable->envelope()->subject,
-                    'text_body' => $textBody,
-                    'html_body' => null,
-                    'raw_email' => $rawEmail,
-                    'event_reservation_id' => $reservation->id,
-                    'email_thread_id' => $emailThread->id,
-                ]);
-
-                Log::info('メールデータベース保存成功', [
-                    'email_id' => $email->id,
-                    'message_id' => $email->message_id,
-                ]);
-            } catch (\Exception $dbException) {
-                Log::error('メールデータベース保存失敗', [
-                    'error' => $dbException->getMessage(),
-                    'trace' => $dbException->getTraceAsString(),
-                ]);
-                throw $dbException;
-            }
-
-            Log::info('返信メール送信処理完了', [
-                'reservation_id' => $reservation->id,
-                'email_thread_id' => $emailThread->id,
-                'email' => $reservation->email,
-            ]);
-
-            return redirect()->back()->with('success', '返信メールを送信しました。');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::warning('バリデーションエラー', [
-                'reservation_id' => $reservation->id,
-                'errors' => $e->errors(),
-            ]);
-            return redirect()->back()->withErrors($e->errors())->withInput();
-        } catch (\Exception $e) {
-            Log::error('返信メールの送信に失敗しました', [
-                'reservation_id' => $reservation->id,
-                'error' => $e->getMessage(),
-                'error_class' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return redirect()->back()->with('error', '返信メールの送信に失敗しました: ' . $e->getMessage());
+        // スレッドを取得
+        $emailThread = EmailThread::with('emails')->findOrFail($validated['email_thread_id']);
+        
+        // スレッドがこの予約に紐づいているか確認
+        if ($emailThread->event_reservation_id !== $reservation->id) {
+            return redirect()->back()->with('error', 'このスレッドはこの予約に紐づいていません。');
         }
+
+        // スレッド内の最新のメールを取得（返信先として使用）
+        $latestEmail = $emailThread->emails()->orderBy('created_at', 'desc')->first();
+        $inReplyTo = $latestEmail ? $latestEmail->message_id : null;
+        
+        // スレッド内のすべてのメールのMessage-IDを取得（References用）
+        $references = $emailThread->emails()
+            ->orderBy('created_at', 'asc')
+            ->pluck('message_id')
+            ->filter()
+            ->implode(' ');
+
+        // メールを送信
+        $mailable = new ReservationReplyMail($emailThread, $reservation->email, $validated['message'], $inReplyTo, $references);
+        
+        // カスタムヘッダーを追加
+        $mailable->withSwiftMessage(function ($swiftMessage) use ($inReplyTo, $references) {
+            if ($inReplyTo) {
+                $swiftMessage->getHeaders()->addTextHeader('In-Reply-To', $inReplyTo);
+            }
+            if ($references) {
+                $swiftMessage->getHeaders()->addTextHeader('References', $references);
+            }
+        });
+        
+        Mail::to($reservation->email)->send($mailable);
+
+        // Message-IDを生成（RFC 5322形式）
+        $messageId = '<reservation-reply-' . $reservation->id . '-' . now()->timestamp . '@' . parse_url(config('app.url'), PHP_URL_HOST) . '>';
+
+        // 送信したメールをデータベースに保存
+        $rawEmail = $this->buildRawEmail($mailable, $reservation->email, $emailThread, $validated['message'], $messageId, $inReplyTo, $references);
+        
+        Email::create([
+            'message_id' => $messageId,
+            'from' => config('mail.from.address'),
+            'to' => $reservation->email,
+            'subject' => $mailable->envelope()->subject,
+            'text_body' => view('mail.reservation_reply_plain', [
+                'emailThread' => $emailThread,
+                'replyMessage' => $validated['message'],
+            ])->render(),
+            'html_body' => null,
+            'raw_email' => $rawEmail,
+            'event_reservation_id' => $reservation->id,
+            'email_thread_id' => $emailThread->id,
+        ]);
+
+        Log::info('返信メールを送信しました', [
+            'reservation_id' => $reservation->id,
+            'email' => $reservation->email,
+            'email_thread_id' => $emailThread->id,
+        ]);
+
+        return redirect()->back()->with('success', '返信メールを送信しました。');
     }
 
     /**
      * メールの生データを構築
      */
-    private function buildRawEmail($mailable, $to)
+    private function buildRawEmail($mailable, $to, $emailThread, $messageText, $messageId, $inReplyTo = null, $references = null)
     {
-        try {
-            Log::debug('生メールデータ構築開始', [
-                'to' => $to,
-            ]);
-
-            $envelope = $mailable->envelope();
-            
-            $subject = $envelope->subject;
-            $from = config('mail.from.address');
-            $fromName = config('mail.from.name');
-            
-            Log::debug('メール設定取得', [
-                'subject' => $subject,
-                'from' => $from,
-                'from_name' => $fromName,
-            ]);
-            
-            $textBody = view('mail.reservation_reply_plain', [
-                'emailThread' => $mailable->emailThread,
-                'replyMessage' => $mailable->replyMessage,
-            ])->render();
-            
-            Log::debug('メール本文生成', [
-                'text_body_length' => strlen($textBody),
-            ]);
-            
-            $rawEmail = "From: {$fromName} <{$from}>\r\n";
-            $rawEmail .= "To: {$to}\r\n";
-            $rawEmail .= "Subject: {$subject}\r\n";
-            $rawEmail .= "Reply-To: reply@reply.kyogofuku-hirata.jp\r\n";
-            $rawEmail .= "Date: " . now()->format('r') . "\r\n";
-            $rawEmail .= "MIME-Version: 1.0\r\n";
-            $rawEmail .= "Content-Type: text/plain; charset=UTF-8\r\n";
-            $rawEmail .= "\r\n";
-            $rawEmail .= $textBody;
-            
-            Log::debug('生メールデータ構築完了', [
-                'raw_email_length' => strlen($rawEmail),
-            ]);
-            
-            return $rawEmail;
-        } catch (\Exception $e) {
-            Log::error('生メールデータ構築エラー', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw $e;
+        $envelope = $mailable->envelope();
+        
+        $subject = $envelope->subject;
+        $from = config('mail.from.address');
+        $fromName = config('mail.from.name');
+        
+        $textBody = view('mail.reservation_reply_plain', [
+            'emailThread' => $emailThread,
+            'replyMessage' => $messageText,
+        ])->render();
+        
+        $rawEmail = "Message-ID: {$messageId}\r\n";
+        $rawEmail .= "From: {$fromName} <{$from}>\r\n";
+        $rawEmail .= "To: {$to}\r\n";
+        $rawEmail .= "Subject: {$subject}\r\n";
+        $rawEmail .= "Reply-To: reply@reply.kyogofuku-hirata.jp\r\n";
+        
+        // 返信メールのヘッダーを追加
+        if ($inReplyTo) {
+            $rawEmail .= "In-Reply-To: {$inReplyTo}\r\n";
         }
+        if ($references) {
+            $rawEmail .= "References: {$references}\r\n";
+        }
+        
+        $rawEmail .= "Date: " . now()->format('r') . "\r\n";
+        $rawEmail .= "MIME-Version: 1.0\r\n";
+        $rawEmail .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        $rawEmail .= "\r\n";
+        $rawEmail .= $textBody;
+        
+        return $rawEmail;
     }
 }
 

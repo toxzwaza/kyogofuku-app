@@ -2,6 +2,36 @@
   <Head title="予約詳細" />
 
   <AuthenticatedLayout>
+    <!-- ローディングオーバーレイ -->
+    <div
+      v-if="isSendingEmail"
+      class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
+        <svg
+          class="animate-spin h-12 w-12 text-indigo-600 mb-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <p class="text-gray-700 font-medium">メールを送信しています...</p>
+      </div>
+    </div>
+
     <template #header>
       <div class="flex justify-between items-center">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -408,10 +438,10 @@
                     <div>
                       <button
                         type="submit"
-                        :disabled="replyForm.processing"
+                        :disabled="replyForm.processing || isSendingEmail"
                         class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150"
                       >
-                        {{ replyForm.processing ? "送信中..." : "返信メールを送信" }}
+                        {{ (replyForm.processing || isSendingEmail) ? "送信中..." : "返信メールを送信" }}
                       </button>
                     </div>
                   </div>
@@ -1003,6 +1033,8 @@ const replyForm = useForm({
   message: "",
 });
 
+const isSendingEmail = ref(false);
+
 const sendReplyEmail = () => {
   console.log('返信メール送信開始', {
     reservation_id: props.reservation.id,
@@ -1022,35 +1054,50 @@ const sendReplyEmail = () => {
     return;
   }
 
+  // ローディング開始
+  isSendingEmail.value = true;
+
   replyForm.post(
     route("admin.reservations.reply-email", props.reservation.id),
     {
       onSuccess: (page) => {
         console.log('返信メール送信成功', page);
-        replyForm.reset();
-        router.reload({ only: ["emailThreads"] });
         
         // 成功メッセージを表示
-        if (page.props.flash?.success) {
-          alert(page.props.flash.success);
-        }
+        const successMessage = page.props.flash?.success || page.props.success || '返信メールを送信しました。';
+        alert(successMessage);
+        
+        // フォームをリセット
+        replyForm.reset();
+        
+        // メールスレッドを再読み込み（少し待ってから実行）
+        setTimeout(() => {
+          router.reload({ 
+            only: ["emailThreads"],
+            preserveScroll: true,
+          });
+        }, 500);
       },
       onError: (errors) => {
         console.error('返信メール送信エラー', errors);
         
         // エラーメッセージを表示
-        if (errors.message) {
-          alert(errors.message);
-        } else if (errors.email_thread_id) {
-          alert('スレッドの選択に問題があります: ' + errors.email_thread_id[0]);
+        let errorMessage = '返信メールの送信に失敗しました。';
+        
+        if (errors.email_thread_id) {
+          errorMessage = 'スレッドの選択に問題があります: ' + (Array.isArray(errors.email_thread_id) ? errors.email_thread_id[0] : errors.email_thread_id);
+        } else if (errors.message && Array.isArray(errors.message)) {
+          errorMessage = 'メッセージに問題があります: ' + errors.message[0];
         } else if (errors.message) {
-          alert('メッセージに問題があります: ' + errors.message[0]);
-        } else {
-          alert('返信メールの送信に失敗しました。ログを確認してください。');
+          errorMessage = errors.message;
         }
+        
+        alert(errorMessage);
       },
       onFinish: () => {
         console.log('返信メール送信処理完了');
+        // ローディング終了
+        isSendingEmail.value = false;
       },
     }
   );
