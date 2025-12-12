@@ -56,6 +56,28 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">スラッグ <span class="text-red-500">*</span></label>
+                                    <input
+                                        v-model="form.slug"
+                                        type="text"
+                                        required
+                                        @input="validateSlug"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        :class="slugError ? 'border-red-500' : ''"
+                                    />
+                                    <p class="mt-1 text-xs text-gray-500">こちらに設定した値がURLと設定されます。英数字とハイフンのみ使用可能です</p>
+                                    <button
+                                        type="button"
+                                        @click="generateSlug"
+                                        class="mt-1 text-xs text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        自動生成
+                                    </button>
+                                    <div v-if="slugError" class="mt-1 text-sm text-red-600">{{ slugError }}</div>
+                                    <div v-if="form.errors.slug" class="mt-1 text-sm text-red-600">{{ form.errors.slug }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">受付開始日</label>
                                     <input
                                         v-model="form.start_at"
@@ -337,7 +359,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -348,6 +370,7 @@ const props = defineProps({
 
 const form = useForm({
     title: '',
+    slug: '',
     description: '',
     form_type: 'reservation',
     start_at: '',
@@ -361,6 +384,68 @@ const form = useForm({
     new_venue_phone: '',
     is_public: true,
 });
+
+const slugError = ref('');
+
+// ランダムな10桁の英数字文字列を生成
+const generateRandomString = (length = 10) => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+};
+
+// デフォルトのslugを生成
+const generateDefaultSlug = () => {
+    const formTypeMap = {
+        'reservation': 'reservation',
+        'document': 'document',
+        'contact': 'contact',
+    };
+    const formTypePrefix = formTypeMap[form.form_type] || 'event';
+    const randomString = generateRandomString(10);
+    return `${formTypePrefix}_${randomString}`;
+};
+
+// 初期slugを設定
+form.slug = generateDefaultSlug();
+
+// form_typeが変更されたときにslugを再生成
+watch(() => form.form_type, () => {
+    if (!form.slug || form.slug.match(/^(reservation|document|contact)_[a-zA-Z0-9]{10}$/)) {
+        form.slug = generateDefaultSlug();
+        slugError.value = '';
+    }
+});
+
+// slugのバリデーション（マルチバイト文字チェック）
+const validateSlug = () => {
+    slugError.value = '';
+    
+    if (!form.slug) {
+        return;
+    }
+    
+    // マルチバイト文字のチェック
+    if (/[^\x00-\x7F]/.test(form.slug)) {
+        slugError.value = 'スラッグには英数字とハイフンのみ使用できます。マルチバイト文字は使用できません。';
+        return;
+    }
+    
+    // 英数字、ハイフン、アンダースコアのみ許可
+    if (!/^[a-zA-Z0-9_-]+$/.test(form.slug)) {
+        slugError.value = 'スラッグには英数字、ハイフン(-)、アンダースコア(_)のみ使用できます。';
+        return;
+    }
+};
+
+// slugを自動生成する関数
+const generateSlug = () => {
+    form.slug = generateDefaultSlug();
+    slugError.value = '';
+};
 
 const documents = ref(props.documents || []);
 const pdfFileInput = ref(null);
@@ -462,6 +547,12 @@ const uploadDocument = async () => {
 };
 
 const submit = () => {
+    // slugのバリデーション
+    validateSlug();
+    if (slugError.value) {
+        return;
+    }
+    
     // datalistから選択された既存会場かチェック
     if (form.new_venue_name) {
         const existingVenue = props.venues.find(v => v.name === form.new_venue_name);

@@ -52,6 +52,7 @@ class EventController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|regex:/^[a-zA-Z0-9_-]+$/|unique:events,slug',
             'description' => 'nullable|string',
             'form_type' => 'required|in:reservation,document,contact',
             'start_at' => 'nullable|date',
@@ -77,12 +78,11 @@ class EventController extends Controller
             $validated['end_at'] = explode('T', $request->end_at)[0];
         }
 
-        // slugを生成（タイトルから）
-        $baseSlug = Str::slug($validated['title']);
-        $slug = $baseSlug;
+        // slugが重複している場合は、自動的に番号を追加
+        $slug = $validated['slug'];
         $counter = 1;
         while (Event::where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $validated['slug'] . '-' . $counter;
             $counter++;
         }
         $validated['slug'] = $slug;
@@ -92,7 +92,7 @@ class EventController extends Controller
         $event = Event::create($validated);
 
         // 店舗を関連付け
-        if ($request->has('shop_ids')) {
+        if ($request->filled('shop_ids') && !empty($request->shop_ids)) {
             $event->shops()->attach($request->shop_ids);
         }
 
