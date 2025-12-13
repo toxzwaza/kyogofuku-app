@@ -11,8 +11,13 @@ class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
-        $csv = storage_path('app/seeders/customers.csv');
+        $csv = __DIR__ . '/csv/customer.csv';
         
+        if (!file_exists($csv)) {
+            $this->command->error('CSVファイルが見つかりません: ' . $csv);
+            return;
+        }
+
         // CSVファイルを適切に読み込む
         $handle = fopen($csv, 'r');
         if ($handle === false) {
@@ -41,8 +46,13 @@ class CustomerSeeder extends Seeder
         }, $header);
 
         $rowIndex = 1; // ヘッダー行をカウント
+        $createdCount = 0;
+        $updatedCount = 0;
+        $skippedCount = 0;
+
         while (($row = fgetcsv($handle)) !== false) {
             $rowIndex++;
+            
             // 空の行をスキップ
             if (empty(array_filter($row))) {
                 continue;
@@ -54,83 +64,142 @@ class CustomerSeeder extends Seeder
                 return trim($value, '"');
             }, $row);
 
-            // ヘッダーとデータ行の列数が一致しない場合は、不足している列を空文字で埋める
-            $originalRowCount = count($row);
-            if (count($header) !== $originalRowCount) {
-                if ($originalRowCount < count($header)) {
-                    // 「成人式エリア」の列のインデックスを取得
-                    $ceremonyAreaIndex = array_search('成人式エリア', $header);
-                    $missingCount = count($header) - $originalRowCount;
-                    
-                    // 行821-826のように「成人式エリア」の列が欠けている場合を考慮
-                    // データ行の30番目の位置（「成人式エリア」の位置）に空文字を挿入
-                    if ($ceremonyAreaIndex !== false && $ceremonyAreaIndex < $originalRowCount + $missingCount) {
-                        // 「成人式エリア」の位置に空文字を挿入
-                        array_splice($row, $ceremonyAreaIndex, 0, '');
-                        // 残りの不足分を末尾に追加
-                        if (count($row) < count($header)) {
-                            $row = array_pad($row, count($header), '');
-                        }
-                        $this->command->warn("行 " . $rowIndex . " の「成人式エリア」列が欠けています。空文字で埋めます。");
-                    } else {
-                        // それ以外の場合は、末尾に空文字を追加
-                        $row = array_pad($row, count($header), '');
-                        $this->command->warn("行 " . $rowIndex . " の列数が不足しています（ヘッダー: " . count($header) . ", データ: " . $originalRowCount . "）。不足分を空文字で埋めます。");
-                    }
+            // ヘッダーとデータ行の列数が一致しない場合は調整
+            if (count($header) !== count($row)) {
+                if (count($row) < count($header)) {
+                    $row = array_pad($row, count($header), '');
                 } else {
-                    // データ行の列数が多すぎる場合、余分な列を削除
                     $row = array_slice($row, 0, count($header));
-                    $this->command->warn("行 " . $rowIndex . " の列数が多すぎます（ヘッダー: " . count($header) . ", データ: " . $originalRowCount . "）。余分な列を削除します。");
                 }
             }
 
             $data = array_combine($header, $row);
 
-            // array_combineが失敗した場合（列数不一致など）をチェック
+            // array_combineが失敗した場合をチェック
             if ($data === false) {
-                $this->command->warn("行 " . $rowIndex . " のデータ結合に失敗しました。スキップします。");
+                $skippedCount++;
                 continue;
             }
 
-            // 必須フィールドの存在チェック
-            $requiredFields = ['顧客名', '成人年度', '電話番号', '郵便番号', '住所'];
-            $missingFields = [];
-            foreach ($requiredFields as $field) {
-                if (!isset($data[$field]) || $data[$field] === '') {
-                    $missingFields[] = $field;
+            // 顧客名が必須
+            $name = $this->pick($data, ['name']);
+            if (!$name || $name === '') {
+                $skippedCount++;
+                continue;
+            }
+
+            // データの準備
+            $customerData = [
+                'name' => $name,
+                'kana' => $this->pick($data, ['kana']) ?: null,
+                'guardian_name' => $this->pick($data, ['guardian_name']) ?: null,
+                'guardian_name_kana' => $this->pick($data, ['guardian_name_kana']) ?: null,
+                'birth_date' => $this->toYmd($this->pick($data, ['birth_date'])) ?: null,
+                'phone_number' => $this->pick($data, ['phone_number']) ?: null,
+                'postal_code' => $this->pick($data, ['postal_code']) ?: null,
+                'address' => $this->pick($data, ['address']) ?: null,
+                'remarks' => $this->pick($data, ['remarks']) ?: null,
+            ];
+
+            // coming_of_age_yearの処理
+            $comingOfAgeYear = $this->pick($data, ['coming_of_age_year']);
+            if ($comingOfAgeYear && $comingOfAgeYear !== 'NULL' && is_numeric($comingOfAgeYear)) {
+                $customerData['coming_of_age_year'] = (int)$comingOfAgeYear;
+            } else {
+                $customerData['coming_of_age_year'] = null;
+            }
+
+            // ceremony_area_idの処理
+            $ceremonyAreaId = $this->pick($data, ['ceremony_area_id']);
+            if ($ceremonyAreaId && $ceremonyAreaId !== '' && $ceremonyAreaId !== 'NULL' && is_numeric($ceremonyAreaId)) {
+                $customerData['ceremony_area_id'] = (int)$ceremonyAreaId;
+            } else {
+                $customerData['ceremony_area_id'] = null;
+            }
+
+            // created_at, updated_atの処理
+            $createdAt = $this->pick($data, ['created_at']);
+            $updatedAt = $this->pick($data, ['updated_at']);
+            
+            if ($createdAt && $createdAt !== '' && $createdAt !== 'NULL') {
+                try {
+                    $customerData['created_at'] = Carbon::parse($createdAt);
+                } catch (\Exception $e) {
+                    // パースに失敗した場合は現在時刻を使用
                 }
             }
 
-            if (!empty($missingFields)) {
-                $this->command->warn("行 " . $rowIndex . " に必須フィールドが不足しています: " . implode(', ', $missingFields) . "。スキップします。");
-                continue;
+            if ($updatedAt && $updatedAt !== '' && $updatedAt !== 'NULL') {
+                try {
+                    $customerData['updated_at'] = Carbon::parse($updatedAt);
+                } catch (\Exception $e) {
+                    // パースに失敗した場合は現在時刻を使用
+                }
             }
 
-            // 成人式エリアの処理（値がない場合は「その他」を紐づける）
-            $areaName = !empty($data['成人式エリア']) ? $data['成人式エリア'] : 'その他';
-            $area = CeremonyArea::where('name', $areaName)->first();
-            
-            if (!$area) {
-                $this->command->warn("行 " . $rowIndex . " の成人式エリア「" . $areaName . "」が見つかりません。スキップします。");
-                continue;
-            }
+            try {
+                // IDで既存の顧客を検索
+                $id = $this->pick($data, ['id']);
+                if ($id && $id !== '' && $id !== 'NULL' && is_numeric($id)) {
+                    $customer = Customer::find((int)$id);
+                    if ($customer) {
+                        // 既存の場合は更新（ただし、created_atは保持）
+                        unset($customerData['created_at']);
+                        $customer->update($customerData);
+                        $updatedCount++;
+                        continue;
+                    }
+                }
 
-            Customer::create([
-                'name' => $data['顧客名'],
-                'kana' => $data['ふりがな'] ?? null,
-                'guardian_name' => $data['保護者名'] ?? null,
-                'birth_date' => !empty($data['生年月日'])
-                    ? Carbon::parse($data['生年月日'])
-                    : null,
-                'coming_of_age_year' => (int)$data['成人年度'],
-                'ceremony_area_id' => $area->id,
-                'phone_number' => $data['電話番号'],
-                'postal_code' => $data['郵便番号'],
-                'address' => $data['住所'],
-                'remarks' => $data['備考'] ?? null,
-            ]);
+                // 新規作成
+                Customer::create($customerData);
+                $createdCount++;
+            } catch (\Exception $e) {
+                $this->command->warn("行 {$rowIndex} でエラーが発生しました: " . $e->getMessage());
+                $skippedCount++;
+            }
         }
 
         fclose($handle);
+        
+        $this->command->info("顧客データのシードが完了しました。");
+        $this->command->info("作成: {$createdCount}件, 更新: {$updatedCount}件, スキップ: {$skippedCount}件");
+    }
+
+    /**
+     * データ配列から指定されたキーの値を取得（複数のキーを試行）
+     *
+     * @param array $data
+     * @param array $keys
+     * @param mixed $default
+     * @return mixed
+     */
+    private function pick(array $data, array $keys, $default = null)
+    {
+        foreach ($keys as $key) {
+            if (isset($data[$key]) && $data[$key] !== '' && $data[$key] !== 'NULL' && strtoupper($data[$key]) !== 'NULL') {
+                return $data[$key];
+            }
+        }
+        return $default;
+    }
+
+    /**
+     * 日付文字列をY-m-d形式に変換
+     *
+     * @param string|null $dateString
+     * @return string|null
+     */
+    private function toYmd($dateString)
+    {
+        if (!$dateString || $dateString === '' || $dateString === 'NULL') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($dateString)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

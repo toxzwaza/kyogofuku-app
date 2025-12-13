@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Customer extends Model
 {
     protected $fillable = [
-        'name','kana','guardian_name','birth_date','coming_of_age_year',
+        'name','kana','guardian_name','guardian_name_kana','birth_date','coming_of_age_year',
         'ceremony_area_id','phone_number','postal_code','address','remarks'
     ];
 
