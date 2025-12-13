@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\EventImageController as AdminEventImageController
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\TimeslotController as AdminTimeslotController;
 use App\Http\Controllers\Admin\ShopController as AdminShopController;
+use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VenueController as AdminVenueController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
@@ -108,6 +109,15 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/shops/{shop}/edit', [AdminShopController::class, 'edit'])->name('shops.edit');
     Route::put('/shops/{shop}', [AdminShopController::class, 'update'])->name('shops.update');
     Route::delete('/shops/{shop}', [AdminShopController::class, 'destroy'])->name('shops.destroy');
+    
+    // 顧客管理
+    Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
+    Route::post('/customers', [AdminCustomerController::class, 'store'])->name('customers.store');
+    Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
+    Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
+    Route::post('/customers/{customer}/contracts', [AdminCustomerController::class, 'storeContract'])->name('customers.contracts.store');
+    Route::post('/customers/{customer}/photo-slots', [AdminCustomerController::class, 'storePhotoSlot'])->name('customers.photo-slots.store');
+    Route::post('/customers/{customer}/photos', [AdminCustomerController::class, 'storeCustomerPhoto'])->name('customers.photos.store');
     
     // スタッフ管理
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');

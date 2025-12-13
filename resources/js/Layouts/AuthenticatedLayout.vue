@@ -7,6 +7,46 @@ import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link } from '@inertiajs/vue3';
 
 const showingNavigationDropdown = ref(false);
+const hoveredMenu = ref(null);
+
+const menuItems = [
+    {
+        key: 'events',
+        label: 'イベント管理',
+        route: 'admin.events.index',
+        subItems: [
+            { label: 'イベント一覧', route: 'admin.events.index' },
+            { label: 'イベント作成', route: 'admin.events.create' },
+        ],
+    },
+    {
+        key: 'customers',
+        label: '顧客管理',
+        route: 'admin.customers.index',
+        subItems: [
+            { label: '顧客一覧', route: 'admin.customers.index' },
+        ],
+    },
+    {
+        key: 'master',
+        label: 'マスタ管理',
+        route: 'admin.shops.index',
+        subItems: [
+            { label: '店舗一覧', route: 'admin.shops.index' },
+            { label: '店舗作成', route: 'admin.shops.create' },
+            { label: 'スタッフ一覧', route: 'admin.users.index' },
+            { label: 'スタッフ作成', route: 'admin.users.create' },
+        ],
+    },
+    {
+        key: 'activity-logs',
+        label: 'ログ管理',
+        route: 'admin.activity-logs.index',
+        subItems: [
+            { label: 'ログ一覧', route: 'admin.activity-logs.index' },
+        ],
+    },
+];
 </script>
 
 <template>
@@ -29,25 +69,65 @@ const showingNavigationDropdown = ref(false);
                             </div>
 
                             <!-- Navigation Links -->
-                            <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                            <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex items-center">
                                 <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
                                     ダッシュボード
                                 </NavLink>
-                                <NavLink :href="route('admin.events.index')" :active="route().current('admin.events.*')">
-                                    イベント管理
-                                </NavLink>
-                                <NavLink :href="route('admin.shops.index')" :active="route().current('admin.shops.*')">
-                                    店舗管理
-                                </NavLink>
-                                <NavLink :href="route('admin.users.index')" :active="route().current('admin.users.*')">
-                                    スタッフ管理
-                                </NavLink>
-                                <!-- <NavLink :href="route('admin.schedules.show')" :active="route().current('admin.schedules.*')">
-                                    スケジュール管理
-                                </NavLink> -->
-                                <NavLink :href="route('admin.activity-logs.index')" :active="route().current('admin.activity-logs.*')">
-                                    ログ管理
-                                </NavLink>
+                                <div
+                                    v-for="menu in menuItems"
+                                    :key="menu.key"
+                                    class="relative -my-px"
+                                    @mouseenter="hoveredMenu = menu.key"
+                                    @mouseleave="hoveredMenu = null"
+                                >
+                                    <Link
+                                        :href="route(menu.route)"
+                                        :class="[
+                                            'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out',
+                                            route().current(menu.route.replace('.index', '.*')) || 
+                                            (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*')))
+                                                ? 'border-indigo-400 text-gray-900 focus:outline-none focus:border-indigo-700'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
+                                        ]"
+                                    >
+                                        {{ menu.label }}
+                                        <svg
+                                            v-if="menu.subItems.length > 0"
+                                            class="ml-1 h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
+                                    </Link>
+                                    <!-- サブナビゲーション -->
+                                    <div
+                                        v-if="hoveredMenu === menu.key && menu.subItems.length > 0"
+                                        class="absolute top-full left-0 pt-1 w-48 z-50"
+                                        @mouseenter="hoveredMenu = menu.key"
+                                        @mouseleave="hoveredMenu = null"
+                                    >
+                                        <div class="bg-white rounded-md shadow-lg py-1 border border-gray-200">
+                                            <Link
+                                                v-for="subItem in menu.subItems"
+                                                :key="subItem.route"
+                                                :href="route(subItem.route)"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current(subItem.route) ? 'bg-gray-50 text-indigo-600 font-medium' : ''
+                                                ]"
+                                            >
+                                                {{ subItem.label }}
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -134,11 +214,23 @@ const showingNavigationDropdown = ref(false);
                         <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*')">
                             イベント管理
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('admin.shops.index')" :active="route().current('admin.shops.*')">
-                            店舗管理
+                        <ResponsiveNavLink :href="route('admin.customers.index')" :active="route().current('admin.customers.*')">
+                            顧客管理
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('admin.users.index')" :active="route().current('admin.users.*')">
-                            スタッフ管理
+                        <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            マスタ管理
+                        </div>
+                        <ResponsiveNavLink :href="route('admin.shops.index')" :active="route().current('admin.shops.*')" class="pl-8">
+                            店舗一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.shops.create')" :active="route().current('admin.shops.create')" class="pl-8">
+                            店舗作成
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.users.index')" :active="route().current('admin.users.*') && !route().current('admin.users.create')" class="pl-8">
+                            スタッフ一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.users.create')" :active="route().current('admin.users.create')" class="pl-8">
+                            スタッフ作成
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.activity-logs.index')" :active="route().current('admin.activity-logs.*')">
                             ログ管理
