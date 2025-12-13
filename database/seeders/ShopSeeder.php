@@ -33,6 +33,12 @@ class ShopSeeder extends Seeder
                 'phone' => '0120-391-529',
                 'is_active' => true,
             ],
+            [
+                'name' => '福井店',
+                'address' => '福井県福井市花堂南1丁目2-1',
+                'phone' => '0776-34-1529',
+                'is_active' => true,
+            ],
         ];
 
         foreach ($shops as $shop) {
