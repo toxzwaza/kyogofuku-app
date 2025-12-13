@@ -11,7 +11,7 @@ class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
-        $csv = __DIR__ . '/csv/customer.csv';
+        $csv = __DIR__ . '/csv/customers.csv';
         
         if (!file_exists($csv)) {
             $this->command->error('CSVファイルが見つかりません: ' . $csv);
