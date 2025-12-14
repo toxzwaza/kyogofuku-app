@@ -20,6 +20,15 @@ const menuItems = [
         ],
     },
     {
+        key: 'photo-slots',
+        label: '前撮り管理',
+        route: 'admin.photo-slots.index',
+        subItems: [
+            { label: '前撮り一覧', route: 'admin.photo-slots.index' },
+            { label: '前撮り枠追加', route: 'admin.photo-slots.create' },
+        ],
+    },
+    {
         key: 'customers',
         label: '顧客管理',
         route: 'admin.customers.index',
@@ -213,6 +222,9 @@ const menuItems = [
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*')">
                             イベント管理
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.photo-slots.index')" :active="route().current('admin.photo-slots.*')">
+                            前撮り管理
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.customers.index')" :active="route().current('admin.customers.*')">
                             顧客管理

@@ -15,6 +15,7 @@ use App\Models\PhotoStudio;
 use App\Models\PhotoType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
@@ -140,8 +141,21 @@ class CustomerController extends Controller
             'contracts.plan',
             'contracts.user',
             'photoSlots.studio',
+            'photoSlots.shop',
+            'photoSlots.user',
+            'photoSlots.plan',
             'photos.type',
         ]);
+        
+        // photoSlotsをソート
+        $customer->photoSlots = $customer->photoSlots->sortBy([
+            ['shoot_date', 'asc'],
+            ['shoot_time', 'asc'],
+        ])->values();
+
+        // デバッグ: 前撮り情報の取得確認
+        Log::info('Customer photoSlots count: ' . $customer->photoSlots->count());
+        Log::info('Customer photoSlots data: ' . json_encode($customer->photoSlots->toArray()));
 
         // フォーム用のマスターデータを取得
         $ceremonyAreas = CeremonyArea::orderBy('name')->get();
@@ -159,6 +173,13 @@ class CustomerController extends Controller
             ->orderBy('shops.name')
             ->get() : collect();
 
+        // 事前に登録された前撮り枠（customer_idがnullのもの）を取得
+        $availablePhotoSlots = PhotoSlot::whereNull('customer_id')
+            ->with(['studio', 'shop', 'plan'])
+            ->orderBy('shoot_date', 'asc')
+            ->orderBy('shoot_time', 'asc')
+            ->get();
+
         return Inertia::render('Admin/Customer/Show', [
             'customer' => $customer,
             'ceremonyAreas' => $ceremonyAreas,
@@ -167,6 +188,7 @@ class CustomerController extends Controller
             'users' => $users,
             'photoStudios' => $photoStudios,
             'photoTypes' => $photoTypes,
+            'availablePhotoSlots' => $availablePhotoSlots,
             'userShops' => $userShops->map(function($shop) {
                 return [
                     'id' => $shop->id,
@@ -233,15 +255,31 @@ class CustomerController extends Controller
     public function storePhotoSlot(Request $request, Customer $customer)
     {
         $validated = $request->validate([
-            'photo_studio_id' => 'required|exists:photo_studios,id',
-            'shoot_date' => 'required|date',
-            'shoot_time' => 'required|date_format:H:i',
+            'photo_slot_id' => 'required|exists:photo_slots,id',
+            'shop_id' => 'nullable|exists:shops,id',
+            'assignment_label' => 'nullable|string|max:255',
+            'user_id' => 'nullable|exists:users,id',
+            'plan_id' => 'nullable|exists:plans,id',
             'remarks' => 'nullable|string',
         ]);
 
-        $validated['customer_id'] = $customer->id;
+        $photoSlot = PhotoSlot::findOrFail($validated['photo_slot_id']);
+        
+        // 既に顧客が割り当てられている場合はエラー
+        if ($photoSlot->customer_id !== null) {
+            return back()->withErrors([
+                'photo_slot_id' => 'この前撮り枠は既に他の顧客に割り当てられています。',
+            ]);
+        }
 
-        PhotoSlot::create($validated);
+        $photoSlot->update([
+            'customer_id' => $customer->id,
+            'shop_id' => $validated['shop_id'] ?? null,
+            'assignment_label' => $validated['assignment_label'] ?? null,
+            'user_id' => $validated['user_id'] ?? null,
+            'plan_id' => $validated['plan_id'] ?? null,
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '前撮り情報を追加しました。');

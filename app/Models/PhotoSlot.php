@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class PhotoSlot extends Model
 {
     protected $fillable = [
-        'photo_studio_id','shoot_date','shoot_time','customer_id','remarks'
+        'photo_studio_id','shoot_date','shoot_time','customer_id','remarks',
+        'assignment_label','shop_id','user_id','plan_id'
     ];
 
     public function studio()
@@ -19,5 +20,20 @@ class PhotoSlot extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
     }
 }

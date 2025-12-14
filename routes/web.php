@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VenueController as AdminVenueController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
+use App\Http\Controllers\Admin\PhotoSlotController as AdminPhotoSlotController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineTestController;
 use App\Http\Controllers\ProfileController;
@@ -64,6 +65,13 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/events', [AdminEventController::class, 'store'])->name('events.store');
     Route::get('/events/{event}', [AdminEventController::class, 'show'])->name('events.show');
     Route::put('/events/{event}', [AdminEventController::class, 'update'])->name('events.update');
+    
+    // 前撮り管理
+    Route::get('/photo-slots', [AdminPhotoSlotController::class, 'index'])->name('photo-slots.index');
+    Route::get('/photo-slots/create', [AdminPhotoSlotController::class, 'create'])->name('photo-slots.create');
+    Route::post('/photo-slots', [AdminPhotoSlotController::class, 'store'])->name('photo-slots.store');
+    Route::put('/photo-slots/{photoSlot}', [AdminPhotoSlotController::class, 'update'])->name('photo-slots.update');
+    Route::delete('/photo-slots/{photoSlot}', [AdminPhotoSlotController::class, 'destroy'])->name('photo-slots.destroy');
     
     // イベント画像管理
     Route::get('/events/{event}/images', [AdminEventImageController::class, 'index'])->name('events.images.index');

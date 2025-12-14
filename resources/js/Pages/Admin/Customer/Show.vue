@@ -137,12 +137,13 @@
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">前撮り情報</h3>
                             <button
-                                @click="showAddPhotoSlotModal = true"
+                                @click="openAddPhotoSlotModal"
                                 class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium"
                             >
                                 前撮り追加
                             </button>
                         </div>
+
                         <div v-if="customer.photoSlots && customer.photoSlots.length > 0" class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -151,6 +152,10 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">前撮り会場</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">撮影日</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">撮影開始時刻</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当店舗</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者用メモラベル</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">備考</th>
                                     </tr>
                                 </thead>
@@ -160,6 +165,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.studio?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatDate(photoSlot.shoot_date) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatTime(photoSlot.shoot_time) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.shop?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.user?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.plan?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.assignment_label || '-' }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ photoSlot.remarks || '-' }}</td>
                                     </tr>
                                 </tbody>
@@ -643,40 +652,135 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        前撮り会場 <span class="text-red-500">*</span>
+                                        担当店舗 <span class="text-red-500">*</span>
                                     </label>
                                     <select
-                                        v-model="photoSlotForm.photo_studio_id"
+                                        v-model="photoSlotForm.shop_id"
                                         required
+                                        @change="onPhotoSlotShopChange"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                     >
                                         <option value="">選択してください</option>
-                                        <option v-for="studio in photoStudios" :key="studio.id" :value="studio.id">
+                                        <option v-for="shop in shops" :key="shop.id" :value="shop.id">
+                                            {{ shop.name }}
+                                        </option>
+                                    </select>
+                                    <div v-if="photoSlotForm.errors.shop_id" class="mt-1 text-sm text-red-600">{{ photoSlotForm.errors.shop_id }}</div>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        会場 <span class="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        v-model="photoSlotForm.selected_studio_id"
+                                        required
+                                        :disabled="!photoSlotForm.shop_id"
+                                        @change="onStudioChange"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">選択してください</option>
+                                        <option 
+                                            v-for="studio in availableStudios" 
+                                            :key="studio.id" 
+                                            :value="studio.id"
+                                        >
                                             {{ studio.name }}
                                         </option>
                                     </select>
+                                    <p v-if="!photoSlotForm.shop_id" class="mt-1 text-xs text-gray-500">まず担当店舗を選択してください</p>
+                                    <div v-if="photoSlotForm.errors.selected_studio_id" class="mt-1 text-sm text-red-600">{{ photoSlotForm.errors.selected_studio_id }}</div>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         撮影日 <span class="text-red-500">*</span>
                                     </label>
-                                    <input
-                                        v-model="photoSlotForm.shoot_date"
-                                        type="date"
+                                    <select
+                                        v-model="photoSlotForm.selected_date"
                                         required
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                    />
+                                        :disabled="!photoSlotForm.selected_studio_id"
+                                        @change="onDateChange"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">選択してください</option>
+                                        <option 
+                                            v-for="date in availableDates" 
+                                            :key="date" 
+                                            :value="date"
+                                        >
+                                            {{ formatDate(date) }}
+                                        </option>
+                                    </select>
+                                    <p v-if="!photoSlotForm.selected_studio_id" class="mt-1 text-xs text-gray-500">まず担当店舗と会場を選択してください</p>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        撮影開始時刻 <span class="text-red-500">*</span>
+                                        撮影時間 <span class="text-red-500">*</span>
                                     </label>
-                                    <input
-                                        v-model="photoSlotForm.shoot_time"
-                                        type="time"
+                                    <select
+                                        v-model="photoSlotForm.photo_slot_id"
                                         required
+                                        :disabled="!photoSlotForm.selected_date"
+                                        @change="onPhotoSlotChange"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">選択してください</option>
+                                        <option 
+                                            v-for="slot in availableTimeSlots" 
+                                            :key="slot.id" 
+                                            :value="slot.id"
+                                        >
+                                            {{ formatTime(slot.shoot_time) }}
+                                            <span v-if="slot.plan"> - {{ slot.plan.name }}</span>
+                                        </option>
+                                    </select>
+                                    <p v-if="!photoSlotForm.selected_date" class="mt-1 text-xs text-gray-500">まず担当店舗、会場、撮影日を選択してください</p>
+                                    <div v-if="photoSlotForm.errors.photo_slot_id" class="mt-1 text-sm text-red-600">{{ photoSlotForm.errors.photo_slot_id }}</div>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        担当者用メモラベル
+                                    </label>
+                                    <select
+                                        v-model="photoSlotForm.assignment_label"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                    />
+                                    >
+                                        <option :value="null">選択してください</option>
+                                        <option value="動員">動員</option>
+                                        <option value="岡山店 / F">岡山店 / F</option>
+                                        <option value="城東店 / F">城東店 / F</option>
+                                        <option value="引継ぎ / F">引継ぎ / F</option>
+                                        <option value="EXPO / F">EXPO / F</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        担当者
+                                    </label>
+                                    <select
+                                        v-model="photoSlotForm.user_id"
+                                        :disabled="!photoSlotForm.shop_id"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    >
+                                        <option :value="null">選択してください</option>
+                                        <option v-for="user in photoSlotShopUsers" :key="user.id" :value="user.id">
+                                            {{ user.name }}
+                                        </option>
+                                    </select>
+                                    <p v-if="!photoSlotForm.shop_id" class="mt-1 text-xs text-gray-500">まず担当店舗を選択してください</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        プラン
+                                    </label>
+                                    <select
+                                        v-model="photoSlotForm.plan_id"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    >
+                                        <option :value="null">選択してください</option>
+                                        <option v-for="plan in plans" :key="plan.id" :value="plan.id">
+                                            {{ plan.name }}
+                                        </option>
+                                    </select>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -688,6 +792,16 @@
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                     ></textarea>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- エラーメッセージ表示 -->
+                        <div v-if="Object.keys(photoSlotForm.errors).length > 0" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <div class="text-sm text-red-800">
+                                <p class="font-semibold mb-2">以下のエラーが発生しました：</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li v-for="(error, key) in photoSlotForm.errors" :key="key">{{ error }}</li>
+                                </ul>
                             </div>
                         </div>
 
@@ -771,6 +885,7 @@ const props = defineProps({
     users: Array,
     photoStudios: Array,
     photoTypes: Array,
+    availablePhotoSlots: Array,
     userShops: Array,
 });
 
@@ -786,8 +901,11 @@ const showPhotoPreviewModal = ref(false);
 // 選択中の写真（プレビュー用）
 const selectedPhoto = ref(null);
 
-// 店舗に所属するユーザーリスト
+// 店舗に所属するユーザーリスト（成約用）
 const shopUsers = ref([]);
+
+// 前撮り追加用の店舗ユーザーリスト
+const photoSlotShopUsers = ref([]);
 
 // 写真プレビュー用URL
 const photoPreview = ref(null);
@@ -868,11 +986,115 @@ const openAddContractModal = async () => {
 
 // 前撮り追加フォーム
 const photoSlotForm = useForm({
-    photo_studio_id: '',
-    shoot_date: '',
-    shoot_time: '',
+    shop_id: '',
+    selected_studio_id: '',
+    selected_date: '',
+    photo_slot_id: '',
+    assignment_label: null,
+    user_id: null,
+    plan_id: null,
     remarks: '',
 });
+
+// 利用可能な会場（スタジオ）を取得（担当店舗でフィルタリング）
+const availableStudios = computed(() => {
+    if (!props.availablePhotoSlots || props.availablePhotoSlots.length === 0) {
+        return [];
+    }
+    if (!photoSlotForm.shop_id || photoSlotForm.shop_id === '') {
+        return [];
+    }
+    const studios = new Map();
+    props.availablePhotoSlots.forEach(slot => {
+        if (slot.studio && slot.shop?.id == photoSlotForm.shop_id && !studios.has(slot.studio.id)) {
+            studios.set(slot.studio.id, slot.studio);
+        }
+    });
+    return Array.from(studios.values()).sort((a, b) => a.name.localeCompare(b.name));
+});
+
+// 選択された会場の利用可能な日付を取得（担当店舗でフィルタリング）
+const availableDates = computed(() => {
+    if (!photoSlotForm.selected_studio_id || !photoSlotForm.shop_id || photoSlotForm.shop_id === '' || !props.availablePhotoSlots) {
+        return [];
+    }
+    const dates = new Set();
+    props.availablePhotoSlots.forEach(slot => {
+        if (slot.studio?.id == photoSlotForm.selected_studio_id && 
+            slot.shop?.id == photoSlotForm.shop_id) {
+            dates.add(slot.shoot_date);
+        }
+    });
+    return Array.from(dates).sort();
+});
+
+// 選択された会場と日付の利用可能な時間枠を取得（担当店舗でフィルタリング）
+const availableTimeSlots = computed(() => {
+    if (!photoSlotForm.selected_studio_id || !photoSlotForm.selected_date || !photoSlotForm.shop_id || photoSlotForm.shop_id === '' || !props.availablePhotoSlots) {
+        return [];
+    }
+    return props.availablePhotoSlots.filter(slot => {
+        return slot.studio?.id == photoSlotForm.selected_studio_id && 
+               slot.shoot_date === photoSlotForm.selected_date &&
+               slot.shop?.id == photoSlotForm.shop_id;
+    }).sort((a, b) => a.shoot_time.localeCompare(b.shoot_time));
+});
+
+// 担当店舗変更時の処理
+const onPhotoSlotShopChange = async () => {
+    // 会場、日付、時間枠をリセット
+    photoSlotForm.selected_studio_id = '';
+    photoSlotForm.selected_date = '';
+    photoSlotForm.photo_slot_id = '';
+    
+    // 担当者を取得
+    if (photoSlotForm.shop_id && photoSlotForm.shop_id !== '') {
+        await loadPhotoSlotShopUsers(photoSlotForm.shop_id);
+    } else {
+        photoSlotShopUsers.value = [];
+        photoSlotForm.user_id = null;
+    }
+};
+
+// 会場選択時の処理
+const onStudioChange = () => {
+    photoSlotForm.selected_date = '';
+    photoSlotForm.photo_slot_id = '';
+};
+
+// 日付選択時の処理
+const onDateChange = () => {
+    photoSlotForm.photo_slot_id = '';
+};
+
+// 前撮り枠選択時の処理
+const onPhotoSlotChange = () => {
+    // 選択された枠の情報を表示（必要に応じて）
+};
+
+// 前撮り追加用の店舗ユーザーを取得
+const loadPhotoSlotShopUsers = async (shopId) => {
+    if (!shopId) {
+        photoSlotShopUsers.value = [];
+        photoSlotForm.user_id = null;
+        return;
+    }
+    
+    try {
+        const response = await axios.get(route('admin.schedules.shop-users'), {
+            params: { shop_id: shopId }
+        });
+        photoSlotShopUsers.value = response.data;
+        
+        // 選択されたユーザーが新しいリストに含まれていない場合はクリア
+        if (photoSlotForm.user_id && !photoSlotShopUsers.value.some(u => u.id === photoSlotForm.user_id)) {
+            photoSlotForm.user_id = null;
+        }
+    } catch (error) {
+        console.error('店舗ユーザーの取得に失敗しました:', error);
+        photoSlotShopUsers.value = [];
+    }
+};
 
 // 顧客写真追加フォーム
 const photoForm = useForm({
@@ -965,13 +1187,53 @@ const storeContract = () => {
     });
 };
 
+// 前撮り追加モーダルを開く
+const openAddPhotoSlotModal = async () => {
+    // ログインユーザーの所属店舗をデフォルトで設定
+    if (props.userShops && props.userShops.length > 0) {
+        photoSlotForm.shop_id = props.userShops[0].id;
+        await loadPhotoSlotShopUsers(props.userShops[0].id);
+    } else {
+        photoSlotForm.shop_id = '';
+    }
+    
+    // その他のフィールドをリセット
+    photoSlotForm.selected_studio_id = '';
+    photoSlotForm.selected_date = '';
+    photoSlotForm.photo_slot_id = '';
+    photoSlotForm.assignment_label = null;
+    photoSlotForm.user_id = null;
+    photoSlotForm.plan_id = null;
+    photoSlotForm.remarks = '';
+    
+    showAddPhotoSlotModal.value = true;
+};
+
 // 前撮り情報追加
 const storePhotoSlot = () => {
-    photoSlotForm.post(route('admin.customers.photo-slots.store', props.customer.id), {
+    // フォームデータを変換（空文字列をnullに変換、不要なフィールドを削除）
+    photoSlotForm.transform((data) => {
+        const transformed = { ...data };
+        transformed.shop_id = transformed.shop_id || null;
+        transformed.assignment_label = transformed.assignment_label || null;
+        transformed.user_id = transformed.user_id || null;
+        transformed.plan_id = transformed.plan_id || null;
+        // selected_studio_idとselected_dateは送信しない（photo_slot_idだけで十分）
+        delete transformed.selected_studio_id;
+        delete transformed.selected_date;
+        return transformed;
+    }).post(route('admin.customers.photo-slots.store', props.customer.id), {
         preserveScroll: true,
         onSuccess: () => {
             showAddPhotoSlotModal.value = false;
             photoSlotForm.reset();
+            // リセット後、デフォルト店舗を再設定
+            if (props.userShops && props.userShops.length > 0) {
+                photoSlotForm.shop_id = props.userShops[0].id;
+            }
+        },
+        onError: (errors) => {
+            console.error('前撮り情報追加エラー:', errors);
         },
     });
 };
