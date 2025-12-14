@@ -81,7 +81,9 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $customers = $query->with(['photos' => function($q) {
+            $q->where('photo_type_id', 1)->orderBy('created_at', 'desc')->limit(1);
+        }])->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         // フォーム用のマスターデータを取得
         $ceremonyAreas = CeremonyArea::orderBy('name')->get();

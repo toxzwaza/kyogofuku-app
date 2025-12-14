@@ -191,6 +191,7 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">画像</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顧客名</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ふりがな</th>
@@ -201,6 +202,30 @@
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     <tr v-for="customer in customers.data" :key="customer.id">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center">
+                                                <img
+                                                    v-if="getFullBodyPhoto(customer)"
+                                                    :src="getPhotoUrl(getFullBodyPhoto(customer).file_path)"
+                                                    :alt="customer.name"
+                                                    class="w-full h-full object-cover"
+                                                />
+                                                <svg
+                                                    v-else
+                                                    class="w-8 h-8 text-gray-400"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                                    />
+                                                </svg>
+                                            </div>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.id }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.kana || '-' }}</td>
@@ -503,6 +528,20 @@ const storeCustomer = () => {
             customerForm.reset();
         },
     });
+};
+
+// 全身写真を取得（photo_type_idが1の写真）
+const getFullBodyPhoto = (customer) => {
+    if (!customer.photos || customer.photos.length === 0) {
+        return null;
+    }
+    // photo_type_idが1の写真を取得
+    return customer.photos.find(photo => photo.photo_type_id === 1) || null;
+};
+
+// 写真URLを取得
+const getPhotoUrl = (filePath) => {
+    return `/storage/${filePath}`;
 };
 </script>
 
