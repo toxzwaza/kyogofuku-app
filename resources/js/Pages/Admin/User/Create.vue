@@ -87,12 +87,31 @@
                                                 v-model="form.shop_ids"
                                                 type="checkbox"
                                                 :value="shop.id"
+                                                @change="onShopToggle(shop.id, $event.target.checked)"
                                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                             />
                                             <span class="ml-2 text-sm text-gray-700">{{ shop.name }}</span>
                                         </label>
                                     </div>
                                     <p v-else class="text-sm text-gray-500">店舗が登録されていません</p>
+                                </div>
+
+                                <div v-if="form.shop_ids && form.shop_ids.length > 0">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">デフォルト店舗</label>
+                                    <select
+                                        v-model="form.main_shop_id"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">デフォルト店舗を選択してください</option>
+                                        <option
+                                            v-for="shopId in form.shop_ids"
+                                            :key="shopId"
+                                            :value="shopId"
+                                        >
+                                            {{ getShopName(shopId) }}
+                                        </option>
+                                    </select>
+                                    <p class="mt-1 text-sm text-gray-500">ダッシュボードのカレンダーで最初に表示される店舗を設定します</p>
                                 </div>
 
                                 <div class="flex justify-end space-x-4 pt-4">
@@ -134,7 +153,20 @@ const form = useForm({
     password: '',
     password_confirmation: '',
     shop_ids: [],
+    main_shop_id: null,
 });
+
+const getShopName = (shopId) => {
+    const shop = props.shops.find(s => s.id === shopId);
+    return shop ? shop.name : '';
+};
+
+const onShopToggle = (shopId, checked) => {
+    // チェックが外された場合、その店舗がデフォルト店舗ならクリア
+    if (!checked && form.main_shop_id === shopId) {
+        form.main_shop_id = null;
+    }
+};
 
 const submit = () => {
     form.post(route('admin.users.store'));

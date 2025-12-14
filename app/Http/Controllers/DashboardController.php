@@ -292,7 +292,8 @@ class DashboardController extends Controller
         $currentUser = $request->user();
         $userShops = $currentUser ? $currentUser->shops()
             ->where('shops.is_active', true)
-            ->select('shops.id', 'shops.name')
+            ->select('shops.id', 'shops.name', 'shop_user.main')
+            ->orderByDesc('shop_user.main')
             ->orderBy('shops.name')
             ->get() : collect();
         $users = User::orderBy('name')->get(['id', 'name']);

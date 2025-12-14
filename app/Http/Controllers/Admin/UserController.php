@@ -16,7 +16,9 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('shops')
+        $users = User::with(['shops' => function($query) {
+            $query->withPivot('main');
+        }])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -44,22 +46,31 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'nullable|string|email|max:255|unique:users',
             'login_id' => 'nullable|string|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
+            'main_shop_id' => 'nullable|exists:shops,id',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            'email' => $validated['email'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'password' => Hash::make($validated['password']),
         ]);
 
         if ($request->has('shop_ids')) {
-            $user->shops()->attach($request->shop_ids);
+            $shopIds = $request->shop_ids;
+            $mainShopId = $request->main_shop_id;
+            
+            // 店舗をアタッチ（mainフラグを設定）
+            foreach ($shopIds as $shopId) {
+                $user->shops()->attach($shopId, [
+                    'main' => ($shopId == $mainShopId)
+                ]);
+            }
         }
 
         return redirect()->route('admin.users.index')
@@ -71,12 +82,19 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $user->load('shops');
+        $user->load(['shops' => function($query) {
+            $query->withPivot('main');
+        }]);
         $shops = Shop::where('is_active', true)->get();
+        
+        // メイン店舗のIDを取得
+        $mainShop = $user->shops->firstWhere('pivot.main', true);
+        $mainShopId = $mainShop ? $mainShop->id : null;
 
         return Inertia::render('Admin/User/Edit', [
             'user' => $user,
             'shops' => $shops,
+            'main_shop_id' => $mainShopId,
         ]);
     }
 
@@ -87,16 +105,17 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
             'login_id' => 'nullable|string|max:255|unique:users,login_id,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
+            'main_shop_id' => 'nullable|exists:shops,id',
         ]);
 
         $user->update([
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            'email' => $validated['email'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
         ]);
 
@@ -107,7 +126,17 @@ class UserController extends Controller
         }
 
         if ($request->has('shop_ids')) {
-            $user->shops()->sync($request->shop_ids);
+            $shopIds = $request->shop_ids;
+            $mainShopId = $request->main_shop_id;
+            
+            // 店舗を同期（mainフラグを設定）
+            $syncData = [];
+            foreach ($shopIds as $shopId) {
+                $syncData[$shopId] = [
+                    'main' => ($shopId == $mainShopId)
+                ];
+            }
+            $user->shops()->sync($syncData);
         } else {
             $user->shops()->detach();
         }

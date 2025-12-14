@@ -1441,12 +1441,14 @@ onMounted(() => {
   console.log('[Dashboard] userShops:', userShops.value);
   console.log('[Dashboard] users:', users.value);
   
-  // 店舗単位：ログインユーザーの所属店舗の最初の店舗を選択
+  // 店舗単位：mainフラグが立っている店舗を優先的に選択、なければ最初の店舗を選択
   if (userShops.value.length > 0) {
-    selectedShopId.value = userShops.value[0].id;
-    selectedShopIdForCreate.value = userShops.value[0].id;
-    loadShopUsersForCreate(userShops.value[0].id);
-    console.log('[Dashboard] 店舗ID設定:', selectedShopId.value);
+    const mainShop = userShops.value.find(shop => shop.main === true || shop.main === 1);
+    const defaultShop = mainShop || userShops.value[0];
+    selectedShopId.value = defaultShop.id;
+    selectedShopIdForCreate.value = defaultShop.id;
+    loadShopUsersForCreate(defaultShop.id);
+    console.log('[Dashboard] 店舗ID設定:', selectedShopId.value, 'main:', defaultShop.main);
   }
   
   // ユーザー単位：ログインユーザーを選択
