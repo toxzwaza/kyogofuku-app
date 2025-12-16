@@ -73,6 +73,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/photo-slots', [AdminPhotoSlotController::class, 'index'])->name('photo-slots.index');
     Route::get('/photo-slots/create', [AdminPhotoSlotController::class, 'create'])->name('photo-slots.create');
     Route::post('/photo-slots', [AdminPhotoSlotController::class, 'store'])->name('photo-slots.store');
+    Route::put('/photo-slots/bulk-update', [AdminPhotoSlotController::class, 'bulkUpdate'])->name('photo-slots.bulk-update');
     Route::put('/photo-slots/{photoSlot}', [AdminPhotoSlotController::class, 'update'])->name('photo-slots.update');
     Route::delete('/photo-slots/{photoSlot}', [AdminPhotoSlotController::class, 'destroy'])->name('photo-slots.destroy');
     

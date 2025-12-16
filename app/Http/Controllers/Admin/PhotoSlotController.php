@@ -196,6 +196,78 @@ class PhotoSlotController extends Controller
     }
 
     /**
+     * 前撮り枠を一括更新（日付・担当店舗・スタジオ）
+     */
+    public function bulkUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'slot_ids' => 'required|array|min:1',
+            'slot_ids.*' => 'exists:photo_slots,id',
+            'shoot_date' => 'required|date',
+            'photo_studio_id' => 'required|exists:photo_studios,id',
+            'shop_ids' => 'nullable|array',
+            'shop_ids.*' => 'exists:shops,id',
+        ]);
+
+        $updatedCount = 0;
+        $skippedCount = 0;
+        $errors = [];
+
+        foreach ($validated['slot_ids'] as $slotId) {
+            $photoSlot = PhotoSlot::findOrFail($slotId);
+            
+            // 顧客が紐づいている場合はスキップ
+            if ($photoSlot->customer_id !== null) {
+                $skippedCount++;
+                $errors[] = "ID {$slotId} の枠は顧客が紐づいているためスキップしました。";
+                continue;
+            }
+
+            // 同じスタジオ、日付、時間の組み合わせが既に存在するかチェック（自分自身以外）
+            $existingSlot = PhotoSlot::where('photo_studio_id', $validated['photo_studio_id'])
+                ->where('shoot_date', $validated['shoot_date'])
+                ->where('shoot_time', $photoSlot->shoot_time)
+                ->where('id', '!=', $photoSlot->id)
+                ->first();
+
+            if ($existingSlot) {
+                $skippedCount++;
+                $errors[] = "ID {$slotId} の枠（{$photoSlot->shoot_time}）は既に同じ時間枠が存在するためスキップしました。";
+                continue;
+            }
+
+            // 日付とスタジオを更新
+            $photoSlot->update([
+                'shoot_date' => $validated['shoot_date'],
+                'photo_studio_id' => $validated['photo_studio_id'],
+            ]);
+
+            // 担当店舗を更新（中間テーブル）
+            if (isset($validated['shop_ids'])) {
+                $photoSlot->shops()->sync($validated['shop_ids']);
+            } else {
+                $photoSlot->shops()->detach();
+            }
+
+            $updatedCount++;
+        }
+
+        $message = "{$updatedCount}件の前撮り枠を更新しました。";
+        if ($skippedCount > 0) {
+            $message .= "（{$skippedCount}件はスキップ）";
+        }
+
+        $redirect = redirect()->route('admin.photo-slots.index')
+            ->with('success', $message);
+        
+        if (!empty($errors)) {
+            $redirect->with('slotErrors', $errors);
+        }
+        
+        return $redirect;
+    }
+
+    /**
      * 前撮り枠を削除
      */
     public function destroy(PhotoSlot $photoSlot)
