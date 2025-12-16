@@ -44,6 +44,33 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        担当店舗
+                                    </label>
+                                    <div class="space-y-2 border border-gray-300 rounded-md p-4 bg-gray-50">
+                                        <label
+                                            v-for="shop in shops"
+                                            :key="shop.id"
+                                            class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                :value="shop.id"
+                                                v-model="form.shop_ids"
+                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <span class="text-sm text-gray-700">{{ shop.name }}</span>
+                                        </label>
+                                        <p v-if="shops.length === 0" class="text-sm text-gray-500">
+                                            店舗が登録されていません
+                                        </p>
+                                    </div>
+                                    <div v-if="form.errors.shop_ids" class="mt-1 text-sm text-red-600">
+                                        {{ form.errors.shop_ids }}
+                                    </div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">
                                         撮影日 <span class="text-red-500">*</span>
                                     </label>
@@ -141,27 +168,6 @@
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        担当店舗
-                                    </label>
-                                    <select
-                                        v-model="form.shop_id"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    >
-                                        <option :value="null">選択してください</option>
-                                        <option
-                                            v-for="shop in shops"
-                                            :key="shop.id"
-                                            :value="shop.id"
-                                        >
-                                            {{ shop.name }}
-                                        </option>
-                                    </select>
-                                    <div v-if="form.errors.shop_id" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.shop_id }}
-                                    </div>
-                                </div>
 
                                 <div class="flex justify-end space-x-4 pt-4">
                                     <Link
@@ -195,14 +201,21 @@ import { ref, computed } from 'vue';
 const props = defineProps({
     photoStudios: Array,
     shops: Array,
+    photoSlotsWithShops: Array,
+    userShops: Array,
 });
 
 const form = useForm({
     photo_studio_id: '',
     shoot_date: '',
     shoot_times: [],
-    shop_id: null,
+    shop_ids: [],
 });
+
+// ログインユーザーの所属店舗をデフォルトで設定
+if (props.userShops && props.userShops.length > 0) {
+    form.shop_ids = props.userShops.map(shop => shop.id);
+}
 
 // 8:00から16:00まで30分間隔の時間スロットを生成
 const generateTimeSlots = () => {

@@ -23,6 +23,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\SesTestController;
+use App\Http\Controllers\TestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +39,8 @@ use App\Http\Controllers\SesTestController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('/test', [TestController::class, 'index'])->name('test');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 

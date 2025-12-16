@@ -18,7 +18,7 @@ class PhotoSlotController extends Controller
      */
     public function index()
     {
-        $photoSlots = PhotoSlot::with(['studio', 'customer', 'shop', 'user', 'plan'])
+        $photoSlots = PhotoSlot::with(['studio', 'customer', 'shops', 'user', 'plan'])
             ->orderBy('shoot_date', 'asc')
             ->orderBy('shoot_time', 'asc')
             ->get();
@@ -31,7 +31,7 @@ class PhotoSlotController extends Controller
 
         // 利用可能な前撮り枠（customer_idがnullのもの）を取得
         $availablePhotoSlots = PhotoSlot::whereNull('customer_id')
-            ->with(['studio', 'shop', 'plan'])
+            ->with(['studio', 'shops', 'plan'])
             ->orderBy('shoot_date', 'asc')
             ->orderBy('shoot_time', 'asc')
             ->get();
@@ -54,9 +54,24 @@ class PhotoSlotController extends Controller
         $photoStudios = PhotoStudio::orderBy('name')->get();
         $shops = Shop::where('is_active', true)->orderBy('name')->get();
 
+        // 既存のphoto_slot_shopに紐づいているスタジオ情報を取得
+        $photoSlotsWithShops = PhotoSlot::with(['studio', 'shops'])
+            ->whereHas('shops')
+            ->get();
+
+        // ログインユーザーの所属店舗を取得
+        $currentUser = auth()->user();
+        $userShops = $currentUser ? $currentUser->shops()
+            ->where('shops.is_active', true)
+            ->select('shops.id', 'shops.name')
+            ->orderBy('shops.name')
+            ->get() : collect();
+
         return Inertia::render('Admin/PhotoSlot/Create', [
             'photoStudios' => $photoStudios,
             'shops' => $shops,
+            'photoSlotsWithShops' => $photoSlotsWithShops,
+            'userShops' => $userShops,
         ]);
     }
 
@@ -70,7 +85,8 @@ class PhotoSlotController extends Controller
             'shoot_date' => 'required|date',
             'shoot_times' => 'required|array|min:1',
             'shoot_times.*' => 'required|date_format:H:i',
-            'shop_id' => 'nullable|exists:shops,id',
+            'shop_ids' => 'nullable|array',
+            'shop_ids.*' => 'exists:shops,id',
         ]);
 
         $createdCount = 0;
@@ -90,12 +106,16 @@ class PhotoSlotController extends Controller
                 continue;
             }
 
-            PhotoSlot::create([
+            $photoSlot = PhotoSlot::create([
                 'photo_studio_id' => $validated['photo_studio_id'],
                 'shoot_date' => $validated['shoot_date'],
                 'shoot_time' => $shootTime,
-                'shop_id' => $validated['shop_id'] ?? null,
             ]);
+
+            // 担当店舗を中間テーブルに保存
+            if (!empty($validated['shop_ids'])) {
+                $photoSlot->shops()->attach($validated['shop_ids']);
+            }
 
             $createdCount++;
         }
@@ -122,7 +142,8 @@ class PhotoSlotController extends Controller
     {
         $validated = $request->validate([
             'photo_slot_id' => 'required|exists:photo_slots,id',
-            'shop_id' => 'nullable|exists:shops,id',
+            'shop_ids' => 'nullable|array',
+            'shop_ids.*' => 'exists:shops,id',
             'assignment_label' => 'nullable|string|max:255',
             'user_id' => 'nullable|exists:users,id',
             'plan_id' => 'nullable|exists:plans,id',
@@ -145,23 +166,29 @@ class PhotoSlotController extends Controller
         // 新しい枠に顧客情報を移行
         $newSlot->update([
             'customer_id' => $customerId,
-            'shop_id' => $validated['shop_id'] ?? null,
             'assignment_label' => $validated['assignment_label'] ?? null,
             'user_id' => $validated['user_id'] ?? null,
             'plan_id' => $validated['plan_id'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
         ]);
 
+        // 担当店舗を更新（中間テーブル）
+        if (isset($validated['shop_ids'])) {
+            $newSlot->shops()->sync($validated['shop_ids']);
+        } else {
+            $newSlot->shops()->detach();
+        }
+
         // 元の枠が異なる場合は、元の枠から顧客を解除
         if ($photoSlot->id !== $newSlot->id) {
             $photoSlot->update([
                 'customer_id' => null,
-                'shop_id' => null,
                 'assignment_label' => null,
                 'user_id' => null,
                 'plan_id' => null,
                 'remarks' => null,
             ]);
+            $photoSlot->shops()->detach();
         }
 
         return redirect()->route('admin.photo-slots.index')

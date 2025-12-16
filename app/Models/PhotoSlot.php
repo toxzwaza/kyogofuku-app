@@ -9,7 +9,7 @@ class PhotoSlot extends Model
 {
     protected $fillable = [
         'photo_studio_id','shoot_date','shoot_time','customer_id','remarks',
-        'assignment_label','shop_id','user_id','plan_id'
+        'assignment_label','user_id','plan_id'
     ];
 
     public function studio()
@@ -22,9 +22,12 @@ class PhotoSlot extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function shop()
+    /**
+     * 担当店舗との多対多リレーション
+     */
+    public function shops()
     {
-        return $this->belongsTo(Shop::class);
+        return $this->belongsToMany(Shop::class, 'photo_slot_shop');
     }
 
     public function user()

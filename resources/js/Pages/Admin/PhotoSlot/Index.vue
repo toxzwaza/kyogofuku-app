@@ -92,9 +92,13 @@
                                                     <span class="text-gray-500 font-medium">担当者用メモラベル:</span>
                                                     <span class="ml-2 text-gray-900">{{ slot.assignment_label }}</span>
                                                 </div>
-                                                <div v-if="slot.shop">
+                                                <div v-if="slot.shops && slot.shops.length > 0">
                                                     <span class="text-gray-500 font-medium">担当店舗:</span>
-                                                    <span class="ml-2 text-gray-900">{{ slot.shop.name }}</span>
+                                                    <span class="ml-2 text-gray-900">
+                                                        <span v-for="(shop, index) in slot.shops" :key="shop.id">
+                                                            {{ shop.name }}<span v-if="index < slot.shops.length - 1">, </span>
+                                                        </span>
+                                                    </span>
                                                 </div>
                                                 <div v-if="slot.user">
                                                     <span class="text-gray-500 font-medium">担当者:</span>
@@ -154,20 +158,21 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        担当店舗 <span class="text-red-500">*</span>
+                                        担当店舗
                                     </label>
                                     <select
-                                        v-model="editForm.shop_id"
-                                        required
+                                        v-model="editForm.shop_ids"
+                                        multiple
                                         @change="onEditShopChange"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        size="5"
                                     >
-                                        <option value="">選択してください</option>
                                         <option v-for="shop in shops" :key="shop.id" :value="shop.id">
                                             {{ shop.name }}
                                         </option>
                                     </select>
-                                    <div v-if="editForm.errors.shop_id" class="mt-1 text-sm text-red-600">{{ editForm.errors.shop_id }}</div>
+                                    <div v-if="editForm.errors.shop_ids" class="mt-1 text-sm text-red-600">{{ editForm.errors.shop_ids }}</div>
+                                    <p class="mt-1 text-xs text-gray-500">Ctrlキー（MacではCommandキー）を押しながらクリックで複数選択</p>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -259,7 +264,7 @@
                                     </label>
                                     <select
                                         v-model="editForm.user_id"
-                                        :disabled="!editForm.shop_id"
+                                        :disabled="!editForm.shop_ids || editForm.shop_ids.length === 0"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     >
                                         <option :value="null">選択してください</option>
@@ -267,7 +272,7 @@
                                             {{ user.name }}
                                         </option>
                                     </select>
-                                    <p v-if="!editForm.shop_id" class="mt-1 text-xs text-gray-500">まず担当店舗を選択してください</p>
+                                    <p v-if="!editForm.shop_ids || editForm.shop_ids.length === 0" class="mt-1 text-xs text-gray-500">まず担当店舗を選択してください</p>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -385,7 +390,7 @@ const editShopUsers = ref([]);
 
 const editForm = useForm({
     photo_slot_id: '',
-    shop_id: '',
+    shop_ids: [],
     selected_studio_id: '',
     selected_date: '',
     assignment_label: null,
@@ -452,7 +457,7 @@ const openEditModal = (slot) => {
     
     // フォームに現在の値を設定
     editForm.photo_slot_id = slot.id;
-    editForm.shop_id = slot.shop?.id || '';
+    editForm.shop_ids = slot.shops ? slot.shops.map(shop => shop.id) : [];
     editForm.selected_studio_id = slot.studio?.id || '';
     editForm.selected_date = slot.shoot_date || '';
     editForm.assignment_label = slot.assignment_label || null;
@@ -460,9 +465,9 @@ const openEditModal = (slot) => {
     editForm.plan_id = slot.plan?.id || null;
     editForm.remarks = slot.remarks || '';
     
-    // 店舗が選択されている場合はユーザーを取得
-    if (editForm.shop_id) {
-        loadEditShopUsers(editForm.shop_id);
+    // 店舗が選択されている場合はユーザーを取得（最初の店舗を使用）
+    if (editForm.shop_ids && editForm.shop_ids.length > 0) {
+        loadEditShopUsers(editForm.shop_ids[0]);
     }
     
     showEditModal.value = true;
@@ -473,12 +478,13 @@ const availableEditStudios = computed(() => {
     if (!props.availablePhotoSlots || props.availablePhotoSlots.length === 0) {
         return props.photoStudios || [];
     }
-    if (!editForm.shop_id || editForm.shop_id === '') {
+    if (!editForm.shop_ids || editForm.shop_ids.length === 0) {
         return [];
     }
     const studios = new Map();
+    const shopIds = editForm.shop_ids.map(id => Number(id));
     props.availablePhotoSlots.forEach(slot => {
-        if (slot.studio && slot.shop?.id == editForm.shop_id && !studios.has(slot.studio.id)) {
+        if (slot.studio && slot.shops && slot.shops.some(shop => shopIds.includes(shop.id)) && !studios.has(slot.studio.id)) {
             studios.set(slot.studio.id, slot.studio);
         }
     });
@@ -494,13 +500,14 @@ const availableEditStudios = computed(() => {
 
 // 選択された会場の利用可能な日付を取得（担当店舗でフィルタリング）
 const availableEditDates = computed(() => {
-    if (!editForm.selected_studio_id || !editForm.shop_id || editForm.shop_id === '' || !props.availablePhotoSlots) {
+    if (!editForm.selected_studio_id || !editForm.shop_ids || editForm.shop_ids.length === 0 || !props.availablePhotoSlots) {
         return [];
     }
     const dates = new Set();
+    const shopIds = editForm.shop_ids.map(id => Number(id));
     props.availablePhotoSlots.forEach(slot => {
         if (slot.studio?.id == editForm.selected_studio_id && 
-            slot.shop?.id == editForm.shop_id) {
+            slot.shops && slot.shops.some(shop => shopIds.includes(shop.id))) {
             dates.add(slot.shoot_date);
         }
     });
@@ -513,13 +520,14 @@ const availableEditDates = computed(() => {
 
 // 選択された会場と日付の利用可能な時間枠を取得（担当店舗でフィルタリング）
 const availableEditTimeSlots = computed(() => {
-    if (!editForm.selected_studio_id || !editForm.selected_date || !editForm.shop_id || editForm.shop_id === '' || !props.availablePhotoSlots) {
+    if (!editForm.selected_studio_id || !editForm.selected_date || !editForm.shop_ids || editForm.shop_ids.length === 0 || !props.availablePhotoSlots) {
         return [];
     }
+    const shopIds = editForm.shop_ids.map(id => Number(id));
     const slots = props.availablePhotoSlots.filter(slot => {
         return slot.studio?.id == editForm.selected_studio_id && 
                slot.shoot_date === editForm.selected_date &&
-               slot.shop?.id == editForm.shop_id;
+               slot.shops && slot.shops.some(shop => shopIds.includes(shop.id));
     });
     // 現在選択中のスロットも含める
     if (selectedSlot.value && selectedSlot.value.id) {
@@ -540,8 +548,8 @@ const onEditShopChange = async () => {
     editForm.selected_date = '';
     editForm.photo_slot_id = '';
     
-    if (editForm.shop_id && editForm.shop_id !== '') {
-        await loadEditShopUsers(editForm.shop_id);
+    if (editForm.shop_ids && editForm.shop_ids.length > 0) {
+        await loadEditShopUsers(editForm.shop_ids[0]);
     } else {
         editShopUsers.value = [];
         editForm.user_id = null;
@@ -591,7 +599,7 @@ const updatePhotoSlot = () => {
     
     const formData = {
         ...editForm.data(),
-        shop_id: editForm.shop_id || null,
+        shop_ids: editForm.shop_ids || [],
         assignment_label: editForm.assignment_label || null,
         user_id: editForm.user_id || null,
         plan_id: editForm.plan_id || null,

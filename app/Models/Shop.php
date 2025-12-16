@@ -71,5 +71,13 @@ class Shop extends Model
     {
         return $this->hasMany(StaffSchedule::class);
     }
+
+    /**
+     * 前撮り枠との多対多リレーション
+     */
+    public function photoSlots()
+    {
+        return $this->belongsToMany(PhotoSlot::class, 'photo_slot_shop');
+    }
 }
 

@@ -165,7 +165,14 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.studio?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatDate(photoSlot.shoot_date) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatTime(photoSlot.shoot_time) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.shop?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <span v-if="photoSlot.shops && photoSlot.shops.length > 0">
+                                                <span v-for="(shop, index) in photoSlot.shops" :key="shop.id">
+                                                    {{ shop.name }}<span v-if="index < photoSlot.shops.length - 1">, </span>
+                                                </span>
+                                            </span>
+                                            <span v-else>-</span>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.user?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.plan?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.assignment_label || '-' }}</td>
@@ -652,11 +659,10 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        担当店舗 <span class="text-red-500">*</span>
+                                        担当店舗
                                     </label>
                                     <select
                                         v-model="photoSlotForm.shop_id"
-                                        required
                                         @change="onPhotoSlotShopChange"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                     >
@@ -1001,12 +1007,13 @@ const availableStudios = computed(() => {
     if (!props.availablePhotoSlots || props.availablePhotoSlots.length === 0) {
         return [];
     }
-    if (!photoSlotForm.shop_id || photoSlotForm.shop_id === '') {
+    if (!photoSlotForm.shop_id) {
         return [];
     }
     const studios = new Map();
+    const shopId = Number(photoSlotForm.shop_id);
     props.availablePhotoSlots.forEach(slot => {
-        if (slot.studio && slot.shop?.id == photoSlotForm.shop_id && !studios.has(slot.studio.id)) {
+        if (slot.studio && slot.shops && slot.shops.some(shop => shop.id === shopId) && !studios.has(slot.studio.id)) {
             studios.set(slot.studio.id, slot.studio);
         }
     });
@@ -1015,13 +1022,14 @@ const availableStudios = computed(() => {
 
 // 選択された会場の利用可能な日付を取得（担当店舗でフィルタリング）
 const availableDates = computed(() => {
-    if (!photoSlotForm.selected_studio_id || !photoSlotForm.shop_id || photoSlotForm.shop_id === '' || !props.availablePhotoSlots) {
+    if (!photoSlotForm.selected_studio_id || !photoSlotForm.shop_id || !props.availablePhotoSlots) {
         return [];
     }
     const dates = new Set();
+    const shopId = Number(photoSlotForm.shop_id);
     props.availablePhotoSlots.forEach(slot => {
         if (slot.studio?.id == photoSlotForm.selected_studio_id && 
-            slot.shop?.id == photoSlotForm.shop_id) {
+            slot.shops && slot.shops.some(shop => shop.id === shopId)) {
             dates.add(slot.shoot_date);
         }
     });
@@ -1030,13 +1038,14 @@ const availableDates = computed(() => {
 
 // 選択された会場と日付の利用可能な時間枠を取得（担当店舗でフィルタリング）
 const availableTimeSlots = computed(() => {
-    if (!photoSlotForm.selected_studio_id || !photoSlotForm.selected_date || !photoSlotForm.shop_id || photoSlotForm.shop_id === '' || !props.availablePhotoSlots) {
+    if (!photoSlotForm.selected_studio_id || !photoSlotForm.selected_date || !photoSlotForm.shop_id || !props.availablePhotoSlots) {
         return [];
     }
+    const shopId = Number(photoSlotForm.shop_id);
     return props.availablePhotoSlots.filter(slot => {
         return slot.studio?.id == photoSlotForm.selected_studio_id && 
                slot.shoot_date === photoSlotForm.selected_date &&
-               slot.shop?.id == photoSlotForm.shop_id;
+               slot.shops && slot.shops.some(shop => shop.id === shopId);
     }).sort((a, b) => a.shoot_time.localeCompare(b.shoot_time));
 });
 
@@ -1048,7 +1057,7 @@ const onPhotoSlotShopChange = async () => {
     photoSlotForm.photo_slot_id = '';
     
     // 担当者を取得
-    if (photoSlotForm.shop_id && photoSlotForm.shop_id !== '') {
+    if (photoSlotForm.shop_id) {
         await loadPhotoSlotShopUsers(photoSlotForm.shop_id);
     } else {
         photoSlotShopUsers.value = [];

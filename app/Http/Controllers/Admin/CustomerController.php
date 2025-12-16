@@ -141,7 +141,7 @@ class CustomerController extends Controller
             'contracts.plan',
             'contracts.user',
             'photoSlots.studio',
-            'photoSlots.shop',
+            'photoSlots.shops',
             'photoSlots.user',
             'photoSlots.plan',
             'photos.type',
@@ -175,7 +175,7 @@ class CustomerController extends Controller
 
         // 事前に登録された前撮り枠（customer_idがnullのもの）を取得
         $availablePhotoSlots = PhotoSlot::whereNull('customer_id')
-            ->with(['studio', 'shop', 'plan'])
+            ->with(['studio', 'shops', 'plan'])
             ->orderBy('shoot_date', 'asc')
             ->orderBy('shoot_time', 'asc')
             ->get();
@@ -274,12 +274,18 @@ class CustomerController extends Controller
 
         $photoSlot->update([
             'customer_id' => $customer->id,
-            'shop_id' => $validated['shop_id'] ?? null,
             'assignment_label' => $validated['assignment_label'] ?? null,
             'user_id' => $validated['user_id'] ?? null,
             'plan_id' => $validated['plan_id'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
         ]);
+
+        // 担当店舗を中間テーブルに保存
+        if (!empty($validated['shop_id'])) {
+            $photoSlot->shops()->sync([$validated['shop_id']]);
+        } else {
+            $photoSlot->shops()->detach();
+        }
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '前撮り情報を追加しました。');
