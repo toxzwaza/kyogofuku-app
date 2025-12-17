@@ -94,11 +94,37 @@ class ScheduleController extends Controller
 
         // モードに応じたフィルタリング
         if ($mode === 'shop' && $shopId) {
-            // 店舗単位：特定の店舗に所属するユーザーのスケジュールを取得
+            // 店舗単位：参加者から検索
             $shop = Shop::find($shopId);
             if ($shop) {
-                $shopUserIds = $shop->users()->pluck('users.id');
-                $query->whereIn('user_id', $shopUserIds);
+                $currentUser = auth()->user();
+                $isCurrentUserMultiShop = $currentUser && $currentUser->shops()->count() > 1;
+                
+                if ($isCurrentUserMultiShop) {
+                    // ログインユーザーが複数店舗所属者の場合：shop_idに所属する全ユーザーで検索
+                    $shopUserIds = $shop->users()->pluck('users.id')->toArray();
+                } else {
+                    // ログインユーザーが単一店舗所属者の場合：複数所属者はmainフラグで絞り込み
+                    $shopUserIds = $shop->users()
+                        ->get()
+                        ->filter(function($user) use ($shopId) {
+                            $userShops = $user->shops;
+                            // 1店舗のみ所属している場合は含める
+                            if ($userShops->count() === 1) {
+                                return true;
+                            }
+                            // 複数店舗所属の場合、該当店舗がメイン店舗の場合のみ含める
+                            $mainShop = $userShops->firstWhere('pivot.main', true);
+                            return $mainShop && $mainShop->id == $shopId;
+                        })
+                        ->pluck('id')
+                        ->toArray();
+                }
+                
+                // 参加者のみから検索
+                $query->whereHas('participantUsers', function($q) use ($shopUserIds) {
+                    $q->whereIn('users.id', $shopUserIds);
+                });
             }
         } elseif ($mode === 'user' && $userId) {
             // ユーザー単位：特定のユーザーが参加者として登録されているスケジュールを取得
