@@ -101,6 +101,99 @@
                 </div>
               </div>
             </div>
+
+            <!-- 勤怠データ出力セクション -->
+            <div class="mt-6 border-t pt-4">
+              <button
+                @click="showAttendanceExport = !showAttendanceExport"
+                class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-indigo-600"
+              >
+                <svg
+                  :class="['w-4 h-4 transition-transform', showAttendanceExport ? 'rotate-90' : '']"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                勤怠データ出力
+              </button>
+              
+              <div v-if="showAttendanceExport" class="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
+                <div class="flex items-end gap-4">
+                  <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">集計開始日</label>
+                    <input
+                      v-model="attendanceStartDate"
+                      type="date"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">集計終了日</label>
+                    <input
+                      v-model="attendanceEndDate"
+                      type="date"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+                  <div class="flex gap-2">
+                    <ActionButton
+                      variant="search"
+                      :disabled="exportingAttendance"
+                      @click="loadAttendanceData"
+                    >
+                      {{ exportingAttendance ? '読込中...' : '表示' }}
+                    </ActionButton>
+                    <ActionButton
+                      variant="save"
+                      :disabled="exportingAttendance || attendanceData.length === 0"
+                      @click="exportAttendanceCsv"
+                    >
+                      TXTダウンロード
+                    </ActionButton>
+                  </div>
+                </div>
+                
+                <!-- 勤怠テーブル -->
+                <div v-if="attendanceData.length > 0" class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-100">
+                      <tr>
+                        <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">日付</th>
+                        <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">作業時間内訳</th>
+                        <th class="whitespace-nowrap px-3 py-2 text-right font-medium text-gray-700">勤務時間(h)</th>
+                        <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">概要</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                      <tr v-for="row in attendanceData" :key="row.date" class="hover:bg-gray-50">
+                        <td class="px-3 py-2 whitespace-nowrap">{{ row.date }}</td>
+                        <td class="px-3 py-2 text-xs text-gray-600">{{ row.timeRanges }}</td>
+                        <td class="px-3 py-2 text-right font-medium">{{ row.totalHours }}</td>
+                        <td class="px-3 py-2 text-xs text-gray-600">{{ row.titles }}</td>
+                      </tr>
+                    </tbody>
+                    <tfoot class="bg-gray-100">
+                      <tr>
+                        <td class="px-3 py-2 font-medium">合計</td>
+                        <td class="px-3 py-2"></td>
+                        <td class="px-3 py-2 text-right font-bold">{{ attendanceTotalHours }}時間</td>
+                        <td class="px-3 py-2"></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                
+                <!-- 労働時間グラフ -->
+                <div v-if="attendanceData.length > 0" class="mt-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-2">日毎の労働時間推移</h4>
+                  <div class="bg-white p-4 rounded border" style="height: 250px;">
+                    <Bar :data="attendanceChartData" :options="attendanceChartOptions" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1305,10 +1398,23 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import StatCard from "../Components/StatCard.vue";
 import TrendChart from "../Components/TrendChart.vue";
 import FullCalendar from "@fullcalendar/vue3";
+import { Bar } from "vue-chartjs";
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+} from "chart.js";
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -1419,6 +1525,113 @@ const getTodayDateString = () => {
   return `${year}-${month}-${date}`;
 };
 const selectedUserDate = ref(getTodayDateString());
+
+// 勤怠データ出力
+const showAttendanceExport = ref(false);
+
+// デフォルト日付を計算（20日締め）
+const getDefaultAttendanceDates = () => {
+  const today = new Date();
+  const currentDay = today.getDate();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  
+  let startDate, endDate;
+  
+  if (currentDay >= 21) {
+    // 21日以降：今月21日〜来月20日
+    startDate = new Date(currentYear, currentMonth, 21);
+    endDate = new Date(currentYear, currentMonth + 1, 20);
+  } else {
+    // 20日以前：前月21日〜今月20日
+    startDate = new Date(currentYear, currentMonth - 1, 21);
+    endDate = new Date(currentYear, currentMonth, 20);
+  }
+  
+  const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  
+  return {
+    start: formatDate(startDate),
+    end: formatDate(endDate),
+  };
+};
+
+const defaultDates = getDefaultAttendanceDates();
+const attendanceStartDate = ref(defaultDates.start);
+const attendanceEndDate = ref(defaultDates.end);
+const exportingAttendance = ref(false);
+const attendanceData = ref([]);
+
+// 勤怠データの合計時間
+const attendanceTotalHours = computed(() => {
+  return attendanceData.value.reduce((sum, row) => sum + parseFloat(row.totalHours), 0).toFixed(1);
+});
+
+// Chart.jsのグラフデータ
+const attendanceChartData = computed(() => ({
+  labels: attendanceData.value.map(row => row.date.slice(5)), // MM-DD形式
+  datasets: [
+    {
+      label: '勤務時間 (h)',
+      data: attendanceData.value.map(row => parseFloat(row.totalHours)),
+      backgroundColor: 'rgba(99, 102, 241, 0.7)',
+      borderColor: 'rgb(99, 102, 241)',
+      borderWidth: 1,
+      borderRadius: 4,
+    },
+  ],
+}));
+
+// Chart.jsのオプション
+const attendanceChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      callbacks: {
+        title: (context) => {
+          const index = context[0].dataIndex;
+          return attendanceData.value[index]?.date || '';
+        },
+        label: (context) => {
+          const index = context.dataIndex;
+          const row = attendanceData.value[index];
+          return [`勤務時間: ${row.totalHours}h`];
+        },
+        afterLabel: (context) => {
+          const index = context.dataIndex;
+          const row = attendanceData.value[index];
+          const lines = [];
+          if (row.timeRanges) {
+            lines.push(`時間帯: ${row.timeRanges}`);
+          }
+          if (row.titles) {
+            lines.push(`タスク: ${row.titles}`);
+          }
+          return lines;
+        },
+      },
+    },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: '時間 (h)',
+      },
+    },
+    x: {
+      title: {
+        display: true,
+        text: '日付',
+      },
+    },
+  },
+}));
 const shops = computed(() => props.shops || []);
 const userShops = computed(() => props.userShops || []);
 const users = computed(() => props.users || []);
@@ -1433,6 +1646,123 @@ function handleResize() {
   resizeTimeout = setTimeout(() => {
     syncCalendarHeights();
   }, 150);
+}
+
+// 勤怠データを読み込む
+async function loadAttendanceData() {
+  if (!attendanceStartDate.value || !attendanceEndDate.value) {
+    alert('集計開始日と集計終了日を選択してください。');
+    return;
+  }
+  
+  exportingAttendance.value = true;
+  
+  try {
+    // 終了日を+1日して、その日まで含めるようにする
+    const endDate = new Date(attendanceEndDate.value);
+    endDate.setDate(endDate.getDate() + 1);
+    const endDateStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+    
+    const response = await axios.get(route('admin.schedules.index'), {
+      params: {
+        start: attendanceStartDate.value,
+        end: endDateStr,
+        mode: 'user',
+        user_id: props.currentUser.id,
+      }
+    });
+    
+    // 日付ごとにグループ化（終日予定は除外）
+    const groupedByDate = {};
+    response.data.forEach(schedule => {
+      // 終日予定は除外
+      if (schedule.allDay) return;
+      
+      const startDate = new Date(schedule.start);
+      const dateKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+      
+      if (!groupedByDate[dateKey]) {
+        groupedByDate[dateKey] = [];
+      }
+      groupedByDate[dateKey].push(schedule);
+    });
+    
+    // データを生成
+    const data = [];
+    
+    Object.keys(groupedByDate).sort().forEach(date => {
+      const schedules = groupedByDate[date];
+      const timeRanges = [];
+      let totalMinutes = 0;
+      const titles = [];
+      
+      schedules.forEach(s => {
+        const start = new Date(s.start);
+        const end = new Date(s.end);
+        
+        // 時間範囲をフォーマット
+        const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+        const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+        timeRanges.push(`${startTime}-${endTime}`);
+        
+        // 分数を計算
+        totalMinutes += (end - start) / (1000 * 60);
+        
+        // タイトルを追加
+        if (s.title && !titles.includes(s.title)) {
+          titles.push(s.title);
+        }
+      });
+      
+      data.push({
+        date,
+        timeRanges: timeRanges.join(' / '),
+        totalHours: (totalMinutes / 60).toFixed(1),
+        titles: titles.join(', '),
+      });
+    });
+    
+    attendanceData.value = data;
+    
+  } catch (error) {
+    console.error('勤怠データの取得に失敗しました:', error);
+    alert('勤怠データの取得に失敗しました。');
+  } finally {
+    exportingAttendance.value = false;
+  }
+}
+
+// 勤怠データTXT出力
+function exportAttendanceCsv() {
+  if (attendanceData.value.length === 0) {
+    alert('先にデータを表示してください。');
+    return;
+  }
+  
+  const lines = [];
+  lines.push('日付        | 時間(h) | 作業時間内訳                                     | 概要');
+  lines.push('------------|---------|--------------------------------------------------|--------------------------------------------------');
+  
+  attendanceData.value.forEach(row => {
+    const date = row.date.padEnd(11);
+    const hours = row.totalHours.toString().padStart(5).padEnd(7);
+    const timeRanges = row.timeRanges.substring(0, 48).padEnd(48);
+    const titles = row.titles.substring(0, 50);
+    lines.push(`${date} | ${hours} | ${timeRanges} | ${titles}`);
+  });
+  
+  // 合計行
+  lines.push('------------|---------|--------------------------------------------------|--------------------------------------------------');
+  lines.push(`合計        | ${attendanceTotalHours.value.toString().padStart(5).padEnd(7)} |                                                  |`);
+  
+  // TXTダウンロード
+  const txtContent = lines.join('\n');
+  const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `勤怠データ_${attendanceStartDate.value}_${attendanceEndDate.value}.txt`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 // デフォルト値を設定
