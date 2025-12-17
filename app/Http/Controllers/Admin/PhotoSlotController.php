@@ -38,6 +38,11 @@ class PhotoSlotController extends Controller
             ->orderBy('shoot_time', 'asc')
             ->get();
 
+        // スケジュール登録済みの前撮り枠IDを取得
+        $scheduledSlotIds = StaffSchedule::whereNotNull('photo_slot_id')
+            ->pluck('photo_slot_id')
+            ->toArray();
+
         return Inertia::render('Admin/PhotoSlot/Index', [
             'photoSlots' => $photoSlots,
             'photoStudios' => $photoStudios,
@@ -45,6 +50,7 @@ class PhotoSlotController extends Controller
             'plans' => $plans,
             'users' => $users,
             'availablePhotoSlots' => $availablePhotoSlots,
+            'scheduledSlotIds' => $scheduledSlotIds,
         ]);
     }
 
@@ -327,6 +333,57 @@ class PhotoSlotController extends Controller
 
         return redirect()->route('admin.photo-slots.index')
             ->with('success', '前撮り枠を削除しました。');
+    }
+
+    /**
+     * 前撮り枠に対するスケジュールを作成
+     */
+    public function createSchedule(Request $request)
+    {
+        $validated = $request->validate([
+            'photo_slot_id' => 'required|exists:photo_slots,id',
+        ]);
+
+        $photoSlot = PhotoSlot::with(['studio', 'shops.users'])->findOrFail($validated['photo_slot_id']);
+
+        // 既にスケジュールが存在するか確認
+        $existingSchedule = StaffSchedule::where('photo_slot_id', $photoSlot->id)->first();
+        if ($existingSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'この前撮り枠には既にスケジュールが登録されています。',
+            ], 400);
+        }
+
+        $studioName = $photoSlot->studio ? $photoSlot->studio->name : '未設定';
+        $shootDate = Carbon::parse($photoSlot->shoot_date);
+
+        $schedule = StaffSchedule::create([
+            'user_id' => $request->user()->id,
+            'photo_slot_id' => $photoSlot->id,
+            'title' => '[前撮り]' . $studioName,
+            'start_at' => $shootDate->copy()->setTime(0, 0, 1),
+            'end_at' => $shootDate->copy()->setTime(23, 59, 59),
+            'all_day' => true,
+            'color' => '#fe1616',
+        ]);
+
+        // 担当店舗に所属するスタッフ全員を参加者として登録
+        $participantUserIds = [];
+        foreach ($photoSlot->shops as $shop) {
+            foreach ($shop->users as $user) {
+                $participantUserIds[] = $user->id;
+            }
+        }
+        if (!empty($participantUserIds)) {
+            $schedule->participantUsers()->sync(array_unique($participantUserIds));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'スケジュールを作成しました。',
+            'schedule_id' => $schedule->id,
+        ]);
     }
 }
 
