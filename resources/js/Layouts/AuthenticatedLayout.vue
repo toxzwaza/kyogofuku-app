@@ -26,6 +26,8 @@ const menuItems = [
         subItems: [
             { label: '前撮り一覧', route: 'admin.photo-slots.index' },
             { label: '前撮り枠追加', route: 'admin.photo-slots.create' },
+            { label: 'スタジオ一覧', route: 'admin.photo-studios.index' },
+            { label: 'スタジオ追加', route: 'admin.photo-studios.create' },
         ],
     },
     {
