@@ -30,16 +30,21 @@
               スケジュール管理
             </h3>
             
-            <!-- 横並びで2つのカレンダーを表示 -->
-            <div class="flex gap-4 items-stretch">
-              <!-- 店舗単位カレンダー（70%幅） -->
-              <div style="flex: 0 0 70%; width: 70%;" class="flex flex-col">
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">店舗単位</label>
+            <!-- 縦並びで2つのカレンダーを表示 -->
+            <div class="space-y-6">
+              <!-- 店舗単位カレンダー -->
+              <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    店舗単位スケジュール
+                  </h4>
                   <select
                     v-model="selectedShopId"
                     @change="onShopChange"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    class="w-48 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                   >
                     <option value="">店舗を選択</option>
                     <option v-for="shop in userShops" :key="shop.id" :value="shop.id">
@@ -47,57 +52,45 @@
                     </option>
                   </select>
                 </div>
-                <div class="flex-1 min-h-0">
-                  <FullCalendar ref="shopCalendar" :options="shopCalendarOptions" class="h-full" />
+                <div class="bg-white rounded-lg shadow-sm" style="min-height: 600px;">
+                  <FullCalendar ref="shopCalendar" :options="shopCalendarOptions" />
                 </div>
               </div>
 
-              <!-- ユーザー単位カレンダー（30%幅） -->
-              <div style="flex: 0 0 30%; width: 30%;" class="flex flex-col">
-                <div class="mb-4 space-y-2">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">ユーザー単位</label>
+              <!-- ユーザー単位カレンダー -->
+              <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    ユーザー単位スケジュール
+                  </h4>
+                  <div class="flex items-center gap-3">
+                    <select
+                      v-model="selectedUserShopId"
+                      @change="onUserShopChange"
+                      class="w-40 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    >
+                      <option value="">店舗を選択</option>
+                      <option v-for="shop in userShops" :key="shop.id" :value="shop.id">
+                        {{ shop.name }}
+                      </option>
+                    </select>
                     <select
                       v-model="selectedUserId"
                       @change="onUserChange"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      class="w-40 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                     >
                       <option value="">ユーザーを選択</option>
-                      <option v-for="user in users" :key="user.id" :value="user.id">
+                      <option v-for="user in filteredUsersForUserCalendar" :key="user.id" :value="user.id">
                         {{ user.name }}
                       </option>
                     </select>
                   </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">表示日付</label>
-                    <div class="flex items-center gap-2">
-                      <button
-                        @click="changeUserDate(-1)"
-                        type="button"
-                        class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium"
-                        title="一日前"
-                      >
-                        ←
-                      </button>
-                      <input
-                        v-model="selectedUserDate"
-                        type="date"
-                        @change="onUserDateChange"
-                        class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                      />
-                      <button
-                        @click="changeUserDate(1)"
-                        type="button"
-                        class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium"
-                        title="一日後"
-                      >
-                        →
-                      </button>
-                    </div>
-                  </div>
                 </div>
-                <div class="flex-1 min-h-0">
-                  <FullCalendar ref="userCalendar" :options="userCalendarOptions" class="h-full" />
+                <div class="bg-white rounded-lg shadow-sm" style="min-height: 500px;">
+                  <FullCalendar ref="userCalendar" :options="userCalendarOptions" />
                 </div>
               </div>
             </div>
@@ -1516,6 +1509,38 @@ const shopCalendar = ref(null);
 const userCalendar = ref(null);
 const selectedShopId = ref("");
 const selectedUserId = ref("");
+const selectedUserShopId = ref(""); // ユーザー単位カレンダー用の店舗選択
+const usersForUserCalendar = ref([]); // ユーザー単位カレンダー用のユーザーリスト
+
+// ユーザー単位カレンダー用の店舗変更時の処理
+async function onUserShopChange() {
+  if (!selectedUserShopId.value) {
+    usersForUserCalendar.value = [];
+    selectedUserId.value = "";
+    return;
+  }
+  
+  try {
+    const response = await axios.get(route('admin.schedules.shop-users'), {
+      params: { shop_id: selectedUserShopId.value }
+    });
+    usersForUserCalendar.value = response.data;
+    
+    // 現在選択中のユーザーがリストにいない場合はクリア
+    if (selectedUserId.value && !response.data.some(u => u.id === selectedUserId.value)) {
+      selectedUserId.value = "";
+    }
+  } catch (error) {
+    console.error('店舗ユーザーの取得に失敗しました:', error);
+    usersForUserCalendar.value = [];
+  }
+}
+
+// フィルタリングされたユーザーリスト
+const filteredUsersForUserCalendar = computed(() => {
+  return usersForUserCalendar.value;
+});
+
 // ユーザー単位カレンダーの表示日付（デフォルトは今日）
 const getTodayDateString = () => {
   const today = new Date();
@@ -1782,8 +1807,26 @@ onMounted(() => {
     console.log('[Dashboard] 店舗ID設定:', selectedShopId.value, 'main:', defaultShop.main);
   }
   
-  // ユーザー単位：ログインユーザーを選択
-  if (props.currentUser) {
+  // ユーザー単位：店舗とログインユーザーを選択
+  if (userShops.value.length > 0) {
+    const mainShop = userShops.value.find(shop => shop.main === true || shop.main === 1);
+    const defaultShop = mainShop || userShops.value[0];
+    selectedUserShopId.value = defaultShop.id;
+    // 店舗ユーザーを読み込み
+    onUserShopChange().then(() => {
+      if (props.currentUser) {
+        selectedUserId.value = props.currentUser.id;
+        console.log('[Dashboard] ユーザーID設定:', selectedUserId.value);
+        // ユーザー設定後にカレンダーをリフレッシュ
+        setTimeout(() => {
+          if (userCalendar.value && selectedUserId.value) {
+            console.log('[Dashboard] ユーザー単位カレンダーをリフレッシュ（初期化）');
+            userCalendar.value.getApi().refetchEvents();
+          }
+        }, 100);
+      }
+    });
+  } else if (props.currentUser) {
     selectedUserId.value = props.currentUser.id;
     console.log('[Dashboard] ユーザーID設定:', selectedUserId.value);
   } else {
@@ -1806,23 +1849,6 @@ onMounted(() => {
       console.log('[Dashboard] 店舗単位カレンダーをリフレッシュ');
       shopCalendar.value.getApi().refetchEvents();
     }
-    if (userCalendar.value && selectedUserId.value) {
-      console.log('[Dashboard] ユーザー単位カレンダーをリフレッシュ');
-      // 初期日付を設定
-      const initialDate = new Date(selectedUserDate.value);
-      userCalendar.value.getApi().gotoDate(initialDate);
-      userCalendar.value.getApi().refetchEvents();
-    } else {
-      console.warn('[Dashboard] ユーザー単位カレンダーのリフレッシュをスキップ:', {
-        userCalendar: !!userCalendar.value,
-        selectedUserId: selectedUserId.value
-      });
-    }
-    
-    // カレンダーの高さを揃える
-    setTimeout(() => {
-      syncCalendarHeights();
-    }, 500);
   }, 200);
 });
 
@@ -1834,28 +1860,10 @@ onUnmounted(() => {
   }
 });
 
-// カレンダーの高さを同期する関数
+// カレンダーの高さを同期する関数（縦並びレイアウトでは不要だが互換性のため残す）
 function syncCalendarHeights() {
-  if (shopCalendar.value && userCalendar.value) {
-    const shopCalendarEl = shopCalendar.value.getApi().el;
-    const userCalendarEl = userCalendar.value.getApi().el;
-    
-    if (shopCalendarEl && userCalendarEl) {
-      // 店舗単位カレンダーの実際の高さを取得
-      const shopHeight = shopCalendarEl.offsetHeight;
-      if (shopHeight > 0) {
-        // ユーザー単位カレンダーの高さを店舗単位カレンダーに合わせる
-        userCalendar.value.getApi().setOption('height', shopHeight);
-        // 少し待ってから再度確認（レンダリングが完了するまで待つ）
-        setTimeout(() => {
-          const updatedShopHeight = shopCalendarEl.offsetHeight;
-          if (updatedShopHeight > 0 && updatedShopHeight !== shopHeight) {
-            userCalendar.value.getApi().setOption('height', updatedShopHeight);
-          }
-        }, 100);
-      }
-    }
-  }
+  // 縦並びレイアウトでは高さ同期は不要
+  // 各カレンダーは固定高さで表示される
 }
 
 // 時間をフォーマット
@@ -1998,14 +2006,6 @@ const shopCalendarOptions = ref({
   eventMouseLeave: handleEventMouseLeave,
   events: loadShopSchedules,
   eventContent: renderShopEventContent,
-  viewDidMount: () => {
-    // ビューがマウントされた後に高さを同期
-    setTimeout(() => syncCalendarHeights(), 100);
-  },
-  eventsSet: () => {
-    // イベントが読み込まれた後に高さを同期
-    setTimeout(() => syncCalendarHeights(), 100);
-  },
 });
 
 // 今日の日付を取得（開始時刻と終了時刻）
@@ -2020,13 +2020,13 @@ const getTodayRange = () => {
   return { start, end };
 };
 
-// ユーザー単位カレンダーオプション（選択された日付を表示、日表示）
+// ユーザー単位カレンダーオプション（週表示）
 const userCalendarOptions = computed(() => ({
-  plugins: [timeGridPlugin, interactionPlugin],
-  initialView: "timeGridDay",
+  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+  initialView: "timeGridWeek",
   locale: jaLocale,
   headerToolbar: {
-    left: "",
+    left: "prev,next today",
     center: "title",
     right: "",
   },
@@ -2042,37 +2042,9 @@ const userCalendarOptions = computed(() => ({
   eventMouseEnter: handleEventMouseEnter,
   eventMouseLeave: handleEventMouseLeave,
   events: loadUserSchedules,
-  slotMinTime: "00:00:00",
+  slotMinTime: "06:00:00",
   slotMaxTime: "24:00:00",
   slotDuration: "00:30:00",
-  viewDidMount: () => {
-    // ビューがマウントされた後に高さを同期
-    setTimeout(() => syncCalendarHeights(), 100);
-  },
-  eventsSet: () => {
-    // イベントが読み込まれた後に高さを同期
-    setTimeout(() => syncCalendarHeights(), 100);
-  },
-  validRange: () => {
-    // 選択された日付を使用
-    const selectedDate = new Date(selectedUserDate.value);
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const date = selectedDate.getDate();
-    
-    // ローカルタイムゾーンで選択された日付を取得
-    const start = new Date(year, month, date);
-    const end = new Date(year, month, date + 1);
-    
-    // YYYY-MM-DD形式で返す（タイムゾーンを考慮）
-    const startStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-    const endStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date + 1).padStart(2, '0')}`;
-    
-    return {
-      start: startStr,
-      end: endStr,
-    };
-  },
 }));
 
 // 店舗単位スケジュール読み込み
@@ -2107,68 +2079,33 @@ function loadShopSchedules(info, successCallback, failureCallback) {
     });
 }
 
-// ユーザー単位スケジュール読み込み（選択された日付）
+// ユーザー単位スケジュール読み込み（カレンダーの表示期間）
 function loadUserSchedules(info, successCallback, failureCallback) {
-  console.log('[loadUserSchedules] 関数呼び出し');
-  console.log('[loadUserSchedules] info:', info);
-  console.log('[loadUserSchedules] selectedUserId:', selectedUserId.value);
-  console.log('[loadUserSchedules] selectedUserDate:', selectedUserDate.value);
-  
   // ユーザーが選択されていない場合は空の配列を返す
   if (!selectedUserId.value) {
-    console.warn('[loadUserSchedules] ユーザーが選択されていません。空の配列を返します。');
     if (successCallback) {
       successCallback([]);
     }
     return;
   }
 
-  // 選択された日付の範囲を取得
-  const selectedDate = new Date(selectedUserDate.value);
-  const year = selectedDate.getFullYear();
-  const month = selectedDate.getMonth();
-  const date = selectedDate.getDate();
-  
-  // ローカルタイムゾーンで選択された日付の開始時刻と終了時刻を取得
-  const startDate = new Date(year, month, date, 0, 0, 0);
-  const endDate = new Date(year, month, date, 23, 59, 59);
-  
-  // ローカルタイムゾーンの日時文字列を作成（YYYY-MM-DDTHH:mm:ss形式）
-  const formatLocalDateTime = (date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    const h = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    const s = String(date.getSeconds()).padStart(2, '0');
-    return `${y}-${m}-${d}T${h}:${min}:${s}`;
-  };
-  
-  const dateStart = formatLocalDateTime(startDate);
-  const dateEnd = formatLocalDateTime(endDate);
-  
+  // FullCalendarから渡される表示期間を使用
   const params = {
-    start: dateStart,
-    end: dateEnd,
+    start: info?.startStr || new Date().toISOString(),
+    end: info?.endStr || new Date().toISOString(),
     mode: 'user',
     user_id: selectedUserId.value,
   };
 
-  console.log('[loadUserSchedules] リクエストパラメータ:', params);
-  console.log('[loadUserSchedules] リクエストURL:', route("admin.schedules.index"));
-
   axios
     .get(route("admin.schedules.index"), { params })
     .then((response) => {
-      console.log('[loadUserSchedules] レスポンス取得成功:', response.data);
-      console.log('[loadUserSchedules] スケジュール数:', response.data?.length || 0);
       if (successCallback) {
         successCallback(response.data);
       }
     })
     .catch((error) => {
-      console.error("[loadUserSchedules] スケジュールの取得に失敗しました:", error);
-      console.error("[loadUserSchedules] エラー詳細:", error.response?.data || error.message);
+      console.error("スケジュールの取得に失敗しました:", error);
       if (failureCallback) {
         failureCallback(error);
       }
