@@ -586,6 +586,7 @@
                         v-model="editScheduleForm.start_at"
                         type="datetime-local"
                         required
+                        @change="onEditStartAtChange"
                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                       />
                     </div>
@@ -2046,6 +2047,15 @@ function startEditSchedule() {
 }
 
 // スケジュール更新
+// 編集フォームの開始日時変更時の処理（終日の場合、終了日時を自動設定）
+function onEditStartAtChange() {
+  if (editScheduleForm.value.all_day && editScheduleForm.value.start_at) {
+    // 開始日時の日付部分を取得して23:59に設定
+    const startDate = editScheduleForm.value.start_at.split('T')[0];
+    editScheduleForm.value.end_at = `${startDate}T23:59`;
+  }
+}
+
 function updateScheduleFromDashboard() {
   if (!selectedScheduleDetail.value) {
     console.error('selectedScheduleDetailが存在しません');
