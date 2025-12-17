@@ -1,4 +1,4 @@
-<template>
+    <template>
     <Head title="前撮り管理" />
 
     <AuthenticatedLayout>
