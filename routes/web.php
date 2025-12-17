@@ -130,6 +130,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/customers/{customer}/contracts', [AdminCustomerController::class, 'storeContract'])->name('customers.contracts.store');
     Route::post('/customers/{customer}/photo-slots', [AdminCustomerController::class, 'storePhotoSlot'])->name('customers.photo-slots.store');
     Route::post('/customers/{customer}/photos', [AdminCustomerController::class, 'storeCustomerPhoto'])->name('customers.photos.store');
+    Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])->name('customers.destroy');
     
     // スタッフ管理
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');

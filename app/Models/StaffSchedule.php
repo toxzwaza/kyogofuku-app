@@ -12,6 +12,7 @@ class StaffSchedule extends Model
     protected $fillable = [
         'user_id',
         'event_reservation_id',
+        'photo_slot_id',
         'title',
         'description',
         'start_at',
@@ -57,5 +58,13 @@ class StaffSchedule extends Model
     public function reservation()
     {
         return $this->belongsTo(EventReservation::class, 'event_reservation_id');
+    }
+
+    /**
+     * 前撮り枠とのリレーション
+     */
+    public function photoSlot()
+    {
+        return $this->belongsTo(PhotoSlot::class);
     }
 }

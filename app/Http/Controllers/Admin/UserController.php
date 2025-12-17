@@ -14,16 +14,49 @@ class UserController extends Controller
     /**
      * スタッフ一覧を表示
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['shops' => function($query) {
+        $currentUser = $request->user();
+        $currentUserShops = $currentUser->shops()->withPivot('main')->get();
+        
+        // デフォルト店舗を取得（メイン店舗、なければ最初の店舗）
+        $defaultShop = $currentUserShops->firstWhere('pivot.main', true) ?? $currentUserShops->first();
+        $defaultShopId = $defaultShop ? $defaultShop->id : null;
+        
+        $query = User::with(['shops' => function($query) {
             $query->withPivot('main');
-        }])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        }]);
+
+        // 店舗でフィルタリング
+        $shopId = $request->filled('shop_id') ? $request->shop_id : $defaultShopId;
+        if ($shopId) {
+            $query->whereHas('shops', function($q) use ($shopId) {
+                $q->where('shops.id', $shopId);
+            });
+        }
+
+        // 名前で検索
+        if ($request->filled('name')) {
+            $query->where('name', 'LIKE', '%' . $request->name . '%');
+        }
+
+        // メールアドレスで検索
+        if ($request->filled('email')) {
+            $query->where('email', 'LIKE', '%' . $request->email . '%');
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+
+        $shops = Shop::where('is_active', true)->get();
 
         return Inertia::render('Admin/User/Index', [
             'users' => $users,
+            'shops' => $shops,
+            'filters' => [
+                'shop_id' => $shopId,
+                'name' => $request->name ?? '',
+                'email' => $request->email ?? '',
+            ],
         ]);
     }
 

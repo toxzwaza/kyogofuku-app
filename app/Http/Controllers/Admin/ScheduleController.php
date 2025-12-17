@@ -112,7 +112,7 @@ class ScheduleController extends Controller
                 'id' => $schedule->id,
                 'title' => $schedule->title,
                 'start' => $schedule->start_at->toIso8601String(),
-                'end' => $schedule->end_at->toIso8601String(),
+                'end' => $schedule->end_at ? $schedule->end_at->toIso8601String() : $schedule->start_at->toIso8601String(),
                 'allDay' => $schedule->all_day,
                 'backgroundColor' => $schedule->color,
                 'borderColor' => $schedule->color,
@@ -204,11 +204,16 @@ class ScheduleController extends Controller
      */
     public function update(Request $request, StaffSchedule $schedule)
     {
+        // 空文字列をnullに変換
+        $request->merge([
+            'end_at' => $request->end_at ?: null,
+        ]);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_at' => 'required|date',
-            'end_at' => 'required|date|after_or_equal:start_at',
+            'end_at' => 'nullable|date|after_or_equal:start_at',
             'all_day' => 'boolean',
             'color' => 'nullable|string|max:7',
             'user_id' => 'required|exists:users,id',
@@ -219,10 +224,30 @@ class ScheduleController extends Controller
         $participantIds = $validated['participant_ids'] ?? [];
         unset($validated['participant_ids']);
 
+        // end_atがnullの場合、start_atと同じ日の23:59:59を設定
+        if (empty($validated['end_at'])) {
+            $validated['end_at'] = \Carbon\Carbon::parse($validated['start_at'])->setTime(23, 59, 59);
+        }
+
         $schedule->update($validated);
 
         // 参加者を更新
         $schedule->participantUsers()->sync($participantIds);
+
+        // photo_slot_idが紐づいている場合、同じ日付・スタジオの全ての前撮り枠の日付も更新
+        if ($schedule->photo_slot_id) {
+            $photoSlot = \App\Models\PhotoSlot::find($schedule->photo_slot_id);
+            if ($photoSlot) {
+                $originalDate = $photoSlot->shoot_date;
+                $originalStudioId = $photoSlot->photo_studio_id;
+                $newDate = \Carbon\Carbon::parse($validated['start_at'])->format('Y-m-d');
+                
+                // 同じ日付・スタジオの全ての前撮り枠を更新
+                \App\Models\PhotoSlot::where('shoot_date', $originalDate)
+                    ->where('photo_studio_id', $originalStudioId)
+                    ->update(['shoot_date' => $newDate]);
+            }
+        }
 
         $schedule->load(['user', 'participantUsers']);
 

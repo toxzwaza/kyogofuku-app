@@ -5,12 +5,10 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">顧客詳細</h2>
-                <Link
-                    :href="route('admin.customers.index')"
-                    class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
-                >
-                    一覧に戻る
-                </Link>
+                <div class="flex items-center space-x-3">
+                    <ActionButton variant="delete" label="削除" @click="openDeleteConfirmModal" />
+                    <ActionButton variant="back" label="一覧に戻る" :href="route('admin.customers.index')" />
+                </div>
             </div>
         </template>
 
@@ -874,12 +872,66 @@
                 </div>
             </div>
         </transition>
+
+        <!-- 削除確認モーダル -->
+        <transition name="modal">
+            <div
+                v-if="showDeleteConfirmModal"
+                class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="showDeleteConfirmModal = false"
+            >
+                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-red-50 to-pink-50">
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            顧客削除の確認
+                        </h3>
+                        <button
+                            @click="showDeleteConfirmModal = false"
+                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-gray-700 mb-4">
+                            「<span class="font-semibold">{{ customer.name }}</span>」を削除しますか？
+                        </p>
+                        <p class="text-sm text-red-600 mb-6">
+                            この操作は取り消せません。関連する成約情報、前撮り情報、写真もすべて削除されます。
+                        </p>
+                        <div class="flex justify-end space-x-3">
+                            <button
+                                type="button"
+                                @click="showDeleteConfirmModal = false"
+                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                @click="deleteCustomer"
+                                :disabled="deleteForm.processing"
+                                class="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span v-if="deleteForm.processing">削除中...</span>
+                                <span v-else>削除する</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
 import { ref, reactive, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
@@ -903,6 +955,7 @@ const showEditCustomerModal = ref(false);
 const showAddContractModal = ref(false);
 const showAddPhotoSlotModal = ref(false);
 const showPhotoPreviewModal = ref(false);
+const showDeleteConfirmModal = ref(false);
 
 // 選択中の写真（プレビュー用）
 const selectedPhoto = ref(null);
@@ -1266,6 +1319,23 @@ const formatTime = (timeString) => {
         return timeString.substring(0, 5);
     }
     return timeString;
+};
+
+// 削除フォーム
+const deleteForm = useForm({});
+
+// 削除確認モーダルを開く
+const openDeleteConfirmModal = () => {
+    showDeleteConfirmModal.value = true;
+};
+
+// 顧客を削除
+const deleteCustomer = () => {
+    deleteForm.delete(route('admin.customers.destroy', props.customer.id), {
+        onSuccess: () => {
+            showDeleteConfirmModal.value = false;
+        },
+    });
 };
 </script>
 

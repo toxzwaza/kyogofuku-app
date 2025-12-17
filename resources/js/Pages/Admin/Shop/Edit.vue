@@ -5,12 +5,7 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">店舗編集</h2>
-                <Link
-                    :href="route('admin.shops.index')"
-                    class="text-indigo-600 hover:text-indigo-900"
-                >
-                    ← 店舗一覧に戻る
-                </Link>
+                <ActionButton variant="back" label="店舗一覧に戻る" :href="route('admin.shops.index')" />
             </div>
         </template>
 
@@ -137,6 +132,7 @@
 <script setup>
 import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({

@@ -8,6 +8,8 @@ use App\Models\PhotoStudio;
 use App\Models\Shop;
 use App\Models\Plan;
 use App\Models\User;
+use App\Models\StaffSchedule;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -92,6 +94,7 @@ class PhotoSlotController extends Controller
         $createdCount = 0;
         $skippedCount = 0;
         $errors = [];
+        $firstCreatedSlot = null;
 
         foreach ($validated['shoot_times'] as $index => $shootTime) {
             // 同じスタジオ、日付、時間の組み合わせが既に存在するかチェック
@@ -117,7 +120,40 @@ class PhotoSlotController extends Controller
                 $photoSlot->shops()->attach($validated['shop_ids']);
             }
 
+            // 最初に作成した枠を保存（スケジュール作成用）
+            if ($firstCreatedSlot === null) {
+                $firstCreatedSlot = $photoSlot;
+            }
+
             $createdCount++;
+        }
+
+        // スタッフスケジュールを1つだけ作成（枠が1つ以上作成された場合）
+        if ($firstCreatedSlot !== null) {
+            $firstCreatedSlot->load(['studio', 'shops.users']);
+            $studioName = $firstCreatedSlot->studio ? $firstCreatedSlot->studio->name : '未設定';
+            
+            $shootDate = Carbon::parse($firstCreatedSlot->shoot_date);
+            $schedule = StaffSchedule::create([
+                'user_id' => $request->user()->id,
+                'photo_slot_id' => $firstCreatedSlot->id,
+                'title' => '[前撮り]' . $studioName,
+                'start_at' => $shootDate->copy()->setTime(0, 0, 1),
+                'end_at' => $shootDate->copy()->setTime(23, 59, 59),
+                'all_day' => true,
+                'color' => '#fe1616',
+            ]);
+
+            // 担当店舗に所属するスタッフ全員を参加者として登録
+            $participantUserIds = [];
+            foreach ($firstCreatedSlot->shops as $shop) {
+                foreach ($shop->users as $user) {
+                    $participantUserIds[] = $user->id;
+                }
+            }
+            if (!empty($participantUserIds)) {
+                $schedule->participantUsers()->sync(array_unique($participantUserIds));
+            }
         }
 
         $message = "{$createdCount}件の前撮り枠を追加しました。";
@@ -248,6 +284,14 @@ class PhotoSlotController extends Controller
             } else {
                 $photoSlot->shops()->detach();
             }
+
+            // 紐づくスタッフスケジュールの日付も更新
+            $newShootDate = Carbon::parse($validated['shoot_date']);
+            StaffSchedule::where('photo_slot_id', $photoSlot->id)
+                ->update([
+                    'start_at' => $newShootDate->copy()->setTime(0, 0, 1),
+                    'end_at' => $newShootDate->copy()->setTime(23, 59, 59),
+                ]);
 
             $updatedCount++;
         }

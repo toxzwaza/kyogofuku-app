@@ -5,12 +5,7 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">イベント一覧</h2>
-                <Link
-                    :href="route('admin.events.create')"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-                >
-                    新規追加
-                </Link>
+                <ActionButton variant="create" label="新規追加" :href="route('admin.events.create')" />
             </div>
         </template>
 
@@ -62,16 +57,7 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <Link
-                                                :href="route('admin.events.show', event.id)"
-                                                class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
-                                            >
-                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                詳細
-                                            </Link>
+                                            <ActionButton variant="detail" label="詳細" size="sm" :href="route('admin.events.show', event.id)" />
                                         </td>
                                     </tr>
                                 </tbody>
@@ -81,17 +67,26 @@
                         <!-- ページネーション -->
                         <div v-if="events.links && events.links.length > 3" class="mt-4">
                             <div class="flex justify-center">
-                                <Link
-                                    v-for="link in events.links"
-                                    :key="link.label"
-                                    :href="link.url"
-                                    :class="[
-                                        'px-4 py-2 mx-1 rounded-md',
-                                        link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
-                                        !link.url ? 'opacity-50 cursor-not-allowed' : ''
-                                    ]"
-                                    v-html="link.label"
-                                ></Link>
+                                <template v-for="link in events.links" :key="link.label">
+                                    <Link
+                                        v-if="link.url"
+                                        :href="link.url"
+                                        :class="[
+                                            'px-4 py-2 mx-1 rounded-md',
+                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                                        ]"
+                                    >
+                                        <span v-html="link.label"></span>
+                                    </Link>
+                                    <span
+                                        v-else
+                                        :class="[
+                                            'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
+                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700',
+                                        ]"
+                                        v-html="link.label"
+                                    ></span>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -103,6 +98,7 @@
 
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({

@@ -13,6 +13,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Models\PhotoStudio;
 use App\Models\PhotoType;
+use App\Models\StaffSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -314,6 +315,24 @@ class CustomerController extends Controller
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '写真を追加しました。');
+    }
+
+    /**
+     * 顧客を削除
+     */
+    public function destroy(Customer $customer)
+    {
+        // 関連する写真ファイルを削除
+        foreach ($customer->photos as $photo) {
+            if ($photo->file_path) {
+                Storage::disk('public')->delete($photo->file_path);
+            }
+        }
+
+        $customer->delete();
+
+        return redirect()->route('admin.customers.index')
+            ->with('success', '顧客情報を削除しました。');
     }
 }
 

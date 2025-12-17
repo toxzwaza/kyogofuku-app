@@ -5,12 +5,7 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">イベント詳細</h2>
-                <Link
-                    :href="route('admin.events.index')"
-                    class="text-indigo-600 hover:text-indigo-900"
-                >
-                    ← イベント一覧に戻る
-                </Link>
+                <ActionButton variant="back" label="イベント一覧に戻る" :href="route('admin.events.index')" />
             </div>
         </template>
 
@@ -874,6 +869,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
 

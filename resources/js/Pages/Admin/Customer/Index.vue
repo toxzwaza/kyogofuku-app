@@ -5,15 +5,7 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">顧客一覧</h2>
-                <button
-                    @click="showAddCustomerModal = true"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium flex items-center gap-2"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    顧客追加
-                </button>
+                <ActionButton variant="create" label="顧客追加" @click="showAddCustomerModal = true" />
             </div>
         </template>
 
@@ -251,17 +243,26 @@
                         <!-- ページネーション -->
                         <div v-if="customers.links && customers.links.length > 3" class="mt-4">
                             <div class="flex justify-center">
-                                <Link
-                                    v-for="link in customers.links"
-                                    :key="link.label"
-                                    :href="link.url"
-                                    :class="[
-                                        'px-4 py-2 mx-1 rounded-md',
-                                        link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
-                                        !link.url ? 'opacity-50 cursor-not-allowed' : ''
-                                    ]"
-                                    v-html="link.label"
-                                ></Link>
+                                <template v-for="link in customers.links" :key="link.label">
+                                    <Link
+                                        v-if="link.url"
+                                        :href="link.url"
+                                        :class="[
+                                            'px-4 py-2 mx-1 rounded-md',
+                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                                        ]"
+                                    >
+                                        <span v-html="link.label"></span>
+                                    </Link>
+                                    <span
+                                        v-else
+                                        :class="[
+                                            'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
+                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700',
+                                        ]"
+                                        v-html="link.label"
+                                    ></span>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -437,6 +438,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
