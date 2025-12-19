@@ -109,7 +109,7 @@ const props = defineProps({
 // すべての費用項目（9種類）
 const allExpenseCategories = [
   'システム設計・要件定義費',
-  'システム開発・実装費',
+  'システム開発・実装・テスト費',
   'インフラ構築・外部サービス連携費',
   '運用支援・マニュアル作成費',
   'データ移行・PC設定・ITサポート費',
@@ -126,9 +126,14 @@ function getItemAmount(category) {
 }
 
 const totalAmount = computed(() => {
-  // 時間合計×1075円で計算
+  // localStorageから時間単価を読み込む（デフォルト1075円）
+  const hourlyRate = localStorage.getItem('hourlyRate') 
+    ? Number(localStorage.getItem('hourlyRate')) 
+    : 1075;
+  
+  // 時間合計×時間単価で計算
   if (props.totalHours) {
-    return Math.round(props.totalHours * 1075);
+    return Math.round(props.totalHours * hourlyRate);
   }
   // フォールバック：itemsの合計
   return props.items.reduce((sum, i) => sum + Number(i.amount || 0), 0);

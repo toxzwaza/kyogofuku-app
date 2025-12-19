@@ -1708,8 +1708,17 @@ const selectedUserDate = ref(getTodayDateString());
 // 勤怠データ出力
 const showAttendanceExport = ref(false);
 const showInvoiceModal = ref(false);
-const hourlyRate = ref(5000); // 時間単価（デフォルト5000円）
+// 時間単価をlocalStorageから読み込む（デフォルト5000円）
+const savedHourlyRate = localStorage.getItem('hourlyRate');
+const hourlyRate = ref(savedHourlyRate ? Number(savedHourlyRate) : 5000);
 const invoiceData = ref(null);
+
+// 時間単価が変更されたらlocalStorageに保存
+watch(hourlyRate, (newValue) => {
+  if (newValue !== null && newValue !== undefined) {
+    localStorage.setItem('hourlyRate', newValue.toString());
+  }
+}, { immediate: false });
 
 // デフォルト日付を計算（20日締め）
 const getDefaultAttendanceDates = () => {
@@ -2184,8 +2193,8 @@ function generateInvoiceData() {
     groupedByCategory[category].totalHours += parseFloat(row.totalHours);
   });
   
-  // 請求書項目を生成（時間×1075円で計算）
-  const hourlyRateForInvoice = 1075; // 固定単価
+  // 請求書項目を生成（時間×時間単価で計算）
+  const hourlyRateForInvoice = hourlyRate.value || 5000; // localStorageから読み込んだ時間単価を使用
   const items = Object.keys(groupedByCategory).sort().map(category => {
     const group = groupedByCategory[category];
     const amount = Math.round(group.totalHours * hourlyRateForInvoice);
@@ -2214,24 +2223,24 @@ function generateInvoiceData() {
   
   return {
     client: {
-      name: '株式会社サンプル', // TODO: 実際の請求先情報に置き換え
-      postal: '123-4567',
-      address: '東京都渋谷区サンプル1-2-3',
+      name: '	株式会社京呉服平田', // TODO: 実際の請求先情報に置き換え
+      postal: '918-8015',
+      address: '	福井県福井市花堂南1丁目2-1',
     },
     issuer: {
-      name: '株式会社キョウゴフク', // TODO: 実際の事業者情報に置き換え
-      postal: '000-0000',
-      address1: '東京都新宿区サンプル1-2-3',
-      address2: 'サンプルビル5F',
-      tel: '03-1234-5678',
-      person: '担当者名', // TODO: 実際の担当者名に置き換え
+      name: 'Onsite Solution', // TODO: 実際の事業者情報に置き換え
+      postal: '701-0221',
+      address1: '岡山県岡山市南区藤田564-4',
+      address2: 'リバーサイド藤田B棟102',
+      tel: '090-6182-7735',
+      person: '村上 飛羽', // TODO: 実際の担当者名に置き換え
     },
     invoice: {
       issueDate: formatDate(today.toISOString().split('T')[0]),
       number: invoiceNumber,
       dueDate: formatDueDate,
-      title: `システム開発業務（${attendanceStartDate.value} ～ ${attendanceEndDate.value}）`,
-      bank: '三菱UFJ銀行 新宿支店 普通 1234567 株式会社キョウゴフク', // TODO: 実際の振込先情報に置き換え
+      title: `ITサポート業務（${attendanceStartDate.value} ～ ${attendanceEndDate.value}）`,
+      bank: '楽天銀行(0036) タイコ支店(242) 普通 2487908 村上 飛羽', // TODO: 実際の振込先情報に置き換え
       remarks: `集計期間: ${attendanceStartDate.value} ～ ${attendanceEndDate.value}\n合計勤務時間: ${attendanceTotalHours.value}時間`,
     },
     items: items,
