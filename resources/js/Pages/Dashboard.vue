@@ -366,6 +366,16 @@
                     </p>
                   </div>
 
+                  <!-- 費用科目（便利機能が有効な場合のみ表示） -->
+                  <div v-if="showExpenseCategoryInEdit && selectedScheduleDetail.expense_category" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      費用科目
+                    </label>
+                    <p class="text-lg font-semibold text-gray-700">
+                      {{ selectedScheduleDetail.expense_category }}
+                    </p>
+                  </div>
+
                   <!-- 日時情報 -->
                   <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
