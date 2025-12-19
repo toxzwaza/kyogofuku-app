@@ -789,6 +789,22 @@
                     />
                   </div>
 
+                  <!-- 費用科目（便利機能が有効な場合のみ表示） -->
+                  <div v-if="showExpenseCategoryInEdit" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      費用科目
+                    </label>
+                    <select
+                      v-model="editScheduleForm.expense_category"
+                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    >
+                      <option value="">選択してください</option>
+                      <option v-for="category in expenseCategories" :key="category" :value="category">
+                        {{ category }}
+                      </option>
+                    </select>
+                  </div>
+
                   <!-- 日時情報 -->
                   <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -3130,6 +3146,7 @@ const createScheduleForm = ref({
 // 便利機能：費用科目の表示制御
 const enableExpenseCategoryFeature = ref(false);
 const showExpenseCategoryInCreate = computed(() => enableExpenseCategoryFeature.value);
+const showExpenseCategoryInEdit = computed(() => enableExpenseCategoryFeature.value);
 
 // LocalStorageから費用科目機能の設定を読み込む
 function loadExpenseCategoryFeatureSetting() {
@@ -3159,6 +3176,7 @@ const editScheduleForm = ref({
   all_day: false,
   color: '#3788d8',
   participant_ids: [],
+  expense_category: '',
   processing: false,
 });
 const shopUsersForEdit = ref([]);
@@ -3188,6 +3206,7 @@ function handleEventClick(clickInfo) {
     description: clickInfo.event.extendedProps.description || "",
     user: clickInfo.event.extendedProps.user || null,
     participants: clickInfo.event.extendedProps.participants || [],
+    expense_category: clickInfo.event.extendedProps.expense_category || null,
   };
   showScheduleDetail.value = true;
 }
@@ -3249,6 +3268,7 @@ function startEditSchedule() {
     all_day: selectedScheduleDetail.value.allDay,
     color: selectedScheduleDetail.value.color,
     participant_ids: selectedScheduleDetail.value.participants?.map(p => p.id) || [],
+    expense_category: selectedScheduleDetail.value.expense_category || '',
     processing: false,
   };
   
@@ -3300,6 +3320,7 @@ function updateScheduleFromDashboard() {
     color: editScheduleForm.value.color,
     user_id: selectedScheduleDetail.value.user?.id,
     participant_ids: editScheduleForm.value.participant_ids || [],
+    expense_category: editScheduleForm.value.expense_category || null,
   };
   
   console.log('更新データ:', updateData);
@@ -3308,16 +3329,59 @@ function updateScheduleFromDashboard() {
   axios.put(route('admin.schedules.update', selectedScheduleDetail.value.id), updateData)
     .then((response) => {
       console.log('更新成功:', response);
+      
+      // カレンダーのイベントを直接更新（リロードなしで反映）
+      const scheduleId = selectedScheduleDetail.value.id;
+      
+      // 店舗単位カレンダーのイベントを更新
+      if (shopCalendar.value) {
+        const shopEvent = shopCalendar.value.getApi().getEventById(scheduleId);
+        if (shopEvent) {
+          shopEvent.setExtendedProp('expense_category', editScheduleForm.value.expense_category || null);
+          // その他の変更も反映
+          if (editScheduleForm.value.title !== shopEvent.title) {
+            shopEvent.setProp('title', editScheduleForm.value.title);
+          }
+          if (editScheduleForm.value.description !== shopEvent.extendedProps.description) {
+            shopEvent.setExtendedProp('description', editScheduleForm.value.description || '');
+          }
+        }
+      }
+      
+      // ユーザー単位カレンダーのイベントを更新
+      if (userCalendar.value) {
+        const userEvent = userCalendar.value.getApi().getEventById(scheduleId);
+        if (userEvent) {
+          userEvent.setExtendedProp('expense_category', editScheduleForm.value.expense_category || null);
+          // その他の変更も反映
+          if (editScheduleForm.value.title !== userEvent.title) {
+            userEvent.setProp('title', editScheduleForm.value.title);
+          }
+          if (editScheduleForm.value.description !== userEvent.extendedProps.description) {
+            userEvent.setExtendedProp('description', editScheduleForm.value.description || '');
+          }
+        }
+      }
+      
+      // selectedScheduleDetailも更新（モーダルを閉じる前に）
+      if (selectedScheduleDetail.value) {
+        selectedScheduleDetail.value.expense_category = editScheduleForm.value.expense_category || null;
+        selectedScheduleDetail.value.title = editScheduleForm.value.title;
+        selectedScheduleDetail.value.description = editScheduleForm.value.description || '';
+      }
+      
       showEditModal.value = false;
       isEditingSchedule.value = false;
       addedParticipantsForEdit.value = [];
       selectedShopIdForEdit.value = '';
       shopUsersForEdit.value = [];
-      shopCalendar.value.getApi().refetchEvents();
-      userCalendar.value.getApi().refetchEvents();
+      
+      // 念のため、イベントを再読み込み（非同期で実行）
       setTimeout(() => {
+        shopCalendar.value?.getApi().refetchEvents();
+        userCalendar.value?.getApi().refetchEvents();
         syncCalendarHeights();
-      }, 300);
+      }, 100);
     })
     .catch(error => {
       console.error('スケジュールの更新に失敗しました:', error);
