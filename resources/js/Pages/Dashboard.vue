@@ -2802,7 +2802,7 @@ const userCalendarOptions = computed(() => {
     eventMouseEnter: handleEventMouseEnter,
     eventMouseLeave: handleEventMouseLeave,
     events: loadUserSchedules,
-    slotMinTime: "06:00:00",
+    slotMinTime: "00:00:00",
     slotMaxTime: "24:00:00",
     slotDuration: "00:30:00",
     datesSet: handleUserCalendarDatesSet, // カレンダーの日付が変更されたときに呼ばれる
@@ -3087,8 +3087,8 @@ function updateCurrentTimeIndicator() {
   }
   
   // スロットの開始時刻を取得（userCalendarOptionsで設定した値を直接使用）
-  // slotMinTimeは "06:00:00" 形式の文字列なので、パースする
-  const slotMinTimeStr = "06:00:00"; // userCalendarOptionsで設定した値
+  // slotMinTimeは "00:00:00" 形式の文字列なので、パースする
+  const slotMinTimeStr = "00:00:00"; // userCalendarOptionsで設定した値
   const slotDurationStr = "00:30:00"; // userCalendarOptionsで設定した値
   
   // 時間文字列をパース
