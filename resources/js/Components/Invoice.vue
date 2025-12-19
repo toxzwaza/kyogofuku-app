@@ -68,7 +68,12 @@
       </thead>
       <tbody>
         <tr v-for="category in allExpenseCategories" :key="category">
-          <td>{{ category }}</td>
+          <td>
+            {{ category }}
+            <template v-if="getItemHours(category) > 0">
+              ({{ getItemHours(category) }}h)
+            </template>
+          </td>
           <td class="amount">
             <template v-if="getItemAmount(category) > 0">
               ¥{{ getItemAmount(category).toLocaleString() }}
@@ -125,17 +130,14 @@ function getItemAmount(category) {
   return item ? item.amount : 0;
 }
 
+// 項目の時間を取得
+function getItemHours(category) {
+  const item = props.items.find(i => i.name === category);
+  return item && item.totalHours ? parseFloat(item.totalHours) : 0;
+}
+
 const totalAmount = computed(() => {
-  // localStorageから時間単価を読み込む（デフォルト1075円）
-  const hourlyRate = localStorage.getItem('hourlyRate') 
-    ? Number(localStorage.getItem('hourlyRate')) 
-    : 1075;
-  
-  // 時間合計×時間単価で計算
-  if (props.totalHours) {
-    return Math.round(props.totalHours * hourlyRate);
-  }
-  // フォールバック：itemsの合計
+  // 各内訳の合計値を計算（端数処理の一貫性を保つため）
   return props.items.reduce((sum, i) => sum + Number(i.amount || 0), 0);
 })
 </script>

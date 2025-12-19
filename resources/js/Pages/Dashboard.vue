@@ -2201,6 +2201,7 @@ function generateInvoiceData() {
     return {
       name: category,
       amount: amount,
+      totalHours: group.totalHours, // 時間情報を追加
     };
   });
   
