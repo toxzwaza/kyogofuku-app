@@ -1854,16 +1854,51 @@ async function saveExpenseCategories() {
 
 // Chart.jsのグラフデータ（日付ごとに集計）
 const attendanceChartData = computed(() => {
+  // データがない場合は空のグラフを返す
+  if (!attendanceData.value || attendanceData.value.length === 0) {
+    return {
+      labels: [],
+      datasets: [
+        {
+          label: '勤務時間 (h)',
+          data: [],
+          backgroundColor: 'rgba(99, 102, 241, 0.7)',
+          borderColor: 'rgb(99, 102, 241)',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    };
+  }
+  
   // 日付ごとにグループ化
   const groupedByDate = {};
   attendanceData.value.forEach(row => {
+    if (!row.date) return;
     if (!groupedByDate[row.date]) {
       groupedByDate[row.date] = 0;
     }
-    groupedByDate[row.date] += parseFloat(row.totalHours);
+    groupedByDate[row.date] += parseFloat(row.totalHours || 0);
   });
   
   const dates = Object.keys(groupedByDate).sort();
+  
+  // データがない場合は空のグラフを返す
+  if (dates.length === 0) {
+    return {
+      labels: [],
+      datasets: [
+        {
+          label: '勤務時間 (h)',
+          data: [],
+          backgroundColor: 'rgba(99, 102, 241, 0.7)',
+          borderColor: 'rgb(99, 102, 241)',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    };
+  }
   
   return {
     labels: dates.map(date => date.slice(5)), // MM-DD形式
@@ -1881,61 +1916,72 @@ const attendanceChartData = computed(() => {
 });
 
 // Chart.jsのオプション
-const attendanceChartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-        tooltip: {
-      callbacks: {
-        title: (context) => {
-          const index = context[0].dataIndex;
-          // 日付ごとにグループ化
-          const groupedByDate = {};
-          attendanceData.value.forEach(row => {
-            if (!groupedByDate[row.date]) {
-              groupedByDate[row.date] = [];
+const attendanceChartOptions = computed(() => {
+  // 日付ごとにグループ化（ツールチップ用）
+  const groupedByDate = {};
+  if (attendanceData.value && attendanceData.value.length > 0) {
+    attendanceData.value.forEach(row => {
+      if (!row.date) return;
+      if (!groupedByDate[row.date]) {
+        groupedByDate[row.date] = {
+          total: 0,
+          items: [],
+        };
+      }
+      groupedByDate[row.date].total += parseFloat(row.totalHours || 0);
+      groupedByDate[row.date].items.push(row);
+    });
+  }
+  const dates = Object.keys(groupedByDate).sort();
+  
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          title: (context) => {
+            const index = context[0].dataIndex;
+            if (dates[index]) {
+              return dates[index];
             }
-            groupedByDate[row.date].push(row);
-          });
-          const dates = Object.keys(groupedByDate).sort();
-          return dates[index] || '';
-        },
-        label: (context) => {
-          const index = context.dataIndex;
-          // 日付ごとにグループ化
-          const groupedByDate = {};
-          attendanceData.value.forEach(row => {
-            if (!groupedByDate[row.date]) {
-              groupedByDate[row.date] = 0;
+            return '';
+          },
+          label: (context) => {
+            const index = context.dataIndex;
+            if (dates[index] && groupedByDate[dates[index]]) {
+              const totalHours = groupedByDate[dates[index]].total || 0;
+              return `勤務時間: ${totalHours.toFixed(1)}h`;
             }
-            groupedByDate[row.date] += parseFloat(row.totalHours);
-          });
-          const dates = Object.keys(groupedByDate).sort();
-          const totalHours = groupedByDate[dates[index]] || 0;
-          return [`勤務時間: ${totalHours.toFixed(1)}h`];
+            return '';
+          },
         },
       },
     },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      title: {
-        display: true,
-        text: '時間 (h)',
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: '時間 (h)',
+        },
+        ticks: {
+          stepSize: 1,
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: '日付',
+        },
       },
     },
-    x: {
-      title: {
-        display: true,
-        text: '日付',
-      },
-    },
-  },
-}));
+  };
+});
 const shops = computed(() => props.shops || []);
 const userShops = computed(() => props.userShops || []);
 const users = computed(() => props.users || []);
