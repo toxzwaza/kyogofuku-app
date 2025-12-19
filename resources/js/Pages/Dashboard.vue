@@ -548,6 +548,22 @@
                     />
                   </div>
 
+                  <!-- 費用科目（便利機能が有効な場合のみ表示） -->
+                  <div v-if="showExpenseCategoryInCreate" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      費用科目
+                    </label>
+                    <select
+                      v-model="createScheduleForm.expense_category"
+                      class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    >
+                      <option value="">選択してください</option>
+                      <option v-for="category in expenseCategories" :key="category" :value="category">
+                        {{ category }}
+                      </option>
+                    </select>
+                  </div>
+
                   <!-- 日時情報 -->
                   <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -684,6 +700,24 @@
                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                       placeholder="スケジュールの説明を入力（任意）"
                     ></textarea>
+                  </div>
+
+                  <!-- 便利機能 -->
+                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      便利機能
+                    </label>
+                    <div class="space-y-2">
+                      <label class="flex items-center cursor-pointer">
+                        <input
+                          v-model="enableExpenseCategoryFeature"
+                          type="checkbox"
+                          @change="onExpenseCategoryFeatureChange"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span class="ml-2 text-sm text-gray-700">費用科目</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </form>
@@ -1482,7 +1516,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from "vue";
+import { computed, ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link } from "@inertiajs/vue3";
@@ -2440,6 +2474,9 @@ onMounted(() => {
   console.log('[Dashboard] userShops:', userShops.value);
   console.log('[Dashboard] users:', users.value);
   
+  // LocalStorageから費用科目機能の設定を読み込む
+  loadExpenseCategoryFeatureSetting();
+  
   // 店舗単位：mainフラグが立っている店舗を優先的に選択、なければ最初の店舗を選択
   if (userShops.value.length > 0) {
     const mainShop = userShops.value.find(shop => shop.main === true || shop.main === 1);
@@ -2492,6 +2529,18 @@ onMounted(() => {
       console.log('[Dashboard] 店舗単位カレンダーをリフレッシュ');
       shopCalendar.value.getApi().refetchEvents();
     }
+    
+    // ユーザー単位カレンダーの現在時刻インジケーターを初期化
+    if (userCalendar.value) {
+      // カレンダーのレンダリング完了を待つ
+      setTimeout(() => {
+        updateCurrentTimeIndicator();
+        // 30秒ごとに現在時刻のインジケーターを更新
+        currentTimeIndicatorInterval = setInterval(() => {
+          updateCurrentTimeIndicator();
+        }, 30000); // 30000ms = 30秒
+      }, 500);
+    }
   }, 200);
 });
 
@@ -2500,6 +2549,11 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   if (resizeTimeout) {
     clearTimeout(resizeTimeout);
+  }
+  // 現在時刻インジケーターのインターバルをクリア
+  if (currentTimeIndicatorInterval) {
+    clearInterval(currentTimeIndicatorInterval);
+    currentTimeIndicatorInterval = null;
   }
 });
 
@@ -2663,32 +2717,61 @@ const getTodayRange = () => {
   return { start, end };
 };
 
-// ユーザー単位カレンダーオプション（週表示）
-const userCalendarOptions = computed(() => ({
-  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-  initialView: "timeGridWeek",
-  locale: jaLocale,
-  headerToolbar: {
-    left: "prev,next today",
-    center: "title",
-    right: "",
-  },
-  height: "auto",
-  editable: true,
-  selectable: true,
-  selectMirror: true,
-  weekends: true,
-  select: handleUserDateSelect,
-  eventClick: handleEventClick,
-  eventDrop: handleEventDrop,
-  eventResize: handleEventResize,
-  eventMouseEnter: handleEventMouseEnter,
-  eventMouseLeave: handleEventMouseLeave,
-  events: loadUserSchedules,
-  slotMinTime: "06:00:00",
-  slotMaxTime: "24:00:00",
-  slotDuration: "00:30:00",
-}));
+// 本日を中心として前3日後3日の合計7日間の開始日を計算する関数
+function getCenteredDateRange() {
+  const today = new Date();
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - 3); // 本日から3日前を開始日とする（本日を中心として前3日後3日）
+  return startDate;
+}
+
+// ユーザー単位カレンダーオプション（7日間表示）
+const userCalendarOptions = computed(() => {
+  // 本日の日付を中心として前3日後3日の合計7日間の開始日を計算
+  const startDate = getCenteredDateRange();
+  
+  return {
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    initialView: "timeGridWeek",
+    duration: { days: 7 }, // 7日間表示（前3日 + 本日 + 後3日）
+    initialDate: startDate, // 本日を中心とする前後7日間の開始日
+    locale: jaLocale,
+    customButtons: {
+      customToday: {
+        text: '今日',
+        click: function() {
+          // 本日を中心として前3日後3日の合計7日間を表示
+          const centeredStartDate = getCenteredDateRange();
+          if (userCalendar.value) {
+            userCalendar.value.getApi().gotoDate(centeredStartDate);
+          }
+        }
+      }
+    },
+    headerToolbar: {
+      left: "prev,next customToday",
+      center: "title",
+      right: "",
+    },
+    height: "auto",
+    editable: true,
+    selectable: true,
+    selectMirror: true,
+    weekends: true,
+    nowIndicator: true, // 現在時刻のインジケーターを有効化
+    select: handleUserDateSelect,
+    eventClick: handleEventClick,
+    eventDrop: handleEventDrop,
+    eventResize: handleEventResize,
+    eventMouseEnter: handleEventMouseEnter,
+    eventMouseLeave: handleEventMouseLeave,
+    events: loadUserSchedules,
+    slotMinTime: "06:00:00",
+    slotMaxTime: "24:00:00",
+    slotDuration: "00:30:00",
+    datesSet: handleUserCalendarDatesSet, // カレンダーの日付が変更されたときに呼ばれる
+  };
+});
 
 // 店舗単位スケジュール読み込み
 function loadShopSchedules(info, successCallback, failureCallback) {
@@ -2746,6 +2829,12 @@ function loadUserSchedules(info, successCallback, failureCallback) {
       if (successCallback) {
         successCallback(response.data);
       }
+      // イベント読み込み後に現在時刻の線を更新
+      nextTick(() => {
+        setTimeout(() => {
+          updateCurrentTimeIndicator();
+        }, 100);
+      });
     })
     .catch((error) => {
       console.error("スケジュールの取得に失敗しました:", error);
@@ -2812,6 +2901,204 @@ function handleUserDateSelect(selectInfo) {
   userCalendar.value.getApi().unselect();
 }
 
+// ユーザー単位カレンダーの日付が変更されたときのハンドラー
+function handleUserCalendarDatesSet(dateInfo) {
+  // カレンダーのレンダリング後に現在時刻の線を更新
+  nextTick(() => {
+    // レンダリング完了を待つために少し遅延させる
+    setTimeout(() => {
+      updateCurrentTimeIndicator();
+    }, 300);
+    // 念のため、もう一度試行
+    setTimeout(() => {
+      updateCurrentTimeIndicator();
+    }, 600);
+  });
+}
+
+// 現在時刻のインジケーターを更新（7日間すべてをまたぐ赤い線）
+let currentTimeIndicatorInterval = null;
+
+function updateCurrentTimeIndicator() {
+  if (!userCalendar.value) {
+    return;
+  }
+  
+  const calendarEl = userCalendar.value.$el;
+  if (!calendarEl) {
+    return;
+  }
+  
+  // 既存のカスタムインジケーターを削除
+  const existingIndicators = calendarEl.querySelectorAll('.custom-current-time-indicator');
+  existingIndicators.forEach(indicator => indicator.remove());
+  
+  const calendarApi = userCalendar.value.getApi();
+  const view = calendarApi.view;
+  if (!view || view.type !== 'timeGridWeek') {
+    return;
+  }
+  
+  // 現在時刻を取得
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  // 表示期間を取得
+  const start = view.activeStart;
+  const end = view.activeEnd;
+  
+  // 今日が表示期間内にあるか確認
+  const todayStartOfDay = new Date(today.getTime());
+  const todayEndOfDay = new Date(today.getTime());
+  todayEndOfDay.setHours(23, 59, 59, 999);
+  
+  if (todayEndOfDay < start || todayStartOfDay > end) {
+    return; // 表示期間外の場合は何もしない
+  }
+  
+  // FullCalendarのDOM構造を確認して、正しい要素を取得
+  // まず、.fc-scrollgrid を探す
+  let scrollGrid = calendarEl.querySelector('.fc-scrollgrid');
+  if (!scrollGrid) {
+    // 見つからない場合は、カレンダー要素全体を探す
+    scrollGrid = calendarEl;
+  }
+  
+  // 時間グリッドのボディを取得（複数のセレクタを試す）
+  let timeGridBody = scrollGrid.querySelector('.fc-timegrid-body');
+  if (!timeGridBody) {
+    timeGridBody = scrollGrid.querySelector('.fc-scrollgrid-sync-table');
+  }
+  if (!timeGridBody) {
+    timeGridBody = scrollGrid.querySelector('table');
+  }
+  if (!timeGridBody) {
+    setTimeout(() => {
+      updateCurrentTimeIndicator();
+    }, 200);
+    return;
+  }
+  
+  // 時間スロットのテーブル行を取得（複数のセレクタを試す）
+  let timeSlots = timeGridBody.querySelectorAll('tbody tr.fc-timegrid-slot');
+  if (timeSlots.length === 0) {
+    timeSlots = timeGridBody.querySelectorAll('tbody tr');
+  }
+  if (timeSlots.length === 0) {
+    setTimeout(() => {
+      updateCurrentTimeIndicator();
+    }, 200);
+    return;
+  }
+  
+  // スロットの開始時刻を取得（userCalendarOptionsで設定した値を直接使用）
+  // slotMinTimeは "06:00:00" 形式の文字列なので、パースする
+  const slotMinTimeStr = "06:00:00"; // userCalendarOptionsで設定した値
+  const slotDurationStr = "00:30:00"; // userCalendarOptionsで設定した値
+  
+  // 時間文字列をパース
+  const [minHour, minMinute] = slotMinTimeStr.split(':').map(Number);
+  const [durationHour, durationMinute] = slotDurationStr.split(':').map(Number);
+  const slotDurationMs = (durationHour * 60 + durationMinute) * 60 * 1000; // ミリ秒
+  
+  // 現在時刻が表示時間範囲内にあるか確認
+  const nowHours = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  const minHours = minHour + minMinute / 60;
+  const maxHours = 24; // slotMaxTimeは24:00:00
+  
+  if (nowHours < minHours || nowHours > maxHours) {
+    return; // 表示時間範囲外の場合は何もしない
+  }
+  
+  // 最初のスロットの位置と高さを取得
+  const firstSlot = timeSlots[0];
+  const firstSlotRect = firstSlot.getBoundingClientRect();
+  const timeGridBodyRect = timeGridBody.getBoundingClientRect();
+  const slotTop = firstSlotRect.top - timeGridBodyRect.top;
+  const slotHeight = firstSlotRect.height;
+  
+  if (!slotHeight || slotHeight === 0) {
+    setTimeout(() => {
+      updateCurrentTimeIndicator();
+    }, 200);
+    return;
+  }
+  
+  // 現在時刻の位置を計算
+  const todayStart = new Date(today);
+  todayStart.setHours(minHour, minMinute, 0, 0);
+  
+  const diffMs = now.getTime() - todayStart.getTime();
+  const slotDurationHours = slotDurationMs / (1000 * 60 * 60); // 時間単位
+  const diffHours = diffMs / (1000 * 60 * 60);
+  const topOffset = slotTop + (diffHours / slotDurationHours) * slotHeight;
+  
+  // 現在時刻をフォーマット
+  const formatCurrentTime = (date) => {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+  
+  const currentTimeStr = formatCurrentTime(now);
+  
+  // 7日間すべてをまたぐ線を作成
+  const indicator = document.createElement('div');
+  indicator.className = 'custom-current-time-indicator';
+  indicator.style.position = 'absolute';
+  indicator.style.left = '0';
+  indicator.style.right = '0';
+  indicator.style.top = `${topOffset}px`;
+  indicator.style.height = '2px';
+  indicator.style.backgroundColor = '#ef4444'; // 赤色
+  indicator.style.zIndex = '1000';
+  indicator.style.pointerEvents = 'auto'; // ホバー可能にする
+  indicator.style.cursor = 'pointer';
+  indicator.style.boxShadow = '0 0 4px rgba(239, 68, 68, 0.5)';
+  
+  // ツールチップ要素を作成
+  const tooltip = document.createElement('div');
+  tooltip.className = 'custom-current-time-tooltip';
+  tooltip.textContent = currentTimeStr;
+  tooltip.style.position = 'absolute';
+  tooltip.style.left = '50%';
+  tooltip.style.transform = 'translateX(-50%)';
+  tooltip.style.bottom = '100%';
+  tooltip.style.marginBottom = '8px';
+  tooltip.style.padding = '4px 8px';
+  tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  tooltip.style.color = 'white';
+  tooltip.style.borderRadius = '4px';
+  tooltip.style.fontSize = '12px';
+  tooltip.style.fontWeight = '600';
+  tooltip.style.whiteSpace = 'nowrap';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.opacity = '0';
+  tooltip.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+  tooltip.style.transform = 'translateX(-50%) translateY(4px)';
+  tooltip.style.zIndex = '1001';
+  
+  // ホバーイベントを追加
+  indicator.addEventListener('mouseenter', () => {
+    tooltip.style.opacity = '1';
+    tooltip.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  
+  indicator.addEventListener('mouseleave', () => {
+    tooltip.style.opacity = '0';
+    tooltip.style.transform = 'translateX(-50%) translateY(4px)';
+  });
+  
+  // ツールチップをインジケーターに追加
+  indicator.appendChild(tooltip);
+  
+  // カレンダーのボディに追加
+  if (timeGridBody.style.position !== 'relative') {
+    timeGridBody.style.position = 'relative';
+  }
+  timeGridBody.appendChild(indicator);
+}
+
 const showScheduleDetail = ref(false);
 const selectedScheduleDetail = ref(null);
 const showEditModal = ref(false);
@@ -2836,8 +3123,34 @@ const createScheduleForm = ref({
   all_day: false,
   color: '#3788d8',
   participant_ids: [],
+  expense_category: '',
   processing: false,
 });
+
+// 便利機能：費用科目の表示制御
+const enableExpenseCategoryFeature = ref(false);
+const showExpenseCategoryInCreate = computed(() => enableExpenseCategoryFeature.value);
+
+// LocalStorageから費用科目機能の設定を読み込む
+function loadExpenseCategoryFeatureSetting() {
+  try {
+    const saved = localStorage.getItem('enableExpenseCategoryFeature');
+    if (saved !== null) {
+      enableExpenseCategoryFeature.value = saved === 'true';
+    }
+  } catch (error) {
+    console.error('LocalStorageからの読み込みに失敗しました:', error);
+  }
+}
+
+// 費用科目機能の設定をLocalStorageに保存
+function onExpenseCategoryFeatureChange() {
+  try {
+    localStorage.setItem('enableExpenseCategoryFeature', enableExpenseCategoryFeature.value.toString());
+  } catch (error) {
+    console.error('LocalStorageへの保存に失敗しました:', error);
+  }
+}
 const editScheduleForm = ref({
   title: '',
   description: '',
@@ -3175,10 +3488,12 @@ function onUserChange() {
     // 高さを同期（イベント読み込み完了を待つ）
     setTimeout(() => {
       syncCalendarHeights();
+      updateCurrentTimeIndicator();
     }, 300);
     // 念のため、もう一度同期（レンダリング完了を待つ）
     setTimeout(() => {
       syncCalendarHeights();
+      updateCurrentTimeIndicator();
     }, 600);
   } else {
     console.warn('[onUserChange] カレンダーのリフレッシュをスキップ:', {
@@ -3255,6 +3570,7 @@ function createScheduleFromDashboard() {
         all_day: false,
         color: '#3788d8',
         participant_ids: [],
+        expense_category: '',
         processing: false,
       };
       addedParticipantsForCreate.value = [];
@@ -3475,5 +3791,58 @@ async function loadShopUsersForCreate(shopId) {
 
 :deep(.fc-view-harness-active) {
   height: 100% !important;
+}
+
+/* ユーザー単位カレンダーの現在時刻インジケーター（7日間すべてをまたぐ赤い線） */
+.custom-current-time-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #ef4444;
+  z-index: 1000;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+  transition: height 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-current-time-indicator:hover {
+  height: 3px;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+}
+
+/* 現在時刻ツールチップ */
+.custom-current-time-tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  bottom: 100%;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1001;
+}
+
+.custom-current-time-indicator:hover .custom-current-time-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* FullCalendarのデフォルトのnowIndicatorを非表示（カスタムの線を使用するため） */
+:deep(.fc-timegrid-now-indicator-line) {
+  display: none !important;
+}
+
+:deep(.fc-timegrid-now-indicator-arrow) {
+  display: none !important;
 }
 </style>
