@@ -14,6 +14,47 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <!-- 顧客タグ -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">顧客タグ</h3>
+                            <button
+                                @click="openTagModal"
+                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium"
+                            >
+                                タグを追加
+                            </button>
+                        </div>
+                        <div v-if="customer.tags && customer.tags.length > 0" class="flex flex-wrap gap-2">
+                            <div
+                                v-for="tag in customer.tags"
+                                :key="tag.id"
+                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                                :style="{
+                                    backgroundColor: tag.color ? tag.color + '20' : '#f3f4f620',
+                                    color: tag.color || '#6b7280',
+                                    border: `1px solid ${tag.color || '#e5e7eb'}`
+                                }"
+                            >
+                                <span>{{ tag.name }}</span>
+                                <button
+                                    @click="removeTag(tag.id)"
+                                    class="ml-2 text-gray-500 hover:text-red-600"
+                                    title="タグを削除"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="text-sm text-gray-500">
+                            タグが設定されていません
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 顧客基本情報 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
@@ -71,47 +112,6 @@
                                 <label class="block text-sm font-medium text-gray-700">備考</label>
                                 <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ customer.remarks || '-' }}</p>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 顧客タグ -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">顧客タグ</h3>
-                            <button
-                                @click="openTagModal"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium"
-                            >
-                                タグを追加
-                            </button>
-                        </div>
-                        <div v-if="customer.tags && customer.tags.length > 0" class="flex flex-wrap gap-2">
-                            <div
-                                v-for="tag in customer.tags"
-                                :key="tag.id"
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                                :style="{
-                                    backgroundColor: tag.color ? tag.color + '20' : '#f3f4f620',
-                                    color: tag.color || '#6b7280',
-                                    border: `1px solid ${tag.color || '#e5e7eb'}`
-                                }"
-                            >
-                                <span>{{ tag.name }}</span>
-                                <button
-                                    @click="removeTag(tag.id)"
-                                    class="ml-2 text-gray-500 hover:text-red-600"
-                                    title="タグを削除"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div v-else class="text-sm text-gray-500">
-                            タグが設定されていません
                         </div>
                     </div>
                 </div>
