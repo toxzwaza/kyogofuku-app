@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StaffSchedule;
 use App\Models\Shop;
 use App\Models\User;
+use App\Models\TaskExpenseMapping;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Inertia\Inertia;
@@ -142,6 +143,7 @@ class ScheduleController extends Controller
                 'allDay' => $schedule->all_day,
                 'backgroundColor' => $schedule->color,
                 'borderColor' => $schedule->color,
+                'expense_category' => $schedule->expense_category,
                 'extendedProps' => [
                     'description' => $schedule->description,
                     'user' => $schedule->user ? [
@@ -176,6 +178,7 @@ class ScheduleController extends Controller
             'user_id' => 'required|exists:users,id',
             'participant_ids' => 'nullable|array',
             'participant_ids.*' => 'exists:users,id',
+            'expense_category' => 'nullable|string|max:255',
         ]);
 
         // デフォルトのユーザーIDを設定（認証ユーザー）
@@ -245,6 +248,7 @@ class ScheduleController extends Controller
             'user_id' => 'required|exists:users,id',
             'participant_ids' => 'nullable|array',
             'participant_ids.*' => 'exists:users,id',
+            'expense_category' => 'nullable|string|max:255',
         ]);
 
         $participantIds = $validated['participant_ids'] ?? [];
@@ -287,6 +291,7 @@ class ScheduleController extends Controller
                 'allDay' => $schedule->all_day,
                 'backgroundColor' => $schedule->color,
                 'borderColor' => $schedule->color,
+                'expense_category' => $schedule->expense_category,
                 'extendedProps' => [
                     'description' => $schedule->description,
                     'user' => $schedule->user ? [
@@ -301,6 +306,45 @@ class ScheduleController extends Controller
                     })->toArray(),
                 ],
             ],
+        ]);
+    }
+
+    /**
+     * スケジュールの費用項目を更新
+     */
+    public function updateExpenseCategory(Request $request, StaffSchedule $schedule)
+    {
+        $validated = $request->validate([
+            'expense_category' => 'nullable|string|max:255',
+        ]);
+
+        $schedule->update(['expense_category' => $validated['expense_category']]);
+
+        // タスク名と費用項目の紐づけを記録
+        if ($validated['expense_category'] && $schedule->title) {
+            TaskExpenseMapping::recordMapping($schedule->title, $validated['expense_category']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'expense_category' => $schedule->expense_category,
+        ]);
+    }
+
+    /**
+     * タスク名から費用項目を推測
+     */
+    public function predictExpenseCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'task_title' => 'required|string|max:255',
+        ]);
+
+        $predictedCategory = TaskExpenseMapping::predictExpenseCategory($validated['task_title']);
+
+        return response()->json([
+            'success' => true,
+            'expense_category' => $predictedCategory,
         ]);
     }
 

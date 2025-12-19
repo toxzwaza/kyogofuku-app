@@ -109,7 +109,7 @@
                 >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
-                勤怠データ出力
+                請求書発行
               </button>
               
               <div v-if="showAttendanceExport" class="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
@@ -140,31 +140,66 @@
                     </ActionButton>
                     <ActionButton
                       variant="save"
+                      :disabled="exportingAttendance || attendanceData.length === 0 || !hasUnsavedChanges"
+                      @click="saveExpenseCategories"
+                    >
+                      費用項目を保存
+                    </ActionButton>
+                    <ActionButton
+                      variant="save"
                       :disabled="exportingAttendance || attendanceData.length === 0"
                       @click="exportAttendanceCsv"
                     >
-                      TXTダウンロード
+                      請求書ダウンロード
                     </ActionButton>
                   </div>
                 </div>
                 
-                <!-- 勤怠テーブル -->
+                <!-- 請求書テーブル -->
                 <div v-if="attendanceData.length > 0" class="overflow-x-auto">
                   <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-100">
                       <tr>
                         <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">日付</th>
-                        <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">作業時間内訳</th>
+                        <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">作業時間</th>
                         <th class="whitespace-nowrap px-3 py-2 text-right font-medium text-gray-700">勤務時間(h)</th>
-                        <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">概要</th>
+                        <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">タスク</th>
+                        <th class="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700">費用項目</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
-                      <tr v-for="row in attendanceData" :key="row.date" class="hover:bg-gray-50">
+                      <tr v-for="row in attendanceData" :key="row.id" class="hover:bg-gray-50">
                         <td class="px-3 py-2 whitespace-nowrap">{{ row.date }}</td>
-                        <td class="px-3 py-2 text-xs text-gray-600">{{ row.timeRanges }}</td>
+                        <td class="px-3 py-2 text-xs text-gray-600">{{ row.timeRange }}</td>
                         <td class="px-3 py-2 text-right font-medium">{{ row.totalHours }}</td>
-                        <td class="px-3 py-2 text-xs text-gray-600">{{ row.titles }}</td>
+                        <td class="px-3 py-2 text-xs text-gray-600">{{ row.title }}</td>
+                        <td class="px-3 py-2">
+                          <div class="flex items-center gap-2">
+                            <select
+                              :value="row.expenseCategory"
+                              @change="updateExpenseCategoryLocal(row.id, $event.target.value)"
+                              :class="[
+                                'w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs',
+                                row.isPredicted ? 'border-yellow-400 bg-yellow-50' : row.dbExpenseCategory ? 'border-green-400 bg-green-50' : ''
+                              ]"
+                            >
+                              <option value="">選択してください</option>
+                              <option v-for="category in expenseCategories" :key="category" :value="category">
+                                {{ category }}
+                              </option>
+                            </select>
+                            <span v-if="row.isPredicted" class="text-yellow-600 text-xs" title="推測された費用項目（未保存）">
+                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                              </svg>
+                            </span>
+                            <span v-else-if="row.dbExpenseCategory" class="text-green-600 text-xs" title="DBに保存済み">
+                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                              </svg>
+                            </span>
+                          </div>
+                        </td>
                       </tr>
                     </tbody>
                     <tfoot class="bg-gray-100">
@@ -172,6 +207,7 @@
                         <td class="px-3 py-2 font-medium">合計</td>
                         <td class="px-3 py-2"></td>
                         <td class="px-3 py-2 text-right font-bold">{{ attendanceTotalHours }}時間</td>
+                        <td class="px-3 py-2"></td>
                         <td class="px-3 py-2"></td>
                       </tr>
                     </tfoot>
@@ -185,8 +221,65 @@
                     <Bar :data="attendanceChartData" :options="attendanceChartOptions" />
                   </div>
                 </div>
+                
+                <!-- 時間単価設定 -->
+                <div v-if="attendanceData.length > 0" class="mt-4">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">時間単価（円/時間）</label>
+                  <input
+                    v-model.number="hourlyRate"
+                    type="number"
+                    min="0"
+                    step="100"
+                    class="w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  />
+                </div>
               </div>
             </div>
+            
+            <!-- 請求書モーダル -->
+            <transition name="modal">
+              <div
+                v-if="showInvoiceModal && invoiceData"
+                class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="showInvoiceModal = false"
+              >
+                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                  <!-- ヘッダー -->
+                  <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      請求書プレビュー
+                    </h3>
+                    <div class="flex gap-2">
+                      <button
+                        @click="downloadInvoice"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                      >
+                        PDFダウンロード
+                      </button>
+                      <button
+                        @click="showInvoiceModal = false"
+                        class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                      >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- コンテンツ（スクロール可能） -->
+                  <div class="overflow-y-auto flex-1 p-6">
+                    <Invoice
+                      :client="invoiceData.client"
+                      :issuer="invoiceData.issuer"
+                      :invoice="invoiceData.invoice"
+                      :items="invoiceData.items"
+                      :total-hours="invoiceData.totalHours"
+                    />
+                  </div>
+                </div>
+              </div>
+            </transition>
           </div>
         </div>
 
@@ -1397,6 +1490,7 @@ import StatCard from "../Components/StatCard.vue";
 import TrendChart from "../Components/TrendChart.vue";
 import FullCalendar from "@fullcalendar/vue3";
 import { Bar } from "vue-chartjs";
+import Invoice from "@/Components/Invoice.vue";
 import {
   Chart as ChartJS,
   Title,
@@ -1553,6 +1647,9 @@ const selectedUserDate = ref(getTodayDateString());
 
 // 勤怠データ出力
 const showAttendanceExport = ref(false);
+const showInvoiceModal = ref(false);
+const hourlyRate = ref(5000); // 時間単価（デフォルト5000円）
+const invoiceData = ref(null);
 
 // デフォルト日付を計算（20日締め）
 const getDefaultAttendanceDates = () => {
@@ -1587,25 +1684,201 @@ const attendanceEndDate = ref(defaultDates.end);
 const exportingAttendance = ref(false);
 const attendanceData = ref([]);
 
+// 費用項目の選択肢
+const expenseCategories = [
+  'システム設計・要件定義費',
+  'システム開発・実装費',
+  'インフラ構築・外部サービス連携費',
+  '運用支援・マニュアル作成費',
+  'データ移行・PC設定・ITサポート費',
+  '調査・打合せ・進行管理費',
+  'デザイン制作費',
+  '外注先折衝・ディレクション費',
+  'そのほか雑費',
+];
+
+// タスク名から費用項目を推測するマッピング
+const taskToExpenseMapping = {
+  'システム設計・要件定義費': [
+    '業務引き継ぎ', '要件定義', '現場ヒアリング', '設計', '仕様検討', '業務整理', '計画策定'
+  ],
+  'システム開発・実装費': [
+    'プログラム実装', '機能追加', 'UI/UX実装', 'フォーム作成', '管理画面開発', 'データベース設計・追加'
+  ],
+  'インフラ構築・外部サービス連携費': [
+    '本番環境構築', 'サーバー設定', 'DNS設定', 'Amazon SES', 'LINE API', '外部API連携', '環境構築'
+  ],
+  '運用支援・マニュアル作成費': [
+    '運用マニュアル作成', '会議資料作成', '稟議書作成', '社内説明資料作成'
+  ],
+  'データ移行・PC設定・ITサポート費': [
+    'PCデータ移行', 'PC初期設定', '故障PC対応', 'バックアップ', 'データ削除', '端末対応'
+  ],
+  '調査・打合せ・進行管理費': [
+    '打合せ', '調査', '比較検討', '市場調査', '外部業者調整', 'タスク整理', '進行管理'
+  ],
+  'デザイン制作費': [
+    'バナー作成', 'チラシ作成', 'LPデザイン', 'UIデザイン', '印刷物制作'
+  ],
+  '外注先折衝・ディレクション費': [
+    '外注管理', '制作進行', '修正依頼', 'クオリティ管理'
+  ],
+};
+
+// タスク名から費用項目を推測する関数（APIから取得）
+async function predictExpenseCategory(taskTitle) {
+  if (!taskTitle) return null;
+  
+  try {
+    const response = await axios.post(route('admin.schedules.predict-expense-category'), {
+      task_title: taskTitle,
+    });
+    
+    if (response.data.success && response.data.expense_category) {
+      return response.data.expense_category;
+    }
+  } catch (error) {
+    console.error('費用項目の推測に失敗しました:', error);
+    // エラー時は固定マッピングにフォールバック
+    return predictExpenseCategoryFallback(taskTitle);
+  }
+  
+  // APIから結果が得られない場合、固定マッピングにフォールバック
+  return predictExpenseCategoryFallback(taskTitle);
+}
+
+// 固定マッピングによる推測（フォールバック用）
+function predictExpenseCategoryFallback(taskTitle) {
+  if (!taskTitle) return null;
+  
+  for (const [category, keywords] of Object.entries(taskToExpenseMapping)) {
+    for (const keyword of keywords) {
+      if (taskTitle.includes(keyword)) {
+        return category;
+      }
+    }
+  }
+  
+  return null;
+}
+
 // 勤怠データの合計時間
 const attendanceTotalHours = computed(() => {
   return attendanceData.value.reduce((sum, row) => sum + parseFloat(row.totalHours), 0).toFixed(1);
 });
 
-// Chart.jsのグラフデータ
-const attendanceChartData = computed(() => ({
-  labels: attendanceData.value.map(row => row.date.slice(5)), // MM-DD形式
-  datasets: [
-    {
-      label: '勤務時間 (h)',
-      data: attendanceData.value.map(row => parseFloat(row.totalHours)),
-      backgroundColor: 'rgba(99, 102, 241, 0.7)',
-      borderColor: 'rgb(99, 102, 241)',
-      borderWidth: 1,
-      borderRadius: 4,
-    },
-  ],
-}));
+// ローカルで費用項目を更新（DBには保存しない）
+function updateExpenseCategoryLocal(scheduleId, category) {
+  const item = attendanceData.value.find(item => item.id === scheduleId);
+  if (item) {
+    item.expenseCategory = category || null;
+    // 推測状態を更新（手動で変更した場合は推測ではない）
+    if (category) {
+      const predictedCategory = predictExpenseCategory(item.title);
+      // DBに保存されていない、かつ推測値と一致する場合のみ推測として扱う
+      item.isPredicted = !item.dbExpenseCategory && category === predictedCategory;
+    } else {
+      item.isPredicted = false;
+    }
+  }
+}
+
+// 費用項目をDBに保存する関数
+async function updateExpenseCategory(scheduleId, category) {
+  try {
+    await axios.patch(route('admin.schedules.update-expense-category', scheduleId), {
+      expense_category: category,
+    });
+    
+    // ローカルデータを更新
+    const item = attendanceData.value.find(item => item.id === scheduleId);
+    if (item) {
+      item.expenseCategory = category;
+      item.dbExpenseCategory = category;
+      item.isPredicted = false;
+    }
+  } catch (error) {
+    console.error('費用項目の更新に失敗しました:', error);
+    alert('費用項目の更新に失敗しました。');
+    throw error;
+  }
+}
+
+// 未保存の変更があるかチェック
+const hasUnsavedChanges = computed(() => {
+  return attendanceData.value.some(item => {
+    // 推測された項目がある、または手動で変更された項目がある
+    return item.isPredicted || (item.expenseCategory && !item.dbExpenseCategory);
+  });
+});
+
+// すべての費用項目を一括保存
+async function saveExpenseCategories() {
+  if (attendanceData.value.length === 0) {
+    alert('保存するデータがありません。');
+    return;
+  }
+  
+  // 保存が必要な項目をフィルタリング
+  const itemsToSave = attendanceData.value.filter(item => {
+    return item.expenseCategory && item.expenseCategory !== item.dbExpenseCategory;
+  });
+  
+  if (itemsToSave.length === 0) {
+    alert('保存する変更がありません。');
+    return;
+  }
+  
+  if (!confirm(`${itemsToSave.length}件の費用項目を保存しますか？`)) {
+    return;
+  }
+  
+  exportingAttendance.value = true;
+  
+  try {
+    // 並列で保存
+    const promises = itemsToSave.map(item => 
+      updateExpenseCategory(item.id, item.expenseCategory)
+    );
+    
+    await Promise.all(promises);
+    
+    alert(`${itemsToSave.length}件の費用項目を保存しました。`);
+  } catch (error) {
+    console.error('費用項目の保存に失敗しました:', error);
+    alert('一部の費用項目の保存に失敗しました。');
+  } finally {
+    exportingAttendance.value = false;
+  }
+}
+
+// Chart.jsのグラフデータ（日付ごとに集計）
+const attendanceChartData = computed(() => {
+  // 日付ごとにグループ化
+  const groupedByDate = {};
+  attendanceData.value.forEach(row => {
+    if (!groupedByDate[row.date]) {
+      groupedByDate[row.date] = 0;
+    }
+    groupedByDate[row.date] += parseFloat(row.totalHours);
+  });
+  
+  const dates = Object.keys(groupedByDate).sort();
+  
+  return {
+    labels: dates.map(date => date.slice(5)), // MM-DD形式
+    datasets: [
+      {
+        label: '勤務時間 (h)',
+        data: dates.map(date => groupedByDate[date]),
+        backgroundColor: 'rgba(99, 102, 241, 0.7)',
+        borderColor: 'rgb(99, 102, 241)',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+    ],
+  };
+});
 
 // Chart.jsのオプション
 const attendanceChartOptions = computed(() => ({
@@ -1615,28 +1888,34 @@ const attendanceChartOptions = computed(() => ({
     legend: {
       display: false,
     },
-    tooltip: {
+        tooltip: {
       callbacks: {
         title: (context) => {
           const index = context[0].dataIndex;
-          return attendanceData.value[index]?.date || '';
+          // 日付ごとにグループ化
+          const groupedByDate = {};
+          attendanceData.value.forEach(row => {
+            if (!groupedByDate[row.date]) {
+              groupedByDate[row.date] = [];
+            }
+            groupedByDate[row.date].push(row);
+          });
+          const dates = Object.keys(groupedByDate).sort();
+          return dates[index] || '';
         },
         label: (context) => {
           const index = context.dataIndex;
-          const row = attendanceData.value[index];
-          return [`勤務時間: ${row.totalHours}h`];
-        },
-        afterLabel: (context) => {
-          const index = context.dataIndex;
-          const row = attendanceData.value[index];
-          const lines = [];
-          if (row.timeRanges) {
-            lines.push(`時間帯: ${row.timeRanges}`);
-          }
-          if (row.titles) {
-            lines.push(`タスク: ${row.titles}`);
-          }
-          return lines;
+          // 日付ごとにグループ化
+          const groupedByDate = {};
+          attendanceData.value.forEach(row => {
+            if (!groupedByDate[row.date]) {
+              groupedByDate[row.date] = 0;
+            }
+            groupedByDate[row.date] += parseFloat(row.totalHours);
+          });
+          const dates = Object.keys(groupedByDate).sort();
+          const totalHours = groupedByDate[dates[index]] || 0;
+          return [`勤務時間: ${totalHours.toFixed(1)}h`];
         },
       },
     },
@@ -1712,14 +1991,11 @@ async function loadAttendanceData() {
       groupedByDate[dateKey].push(schedule);
     });
     
-    // データを生成
+    // データを生成（各スケジュールごとに）
     const data = [];
     
     Object.keys(groupedByDate).sort().forEach(date => {
       const schedules = groupedByDate[date];
-      const timeRanges = [];
-      let totalMinutes = 0;
-      const titles = [];
       
       schedules.forEach(s => {
         const start = new Date(s.start);
@@ -1728,26 +2004,50 @@ async function loadAttendanceData() {
         // 時間範囲をフォーマット
         const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
         const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
-        timeRanges.push(`${startTime}-${endTime}`);
         
         // 分数を計算
-        totalMinutes += (end - start) / (1000 * 60);
+        const minutes = (end - start) / (1000 * 60);
         
-        // タイトルを追加
-        if (s.title && !titles.includes(s.title)) {
-          titles.push(s.title);
-        }
-      });
-      
-      data.push({
-        date,
-        timeRanges: timeRanges.join(' / '),
-        totalHours: (totalMinutes / 60).toFixed(1),
-        titles: titles.join(', '),
+        const title = s.title || '';
+        const dbExpenseCategory = s.expense_category || null;
+        // 推測は非同期なので、後で処理する
+        data.push({
+          id: s.id,
+          date,
+          timeRange: `${startTime}-${endTime}`,
+          totalHours: (minutes / 60).toFixed(1),
+          title: title,
+          expenseCategory: dbExpenseCategory, // まずDBの値を設定
+          isPredicted: false,
+          dbExpenseCategory: dbExpenseCategory,
+          _pendingPrediction: !dbExpenseCategory, // 推測待ちフラグ（DBに値がない場合のみ）
+        });
       });
     });
     
     attendanceData.value = data;
+    
+    // 推測待ちの項目に対して非同期で推測を実行
+    const predictionPromises = data
+      .filter(item => item._pendingPrediction)
+      .map(async (item) => {
+        try {
+          const predictedCategory = await predictExpenseCategory(item.title);
+          if (predictedCategory) {
+            item.expenseCategory = predictedCategory;
+            item.isPredicted = true;
+          }
+          delete item._pendingPrediction;
+        } catch (error) {
+          console.error('費用項目の推測に失敗しました:', error);
+          delete item._pendingPrediction;
+        }
+      });
+    
+    // 推測が完了するまで待機（並列実行）
+    if (predictionPromises.length > 0) {
+      await Promise.all(predictionPromises);
+    }
     
   } catch (error) {
     console.error('勤怠データの取得に失敗しました:', error);
@@ -1757,37 +2057,334 @@ async function loadAttendanceData() {
   }
 }
 
-// 勤怠データTXT出力
-function exportAttendanceCsv() {
+// 請求書データを生成
+function generateInvoiceData() {
   if (attendanceData.value.length === 0) {
     alert('先にデータを表示してください。');
-    return;
+    return null;
   }
   
-  const lines = [];
-  lines.push('日付        | 時間(h) | 作業時間内訳                                     | 概要');
-  lines.push('------------|---------|--------------------------------------------------|--------------------------------------------------');
-  
+  // 費用項目ごとにグループ化
+  const groupedByCategory = {};
   attendanceData.value.forEach(row => {
-    const date = row.date.padEnd(11);
-    const hours = row.totalHours.toString().padStart(5).padEnd(7);
-    const timeRanges = row.timeRanges.substring(0, 48).padEnd(48);
-    const titles = row.titles.substring(0, 50);
-    lines.push(`${date} | ${hours} | ${timeRanges} | ${titles}`);
+    const category = row.expenseCategory || '未分類';
+    if (!groupedByCategory[category]) {
+      groupedByCategory[category] = {
+        items: [],
+        totalHours: 0,
+      };
+    }
+    groupedByCategory[category].items.push(row);
+    groupedByCategory[category].totalHours += parseFloat(row.totalHours);
   });
   
-  // 合計行
-  lines.push('------------|---------|--------------------------------------------------|--------------------------------------------------');
-  lines.push(`合計        | ${attendanceTotalHours.value.toString().padStart(5).padEnd(7)} |                                                  |`);
+  // 請求書項目を生成（時間×1075円で計算）
+  const hourlyRateForInvoice = 1075; // 固定単価
+  const items = Object.keys(groupedByCategory).sort().map(category => {
+    const group = groupedByCategory[category];
+    const amount = Math.round(group.totalHours * hourlyRateForInvoice);
+    return {
+      name: category,
+      amount: amount,
+    };
+  });
   
-  // TXTダウンロード
-  const txtContent = lines.join('\n');
-  const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `勤怠データ_${attendanceStartDate.value}_${attendanceEndDate.value}.txt`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  // 日付をフォーマット
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}年${month}月${day}日`;
+  };
+  
+  // 支払期限を計算（発行日の翌月末日）
+  const today = new Date();
+  const dueDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+  const formatDueDate = `${dueDate.getFullYear()}年${String(dueDate.getMonth() + 1).padStart(2, '0')}月${String(dueDate.getDate()).padStart(2, '0')}日`;
+  
+  // 請求書番号を生成（YYYYMMDD形式）
+  const invoiceNumber = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}-001`;
+  
+  return {
+    client: {
+      name: '株式会社サンプル', // TODO: 実際の請求先情報に置き換え
+      postal: '123-4567',
+      address: '東京都渋谷区サンプル1-2-3',
+    },
+    issuer: {
+      name: '株式会社キョウゴフク', // TODO: 実際の事業者情報に置き換え
+      postal: '000-0000',
+      address1: '東京都新宿区サンプル1-2-3',
+      address2: 'サンプルビル5F',
+      tel: '03-1234-5678',
+      person: '担当者名', // TODO: 実際の担当者名に置き換え
+    },
+    invoice: {
+      issueDate: formatDate(today.toISOString().split('T')[0]),
+      number: invoiceNumber,
+      dueDate: formatDueDate,
+      title: `システム開発業務（${attendanceStartDate.value} ～ ${attendanceEndDate.value}）`,
+      bank: '三菱UFJ銀行 新宿支店 普通 1234567 株式会社キョウゴフク', // TODO: 実際の振込先情報に置き換え
+      remarks: `集計期間: ${attendanceStartDate.value} ～ ${attendanceEndDate.value}\n合計勤務時間: ${attendanceTotalHours.value}時間`,
+    },
+    items: items,
+    totalHours: parseFloat(attendanceTotalHours.value), // 合計時間を追加
+  };
+}
+
+// 請求書発行
+function exportAttendanceCsv() {
+  const data = generateInvoiceData();
+  if (!data) return;
+  
+  invoiceData.value = data;
+  showInvoiceModal.value = true;
+}
+
+// 請求書をPDFとしてダウンロード
+function downloadInvoice() {
+  if (!invoiceData.value) return;
+  
+  // HTMLを取得
+  const invoiceElement = document.querySelector('.invoice');
+  if (!invoiceElement) return;
+  
+  // スタイルを取得（scopedスタイルの属性を削除）
+  const invoiceHTML = invoiceElement.outerHTML.replace(/data-v-[a-z0-9]+/g, '');
+  
+  // 完全なスタイル定義
+  const invoiceStyles = `
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
+    @media print {
+      @page {
+        size: A4;
+        margin: 15mm;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      .invoice {
+        margin: 0;
+        padding: 10mm 12mm;
+        min-height: 267mm;
+        page-break-inside: avoid;
+        page-break-after: avoid;
+        page-break-before: avoid;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: white;
+      height: auto;
+      overflow: visible;
+    }
+    .invoice {
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      border-top: 4px solid #2e7d32;
+      color: #000;
+      padding: 10mm 12mm;
+      max-width: 210mm;
+      min-height: 267mm;
+      margin: 0 auto;
+      background: white;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      page-break-inside: avoid;
+      page-break-after: avoid;
+      page-break-before: avoid;
+    }
+    .header {
+      flex-shrink: 0;
+    }
+    .header h1 {
+      text-align: center;
+      letter-spacing: 0.3em;
+      margin: 6px 0;
+      font-size: 20px;
+      page-break-inside: avoid;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+      page-break-inside: avoid;
+    }
+    .client {
+      width: 55%;
+      font-size: 12px;
+    }
+    .client-name {
+      font-weight: bold;
+      margin-bottom: 3px;
+      font-size: 14px;
+    }
+    .client p {
+      margin: 1px 0;
+      font-size: 12px;
+    }
+    .meta table {
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .meta th,
+    .meta td {
+      border: 1px solid #000;
+      padding: 3px 6px;
+      font-size: 11px;
+    }
+    .meta th {
+      background: #f5f5f5;
+      width: 80px;
+    }
+    .message {
+      margin: 6px 0;
+      font-size: 12px;
+      flex-shrink: 0;
+      page-break-inside: avoid;
+    }
+    .summary {
+      width: 50%;
+      margin-bottom: 6px;
+      font-size: 11px;
+      flex-shrink: 0;
+      page-break-inside: avoid;
+    }
+    .summary table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .summary th,
+    .summary td {
+      border: 1px solid #000;
+      padding: 3px;
+      font-size: 11px;
+    }
+    .summary th {
+      background: #f5f5f5;
+      width: 80px;
+    }
+    .issuer {
+      text-align: right;
+      margin-top: -60px;
+      font-size: 11px;
+      flex-shrink: 0;
+      page-break-inside: avoid;
+    }
+    .issuer-name {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 1px;
+    }
+    .issuer p {
+      margin: 0.5px 0;
+      font-size: 11px;
+    }
+    .total-box {
+      display: flex;
+      justify-content: space-between;
+      width: 280px;
+      border: 2px solid #000;
+      padding: 6px;
+      margin: 8px 0;
+      font-size: 16px;
+      font-weight: bold;
+      flex-shrink: 0;
+      page-break-inside: avoid;
+    }
+    .items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 12px;
+      flex: 1;
+      min-height: 0;
+      page-break-inside: avoid;
+    }
+    .items th,
+    .items td {
+      border: 1px solid #000;
+      padding: 4px;
+      font-size: 12px;
+    }
+    .items th {
+      background: #333;
+      color: #fff;
+      padding: 5px 4px;
+    }
+    .items tbody tr {
+      height: 24px;
+      page-break-inside: avoid;
+    }
+    .amount {
+      text-align: right;
+      width: 180px;
+    }
+    .footer {
+      margin-top: 6px;
+      font-size: 11px;
+      flex-shrink: 0;
+      page-break-inside: avoid;
+    }
+    .footer p {
+      margin: 2px 0;
+    }
+    .remarks {
+      margin-top: 8px;
+      flex-shrink: 0;
+      page-break-inside: avoid;
+    }
+    .remarks h3 {
+      background: #333;
+      color: #fff;
+      padding: 3px;
+      font-size: 12px;
+      margin: 0;
+    }
+    .remarks-box {
+      border: 1px dashed #000;
+      min-height: 45px;
+      padding: 5px;
+      white-space: pre-wrap;
+      font-size: 11px;
+    }
+  `;
+  
+  // 印刷用のウィンドウを開く
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>請求書</title>
+      <style>
+        ${invoiceStyles}
+      </style>
+    </head>
+    <body>
+      ${invoiceHTML}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  
+  // スタイルが適用されるまで待機してから印刷ダイアログを表示
+  setTimeout(() => {
+    // 印刷設定を調整（単一ページとして保存）
+    printWindow.print();
+  }, 500);
 }
 
 // デフォルト値を設定

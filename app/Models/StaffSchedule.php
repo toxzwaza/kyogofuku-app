@@ -19,6 +19,7 @@ class StaffSchedule extends Model
         'end_at',
         'all_day',
         'color',
+        'expense_category',
     ];
 
     protected $casts = [

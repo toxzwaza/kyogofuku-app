@@ -168,6 +168,8 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/api/schedules/shop-users', [AdminScheduleController::class, 'getShopUsers'])->name('schedules.shop-users');
     Route::post('/api/schedules', [AdminScheduleController::class, 'store'])->name('schedules.store');
     Route::put('/api/schedules/{schedule}', [AdminScheduleController::class, 'update'])->name('schedules.update');
+    Route::patch('/api/schedules/{schedule}/expense-category', [AdminScheduleController::class, 'updateExpenseCategory'])->name('schedules.update-expense-category');
+    Route::post('/api/schedules/predict-expense-category', [AdminScheduleController::class, 'predictExpenseCategory'])->name('schedules.predict-expense-category');
     Route::delete('/api/schedules/{schedule}', [AdminScheduleController::class, 'destroy'])->name('schedules.destroy');
     
     // 資料管理
