@@ -75,6 +75,47 @@
                     </div>
                 </div>
 
+                <!-- 顧客タグ -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">顧客タグ</h3>
+                            <button
+                                @click="openTagModal"
+                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium"
+                            >
+                                タグを追加
+                            </button>
+                        </div>
+                        <div v-if="customer.tags && customer.tags.length > 0" class="flex flex-wrap gap-2">
+                            <div
+                                v-for="tag in customer.tags"
+                                :key="tag.id"
+                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                                :style="{
+                                    backgroundColor: tag.color ? tag.color + '20' : '#f3f4f620',
+                                    color: tag.color || '#6b7280',
+                                    border: `1px solid ${tag.color || '#e5e7eb'}`
+                                }"
+                            >
+                                <span>{{ tag.name }}</span>
+                                <button
+                                    @click="removeTag(tag.id)"
+                                    class="ml-2 text-gray-500 hover:text-red-600"
+                                    title="タグを削除"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="text-sm text-gray-500">
+                            タグが設定されていません
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 成約情報 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
@@ -925,6 +966,99 @@
                 </div>
             </div>
         </transition>
+
+        <!-- タグ追加モーダル -->
+        <transition name="modal">
+            <div
+                v-if="showTagModal"
+                class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="showTagModal = false"
+            >
+                <div
+                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
+                >
+                    <!-- ヘッダー -->
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            タグを追加
+                        </h3>
+                        <button
+                            @click="showTagModal = false"
+                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- コンテンツ（スクロール可能） -->
+                    <form @submit.prevent="attachTag" class="overflow-y-auto flex-1 px-6 py-5">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    タグを選択 <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    v-model="tagForm.customer_tag_id"
+                                    required
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option :value="null">選択してください</option>
+                                    <option
+                                        v-for="tag in availableTags"
+                                        :key="tag.id"
+                                        :value="tag.id"
+                                    >
+                                        {{ tag.name }}
+                                    </option>
+                                </select>
+                                <div v-if="tagForm.errors.customer_tag_id" class="mt-1 text-sm text-red-600">
+                                    {{ tagForm.errors.customer_tag_id }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    備考（タグ付与理由など）
+                                </label>
+                                <textarea
+                                    v-model="tagForm.note"
+                                    rows="3"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    placeholder="タグを付与した理由や補足情報を入力"
+                                ></textarea>
+                                <div v-if="tagForm.errors.note" class="mt-1 text-sm text-red-600">
+                                    {{ tagForm.errors.note }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- フッター -->
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button
+                                type="button"
+                                @click="showTagModal = false"
+                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="tagForm.processing"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span v-if="tagForm.processing">追加中...</span>
+                                <span v-else>追加</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </transition>
     </AuthenticatedLayout>
 </template>
 
@@ -945,6 +1079,7 @@ const props = defineProps({
     photoTypes: Array,
     availablePhotoSlots: Array,
     userShops: Array,
+    customerTags: Array,
 });
 
 const page = usePage();
@@ -956,6 +1091,7 @@ const showAddContractModal = ref(false);
 const showAddPhotoSlotModal = ref(false);
 const showPhotoPreviewModal = ref(false);
 const showDeleteConfirmModal = ref(false);
+const showTagModal = ref(false);
 
 // 選択中の写真（プレビュー用）
 const selectedPhoto = ref(null);
@@ -1323,6 +1459,45 @@ const formatTime = (timeString) => {
 
 // 削除フォーム
 const deleteForm = useForm({});
+
+// タグ追加フォーム
+const tagForm = useForm({
+    customer_tag_id: null,
+    note: '',
+});
+
+// 利用可能なタグ（既に紐づいているタグを除外）
+const availableTags = computed(() => {
+    if (!props.customerTags) return [];
+    const assignedTagIds = props.customer.tags?.map(tag => tag.id) || [];
+    return props.customerTags.filter(tag => !assignedTagIds.includes(tag.id));
+});
+
+// タグ追加モーダルを開く
+const openTagModal = () => {
+    tagForm.reset();
+    showTagModal.value = true;
+};
+
+// タグを追加
+const attachTag = () => {
+    tagForm.post(route('admin.customers.attach-tag', props.customer.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showTagModal.value = false;
+            tagForm.reset();
+        },
+    });
+};
+
+// タグを削除
+const removeTag = (tagId) => {
+    if (confirm('このタグを削除しますか？')) {
+        router.delete(route('admin.customers.detach-tag', [props.customer.id, tagId]), {
+            preserveScroll: true,
+        });
+    }
+};
 
 // 削除確認モーダルを開く
 const openDeleteConfirmModal = () => {

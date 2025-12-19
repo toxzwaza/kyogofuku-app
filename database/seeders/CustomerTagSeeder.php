@@ -17,9 +17,9 @@ class CustomerTagSeeder extends Seeder
     {
         //
         CustomerTag::insert([
-            ['name' => 'クレーム履歴あり', 'slug' => 'complaint', 'color' => '#ff4d4f'],
-            ['name' => '返信忘れ', 'slug' => 'forgot_reply', 'color' => '#faad14'],
-            ['name' => '要フォロー', 'slug' => 'need_follow', 'color' => '#1890ff'],
+            ['name' => 'クレーム履歴あり', 'color' => '#ff4d4f'],
+            ['name' => '返信忘れ', 'color' => '#faad14'],
+            ['name' => '要フォロー', 'color' => '#1890ff'],
         ]);
     }
 }

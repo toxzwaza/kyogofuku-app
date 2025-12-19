@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CustomerTag extends Model
 {
-    protected $fillable = ['name','slug','description','color','is_active'];
+    protected $fillable = ['name','description','color','is_active'];
 
     public function customers()
     {

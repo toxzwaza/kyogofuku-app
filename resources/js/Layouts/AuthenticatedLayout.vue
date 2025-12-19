@@ -36,6 +36,7 @@ const menuItems = [
         route: 'admin.customers.index',
         subItems: [
             { label: '顧客一覧', route: 'admin.customers.index' },
+            { label: '顧客タグ一覧', route: 'admin.customer-tags.index' },
         ],
     },
     {
@@ -96,7 +97,8 @@ const menuItems = [
                                         :class="[
                                             'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out',
                                             route().current(menu.route.replace('.index', '.*')) || 
-                                            (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*')))
+                                            (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*'))) ||
+                                            (menu.key === 'customers' && route().current('admin.customer-tags.*'))
                                                 ? 'border-indigo-400 text-gray-900 focus:outline-none focus:border-indigo-700'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
                                         ]"
@@ -228,8 +230,11 @@ const menuItems = [
                         <ResponsiveNavLink :href="route('admin.photo-slots.index')" :active="route().current('admin.photo-slots.*')">
                             前撮り管理
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('admin.customers.index')" :active="route().current('admin.customers.*')">
-                            顧客管理
+                        <ResponsiveNavLink :href="route('admin.customers.index')" :active="route().current('admin.customers.*') && !route().current('admin.customer-tags.*')">
+                            顧客一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.customer-tags.index')" :active="route().current('admin.customer-tags.*')" class="pl-8">
+                            顧客タグ一覧
                         </ResponsiveNavLink>
                         <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             マスタ管理

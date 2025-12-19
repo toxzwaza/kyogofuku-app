@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\PhotoStudio;
 use App\Models\PhotoType;
 use App\Models\StaffSchedule;
+use App\Models\CustomerTag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -83,9 +84,12 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->with(['photos' => function($q) {
-            $q->where('photo_type_id', 1)->orderBy('created_at', 'desc')->limit(1);
-        }])->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $customers = $query->with([
+            'photos' => function($q) {
+                $q->where('photo_type_id', 1)->orderBy('created_at', 'desc')->limit(1);
+            },
+            'tags'
+        ])->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         // フォーム用のマスターデータを取得
         $ceremonyAreas = CeremonyArea::orderBy('name')->get();
@@ -146,6 +150,7 @@ class CustomerController extends Controller
             'photoSlots.user',
             'photoSlots.plan',
             'photos.type',
+            'tags',
         ]);
         
         // photoSlotsをソート
@@ -181,6 +186,9 @@ class CustomerController extends Controller
             ->orderBy('shoot_time', 'asc')
             ->get();
 
+        // 顧客タグ一覧を取得（有効なもののみ）
+        $customerTags = CustomerTag::where('is_active', true)->orderBy('name')->get();
+
         return Inertia::render('Admin/Customer/Show', [
             'customer' => $customer,
             'ceremonyAreas' => $ceremonyAreas,
@@ -190,6 +198,7 @@ class CustomerController extends Controller
             'photoStudios' => $photoStudios,
             'photoTypes' => $photoTypes,
             'availablePhotoSlots' => $availablePhotoSlots,
+            'customerTags' => $customerTags,
             'userShops' => $userShops->map(function($shop) {
                 return [
                     'id' => $shop->id,
@@ -290,6 +299,42 @@ class CustomerController extends Controller
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '前撮り情報を追加しました。');
+    }
+
+    /**
+     * 顧客にタグを紐づけ
+     */
+    public function attachTag(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'customer_tag_id' => 'required|exists:customer_tags,id',
+            'note' => 'nullable|string',
+        ]);
+
+        // 既に紐づいている場合は更新
+        if ($customer->tags()->where('customer_tag_id', $validated['customer_tag_id'])->exists()) {
+            $customer->tags()->updateExistingPivot($validated['customer_tag_id'], [
+                'note' => $validated['note'] ?? null,
+            ]);
+        } else {
+            $customer->tags()->attach($validated['customer_tag_id'], [
+                'note' => $validated['note'] ?? null,
+            ]);
+        }
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', 'タグを紐づけました。');
+    }
+
+    /**
+     * 顧客からタグを外す
+     */
+    public function detachTag(Request $request, Customer $customer, CustomerTag $customerTag)
+    {
+        $customer->tags()->detach($customerTag->id);
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', 'タグを外しました。');
     }
 
     /**

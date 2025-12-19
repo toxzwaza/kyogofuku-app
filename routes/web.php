@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\VenueController as AdminVenueController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\PhotoSlotController as AdminPhotoSlotController;
 use App\Http\Controllers\Admin\PhotoStudioController as AdminPhotoStudioController;
+use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineTestController;
 use App\Http\Controllers\ProfileController;
@@ -140,7 +141,18 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/customers/{customer}/contracts', [AdminCustomerController::class, 'storeContract'])->name('customers.contracts.store');
     Route::post('/customers/{customer}/photo-slots', [AdminCustomerController::class, 'storePhotoSlot'])->name('customers.photo-slots.store');
     Route::post('/customers/{customer}/photos', [AdminCustomerController::class, 'storeCustomerPhoto'])->name('customers.photos.store');
+    Route::post('/customers/{customer}/tags', [AdminCustomerController::class, 'attachTag'])->name('customers.attach-tag');
+    Route::delete('/customers/{customer}/tags/{customerTag}', [AdminCustomerController::class, 'detachTag'])->name('customers.detach-tag');
     Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])->name('customers.destroy');
+    
+    // 顧客タグ管理
+    Route::get('/customer-tags', [AdminCustomerTagController::class, 'index'])->name('customer-tags.index');
+    Route::get('/customer-tags/create', [AdminCustomerTagController::class, 'create'])->name('customer-tags.create');
+    Route::post('/customer-tags', [AdminCustomerTagController::class, 'store'])->name('customer-tags.store');
+    Route::get('/customer-tags/{customerTag}', [AdminCustomerTagController::class, 'show'])->name('customer-tags.show');
+    Route::get('/customer-tags/{customerTag}/edit', [AdminCustomerTagController::class, 'edit'])->name('customer-tags.edit');
+    Route::put('/customer-tags/{customerTag}', [AdminCustomerTagController::class, 'update'])->name('customer-tags.update');
+    Route::delete('/customer-tags/{customerTag}', [AdminCustomerTagController::class, 'destroy'])->name('customer-tags.destroy');
     
     // スタッフ管理
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');

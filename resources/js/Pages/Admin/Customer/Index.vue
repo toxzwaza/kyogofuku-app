@@ -184,7 +184,7 @@
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">画像</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">タグ</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顧客名</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ふりがな</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成人式エリア</th>
@@ -218,7 +218,23 @@
                                                 </svg>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.id }}</td>
+                                        <td class="px-6 py-4">
+                                            <div v-if="customer.tags && customer.tags.length > 0" class="flex flex-wrap gap-1">
+                                                <span
+                                                    v-for="tag in customer.tags"
+                                                    :key="tag.id"
+                                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                                    :style="{
+                                                        backgroundColor: tag.color ? tag.color + '20' : '#f3f4f620',
+                                                        color: tag.color || '#6b7280',
+                                                        border: `1px solid ${tag.color || '#e5e7eb'}`
+                                                    }"
+                                                >
+                                                    {{ tag.name }}
+                                                </span>
+                                            </div>
+                                            <span v-else class="text-sm text-gray-400">-</span>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.kana || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.ceremony_area?.name || '-' }}</td>
