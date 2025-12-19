@@ -34,23 +34,75 @@
             <div class="space-y-6">
               <!-- 店舗単位カレンダー -->
               <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <div class="flex items-center justify-between mb-4">
-                  <h4 class="text-base font-semibold text-gray-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    店舗単位スケジュール
-                  </h4>
-                  <select
-                    v-model="selectedShopId"
-                    @change="onShopChange"
-                    class="w-48 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                  >
-                    <option value="">店舗を選択</option>
-                    <option v-for="shop in userShops" :key="shop.id" :value="shop.id">
-                      {{ shop.name }}
-                    </option>
-                  </select>
+                <div class="mb-4">
+                  <div class="flex items-center mb-3">
+                    <h4 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+                      <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      店舗単位スケジュール
+                    </h4>
+                  </div>
+                  <!-- ユーザーチェックボックス -->
+                  <div v-if="selectedShopId && usersForShopCalendar.length > 0" class="pt-3 border-t border-gray-200">
+                    <div class="flex items-center gap-3 flex-wrap">
+                      <select
+                        v-model="selectedShopId"
+                        @change="onShopChange"
+                        class="w-48 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      >
+                        <option value="">店舗を選択</option>
+                        <option v-for="shop in userShops" :key="shop.id" :value="shop.id">
+                          {{ shop.name }}
+                        </option>
+                      </select>
+                      <div class="flex items-center gap-2 ml-2">
+                        <button
+                          @click="selectAllUsers"
+                          class="px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                        >
+                          全選択
+                        </button>
+                        <button
+                          @click="deselectAllUsers"
+                          class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                        >
+                          全解除
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-4 flex-wrap ml-2">
+                        <label
+                          v-for="user in usersForShopCalendar"
+                          :key="user.id"
+                          class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-indigo-600 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            :value="user.id"
+                            v-model="selectedUserIdsForShopCalendar"
+                            @change="onShopCalendarUserChange"
+                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 focus:ring-2"
+                          />
+                          <span class="select-none">{{ user.name }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="pt-3 border-t border-gray-200">
+                    <div class="flex items-center gap-3 flex-wrap">
+                      <span class="text-sm font-medium text-gray-700">表示ユーザー:</span>
+                      <select
+                        v-model="selectedShopId"
+                        @change="onShopChange"
+                        class="w-48 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                      >
+                        <option value="">店舗を選択</option>
+                        <option v-for="shop in userShops" :key="shop.id" :value="shop.id">
+                          {{ shop.name }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-sm" style="min-height: 600px;">
                   <FullCalendar ref="shopCalendar" :options="shopCalendarOptions" />
@@ -1609,6 +1661,8 @@ const selectedShopId = ref("");
 const selectedUserId = ref("");
 const selectedUserShopId = ref(""); // ユーザー単位カレンダー用の店舗選択
 const usersForUserCalendar = ref([]); // ユーザー単位カレンダー用のユーザーリスト
+const usersForShopCalendar = ref([]); // 店舗単位カレンダー用のユーザーリスト
+const selectedUserIdsForShopCalendar = ref([]); // 店舗単位カレンダーで選択されたユーザーIDのリスト
 
 // ユーザー単位カレンダー用の店舗変更時の処理
 async function onUserShopChange() {
@@ -2464,6 +2518,8 @@ onMounted(() => {
     selectedShopId.value = defaultShop.id;
     selectedShopIdForCreate.value = defaultShop.id;
     loadShopUsersForCreate(defaultShop.id);
+    // 店舗単位カレンダー用のユーザーリストを取得
+    onShopChange();
     console.log('[Dashboard] 店舗ID設定:', selectedShopId.value, 'main:', defaultShop.main);
   }
   
@@ -2774,7 +2830,31 @@ function loadShopSchedules(info, successCallback, failureCallback) {
     .get(route("admin.schedules.index"), { params })
     .then((response) => {
       if (successCallback) {
-        successCallback(response.data);
+        // ユーザーリストが存在し、選択されたユーザーIDが0の場合は空配列を返す（全解除時）
+        if (usersForShopCalendar.value.length > 0 && selectedUserIdsForShopCalendar.value.length === 0) {
+          successCallback([]);
+          return;
+        }
+        
+        // 選択されたユーザーIDでフィルタリング
+        let filteredData = response.data;
+        
+        // ユーザーが選択されている場合のみフィルタリング
+        if (selectedUserIdsForShopCalendar.value.length > 0) {
+          // 全ユーザーが選択されている場合はフィルタリング不要
+          if (selectedUserIdsForShopCalendar.value.length < usersForShopCalendar.value.length) {
+            filteredData = response.data.filter(event => {
+              // extendedProps.user.idでフィルタリング（スケジュールの作成者）
+              if (event.extendedProps?.user?.id) {
+                return selectedUserIdsForShopCalendar.value.includes(event.extendedProps.user.id);
+              }
+              // ユーザー情報が取得できない場合は表示しない
+              return false;
+            });
+          }
+        }
+        
+        successCallback(filteredData);
       }
     })
     .catch((error) => {
@@ -2783,6 +2863,41 @@ function loadShopSchedules(info, successCallback, failureCallback) {
         failureCallback(error);
       }
     });
+}
+
+// 店舗単位カレンダーのユーザーチェックボックス変更時の処理
+function onShopCalendarUserChange() {
+  if (shopCalendar.value) {
+    shopCalendar.value.getApi().refetchEvents();
+    // 高さを同期（イベント読み込み完了を待つ）
+    setTimeout(() => {
+      syncCalendarHeights();
+    }, 300);
+    // 念のため、もう一度同期（レンダリング完了を待つ）
+    setTimeout(() => {
+      syncCalendarHeights();
+    }, 600);
+  }
+}
+
+// 全ユーザーを選択
+function selectAllUsers() {
+  if (usersForShopCalendar.value.length > 0) {
+    selectedUserIdsForShopCalendar.value = usersForShopCalendar.value.map(u => u.id);
+    // スケジュール情報を再度取得
+    nextTick(() => {
+      onShopCalendarUserChange();
+    });
+  }
+}
+
+// 全ユーザーの選択を解除
+function deselectAllUsers() {
+  selectedUserIdsForShopCalendar.value = [];
+  // スケジュール情報を再度取得
+  nextTick(() => {
+    onShopCalendarUserChange();
+  });
 }
 
 // ユーザー単位スケジュール読み込み（カレンダーの表示期間）
@@ -3493,7 +3608,32 @@ const formatDate = (dateString) => {
 };
 
 // 店舗変更時の処理
-function onShopChange() {
+async function onShopChange() {
+  // 店舗が選択されていない場合はユーザーリストをクリア
+  if (!selectedShopId.value) {
+    usersForShopCalendar.value = [];
+    selectedUserIdsForShopCalendar.value = [];
+    if (shopCalendar.value) {
+      shopCalendar.value.getApi().refetchEvents();
+    }
+    return;
+  }
+  
+  // 選択された店舗に所属するユーザーを取得
+  try {
+    const response = await axios.get(route('admin.schedules.shop-users'), {
+      params: { shop_id: selectedShopId.value }
+    });
+    usersForShopCalendar.value = response.data;
+    // デフォルトで全ユーザーを選択
+    selectedUserIdsForShopCalendar.value = response.data.map(u => u.id);
+  } catch (error) {
+    console.error('店舗ユーザーの取得に失敗しました:', error);
+    usersForShopCalendar.value = [];
+    selectedUserIdsForShopCalendar.value = [];
+  }
+  
+  // カレンダーをリフレッシュ
   if (shopCalendar.value) {
     shopCalendar.value.getApi().refetchEvents();
     // 高さを同期（イベント読み込み完了を待つ）
