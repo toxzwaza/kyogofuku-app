@@ -8,6 +8,7 @@ use App\Models\EventTimeslot;
 use App\Models\ReservationNote;
 use App\Models\Shop;
 use App\Models\User;
+use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,18 +31,7 @@ class DashboardController extends Controller
 
         // 基本統計
         $stats = [
-            'events' => Event::count(),
-            'active_events' => Event::where('is_public', true)
-                ->where(function($query) {
-                    $query->whereNull('end_at')
-                        ->orWhere('end_at', '>=', Carbon::today());
-                })
-                ->count(),
-            'reservations' => EventReservation::count(),
-            'reservations_today' => EventReservation::whereDate('created_at', $today)->count(),
-            'reservations_this_month' => EventReservation::whereBetween('created_at', [$thisMonthStart, $thisMonthEnd])->count(),
-            'shops' => Shop::where('is_active', true)->count(),
-            'users' => User::count(),
+            'customers_today' => Customer::whereDate('created_at', $today)->count(),
         ];
 
         // フォームタイプ別の予約数
