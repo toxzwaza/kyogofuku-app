@@ -319,6 +319,43 @@
                     </div>
                   </div>
                   
+                  <!-- 編集フォーム -->
+                  <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <div class="space-y-4">
+                      <!-- 雑費の手入力 -->
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                          そのほか雑費の金額
+                        </label>
+                        <div class="flex items-center gap-2">
+                          <span class="text-gray-600">¥</span>
+                          <input
+                            type="number"
+                            v-model.number="miscellaneousAmount"
+                            @input="updateMiscellaneousAmount"
+                            min="0"
+                            step="1"
+                            class="w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      <!-- 備考の編集 -->
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                          備考
+                        </label>
+                        <textarea
+                          v-model="invoiceRemarks"
+                          @input="updateInvoiceRemarks"
+                          rows="3"
+                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                          placeholder="備考を入力してください"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <!-- コンテンツ（スクロール可能） -->
                   <div class="overflow-y-auto flex-1 p-6">
                     <Invoice
@@ -1710,6 +1747,8 @@ const showInvoiceModal = ref(false);
 const savedHourlyRate = localStorage.getItem('hourlyRate');
 const hourlyRate = ref(savedHourlyRate ? Number(savedHourlyRate) : 5000);
 const invoiceData = ref(null);
+const miscellaneousAmount = ref(0); // 雑費の手入力値
+const invoiceRemarks = ref(''); // 備考の編集値
 
 // 時間単価が変更されたらlocalStorageに保存
 watch(hourlyRate, (newValue) => {
@@ -2253,7 +2292,44 @@ function exportAttendanceCsv() {
   if (!data) return;
   
   invoiceData.value = data;
+  // 雑費の初期値を設定（既存の雑費項目があればその金額、なければ0）
+  const miscellaneousItem = data.items.find(item => item.name === 'そのほか雑費');
+  miscellaneousAmount.value = miscellaneousItem ? miscellaneousItem.amount : 0;
+  // 備考の初期値を設定
+  invoiceRemarks.value = data.invoice.remarks || '';
   showInvoiceModal.value = true;
+}
+
+// 雑費の金額を更新
+function updateMiscellaneousAmount() {
+  if (!invoiceData.value) return;
+  
+  // 雑費項目を検索または作成
+  let miscellaneousItem = invoiceData.value.items.find(item => item.name === 'そのほか雑費');
+  
+  if (miscellaneousItem) {
+    // 既存の雑費項目の金額を更新
+    miscellaneousItem.amount = miscellaneousAmount.value || 0;
+  } else {
+    // 雑費項目が存在しない場合は追加
+    invoiceData.value.items.push({
+      name: 'そのほか雑費',
+      amount: miscellaneousAmount.value || 0,
+      totalHours: 0,
+    });
+    // 項目をソート（雑費は最後に表示されるように）
+    invoiceData.value.items.sort((a, b) => {
+      if (a.name === 'そのほか雑費') return 1;
+      if (b.name === 'そのほか雑費') return -1;
+      return a.name.localeCompare(b.name);
+    });
+  }
+}
+
+// 備考を更新
+function updateInvoiceRemarks() {
+  if (!invoiceData.value) return;
+  invoiceData.value.invoice.remarks = invoiceRemarks.value;
 }
 
 // 請求書をPDFとしてダウンロード
