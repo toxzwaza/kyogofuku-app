@@ -384,22 +384,27 @@
           }"
           class="schedule-tooltip bg-gray-900 text-white text-xs rounded-lg shadow-lg p-3 max-w-xs"
         >
-          <div class="space-y-1">
-            <div class="font-semibold text-sm">{{ tooltip.title }}</div>
-            <div v-if="tooltip.user" class="text-gray-300">
-              作成者: {{ tooltip.user }}
+          <div class="flex flex-col h-full">
+            <!-- 基本情報 -->
+            <div class="space-y-1 flex-shrink-0">
+              <div class="font-semibold text-sm">{{ tooltip.title }}</div>
+              <div v-if="tooltip.user" class="text-gray-300">
+                作成者: {{ tooltip.user }}
+              </div>
+              <div v-if="tooltip.start" class="text-gray-300">
+                開始: {{ formatDateTime(tooltip.start) }}
+              </div>
+              <div v-if="tooltip.end" class="text-gray-300">
+                終了: {{ formatDateTime(tooltip.end) }}
+              </div>
+              <div v-if="tooltip.participants && tooltip.participants.length > 0" class="text-gray-300">
+                参加者: {{ tooltip.participants.map(p => p.name).join(', ') }}
+              </div>
             </div>
-            <div v-if="tooltip.start" class="text-gray-300">
-              開始: {{ formatDateTime(tooltip.start) }}
-            </div>
-            <div v-if="tooltip.end" class="text-gray-300">
-              終了: {{ formatDateTime(tooltip.end) }}
-            </div>
-            <div v-if="tooltip.participants && tooltip.participants.length > 0" class="text-gray-300">
-              参加者: {{ tooltip.participants.map(p => p.name).join(', ') }}
-            </div>
-            <div v-if="tooltip.description" class="text-gray-300 mt-2 pt-2 border-t border-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
-              {{ tooltip.description }}
+            <!-- 説明（一番下に固定） -->
+            <div v-if="tooltip.description" class="mt-3 pt-3 border-t border-gray-700 text-gray-300 whitespace-pre-wrap max-h-32 overflow-y-auto flex-shrink">
+              <div class="text-xs font-medium text-gray-400 mb-1">説明</div>
+              <div class="text-sm">{{ tooltip.description }}</div>
             </div>
           </div>
         </div>
@@ -577,12 +582,6 @@
                 >
                   閉じる
                 </button>
-                <Link
-                  :href="route('admin.schedules.show')"
-                  class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  詳細管理へ
-                </Link>
                 <button
                   v-if="canEditSchedule(selectedScheduleDetail)"
                   @click="deleteScheduleFromDashboard"
@@ -4243,6 +4242,15 @@ async function loadShopUsersForCreate(shopId) {
 /* ツールチップスタイル */
 .schedule-tooltip {
   animation: fadeIn 0.2s ease-in;
+  display: flex;
+  flex-direction: column;
+  min-height: fit-content;
+  max-height: 400px;
+}
+
+.schedule-tooltip .flex-shrink {
+  flex-shrink: 1;
+  min-height: 0;
 }
 
 @keyframes fadeIn {
