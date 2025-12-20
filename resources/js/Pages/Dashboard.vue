@@ -1727,6 +1727,66 @@ const usersForUserCalendar = ref([]); // ユーザー単位カレンダー用の
 const usersForShopCalendar = ref([]); // 店舗単位カレンダー用のユーザーリスト
 const selectedUserIdsForShopCalendar = ref([]); // 店舗単位カレンダーで選択されたユーザーIDのリスト
 
+// LocalStorageから店舗ごとの表示ユーザー設定を読み込む（店舗IDを指定）
+function loadShopCalendarSettings(shopId) {
+  if (!props.currentUser?.id || !shopId) return null;
+  
+  try {
+    const key = `shopCalendarSettings_${props.currentUser.id}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const allSettings = JSON.parse(saved);
+      // 店舗IDごとの設定を返す
+      return allSettings[shopId] || null;
+    }
+  } catch (error) {
+    console.error('設定の読み込みに失敗しました:', error);
+  }
+  return null;
+}
+
+// LocalStorageに店舗ごとの表示ユーザー設定を保存する（店舗IDを指定）
+function saveShopCalendarSettings(shopId) {
+  if (!props.currentUser?.id || !shopId) return;
+  
+  try {
+    const key = `shopCalendarSettings_${props.currentUser.id}`;
+    // 既存の設定を読み込む
+    let allSettings = {};
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      allSettings = JSON.parse(saved);
+    }
+    // 現在の店舗の設定を更新
+    allSettings[shopId] = {
+      selectedUserIds: selectedUserIdsForShopCalendar.value
+    };
+    localStorage.setItem(key, JSON.stringify(allSettings));
+    
+    // 最後に選択していた店舗IDも保存
+    const lastShopKey = `lastSelectedShopId_${props.currentUser.id}`;
+    localStorage.setItem(lastShopKey, shopId.toString());
+  } catch (error) {
+    console.error('設定の保存に失敗しました:', error);
+  }
+}
+
+// 最後に選択していた店舗IDを読み込む
+function loadLastSelectedShopId() {
+  if (!props.currentUser?.id) return null;
+  
+  try {
+    const key = `lastSelectedShopId_${props.currentUser.id}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return saved;
+    }
+  } catch (error) {
+    console.error('最後に選択した店舗IDの読み込みに失敗しました:', error);
+  }
+  return null;
+}
+
 // ユーザー単位カレンダー用の店舗変更時の処理
 async function onUserShopChange() {
   if (!selectedUserShopId.value) {
@@ -2613,10 +2673,23 @@ onMounted(() => {
   if (userShops.value.length > 0) {
     const mainShop = userShops.value.find(shop => shop.main === true || shop.main === 1);
     const defaultShop = mainShop || userShops.value[0];
-    selectedShopId.value = defaultShop.id;
-    selectedShopIdForCreate.value = defaultShop.id;
-    loadShopUsersForCreate(defaultShop.id);
-    // 店舗単位カレンダー用のユーザーリストを取得
+    
+    // 最後に選択していた店舗IDを読み込む
+    const lastSelectedShopId = loadLastSelectedShopId();
+    let shopIdToSelect = defaultShop.id;
+    
+    // 最後に選択していた店舗が有効な店舗リストに存在するか確認
+    if (lastSelectedShopId) {
+      const savedShop = userShops.value.find(shop => shop.id === lastSelectedShopId);
+      if (savedShop) {
+        shopIdToSelect = lastSelectedShopId;
+      }
+    }
+    
+    selectedShopId.value = shopIdToSelect;
+    selectedShopIdForCreate.value = selectedShopId.value;
+    loadShopUsersForCreate(selectedShopId.value);
+    // 店舗単位カレンダー用のユーザーリストを取得（onShopChange内で保存された設定を適用）
     onShopChange();
   }
   
@@ -3259,6 +3332,11 @@ function loadShopSchedules(info, successCallback, failureCallback) {
 
 // 店舗単位カレンダーのユーザーチェックボックス変更時の処理
 function onShopCalendarUserChange() {
+  // 設定を保存（現在の店舗IDを指定）
+  if (selectedShopId.value) {
+    saveShopCalendarSettings(selectedShopId.value);
+  }
+  
   if (shopCalendar.value) {
     shopCalendar.value.getApi().refetchEvents();
     // 高さを同期（イベント読み込み完了を待つ）
@@ -3276,6 +3354,10 @@ function onShopCalendarUserChange() {
 function selectAllUsers() {
   if (usersForShopCalendar.value.length > 0) {
     selectedUserIdsForShopCalendar.value = usersForShopCalendar.value.map(u => u.id);
+    // 設定を保存（現在の店舗IDを指定）
+    if (selectedShopId.value) {
+      saveShopCalendarSettings(selectedShopId.value);
+    }
     // スケジュール情報を再度取得
     nextTick(() => {
       onShopCalendarUserChange();
@@ -3286,6 +3368,10 @@ function selectAllUsers() {
 // 全ユーザーの選択を解除
 function deselectAllUsers() {
   selectedUserIdsForShopCalendar.value = [];
+  // 設定を保存（現在の店舗IDを指定）
+  if (selectedShopId.value) {
+    saveShopCalendarSettings(selectedShopId.value);
+  }
   // スケジュール情報を再度取得
   nextTick(() => {
     onShopCalendarUserChange();
@@ -4020,8 +4106,27 @@ async function onShopChange() {
       params: { shop_id: selectedShopId.value }
     });
     usersForShopCalendar.value = response.data;
-    // デフォルトで全ユーザーを選択
-    selectedUserIdsForShopCalendar.value = response.data.map(u => u.id);
+    
+    // LocalStorageから保存された設定を読み込む（現在の店舗IDを指定）
+    const savedSettings = loadShopCalendarSettings(selectedShopId.value);
+    if (savedSettings?.selectedUserIds) {
+      // 保存されたユーザーIDのうち、現在の店舗に存在するもののみを選択
+      const validUserIds = savedSettings.selectedUserIds.filter(userId => 
+        response.data.some(u => u.id === userId)
+      );
+      if (validUserIds.length > 0) {
+        selectedUserIdsForShopCalendar.value = validUserIds;
+      } else {
+        // 有効なユーザーがない場合は全選択
+        selectedUserIdsForShopCalendar.value = response.data.map(u => u.id);
+      }
+    } else {
+      // デフォルトで全ユーザーを選択
+      selectedUserIdsForShopCalendar.value = response.data.map(u => u.id);
+    }
+    
+    // 設定を保存（現在の店舗IDを指定）
+    saveShopCalendarSettings(selectedShopId.value);
   } catch (error) {
     console.error('店舗ユーザーの取得に失敗しました:', error);
     usersForShopCalendar.value = [];
