@@ -52,6 +52,8 @@
       <p>{{ issuer.address2 }}</p>
       <p>TEL：{{ issuer.tel }}</p>
       <p>担当：{{ issuer.person }}</p>
+
+      <img class="issuer-logo" src="/storage/stamp/hanko.png" alt="印鑑" />
     </div>
     <!-- 合計 -->
     <div class="total-box">
@@ -78,16 +80,16 @@
             <template v-if="getItemAmount(category) > 0">
               ¥{{ getItemAmount(category).toLocaleString() }}
             </template>
-            <template v-else>
-              -
-            </template>
+            <template v-else> - </template>
           </td>
         </tr>
       </tbody>
     </table>
     <!-- 注意書き -->
     <div class="footer">
-      <p>当社は消費税の免税事業者です。本請求書には消費税額を明記しておりません。</p>
+      <p>
+        当社は消費税の免税事業者です。本請求書には消費税額を明記しておりません。
+      </p>
       <p>振込手数料は貴社にてご負担をお願いいたします。</p>
     </div>
     <!-- 備考 -->
@@ -101,7 +103,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps({
   client: Object,
@@ -109,37 +111,37 @@ const props = defineProps({
   invoice: Object,
   items: Array,
   totalHours: Number,
-})
+});
 
 // すべての費用項目（9種類）
 const allExpenseCategories = [
-  'システム設計・要件定義費',
-  'システム開発・実装費',
-  'インフラ構築・外部サービス連携費',
-  '運用支援・マニュアル作成費',
-  'データ移行・PC設定・ITサポート費',
-  '調査・打合せ・進行管理費',
-  'デザイン制作費',
-  '外注先折衝・ディレクション費',
-  'そのほか雑費',
+  "システム設計・要件定義費",
+  "システム開発・実装費",
+  "インフラ構築・外部サービス連携費",
+  "運用支援・マニュアル作成費",
+  "データ移行・PC設定・ITサポート費",
+  "調査・打合せ・進行管理費",
+  "デザイン制作費",
+  "外注先折衝・ディレクション費",
+  "そのほか雑費",
 ];
 
 // 項目の金額を取得
 function getItemAmount(category) {
-  const item = props.items.find(i => i.name === category);
+  const item = props.items.find((i) => i.name === category);
   return item ? item.amount : 0;
 }
 
 // 項目の時間を取得
 function getItemHours(category) {
-  const item = props.items.find(i => i.name === category);
+  const item = props.items.find((i) => i.name === category);
   return item && item.totalHours ? parseFloat(item.totalHours) : 0;
 }
 
 const totalAmount = computed(() => {
   // 各内訳の合計値を計算（端数処理の一貫性を保つため）
   return props.items.reduce((sum, i) => sum + Number(i.amount || 0), 0);
-})
+});
 </script>
 
 <style scoped>
@@ -248,6 +250,38 @@ const totalAmount = computed(() => {
   margin-top: -60px;
   font-size: 11px;
   flex-shrink: 0;
+  position: relative;
+}
+
+.issuer-logo {
+  position: absolute;
+  right: -15px;
+  bottom: 0;
+  width: 24px;
+}
+
+.person-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0.5px 0;
+}
+
+.person-row p {
+  margin: 0;
+  font-size: 11px;
+}
+
+.issuer-logo {
+  display: inline-block;
+}
+
+.hanko-image {
+  max-width: 60px;
+  max-height: 60px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .issuer-name {

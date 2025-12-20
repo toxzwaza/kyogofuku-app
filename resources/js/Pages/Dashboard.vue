@@ -2504,7 +2504,7 @@ function downloadInvoice() {
     }
     .client-name {
       font-weight: bold;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
       font-size: 14px;
     }
     .client p {
@@ -2557,7 +2557,14 @@ function downloadInvoice() {
       margin-top: -60px;
       font-size: 11px;
       flex-shrink: 0;
+      position: relative;
       page-break-inside: avoid;
+    }
+    .issuer-logo {
+      position: absolute;
+      right: -15px;
+      bottom: 0;
+      width: 24px;
     }
     .issuer-name {
       font-weight: bold;
