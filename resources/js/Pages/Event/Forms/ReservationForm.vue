@@ -419,6 +419,45 @@ const visitReasonOptions = [
 const currentYear = new Date().getFullYear();
 const seijinYears = Array.from({ length: 11 }, (_, i) => currentYear + i);
 
+// 生年月日から成人式予定年を計算する関数
+const calculateSeijinYear = (birthDate) => {
+    if (!birthDate) {
+        return null;
+    }
+    
+    try {
+        const date = new Date(birthDate);
+        if (isNaN(date.getTime())) {
+            return null;
+        }
+        
+        // 生年月日の年 + 20 = 成人式予定年
+        const birthYear = date.getFullYear();
+        const seijinYear = birthYear + 20;
+        
+        // 計算された年が選択肢に含まれているか確認
+        if (seijinYears.includes(seijinYear)) {
+            return seijinYear;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('生年月日の計算エラー:', error);
+        return null;
+    }
+};
+
+// 生年月日の変更を監視して、成人式予定年を自動選択
+watch(() => form.birth_date, (newBirthDate) => {
+    if (newBirthDate) {
+        const calculatedYear = calculateSeijinYear(newBirthDate);
+        if (calculatedYear && !form.seijin_year) {
+            // 既に値が設定されていない場合のみ自動選択
+            form.seijin_year = calculatedYear;
+        }
+    }
+});
+
 // 会場が一つしかない場合はデフォルトで選択
 watch(() => props.venues, (newVenues) => {
     if (newVenues && newVenues.length === 1 && !form.venue_id) {
