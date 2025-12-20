@@ -75,6 +75,7 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名前</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">メールアドレス</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">テーマカラー</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所属店舗</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                     </tr>
@@ -84,6 +85,16 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.id }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <div v-if="user.theme_color" class="flex items-center space-x-2">
+                                                <div
+                                                    class="w-8 h-8 rounded border border-gray-300"
+                                                    :style="{ backgroundColor: user.theme_color }"
+                                                ></div>
+                                                <span class="text-gray-600">{{ user.theme_color }}</span>
+                                            </div>
+                                            <span v-else class="text-gray-400">未設定</span>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <span v-if="user.shops && user.shops.length > 0">
                                                 <span v-for="(shop, index) in user.shops" :key="shop.id">
@@ -100,7 +111,7 @@
                                         </td>
                                     </tr>
                                     <tr v-if="users.data.length === 0">
-                                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                                             スタッフが見つかりませんでした
                                         </td>
                                     </tr>

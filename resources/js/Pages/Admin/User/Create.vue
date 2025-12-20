@@ -55,6 +55,26 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">テーマカラー</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input
+                                            v-model="form.theme_color"
+                                            type="color"
+                                            class="h-10 w-20 rounded-md border-gray-300 shadow-sm cursor-pointer"
+                                        />
+                                        <input
+                                            v-model="form.theme_color"
+                                            type="text"
+                                            pattern="^#[0-9A-Fa-f]{6}$"
+                                            placeholder="#000000"
+                                            class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                    <p class="mt-1 text-sm text-gray-500">スタッフごとのテーマカラーを設定できます（任意）</p>
+                                    <div v-if="form.errors.theme_color" class="mt-1 text-sm text-red-600">{{ form.errors.theme_color }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">パスワード <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.password"
@@ -150,6 +170,7 @@ const form = useForm({
     name: '',
     email: '',
     login_id: '',
+    theme_color: '',
     password: '',
     password_confirmation: '',
     shop_ids: [],

@@ -82,6 +82,7 @@ class UserController extends Controller
             'email' => 'nullable|string|email|max:255|unique:users',
             'login_id' => 'nullable|string|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'theme_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
@@ -92,6 +93,7 @@ class UserController extends Controller
             'email' => $validated['email'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'password' => Hash::make($validated['password']),
+            'theme_color' => $validated['theme_color'] ?? null,
         ]);
 
         if ($request->has('shop_ids')) {
@@ -141,6 +143,7 @@ class UserController extends Controller
             'email' => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
             'login_id' => 'nullable|string|max:255|unique:users,login_id,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
+            'theme_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
@@ -150,6 +153,7 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
+            'theme_color' => $validated['theme_color'] ?? null,
         ]);
 
         if ($request->filled('password')) {

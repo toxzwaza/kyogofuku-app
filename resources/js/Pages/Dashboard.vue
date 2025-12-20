@@ -2687,7 +2687,19 @@ function renderShopEventContent(arg) {
   const event = arg.event;
   const isAllDay = event.allDay;
   const startTime = isAllDay ? null : formatTime(event.start);
-  const user = event.extendedProps.user;
+  const participants = event.extendedProps?.participants || [];
+  
+  console.log('[renderShopEventContent] Rendering event:', {
+    id: event.id,
+    title: event.title,
+    isAllDay: isAllDay,
+    backgroundColor: event.backgroundColor,
+    borderColor: event.borderColor,
+    participants: participants,
+    eventElement: arg.el,
+    eventElementClasses: arg.el?.className,
+    eventElementStyle: arg.el?.style?.cssText,
+  });
   
   // コンテナ要素を作成
   const container = document.createElement('div');
@@ -2714,11 +2726,16 @@ function renderShopEventContent(arg) {
   titleEl.textContent = event.title;
   container.appendChild(titleEl);
   
-  // 作成者名を表示
-  if (user) {
+  // 参加者が1人の場合、苗字の最初の1文字だけ表示（右端に固定）
+  if (participants.length === 1 && participants[0].name) {
+    // 苗字の最初の1文字を取得（スペースで分割して最初の部分、または最初の1文字）
+    const name = participants[0].name.trim();
+    const lastName = name.includes(' ') ? name.split(' ')[0] : name;
+    const lastNameFirstChar = lastName.charAt(0);
+    
     const userEl = document.createElement('span');
-    userEl.className = 'event-user';
-    userEl.textContent = `(${user.name})`;
+    userEl.className = 'event-user event-user-right';
+    userEl.textContent = `(${lastNameFirstChar})`;
     container.appendChild(userEl);
   }
   
@@ -2791,6 +2808,141 @@ function handleEventMouseLeave() {
   tooltip.value.visible = false;
 }
 
+// 16進数カラーコードをRGBに変換
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+// 背景色の明るさを判定して適切な文字色を返す
+function getContrastColor(backgroundColor) {
+  const rgb = hexToRgb(backgroundColor);
+  if (!rgb) return '#ffffff';
+  
+  // 相対輝度を計算（WCAG基準）
+  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  
+  // 明るい背景には暗い文字、暗い背景には明るい文字
+  return luminance > 0.5 ? '#1f2937' : '#ffffff';
+}
+
+// 背景色を少し暗くする（時間表示の背景用）
+function darkenColor(hex, percent) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  
+  const factor = 1 - (percent / 100);
+  const r = Math.round(rgb.r * factor);
+  const g = Math.round(rgb.g * factor);
+  const b = Math.round(rgb.b * factor);
+  
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+// イベントがDOMに追加された後の処理（店舗単位用）
+function handleShopEventDidMount(info) {
+  const event = info.event;
+  const participants = event.extendedProps?.participants || [];
+  
+  // 参加者が1人の場合、そのユーザーのtheme_colorを直接DOM要素に適用
+  if (participants.length === 1 && participants[0].theme_color) {
+    const themeColor = participants[0].theme_color;
+    const el = info.el;
+    
+    console.log('[handleShopEventDidMount] Applying theme_color to DOM:', {
+      eventId: event.id,
+      themeColor: themeColor,
+      element: el,
+      elementClasses: el?.className,
+    });
+    
+    if (el) {
+      // 背景色に応じた文字色を取得
+      const textColor = getContrastColor(themeColor);
+      const isLight = getContrastColor(themeColor) === '#1f2937';
+      
+      // 背景色とボーダー色を直接設定（!importantで確実に適用）
+      el.style.setProperty('background-color', themeColor, 'important');
+      el.style.setProperty('border-color', themeColor, 'important');
+      el.style.setProperty('border-radius', '8px', 'important');
+      el.style.setProperty('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.15)', 'important');
+      
+      // 子要素の.timed-eventも背景を透明にして親の色を見せる
+      const timedEvent = el.querySelector('.timed-event');
+      if (timedEvent) {
+        timedEvent.style.background = 'transparent';
+        timedEvent.style.setProperty('border-left', 'none', 'important');
+        timedEvent.style.setProperty('border-radius', '8px', 'important');
+        timedEvent.style.setProperty('padding', '6px 8px', 'important');
+        timedEvent.style.setProperty('box-shadow', 'none', 'important');
+      }
+      
+      // event-titleの文字色を背景色に応じて設定
+      const eventTitle = el.querySelector('.event-title');
+      if (eventTitle) {
+        eventTitle.style.setProperty('color', textColor, 'important');
+        eventTitle.style.setProperty('font-weight', '600', 'important');
+      }
+      
+      // event-userの文字色を背景色に応じて設定（少し透明度を下げる）
+      const eventUser = el.querySelector('.event-user');
+      if (eventUser) {
+        const userColor = isLight ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.9)';
+        eventUser.style.setProperty('color', userColor, 'important');
+        eventUser.style.setProperty('font-weight', '500', 'important');
+      }
+      
+      // event-timeはモダンなスタイルに
+      const eventTime = el.querySelector('.event-time');
+      if (eventTime) {
+        // 背景色を少し暗くしたバージョンを使用
+        const timeBgColor = darkenColor(themeColor, 15);
+        eventTime.style.setProperty('color', textColor, 'important');
+        eventTime.style.setProperty('background-color', timeBgColor, 'important');
+        eventTime.style.setProperty('font-weight', '700', 'important');
+        eventTime.style.setProperty('padding', '4px 8px', 'important');
+        eventTime.style.setProperty('border-radius', '6px', 'important');
+        eventTime.style.setProperty('backdrop-filter', 'blur(4px)', 'important');
+        eventTime.style.setProperty('box-shadow', '0 1px 3px rgba(0, 0, 0, 0.1)', 'important');
+      }
+    }
+  }
+}
+
+// イベントがDOMに追加された後の処理（ユーザー単位用）
+function handleUserEventDidMount(info) {
+  const event = info.event;
+  const participants = event.extendedProps?.participants || [];
+  
+  // 参加者が1人の場合、そのユーザーのtheme_colorを直接DOM要素に適用
+  if (participants.length === 1 && participants[0].theme_color) {
+    const themeColor = participants[0].theme_color;
+    const el = info.el;
+    
+    console.log('[handleUserEventDidMount] Applying theme_color to DOM:', {
+      eventId: event.id,
+      themeColor: themeColor,
+      element: el,
+      elementClasses: el?.className,
+    });
+    
+    if (el) {
+      // 背景色とボーダー色を直接設定（!importantで確実に適用）
+      el.style.setProperty('background-color', themeColor, 'important');
+      el.style.setProperty('border-color', themeColor, 'important');
+      // 子要素の.timed-eventも背景を透明にして親の色を見せる
+      const timedEvent = el.querySelector('.timed-event');
+      if (timedEvent) {
+        timedEvent.style.background = 'transparent';
+      }
+    }
+  }
+}
+
 // 店舗単位カレンダーオプション
 const shopCalendarOptions = ref({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -2813,6 +2965,7 @@ const shopCalendarOptions = ref({
   eventResize: handleEventResize,
   eventMouseEnter: handleEventMouseEnter,
   eventMouseLeave: handleEventMouseLeave,
+  eventDidMount: handleShopEventDidMount,
   events: loadShopSchedules,
   eventContent: renderShopEventContent,
 });
@@ -2877,6 +3030,7 @@ const userCalendarOptions = computed(() => {
     eventResize: handleEventResize,
     eventMouseEnter: handleEventMouseEnter,
     eventMouseLeave: handleEventMouseLeave,
+    eventDidMount: handleUserEventDidMount,
     events: loadUserSchedules,
     slotMinTime: "00:00:00",
     slotMaxTime: "24:00:00",
@@ -2930,6 +3084,40 @@ function loadShopSchedules(info, successCallback, failureCallback) {
           }
         }
         
+        // 参加者が1人の場合、そのユーザーのtheme_colorを使用
+        filteredData = filteredData.map(event => {
+          const participants = event.extendedProps?.participants || [];
+          console.log('[loadShopSchedules] Event:', {
+            id: event.id,
+            title: event.title,
+            participants: participants,
+            participantsCount: participants.length,
+            originalBackgroundColor: event.backgroundColor,
+            originalBorderColor: event.borderColor,
+          });
+          
+          if (participants.length === 1 && participants[0].theme_color) {
+            const themeColor = participants[0].theme_color;
+            console.log('[loadShopSchedules] Applying theme_color:', {
+              eventId: event.id,
+              participantName: participants[0].name,
+              themeColor: themeColor,
+            });
+            return {
+              ...event,
+              backgroundColor: themeColor,
+              borderColor: themeColor,
+            };
+          } else {
+            console.log('[loadShopSchedules] Not applying theme_color:', {
+              eventId: event.id,
+              reason: participants.length === 1 ? 'no theme_color' : `participants count: ${participants.length}`,
+            });
+          }
+          return event;
+        });
+        
+        console.log('[loadShopSchedules] Final filteredData:', filteredData);
         successCallback(filteredData);
       }
     })
@@ -2998,7 +3186,41 @@ function loadUserSchedules(info, successCallback, failureCallback) {
     .get(route("admin.schedules.index"), { params })
     .then((response) => {
       if (successCallback) {
-        successCallback(response.data);
+        // 参加者が1人の場合、そのユーザーのtheme_colorを使用
+        const processedData = response.data.map(event => {
+          const participants = event.extendedProps?.participants || [];
+          console.log('[loadUserSchedules] Event:', {
+            id: event.id,
+            title: event.title,
+            participants: participants,
+            participantsCount: participants.length,
+            originalBackgroundColor: event.backgroundColor,
+            originalBorderColor: event.borderColor,
+          });
+          
+          if (participants.length === 1 && participants[0].theme_color) {
+            const themeColor = participants[0].theme_color;
+            console.log('[loadUserSchedules] Applying theme_color:', {
+              eventId: event.id,
+              participantName: participants[0].name,
+              themeColor: themeColor,
+            });
+            return {
+              ...event,
+              backgroundColor: themeColor,
+              borderColor: themeColor,
+            };
+          } else {
+            console.log('[loadUserSchedules] Not applying theme_color:', {
+              eventId: event.id,
+              reason: participants.length === 1 ? 'no theme_color' : `participants count: ${participants.length}`,
+            });
+          }
+          return event;
+        });
+        
+        console.log('[loadUserSchedules] Final processedData:', processedData);
+        successCallback(processedData);
       }
       // イベント読み込み後に現在時刻の線を更新
       nextTick(() => {
@@ -3888,15 +4110,31 @@ async function loadShopUsersForCreate(shopId) {
   font-size: 0.75rem;
   line-height: 1.3;
   overflow: hidden;
+  width: 100%;
+  position: relative;
 }
 
 /* 時間指定予定のスタイル */
 :deep(.timed-event) {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-left: 4px solid;
-  border-radius: 4px;
-  padding: 4px 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  background: transparent;
+  border-left: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+/* FullCalendarイベント要素の背景色を表示（デフォルトは白、ただしJavaScriptで設定された色を優先） */
+:deep(.fc-event) {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+:deep(.fc-event:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 :deep(.timed-event .event-time) {
@@ -3906,8 +4144,11 @@ async function loadShopUsersForCreate(shopId) {
   white-space: nowrap;
   flex-shrink: 0;
   background: rgba(0, 0, 0, 0.05);
-  padding: 2px 4px;
-  border-radius: 3px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
 :deep(.timed-event .event-title) {
@@ -3918,6 +4159,7 @@ async function loadShopUsersForCreate(shopId) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.2s ease;
 }
 
 :deep(.timed-event .event-user) {
@@ -3925,6 +4167,12 @@ async function loadShopUsersForCreate(shopId) {
   color: #6b7280;
   flex-shrink: 0;
   font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+:deep(.timed-event .event-user-right) {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* 終日予定のスタイル */
@@ -3952,6 +4200,11 @@ async function loadShopUsersForCreate(shopId) {
   flex-shrink: 0;
 }
 
+:deep(.all-day-event .event-user-right) {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 /* FullCalendarのイベントスタイル調整 */
 :deep(.fc-event) {
   border: none;
@@ -3973,6 +4226,7 @@ async function loadShopUsersForCreate(shopId) {
   padding: 2px;
 }
 
+/* 終日イベントエリアのスタイル */
 :deep(.fc-daygrid-day-events) {
   margin-top: 2px;
 }

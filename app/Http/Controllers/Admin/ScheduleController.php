@@ -154,6 +154,7 @@ class ScheduleController extends Controller
                         return [
                             'id' => $user->id,
                             'name' => $user->name,
+                            'theme_color' => $user->theme_color,
                         ];
                     })->toArray(),
                 ],
@@ -302,6 +303,7 @@ class ScheduleController extends Controller
                         return [
                             'id' => $user->id,
                             'name' => $user->name,
+                            'theme_color' => $user->theme_color,
                         ];
                     })->toArray(),
                 ],
