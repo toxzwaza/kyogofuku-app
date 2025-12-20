@@ -50,6 +50,19 @@
                         <p class="text-gray-900">{{ formData.school_name || '-' }}</p>
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">担当者名</label>
+                        <p class="text-gray-900">{{ formData.staff_name || '-' }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">来店動機</label>
+                        <p class="text-gray-900">
+                            <span v-if="formData.visit_reasons && formData.visit_reasons.length > 0">
+                                {{ formData.visit_reasons.join('、') }}
+                            </span>
+                            <span v-else>-</span>
+                        </p>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">駐車場利用</label>
                         <p class="text-gray-900">{{ formData.parking_usage || '-' }}</p>
                     </div>

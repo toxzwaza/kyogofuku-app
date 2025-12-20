@@ -204,6 +204,44 @@
                                     </div>
 
                                     <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">担当者指定</label>
+                                        <input
+                                            v-model="form.staff_name"
+                                            type="text"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                        <div v-if="form.errors.staff_name" class="mt-1 text-sm text-red-600">{{ form.errors.staff_name }}</div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">来店動機</label>
+                                        <div class="space-y-2">
+                                            <label
+                                                v-for="reason in visitReasonOptions"
+                                                :key="reason.value"
+                                                class="flex items-center"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    :value="reason.value"
+                                                    v-model="form.visit_reasons"
+                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                />
+                                                <span class="ml-2 text-sm text-gray-700">{{ reason.label }}</span>
+                                            </label>
+                                            <div v-if="form.visit_reasons && form.visit_reasons.includes('その他')" class="ml-6 mt-2">
+                                                <input
+                                                    v-model="form.visit_reason_other"
+                                                    type="text"
+                                                    placeholder="その他の内容を入力してください"
+                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div v-if="form.errors.visit_reasons" class="mt-1 text-sm text-red-600">{{ form.errors.visit_reasons }}</div>
+                                    </div>
+
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">駐車場利用</label>
                                         <div class="flex space-x-4">
                                             <label class="flex items-center">
@@ -486,6 +524,91 @@ const getRemainingCapacity = (timeslot) => {
     return timeslot.remaining_capacity || 0;
 };
 
+// 来店動機の選択肢
+const visitReasonOptions = [
+    { value: '紹介', label: '紹介' },
+    { value: 'DM・カタログ', label: 'DM・カタログ' },
+    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
+    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'その他', label: 'その他(テキスト入力)' },
+];
+
+// 来店動機を処理（「その他」の場合はテキスト入力も含める）
+const processVisitReasons = (visitReasons, visitReasonOther) => {
+    if (!visitReasons || !Array.isArray(visitReasons) || visitReasons.length === 0) {
+        return null;
+    }
+
+    const reasons = [];
+    visitReasons.forEach(reason => {
+        if (reason === 'その他' && visitReasonOther) {
+            reasons.push('その他(' + visitReasonOther + ')');
+        } else {
+            reasons.push(reason);
+        }
+    });
+
+    return reasons.length > 0 ? reasons : null;
+};
+
+// 既存の来店動機から「その他」のテキストを抽出
+const extractVisitReasonOther = (visitReasons) => {
+    if (!visitReasons || !Array.isArray(visitReasons)) {
+        return '';
+    }
+    const otherReason = visitReasons.find(r => r && typeof r === 'string' && r.startsWith('その他('));
+    if (otherReason) {
+        // 「その他(テキスト)」からテキスト部分を抽出
+        const match = otherReason.match(/^その他\((.+)\)$/);
+        if (match && match[1]) {
+            return match[1];
+        }
+    }
+    return '';
+};
+
+// 既存の来店動機から「その他」を除いた配列を取得
+const getVisitReasonsWithoutOther = (visitReasons) => {
+    if (!visitReasons || !Array.isArray(visitReasons)) {
+        return [];
+    }
+    const reasons = [];
+    let hasOther = false;
+    
+    visitReasons.forEach(r => {
+        if (!r || typeof r !== 'string') {
+            return;
+        }
+        // 「その他(テキスト)」形式の場合は「その他」として追加
+        if (r.startsWith('その他(')) {
+            if (!hasOther) {
+                reasons.push('その他');
+                hasOther = true;
+            }
+        } else {
+            // その他の理由はそのまま追加
+            reasons.push(r);
+        }
+    });
+    
+    return reasons;
+};
+
+// 既存データを処理
+const initialStaffName = props.reservation.staff_name || '';
+const initialVisitReasons = getVisitReasonsWithoutOther(props.reservation.visit_reasons);
+const initialVisitReasonOther = extractVisitReasonOther(props.reservation.visit_reasons);
+
+// デバッグ用（開発時のみ）
+if (process.env.NODE_ENV === 'development') {
+    console.log('予約データ:', {
+        staff_name: props.reservation.staff_name,
+        visit_reasons: props.reservation.visit_reasons,
+        processed_visit_reasons: initialVisitReasons,
+        visit_reason_other: initialVisitReasonOther,
+    });
+}
+
 // フォーム初期化（全フィールドを含む）
 const form = useForm({
     name: props.reservation.name || '',
@@ -500,6 +623,9 @@ const form = useForm({
     birth_date: props.reservation.birth_date || '',
     seijin_year: props.reservation.seijin_year || null,
     school_name: props.reservation.school_name || '',
+    staff_name: initialStaffName,
+    visit_reasons: initialVisitReasons,
+    visit_reason_other: initialVisitReasonOther,
     parking_usage: props.reservation.parking_usage || '',
     parking_car_count: props.reservation.parking_car_count || null,
     considering_plans: props.reservation.considering_plans || [],
@@ -527,6 +653,12 @@ const currentYear = new Date().getFullYear();
 const seijinYears = Array.from({ length: 11 }, (_, i) => currentYear + i);
 
 const submit = () => {
-    form.put(route('admin.reservations.update', props.reservation.id));
+    // 来店動機を処理
+    const processedVisitReasons = processVisitReasons(form.visit_reasons, form.visit_reason_other);
+    
+    form.transform((data) => ({
+        ...data,
+        visit_reasons: processedVisitReasons,
+    })).put(route('admin.reservations.update', props.reservation.id));
 };
 </script>

@@ -192,6 +192,42 @@
             </div>
 
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">担当者指定</label>
+                <input
+                    v-model="form.staff_name"
+                    type="text"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">来店動機</label>
+                <div class="space-y-2">
+                    <label
+                        v-for="reason in visitReasonOptions"
+                        :key="reason.value"
+                        class="flex items-center"
+                    >
+                        <input
+                            type="checkbox"
+                            :value="reason.value"
+                            v-model="form.visit_reasons"
+                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                        <span class="ml-2 text-sm text-gray-700">{{ reason.label }}</span>
+                    </label>
+                    <div v-if="form.visit_reasons && form.visit_reasons.includes('その他')" class="ml-6 mt-2">
+                        <input
+                            v-model="form.visit_reason_other"
+                            type="text"
+                            placeholder="その他の内容を入力してください"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">駐車場利用</label>
                 <div class="flex space-x-4">
                     <label class="flex items-center">
@@ -352,6 +388,9 @@ const form = useForm({
     referred_by_name: '',
     furigana: '',
     school_name: '',
+    staff_name: '',
+    visit_reasons: [],
+    visit_reason_other: '',
     parking_usage: '',
     parking_car_count: null,
     considering_plans: [],
@@ -365,6 +404,15 @@ const availablePlans = [
     '振袖購入プラン',
     'ママ振りフォトプラン',
     'フォトレンタルプラン',
+];
+
+// 来店動機の選択肢
+const visitReasonOptions = [
+    { value: '紹介', label: '紹介' },
+    { value: 'DM・カタログ', label: 'DM・カタログ' },
+    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
+    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'その他', label: 'その他(テキスト入力)' },
 ];
 
 // 成人式予定年の選択肢（現在年から10年後まで）

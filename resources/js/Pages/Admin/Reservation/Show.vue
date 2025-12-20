@@ -37,21 +37,17 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
           予約詳細
         </h2>
-        <div class="flex space-x-4">
-          <Link
+        <div class="flex items-center space-x-3">
+          <ActionButton
+            variant="edit"
+            label="編集"
             :href="route('admin.reservations.edit', reservation.id)"
-            class="text-indigo-600 hover:text-indigo-900"
-          >
-            編集
-          </Link>
-          <Link
-            :href="
-              route('admin.events.reservations.index', reservation.event_id)
-            "
-            class="text-indigo-600 hover:text-indigo-900"
-          >
-            ← 予約一覧に戻る
-          </Link>
+          />
+          <ActionButton
+            variant="back"
+            label="予約一覧に戻る"
+            :href="route('admin.events.reservations.index', reservation.event_id)"
+          />
         </div>
       </div>
     </template>
@@ -70,265 +66,346 @@
           <div class="lg:col-span-2">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
               <div class="p-6">
-                <h3 class="text-lg font-semibold mb-4">予約情報</h3>
-                <div class="space-y-4">
-                  <!-- 共通フィールド -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                      >お名前</label
-                    >
-                    <p class="text-sm text-gray-900">{{ reservation.name }}</p>
+                <div class="flex justify-between items-center mb-6">
+                  <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    予約情報
+                  </h3>
+                </div>
+
+                <!-- 基本情報セクション -->
+                <div class="mb-6">
+                  <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    基本情報
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 予約ID -->
+                    <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-100 md:col-span-2">
+                      <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">予約ID</label>
+                      <p class="text-lg font-bold text-gray-900">{{ reservation.id }}</p>
+                    </div>
+                    <!-- お名前、フリガナ -->
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        お名前
+                      </label>
+                      <p class="text-lg font-semibold text-gray-900">{{ reservation.name }}</p>
+                    </div>
+                    <div v-if="event.form_type === 'reservation' || event.form_type === 'document'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        フリガナ
+                      </label>
+                      <p class="text-base font-medium text-gray-900">{{ reservation.furigana || '-' }}</p>
+                    </div>
+
+                    <!-- メールアドレス、電話番号 -->
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        メールアドレス
+                      </label>
+                      <p class="text-base font-semibold text-gray-900">{{ reservation.email }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        電話番号
+                      </label>
+                      <p class="text-base font-semibold text-gray-900">{{ reservation.phone }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 予約フォーム (reservation) -->
+                <template v-if="event.form_type === 'reservation'">
+                  <!-- 予約情報セクション -->
+                  <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      予約情報
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          予約日時
+                        </label>
+                        <p class="text-base font-semibold text-gray-900">{{ reservation.reservation_datetime || "-" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          ご来店会場
+                        </label>
+                        <p class="text-base font-semibold text-gray-900">{{ reservation.venue ? reservation.venue.name : "-" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          過去当店のご来店
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.has_visited_before ? "あり" : "なし" }}</p>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                      >メールアドレス</label
-                    >
-                    <p class="text-sm text-gray-900">{{ reservation.email }}</p>
+                  <!-- 個人情報セクション -->
+                  <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      個人情報
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          住所
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.address || "-" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          生年月日
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.birth_date ? formatDate(reservation.birth_date) : "-" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          成人式予定年月
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.seijin_year ? reservation.seijin_year + "年" : "-" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                          学校名
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.school_name || "-" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                          担当者指定
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.staff_name || "-" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                          </svg>
+                          来店動機
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.visit_reasons && reservation.visit_reasons.length > 0 ? reservation.visit_reasons.join("、") : "-" }}</p>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                      >電話番号</label
-                    >
-                    <p class="text-sm text-gray-900">{{ reservation.phone }}</p>
+                  <!-- その他情報セクション -->
+                  <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      その他情報
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                          </svg>
+                          駐車場利用
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.parking_usage || "-" }}</p>
+                      </div>
+                      <div v-if="reservation.parking_usage === 'あり'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                          </svg>
+                          駐車台数
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.parking_car_count || "-" }}台</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                          検討中のプラン
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.considering_plans && reservation.considering_plans.length > 0 ? reservation.considering_plans.join("、") : "-" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                          ご紹介者様お名前
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.referred_by_name || "-" }}</p>
+                      </div>
+                    </div>
                   </div>
-
-                  <!-- 予約フォーム (reservation) -->
-                  <template v-if="event.form_type === 'reservation'">
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >予約日時</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.reservation_datetime || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >フリガナ</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.furigana || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >ご来店会場</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.venue ? reservation.venue.name : "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >過去当店のご来店はありますか</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.has_visited_before ? "あり" : "なし" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >住所</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.address || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >生年月日</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{
-                          reservation.birth_date
-                            ? formatDate(reservation.birth_date)
-                            : "-"
-                        }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >成人式予定年月</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{
-                          reservation.seijin_year
-                            ? reservation.seijin_year + "年"
-                            : "-"
-                        }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >学校名</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.school_name || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >駐車場利用</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.parking_usage || "-" }}
-                      </p>
-                    </div>
-
-                    <div v-if="reservation.parking_usage === 'あり'">
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >駐車台数</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.parking_car_count || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >検討中のプラン</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{
-                          reservation.considering_plans &&
-                          reservation.considering_plans.length > 0
-                            ? reservation.considering_plans.join(", ")
-                            : "-"
-                        }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >ご紹介者様お名前</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.referred_by_name || "-" }}
-                      </p>
-                    </div>
-                  </template>
+                </template>
 
                   <!-- 資料請求フォーム (document) -->
                   <template v-if="event.form_type === 'document'">
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >請求方法</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.request_method || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >フリガナ</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.furigana || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >生年月日</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{
-                          reservation.birth_date
-                            ? formatDate(reservation.birth_date)
-                            : "-"
-                        }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >郵便番号</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.postal_code || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >住所</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.address || "-" }}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >個人情報保護方針への同意</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.privacy_agreed ? "同意" : "-" }}
-                      </p>
+                    <!-- 資料請求情報セクション -->
+                    <div class="mb-6">
+                      <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        資料請求情報
+                      </h4>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            請求方法
+                          </label>
+                          <p class="text-base font-semibold text-gray-900">{{ reservation.request_method || "-" }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            生年月日
+                          </label>
+                          <p class="text-base font-medium text-gray-900">{{ reservation.birth_date ? formatDate(reservation.birth_date) : "-" }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            郵便番号
+                          </label>
+                          <p class="text-base font-medium text-gray-900">{{ reservation.postal_code || "-" }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            住所
+                          </label>
+                          <p class="text-base font-medium text-gray-900">{{ reservation.address || "-" }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            個人情報保護方針への同意
+                          </label>
+                          <p class="text-base font-medium text-gray-900">{{ reservation.privacy_agreed ? "同意" : "-" }}</p>
+                        </div>
+                      </div>
                     </div>
                   </template>
 
                   <!-- お問い合わせフォーム (contact) -->
                   <template v-if="event.form_type === 'contact'">
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >問い合わせ回答方法</label
-                      >
-                      <p class="text-sm text-gray-900">
-                        {{ reservation.heard_from || "-" }}
-                      </p>
+                    <div class="mb-6">
+                      <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        お問い合わせ情報
+                      </h4>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            問い合わせ回答方法
+                          </label>
+                          <p class="text-base font-medium text-gray-900">{{ reservation.heard_from || "-" }}</p>
+                        </div>
+                      </div>
                     </div>
                   </template>
 
-                  <!-- 共通: お問い合わせ内容 -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                      >お問い合わせ内容</label
-                    >
-                    <p class="text-sm text-gray-900 whitespace-pre-wrap">
-                      {{ reservation.inquiry_message || "-" }}
-                    </p>
+                  <!-- お問い合わせ内容セクション -->
+                  <div v-if="reservation.inquiry_message" class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                      </svg>
+                      お問い合わせ内容
+                    </h4>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <p class="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{{ reservation.inquiry_message }}</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                      >登録日時</label
-                    >
-                    <p class="text-sm text-gray-900">
-                      {{ formatDateTime(reservation.created_at) }}
-                    </p>
+                  <!-- システム情報セクション -->
+                  <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      システム情報
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          登録日時
+                        </label>
+                        <p class="text-base font-semibold text-gray-900">{{ formatDateTime(reservation.created_at) }}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
               </div>
             </div>
 
@@ -878,6 +955,7 @@
 
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";

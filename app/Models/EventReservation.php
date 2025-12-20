@@ -28,6 +28,8 @@ class EventReservation extends Model
         'reservation_datetime',
         'furigana',
         'school_name',
+        'staff_name',
+        'visit_reasons',
         'parking_usage',
         'parking_car_count',
         'considering_plans',
@@ -42,6 +44,7 @@ class EventReservation extends Model
         'seijin_year' => 'integer',
         'parking_car_count' => 'integer',
         'considering_plans' => 'array',
+        'visit_reasons' => 'array',
         'privacy_agreed' => 'boolean',
     ];
 

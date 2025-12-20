@@ -208,6 +208,10 @@ class ReservationController extends Controller
             $rules['seijin_year'] = 'nullable|integer|min:2000|max:2100';
             $rules['referred_by_name'] = 'nullable|string|max:255';
             $rules['school_name'] = 'nullable|string|max:255';
+            $rules['staff_name'] = 'nullable|string|max:255';
+            $rules['visit_reasons'] = 'nullable|array';
+            $rules['visit_reasons.*'] = 'string|max:255';
+            $rules['visit_reason_other'] = 'nullable|string|max:255';
             $rules['parking_usage'] = 'nullable|string|max:255';
             $rules['parking_car_count'] = 'nullable|integer';
             $rules['considering_plans'] = 'nullable|array';
@@ -230,6 +234,11 @@ class ReservationController extends Controller
         }
         
         $validated = $request->validate($rules);
+
+        // 来店動機を処理（「その他」の場合はテキスト入力も含める）
+        if ($event->form_type === 'reservation' && isset($validated['visit_reasons'])) {
+            $validated['visit_reasons'] = $this->processVisitReasons($validated['visit_reasons'], $request->visit_reason_other);
+        }
 
         $reservation->update($validated);
 
@@ -482,6 +491,27 @@ class ReservationController extends Controller
         $rawEmail .= $textBody;
         
         return $rawEmail;
+    }
+
+    /**
+     * 来店動機を処理（「その他」の場合はテキスト入力も含める）
+     */
+    private function processVisitReasons($visitReasons, $visitReasonOther)
+    {
+        if (!$visitReasons || !is_array($visitReasons)) {
+            return null;
+        }
+
+        $reasons = [];
+        foreach ($visitReasons as $reason) {
+            if ($reason === 'その他' && $visitReasonOther) {
+                $reasons[] = 'その他(' . $visitReasonOther . ')';
+            } else {
+                $reasons[] = $reason;
+            }
+        }
+
+        return !empty($reasons) ? $reasons : null;
     }
 }
 

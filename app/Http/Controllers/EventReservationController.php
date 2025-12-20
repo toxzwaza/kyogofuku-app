@@ -46,6 +46,10 @@ class EventReservationController extends Controller
             $rules['seijin_year'] = 'nullable|integer|min:2000|max:2100';
             $rules['referred_by_name'] = 'nullable|string|max:255';
             $rules['school_name'] = 'nullable|string|max:255';
+            $rules['staff_name'] = 'nullable|string|max:255';
+            $rules['visit_reasons'] = 'nullable|array';
+            $rules['visit_reasons.*'] = 'string|max:255';
+            $rules['visit_reason_other'] = 'nullable|string|max:255';
             $rules['parking_usage'] = 'nullable|string|max:255';
             $rules['parking_car_count'] = 'nullable|integer';
             $rules['considering_plans'] = 'nullable|array';
@@ -117,6 +121,8 @@ class EventReservationController extends Controller
             'referred_by_name' => $request->referred_by_name,
             'furigana' => $request->furigana,
             'school_name' => $request->school_name,
+            'staff_name' => $request->staff_name,
+            'visit_reasons' => $this->processVisitReasons($request->visit_reasons, $request->visit_reason_other),
             'parking_usage' => $request->parking_usage,
             'parking_car_count' => $request->parking_car_count,
             'considering_plans' => $request->considering_plans,
@@ -133,9 +139,12 @@ class EventReservationController extends Controller
             'name', 'email', 'phone', 'request_method', 'postal_code',
             'reservation_datetime', 'venue_id', 'has_visited_before',
             'address', 'birth_date', 'seijin_year', 'referred_by_name',
-            'furigana', 'school_name', 'parking_usage', 'parking_car_count',
+            'furigana', 'school_name', 'staff_name', 'visit_reasons', 'visit_reason_other',
+            'parking_usage', 'parking_car_count',
             'considering_plans', 'heard_from', 'inquiry_message', 'privacy_agreed'
         ]);
+        // visit_reasonsを処理済みの値に置き換え
+        $formData['visit_reasons'] = $this->processVisitReasons($request->visit_reasons, $request->visit_reason_other);
 
         // セッションにデータを保存
         $request->session()->put('formData', $formData);
@@ -343,6 +352,15 @@ class EventReservationController extends Controller
                 $message .= "学校名: {$reservation->school_name}\n";
             }
             
+            if ($reservation->staff_name) {
+                $message .= "担当者名: {$reservation->staff_name}\n";
+            }
+            
+            if ($reservation->visit_reasons && count($reservation->visit_reasons) > 0) {
+                $reasons = implode('、', $reservation->visit_reasons);
+                $message .= "来店動機: {$reasons}\n";
+            }
+            
             if ($reservation->parking_usage) {
                 $message .= "駐車場利用: {$reservation->parking_usage}\n";
             }
@@ -458,6 +476,27 @@ class EventReservationController extends Controller
         $rawEmail .= $textBody;
         
         return $rawEmail;
+    }
+
+    /**
+     * 来店動機を処理（「その他」の場合はテキスト入力も含める）
+     */
+    private function processVisitReasons($visitReasons, $visitReasonOther)
+    {
+        if (!$visitReasons || !is_array($visitReasons)) {
+            return null;
+        }
+
+        $reasons = [];
+        foreach ($visitReasons as $reason) {
+            if ($reason === 'その他' && $visitReasonOther) {
+                $reasons[] = 'その他(' . $visitReasonOther . ')';
+            } else {
+                $reasons[] = $reason;
+            }
+        }
+
+        return !empty($reasons) ? $reasons : null;
     }
 }
 
