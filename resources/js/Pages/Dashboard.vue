@@ -2606,11 +2606,6 @@ function downloadInvoice() {
 
 // デフォルト値を設定
 onMounted(() => {
-  console.log('[Dashboard] onMounted開始');
-  console.log('[Dashboard] currentUser:', props.currentUser);
-  console.log('[Dashboard] userShops:', userShops.value);
-  console.log('[Dashboard] users:', users.value);
-  
   // LocalStorageから費用科目機能の設定を読み込む
   loadExpenseCategoryFeatureSetting();
   
@@ -2623,7 +2618,6 @@ onMounted(() => {
     loadShopUsersForCreate(defaultShop.id);
     // 店舗単位カレンダー用のユーザーリストを取得
     onShopChange();
-    console.log('[Dashboard] 店舗ID設定:', selectedShopId.value, 'main:', defaultShop.main);
   }
   
   // ユーザー単位：店舗とログインユーザーを選択
@@ -2635,11 +2629,9 @@ onMounted(() => {
     onUserShopChange().then(() => {
       if (props.currentUser) {
         selectedUserId.value = props.currentUser.id;
-        console.log('[Dashboard] ユーザーID設定:', selectedUserId.value);
         // ユーザー設定後にカレンダーをリフレッシュ
         setTimeout(() => {
           if (userCalendar.value && selectedUserId.value) {
-            console.log('[Dashboard] ユーザー単位カレンダーをリフレッシュ（初期化）');
             userCalendar.value.getApi().refetchEvents();
           }
         }, 100);
@@ -2647,9 +2639,6 @@ onMounted(() => {
     });
   } else if (props.currentUser) {
     selectedUserId.value = props.currentUser.id;
-    console.log('[Dashboard] ユーザーID設定:', selectedUserId.value);
-  } else {
-    console.warn('[Dashboard] currentUserが存在しません');
   }
   
   // リサイズイベントリスナーを追加
@@ -2658,14 +2647,7 @@ onMounted(() => {
   // カレンダーを初期読み込み（デフォルト値で絞り込み）
   // 少し待ってから実行（DOMの準備とデフォルト値の設定を待つ）
   setTimeout(() => {
-    console.log('[Dashboard] カレンダー初期読み込み開始');
-    console.log('[Dashboard] shopCalendar:', shopCalendar.value);
-    console.log('[Dashboard] userCalendar:', userCalendar.value);
-    console.log('[Dashboard] selectedShopId:', selectedShopId.value);
-    console.log('[Dashboard] selectedUserId:', selectedUserId.value);
-    
     if (shopCalendar.value && selectedShopId.value) {
-      console.log('[Dashboard] 店舗単位カレンダーをリフレッシュ');
       shopCalendar.value.getApi().refetchEvents();
     }
     
@@ -2715,18 +2697,6 @@ function renderShopEventContent(arg) {
   const isAllDay = event.allDay;
   const startTime = isAllDay ? null : formatTime(event.start);
   const participants = event.extendedProps?.participants || [];
-  
-  console.log('[renderShopEventContent] Rendering event:', {
-    id: event.id,
-    title: event.title,
-    isAllDay: isAllDay,
-    backgroundColor: event.backgroundColor,
-    borderColor: event.borderColor,
-    participants: participants,
-    eventElement: arg.el,
-    eventElementClasses: arg.el?.className,
-    eventElementStyle: arg.el?.style?.cssText,
-  });
   
   // コンテナ要素を作成
   const container = document.createElement('div');
@@ -2903,13 +2873,6 @@ function handleShopEventDidMount(info) {
     const themeColor = participants[0].theme_color;
     const el = info.el;
     
-    console.log('[handleShopEventDidMount] Applying theme_color to DOM:', {
-      eventId: event.id,
-      themeColor: themeColor,
-      element: el,
-      elementClasses: el?.className,
-    });
-    
     if (el) {
       // 背景色の明るさを判定
       const rgb = hexToRgb(themeColor);
@@ -3014,13 +2977,6 @@ function handleUserEventDidMount(info) {
     const themeColor = participants[0].theme_color;
     const el = info.el;
     
-    console.log('[handleUserEventDidMount] Applying theme_color to DOM:', {
-      eventId: event.id,
-      themeColor: themeColor,
-      element: el,
-      elementClasses: el?.className,
-    });
-    
     if (el) {
       // 背景色の明るさを判定
       const rgb = hexToRgb(themeColor);
@@ -3069,6 +3025,12 @@ function handleUserEventDidMount(info) {
         }
       }
       
+      // FullCalendarのデフォルトクラス fc-event-title にもスタイルを適用
+      const fcEventTitle = el.querySelector('.fc-event-title');
+      if (fcEventTitle) {
+        fcEventTitle.style.setProperty('color', 'rgb(31, 41, 55)', 'important');
+      }
+      
       // event-userの文字色を背景色に応じて設定（可読性を重視）
       const eventUser = el.querySelector('.event-user');
       if (eventUser) {
@@ -3104,6 +3066,26 @@ function handleUserEventDidMount(info) {
           eventTime.style.setProperty('text-shadow', '0 1px 2px rgba(255, 255, 255, 0.8)', 'important');
         }
       }
+      
+      // FullCalendarのデフォルトクラス fc-event-time にもスタイルを適用
+      const fcEventTime = el.querySelector('.fc-event-time');
+      if (fcEventTime) {
+        fcEventTime.style.setProperty('color', 'rgb(31, 41, 55)', 'important');
+      }
+    }
+  }
+  
+  // 参加者が1人でない場合やtheme_colorがない場合でも、fc-event-timeとfc-event-titleの色を設定
+  const el = info.el;
+  if (el) {
+    const fcEventTitle = el.querySelector('.fc-event-title');
+    if (fcEventTitle) {
+      fcEventTitle.style.setProperty('color', 'rgb(31, 41, 55)', 'important');
+    }
+    
+    const fcEventTime = el.querySelector('.fc-event-time');
+    if (fcEventTime) {
+      fcEventTime.style.setProperty('color', 'rgb(31, 41, 55)', 'important');
     }
   }
 }
@@ -3252,37 +3234,18 @@ function loadShopSchedules(info, successCallback, failureCallback) {
         // 参加者が1人の場合、そのユーザーのtheme_colorを使用
         filteredData = filteredData.map(event => {
           const participants = event.extendedProps?.participants || [];
-          console.log('[loadShopSchedules] Event:', {
-            id: event.id,
-            title: event.title,
-            participants: participants,
-            participantsCount: participants.length,
-            originalBackgroundColor: event.backgroundColor,
-            originalBorderColor: event.borderColor,
-          });
           
           if (participants.length === 1 && participants[0].theme_color) {
             const themeColor = participants[0].theme_color;
-            console.log('[loadShopSchedules] Applying theme_color:', {
-              eventId: event.id,
-              participantName: participants[0].name,
-              themeColor: themeColor,
-            });
             return {
               ...event,
               backgroundColor: themeColor,
               borderColor: themeColor,
             };
-          } else {
-            console.log('[loadShopSchedules] Not applying theme_color:', {
-              eventId: event.id,
-              reason: participants.length === 1 ? 'no theme_color' : `participants count: ${participants.length}`,
-            });
           }
           return event;
         });
         
-        console.log('[loadShopSchedules] Final filteredData:', filteredData);
         successCallback(filteredData);
       }
     })
@@ -3354,37 +3317,18 @@ function loadUserSchedules(info, successCallback, failureCallback) {
         // 参加者が1人の場合、そのユーザーのtheme_colorを使用
         const processedData = response.data.map(event => {
           const participants = event.extendedProps?.participants || [];
-          console.log('[loadUserSchedules] Event:', {
-            id: event.id,
-            title: event.title,
-            participants: participants,
-            participantsCount: participants.length,
-            originalBackgroundColor: event.backgroundColor,
-            originalBorderColor: event.borderColor,
-          });
           
           if (participants.length === 1 && participants[0].theme_color) {
             const themeColor = participants[0].theme_color;
-            console.log('[loadUserSchedules] Applying theme_color:', {
-              eventId: event.id,
-              participantName: participants[0].name,
-              themeColor: themeColor,
-            });
             return {
               ...event,
               backgroundColor: themeColor,
               borderColor: themeColor,
             };
-          } else {
-            console.log('[loadUserSchedules] Not applying theme_color:', {
-              eventId: event.id,
-              reason: participants.length === 1 ? 'no theme_color' : `participants count: ${participants.length}`,
-            });
           }
           return event;
         });
         
-        console.log('[loadUserSchedules] Final processedData:', processedData);
         successCallback(processedData);
       }
       // イベント読み込み後に現在時刻の線を更新
@@ -3843,13 +3787,8 @@ function onEditStartAtChange() {
 
 function updateScheduleFromDashboard() {
   if (!selectedScheduleDetail.value) {
-    console.error('selectedScheduleDetailが存在しません');
     return;
   }
-  
-  console.log('updateScheduleFromDashboard開始');
-  console.log('selectedScheduleDetail:', selectedScheduleDetail.value);
-  console.log('editScheduleForm:', editScheduleForm.value);
   
   editScheduleForm.value.processing = true;
   
@@ -3865,13 +3804,8 @@ function updateScheduleFromDashboard() {
     expense_category: editScheduleForm.value.expense_category || null,
   };
   
-  console.log('更新データ:', updateData);
-  console.log('更新URL:', route('admin.schedules.update', selectedScheduleDetail.value.id));
-  
   axios.put(route('admin.schedules.update', selectedScheduleDetail.value.id), updateData)
     .then((response) => {
-      console.log('更新成功:', response);
-      
       // カレンダーのイベントを直接更新（リロードなしで反映）
       const scheduleId = selectedScheduleDetail.value.id;
       
@@ -3926,8 +3860,6 @@ function updateScheduleFromDashboard() {
       }, 100);
     })
     .catch(error => {
-      console.error('スケジュールの更新に失敗しました:', error);
-      console.error('エラー詳細:', error.response?.data || error.message);
       alert('スケジュールの更新に失敗しました。' + (error.response?.data?.message || ''));
     })
     .finally(() => {
@@ -4112,9 +4044,7 @@ async function onShopChange() {
 
 // ユーザー変更時の処理
 function onUserChange() {
-  console.log('[onUserChange] ユーザー変更:', selectedUserId.value);
   if (userCalendar.value && selectedUserId.value) {
-    console.log('[onUserChange] カレンダーをリフレッシュ');
     userCalendar.value.getApi().refetchEvents();
     // 高さを同期（イベント読み込み完了を待つ）
     setTimeout(() => {
@@ -4126,11 +4056,6 @@ function onUserChange() {
       syncCalendarHeights();
       updateCurrentTimeIndicator();
     }, 600);
-  } else {
-    console.warn('[onUserChange] カレンダーのリフレッシュをスキップ:', {
-      userCalendar: !!userCalendar.value,
-      selectedUserId: selectedUserId.value
-    });
   }
 }
 
@@ -4152,7 +4077,6 @@ function changeUserDate(days) {
 
 // ユーザー単位カレンダーの日付変更時の処理
 function onUserDateChange() {
-  console.log('[onUserDateChange] 日付変更:', selectedUserDate.value);
   if (userCalendar.value && selectedUserDate.value) {
     // カレンダーの日付を変更
     const selectedDate = new Date(selectedUserDate.value);
