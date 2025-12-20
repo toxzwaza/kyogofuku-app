@@ -757,6 +757,7 @@
                           </svg>
                           {{ participant.name }}
                           <button
+                            v-if="participant.id !== currentUser?.id"
                             type="button"
                             @click="removeParticipantForCreate(participant.id)"
                             class="ml-1 text-indigo-600 hover:text-indigo-800 font-bold"
@@ -768,21 +769,47 @@
                     </div>
 
                     <!-- 店舗ユーザー一覧（チェックボックス） -->
-                    <div v-if="shopUsersForCreate.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">
-                      <label
-                        v-for="user in shopUsersForCreate"
-                        :key="user.id"
-                        class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          :value="user.id"
-                          :checked="isParticipantAddedForCreate(user.id)"
-                          @change="toggleParticipantForCreate(user.id, $event.target.checked)"
-                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span class="text-sm text-gray-900">{{ user.name }}</span>
-                      </label>
+                    <div v-if="shopUsersForCreate.length > 0" class="space-y-2">
+                      <!-- 全選択・全解除ボタン -->
+                      <div class="flex gap-2 mb-2">
+                        <button
+                          type="button"
+                          @click="selectAllParticipantsForCreate"
+                          class="flex-1 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                        >
+                          全選択
+                        </button>
+                        <button
+                          type="button"
+                          @click="deselectAllParticipantsForCreate"
+                          class="flex-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          全解除
+                        </button>
+                      </div>
+                      <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">
+                        <label
+                          v-for="user in shopUsersForCreate"
+                          :key="user.id"
+                          :class="[
+                            'flex items-center space-x-2 p-2 rounded-lg transition-colors',
+                            user.id === currentUser?.id ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-50'
+                          ]"
+                        >
+                          <input
+                            type="checkbox"
+                            :value="user.id"
+                            :checked="isParticipantAddedForCreate(user.id)"
+                            :disabled="user.id === currentUser?.id"
+                            @change="toggleParticipantForCreate(user.id, $event.target.checked)"
+                            class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                          <span class="text-sm text-gray-900">
+                            {{ user.name }}
+                            <span v-if="user.id === currentUser?.id" class="text-xs text-gray-500">(自分)</span>
+                          </span>
+                        </label>
+                      </div>
                     </div>
                     <p v-else-if="!selectedShopIdForCreate" class="text-sm text-gray-500 italic">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
                   </div>
@@ -2090,6 +2117,7 @@ const attendanceChartOptions = computed(() => {
 const shops = computed(() => props.shops || []);
 const userShops = computed(() => props.userShops || []);
 const users = computed(() => props.users || []);
+const currentUser = computed(() => props.currentUser);
 
 // リサイズイベントハンドラー
 let resizeTimeout = null;
@@ -4016,6 +4044,21 @@ function onUserDateChange() {
 
 // スケジュール作成
 function createScheduleFromDashboard() {
+  // バリデーション: 参加者が登録されていない場合
+  if (!createScheduleForm.value.participant_ids || createScheduleForm.value.participant_ids.length === 0) {
+    alert('参加者を1名以上選択してください。');
+    createScheduleForm.value.processing = false;
+    return;
+  }
+  
+  // バリデーション: 参加者に自分が登録されていない場合
+  const currentUserId = props.currentUser?.id;
+  if (currentUserId && !createScheduleForm.value.participant_ids.includes(currentUserId)) {
+    alert('参加者に自分を含める必要があります。');
+    createScheduleForm.value.processing = false;
+    return;
+  }
+  
   createScheduleForm.value.processing = true;
   
   const createData = {
@@ -4070,13 +4113,42 @@ function toggleParticipantForCreate(userId, checked) {
       createScheduleForm.value.participant_ids = addedParticipantsForCreate.value.map(p => p.id);
     }
   } else {
+    // 自分は削除できない
+    if (props.currentUser && userId === props.currentUser.id) {
+      return;
+    }
     removeParticipantForCreate(userId);
   }
 }
 
 // 参加者を削除（作成用）
 function removeParticipantForCreate(userId) {
+  // 自分は削除できない
+  if (props.currentUser && userId === props.currentUser.id) {
+    return;
+  }
   addedParticipantsForCreate.value = addedParticipantsForCreate.value.filter(p => p.id !== userId);
+  createScheduleForm.value.participant_ids = addedParticipantsForCreate.value.map(p => p.id);
+}
+
+// 参加者全選択（作成用）
+function selectAllParticipantsForCreate() {
+  shopUsersForCreate.value.forEach(user => {
+    if (!isParticipantAddedForCreate(user.id)) {
+      addedParticipantsForCreate.value.push(user);
+    }
+  });
+  createScheduleForm.value.participant_ids = addedParticipantsForCreate.value.map(p => p.id);
+}
+
+// 参加者全解除（作成用）
+function deselectAllParticipantsForCreate() {
+  // 現在選択されている店舗のユーザーのみを解除（自分は残す）
+  const shopUserIds = shopUsersForCreate.value.map(u => u.id);
+  const currentUserId = props.currentUser?.id;
+  addedParticipantsForCreate.value = addedParticipantsForCreate.value.filter(
+    p => !shopUserIds.includes(p.id) || (currentUserId && p.id === currentUserId)
+  );
   createScheduleForm.value.participant_ids = addedParticipantsForCreate.value.map(p => p.id);
 }
 
