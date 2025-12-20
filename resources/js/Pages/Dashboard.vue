@@ -2848,13 +2848,36 @@ function hexToRgb(hex) {
 // 背景色の明るさを判定して適切な文字色を返す
 function getContrastColor(backgroundColor) {
   const rgb = hexToRgb(backgroundColor);
-  if (!rgb) return '#ffffff';
+  if (!rgb) return '#1f2937';
   
   // 相対輝度を計算（WCAG基準）
   const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
   
   // 明るい背景には暗い文字、暗い背景には明るい文字
-  return luminance > 0.5 ? '#1f2937' : '#ffffff';
+  // 薄い色（luminance > 0.7）の場合は常に暗い文字を使用
+  return luminance > 0.7 ? '#1f2937' : '#ffffff';
+}
+
+// コントラスト比を計算（WCAG基準）
+function getContrastRatio(color1, color2) {
+  const rgb1 = hexToRgb(color1);
+  const rgb2 = hexToRgb(color2);
+  if (!rgb1 || !rgb2) return 1;
+  
+  const getLuminance = (r, g, b) => {
+    const [rs, gs, bs] = [r, g, b].map(val => {
+      val = val / 255;
+      return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  };
+  
+  const lum1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
+  const lum2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
+  const lighter = Math.max(lum1, lum2);
+  const darker = Math.min(lum1, lum2);
+  
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 // 背景色を少し暗くする（時間表示の背景用）
@@ -2888,56 +2911,97 @@ function handleShopEventDidMount(info) {
     });
     
     if (el) {
-      // 背景色に応じた文字色を取得
-      const textColor = getContrastColor(themeColor);
-      const isLight = getContrastColor(themeColor) === '#1f2937';
+      // 背景色の明るさを判定
+      const rgb = hexToRgb(themeColor);
+      const luminance = rgb ? (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255 : 0.5;
+      const isPaleColor = luminance > 0.7;
       
-      // 背景色とボーダー色を直接設定（!importantで確実に適用）
-      el.style.setProperty('background-color', themeColor, 'important');
-      el.style.setProperty('border-color', themeColor, 'important');
-      el.style.setProperty('border-radius', '8px', 'important');
-      el.style.setProperty('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.15)', 'important');
+      // 背景色に応じた文字色を取得（薄い色の場合は常に暗い文字）
+      const textColor = isPaleColor ? '#1f2937' : getContrastColor(themeColor);
+      const isLight = textColor === '#1f2937';
+      
+      // リキッドグラス効果：半透明の背景色とぼかし効果
+      // 薄い色の場合はより濃い背景色を使用して可読性を確保
+      const bgAlpha = isPaleColor ? 0.95 : 0.85;
+      const darkenedThemeColor = isPaleColor ? darkenColor(themeColor, 15) : themeColor;
+      const glassBgColor = addAlphaToColor(darkenedThemeColor, bgAlpha);
+      
+      el.style.setProperty('background-color', glassBgColor, 'important');
+      el.style.setProperty('backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+      el.style.setProperty('-webkit-backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+      el.style.setProperty('border-color', addAlphaToColor(darkenedThemeColor, 0.3), 'important');
+      el.style.setProperty('border-width', '1px', 'important');
+      el.style.setProperty('border-style', 'solid', 'important');
+      el.style.setProperty('border-radius', '12px', 'important');
+      el.style.setProperty('box-shadow', '0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)', 'important');
       
       // 子要素の.timed-eventも背景を透明にして親の色を見せる
       const timedEvent = el.querySelector('.timed-event');
       if (timedEvent) {
         timedEvent.style.background = 'transparent';
         timedEvent.style.setProperty('border-left', 'none', 'important');
-        timedEvent.style.setProperty('border-radius', '8px', 'important');
-        timedEvent.style.setProperty('padding', '6px 8px', 'important');
+        timedEvent.style.setProperty('border-radius', '12px', 'important');
+        timedEvent.style.setProperty('padding', '8px 10px', 'important');
         timedEvent.style.setProperty('box-shadow', 'none', 'important');
       }
       
-      // event-titleの文字色を背景色に応じて設定
+      // event-titleの文字色を背景色に応じて設定（可読性を重視）
       const eventTitle = el.querySelector('.event-title');
       if (eventTitle) {
         eventTitle.style.setProperty('color', textColor, 'important');
-        eventTitle.style.setProperty('font-weight', '600', 'important');
+        eventTitle.style.setProperty('font-weight', '700', 'important');
+        // 薄い色の場合、白いテキストシャドウで可読性を向上
+        if (isPaleColor) {
+          eventTitle.style.setProperty('text-shadow', '0 1px 2px rgba(255, 255, 255, 0.8)', 'important');
+        } else {
+          eventTitle.style.setProperty('text-shadow', '0 1px 3px rgba(0, 0, 0, 0.3)', 'important');
+        }
       }
       
-      // event-userの文字色を背景色に応じて設定（少し透明度を下げる）
+      // event-userの文字色を背景色に応じて設定（可読性を重視）
       const eventUser = el.querySelector('.event-user');
       if (eventUser) {
-        const userColor = isLight ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.9)';
+        const userColor = isPaleColor ? 'rgba(31, 41, 55, 0.9)' : (isLight ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.95)');
         eventUser.style.setProperty('color', userColor, 'important');
-        eventUser.style.setProperty('font-weight', '500', 'important');
+        eventUser.style.setProperty('font-weight', '600', 'important');
+        if (isPaleColor) {
+          eventUser.style.setProperty('text-shadow', '0 1px 2px rgba(255, 255, 255, 0.8)', 'important');
+        } else if (!isLight) {
+          eventUser.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.3)', 'important');
+        }
       }
       
-      // event-timeはモダンなスタイルに
+      // event-timeはリキッドグラススタイルに（可読性を重視）
       const eventTime = el.querySelector('.event-time');
       if (eventTime) {
-        // 背景色を少し暗くしたバージョンを使用
-        const timeBgColor = darkenColor(themeColor, 15);
-        eventTime.style.setProperty('color', textColor, 'important');
+        // 薄い色の場合はより濃い背景を使用
+        const timeDarkenPercent = isPaleColor ? 30 : 20;
+        const timeBgColor = addAlphaToColor(darkenColor(themeColor, timeDarkenPercent), 0.8);
+        const timeTextColor = isPaleColor ? '#1f2937' : textColor;
+        
+        eventTime.style.setProperty('color', timeTextColor, 'important');
         eventTime.style.setProperty('background-color', timeBgColor, 'important');
+        eventTime.style.setProperty('backdrop-filter', 'blur(8px) saturate(150%)', 'important');
+        eventTime.style.setProperty('-webkit-backdrop-filter', 'blur(8px) saturate(150%)', 'important');
         eventTime.style.setProperty('font-weight', '700', 'important');
-        eventTime.style.setProperty('padding', '4px 8px', 'important');
-        eventTime.style.setProperty('border-radius', '6px', 'important');
-        eventTime.style.setProperty('backdrop-filter', 'blur(4px)', 'important');
-        eventTime.style.setProperty('box-shadow', '0 1px 3px rgba(0, 0, 0, 0.1)', 'important');
+        eventTime.style.setProperty('padding', '5px 10px', 'important');
+        eventTime.style.setProperty('border-radius', '8px', 'important');
+        eventTime.style.setProperty('border', isPaleColor ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)', 'important');
+        eventTime.style.setProperty('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)', 'important');
+        // 薄い色の場合、テキストシャドウで可読性を向上
+        if (isPaleColor) {
+          eventTime.style.setProperty('text-shadow', '0 1px 2px rgba(255, 255, 255, 0.8)', 'important');
+        }
       }
     }
   }
+}
+
+// 背景色を半透明にする（リキッドグラス効果用）
+function addAlphaToColor(hex, alpha) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
 }
 
 // イベントがDOMに追加された後の処理（ユーザー単位用）
@@ -2958,13 +3022,87 @@ function handleUserEventDidMount(info) {
     });
     
     if (el) {
-      // 背景色とボーダー色を直接設定（!importantで確実に適用）
-      el.style.setProperty('background-color', themeColor, 'important');
-      el.style.setProperty('border-color', themeColor, 'important');
+      // 背景色の明るさを判定
+      const rgb = hexToRgb(themeColor);
+      const luminance = rgb ? (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255 : 0.5;
+      const isPaleColor = luminance > 0.7;
+      
+      // 背景色に応じた文字色を取得（薄い色の場合は常に暗い文字）
+      const textColor = isPaleColor ? '#1f2937' : getContrastColor(themeColor);
+      const isLight = textColor === '#1f2937';
+      
+      // リキッドグラス効果：半透明の背景色とぼかし効果
+      // 薄い色の場合はより濃い背景色を使用して可読性を確保
+      const bgAlpha = isPaleColor ? 0.95 : 0.85;
+      const darkenedThemeColor = isPaleColor ? darkenColor(themeColor, 15) : themeColor;
+      const glassBgColor = addAlphaToColor(darkenedThemeColor, bgAlpha);
+      
+      el.style.setProperty('background-color', glassBgColor, 'important');
+      el.style.setProperty('backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+      el.style.setProperty('-webkit-backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+      el.style.setProperty('border-color', addAlphaToColor(darkenedThemeColor, 0.3), 'important');
+      el.style.setProperty('border-width', '1px', 'important');
+      el.style.setProperty('border-style', 'solid', 'important');
+      el.style.setProperty('border-radius', '12px', 'important');
+      el.style.setProperty('box-shadow', '0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)', 'important');
+      
       // 子要素の.timed-eventも背景を透明にして親の色を見せる
       const timedEvent = el.querySelector('.timed-event');
       if (timedEvent) {
         timedEvent.style.background = 'transparent';
+        timedEvent.style.setProperty('border-left', 'none', 'important');
+        timedEvent.style.setProperty('border-radius', '12px', 'important');
+        timedEvent.style.setProperty('padding', '8px 10px', 'important');
+        timedEvent.style.setProperty('box-shadow', 'none', 'important');
+      }
+      
+      // event-titleの文字色を背景色に応じて設定（可読性を重視）
+      const eventTitle = el.querySelector('.event-title');
+      if (eventTitle) {
+        eventTitle.style.setProperty('color', textColor, 'important');
+        eventTitle.style.setProperty('font-weight', '700', 'important');
+        // 薄い色の場合、白いテキストシャドウで可読性を向上
+        if (isPaleColor) {
+          eventTitle.style.setProperty('text-shadow', '0 1px 2px rgba(255, 255, 255, 0.8)', 'important');
+        } else {
+          eventTitle.style.setProperty('text-shadow', '0 1px 3px rgba(0, 0, 0, 0.3)', 'important');
+        }
+      }
+      
+      // event-userの文字色を背景色に応じて設定（可読性を重視）
+      const eventUser = el.querySelector('.event-user');
+      if (eventUser) {
+        const userColor = isPaleColor ? 'rgba(31, 41, 55, 0.9)' : (isLight ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.95)');
+        eventUser.style.setProperty('color', userColor, 'important');
+        eventUser.style.setProperty('font-weight', '600', 'important');
+        if (isPaleColor) {
+          eventUser.style.setProperty('text-shadow', '0 1px 2px rgba(255, 255, 255, 0.8)', 'important');
+        } else if (!isLight) {
+          eventUser.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.3)', 'important');
+        }
+      }
+      
+      // event-timeはリキッドグラススタイルに（可読性を重視）
+      const eventTime = el.querySelector('.event-time');
+      if (eventTime) {
+        // 薄い色の場合はより濃い背景を使用
+        const timeDarkenPercent = isPaleColor ? 30 : 20;
+        const timeBgColor = addAlphaToColor(darkenColor(themeColor, timeDarkenPercent), 0.8);
+        const timeTextColor = isPaleColor ? '#1f2937' : textColor;
+        
+        eventTime.style.setProperty('color', timeTextColor, 'important');
+        eventTime.style.setProperty('background-color', timeBgColor, 'important');
+        eventTime.style.setProperty('backdrop-filter', 'blur(8px) saturate(150%)', 'important');
+        eventTime.style.setProperty('-webkit-backdrop-filter', 'blur(8px) saturate(150%)', 'important');
+        eventTime.style.setProperty('font-weight', '700', 'important');
+        eventTime.style.setProperty('padding', '5px 10px', 'important');
+        eventTime.style.setProperty('border-radius', '8px', 'important');
+        eventTime.style.setProperty('border', isPaleColor ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)', 'important');
+        eventTime.style.setProperty('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)', 'important');
+        // 薄い色の場合、テキストシャドウで可読性を向上
+        if (isPaleColor) {
+          eventTime.style.setProperty('text-shadow', '0 1px 2px rgba(255, 255, 255, 0.8)', 'important');
+        }
       }
     }
   }
