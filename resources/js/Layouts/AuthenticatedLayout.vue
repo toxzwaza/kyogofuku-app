@@ -1,14 +1,47 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 
+const page = usePage();
 const showingNavigationDropdown = ref(false);
 const hoveredMenu = ref(null);
+
+// ユーザーのテーマカラーを取得（デフォルトはindigo）
+const themeColor = computed(() => {
+  return page.props.auth?.user?.theme_color || '#6366f1'; // indigo-500のデフォルト値
+});
+
+// CSS変数を設定
+onMounted(() => {
+  updateThemeColor();
+});
+
+watch(themeColor, () => {
+  updateThemeColor();
+});
+
+function updateThemeColor() {
+  const root = document.documentElement;
+  root.style.setProperty('--theme-color', themeColor.value);
+  
+  // RGB値を計算（透明度用）
+  const hex = themeColor.value.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  root.style.setProperty('--theme-color-rgb', `${r}, ${g}, ${b}`);
+  
+  // rgba値を直接設定（透明度付き）
+  root.style.setProperty('--theme-color-10', `rgba(${r}, ${g}, ${b}, 0.6)`);
+  root.style.setProperty('--theme-color-15', `rgba(${r}, ${g}, ${b}, 0.15)`);
+  root.style.setProperty('--theme-color-20', `rgba(${r}, ${g}, ${b}, 0.2)`);
+  root.style.setProperty('--theme-color-50', `rgba(${r}, ${g}, ${b}, 0.5)`);
+}
 
 const menuItems = [
     {
@@ -101,7 +134,7 @@ const menuItems = [
                                             route().current(menu.route.replace('.index', '.*')) || 
                                             (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*'))) ||
                                             (menu.key === 'customers' && route().current('admin.customer-tags.*'))
-                                                ? 'border-indigo-400 text-gray-900 focus:outline-none focus:border-indigo-700'
+                                                ? 'theme-active-link'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
                                         ]"
                                     >
@@ -135,7 +168,7 @@ const menuItems = [
                                                 :href="route(subItem.route)"
                                                 :class="[
                                                     'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
-                                                    route().current(subItem.route) ? 'bg-gray-50 text-indigo-600 font-medium' : ''
+                                                    route().current(subItem.route) ? 'theme-active-sub-link' : ''
                                                 ]"
                                             >
                                                 {{ subItem.label }}
@@ -278,7 +311,7 @@ const menuItems = [
             </nav>
 
             <!-- Page Heading -->
-            <header class="bg-white shadow" v-if="$slots.header">
+            <header class="theme-header-bg shadow theme-header-border" v-if="$slots.header">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                     <slot name="header" />
                 </div>
@@ -291,3 +324,34 @@ const menuItems = [
         </div>
     </div>
 </template>
+
+<style scoped>
+/* ページヘッダーの背景色とボーダー */
+.theme-header-bg {
+    background-color: var(--theme-color-10);
+}
+
+.theme-header-border {
+    border-top: 3px solid var(--theme-color);
+}
+
+/* テーマカラーを使用したアクティブリンクのスタイル（アンダーラインのみ） */
+.theme-active-link {
+    border-color: var(--theme-color) !important;
+    border-bottom-width: 3px !important;
+    color: rgb(17, 24, 39) !important;
+    font-weight: 600;
+}
+
+.theme-active-link:focus {
+    border-color: var(--theme-color) !important;
+    outline: none;
+}
+
+/* テーマカラーを使用したアクティブサブリンクのスタイル（背景色のみ） */
+.theme-active-sub-link {
+    background-color: var(--theme-color-15) !important;
+    color: rgb(55, 65, 81) !important;
+    font-weight: 600;
+}
+</style>
