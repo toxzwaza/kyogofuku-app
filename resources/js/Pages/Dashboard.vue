@@ -505,17 +505,14 @@
                     </div>
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        色
+                        公開設定
                       </label>
-                      <div class="flex items-center gap-2">
-                        <div
-                          class="w-8 h-8 rounded-lg shadow-sm border-2 border-gray-300"
-                          :style="{ backgroundColor: selectedScheduleDetail.color }"
-                        ></div>
-                        <span class="text-sm font-mono text-gray-700">{{
-                          selectedScheduleDetail.color
-                        }}</span>
-                      </div>
+                      <span
+                        :class="selectedScheduleDetail.is_public ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                      >
+                        {{ selectedScheduleDetail.is_public ? "公開" : "非公開" }}
+                      </span>
                     </div>
                   </div>
 
@@ -705,16 +702,16 @@
                     </div>
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        色
+                        公開設定
                       </label>
-                      <div class="flex items-center gap-3">
+                      <label class="flex items-center cursor-pointer">
                         <input
-                          v-model="createScheduleForm.color"
-                          type="color"
-                          class="w-12 h-12 rounded-lg border-2 border-gray-300 shadow-sm cursor-pointer"
+                          v-model="createScheduleForm.is_public"
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
-                        <span class="text-sm font-mono text-gray-700">{{ createScheduleForm.color }}</span>
-                      </div>
+                        <span class="ml-2 text-sm text-gray-700">公開する（デフォルト）</span>
+                      </label>
                     </div>
                   </div>
 
@@ -974,16 +971,16 @@
                     </div>
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        色
+                        公開設定
                       </label>
-                      <div class="flex items-center gap-3">
+                      <label class="flex items-center cursor-pointer">
                         <input
-                          v-model="editScheduleForm.color"
-                          type="color"
-                          class="w-12 h-12 rounded-lg border-2 border-gray-300 shadow-sm cursor-pointer"
+                          v-model="editScheduleForm.is_public"
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
-                        <span class="text-sm font-mono text-gray-700">{{ editScheduleForm.color }}</span>
-                      </div>
+                        <span class="ml-2 text-sm text-gray-700">公開する</span>
+                      </label>
                     </div>
                   </div>
 
@@ -3051,11 +3048,81 @@ function addAlphaToColor(hex, alpha) {
 function handleUserEventDidMount(info) {
   const event = info.event;
   const participants = event.extendedProps?.participants || [];
+  const isPublic = event.extendedProps?.is_public !== undefined ? event.extendedProps.is_public : true;
+  const el = info.el;
+  
+  // 非公開の場合は背景色を赤色にする
+  if (!isPublic && el) {
+    const redColor = '#dc2626'; // 赤色
+    const redBgColor = addAlphaToColor(redColor, 0.9);
+    
+    el.style.setProperty('background-color', redBgColor, 'important');
+    el.style.setProperty('backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+    el.style.setProperty('-webkit-backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+    el.style.setProperty('border-color', addAlphaToColor(redColor, 0.5), 'important');
+    el.style.setProperty('border-width', '1px', 'important');
+    el.style.setProperty('border-style', 'solid', 'important');
+    el.style.setProperty('border-radius', '12px', 'important');
+    el.style.setProperty('box-shadow', '0 4px 16px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)', 'important');
+    
+    // 子要素の.timed-eventも背景を透明にして親の色を見せる
+    const timedEvent = el.querySelector('.timed-event');
+    if (timedEvent) {
+      timedEvent.style.background = 'transparent';
+      timedEvent.style.setProperty('border-left', 'none', 'important');
+      timedEvent.style.setProperty('border-radius', '12px', 'important');
+      timedEvent.style.setProperty('padding', '8px 10px', 'important');
+      timedEvent.style.setProperty('box-shadow', 'none', 'important');
+    }
+    
+    // テキスト色を白色にする（赤背景なので）
+    const eventTitle = el.querySelector('.event-title');
+    if (eventTitle) {
+      eventTitle.style.setProperty('color', '#ffffff', 'important');
+      eventTitle.style.setProperty('font-weight', '700', 'important');
+      eventTitle.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.3)', 'important');
+    }
+    
+    const eventUser = el.querySelector('.event-user');
+    if (eventUser) {
+      eventUser.style.setProperty('color', 'rgba(255, 255, 255, 0.95)', 'important');
+      eventUser.style.setProperty('font-weight', '600', 'important');
+      eventUser.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.3)', 'important');
+    }
+    
+    const eventTime = el.querySelector('.event-time');
+    if (eventTime) {
+      const darkerRed = darkenColor(redColor, 20);
+      const timeBgColor = addAlphaToColor(darkerRed, 0.9);
+      
+      eventTime.style.setProperty('color', '#ffffff', 'important');
+      eventTime.style.setProperty('background-color', timeBgColor, 'important');
+      eventTime.style.setProperty('backdrop-filter', 'blur(8px) saturate(150%)', 'important');
+      eventTime.style.setProperty('-webkit-backdrop-filter', 'blur(8px) saturate(150%)', 'important');
+      eventTime.style.setProperty('font-weight', '700', 'important');
+      eventTime.style.setProperty('padding', '5px 10px', 'important');
+      eventTime.style.setProperty('border-radius', '8px', 'important');
+      eventTime.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.3)', 'important');
+      eventTime.style.setProperty('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)', 'important');
+      eventTime.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.3)', 'important');
+    }
+    
+    const fcEventTitle = el.querySelector('.fc-event-title');
+    if (fcEventTitle) {
+      fcEventTitle.style.setProperty('color', '#ffffff', 'important');
+    }
+    
+    const fcEventTime = el.querySelector('.fc-event-time');
+    if (fcEventTime) {
+      fcEventTime.style.setProperty('color', '#ffffff', 'important');
+    }
+    
+    return; // 非公開の場合はここで終了（theme_colorの処理はスキップ）
+  }
   
   // 参加者が1人の場合、そのユーザーのtheme_colorを直接DOM要素に適用
   if (participants.length === 1 && participants[0].theme_color) {
     const themeColor = participants[0].theme_color;
-    const el = info.el;
     
     if (el) {
       // 背景色の明るさを判定
@@ -3156,7 +3223,6 @@ function handleUserEventDidMount(info) {
   }
   
   // 参加者が1人でない場合やtheme_colorがない場合でも、fc-event-timeとfc-event-titleの色を設定
-  const el = info.el;
   if (el) {
     const fcEventTitle = el.querySelector('.fc-event-title');
     if (fcEventTitle) {
@@ -3716,7 +3782,7 @@ const createScheduleForm = ref({
   start_at: '',
   end_at: '',
   all_day: false,
-  color: '#3788d8',
+  is_public: true,
   participant_ids: [],
   expense_category: '',
   processing: false,
@@ -3753,7 +3819,7 @@ const editScheduleForm = ref({
   start_at: '',
   end_at: '',
   all_day: false,
-  color: '#3788d8',
+  is_public: true,
   participant_ids: [],
   expense_category: '',
   processing: false,
@@ -3781,7 +3847,7 @@ function handleEventClick(clickInfo) {
     start: clickInfo.event.startStr,
     end: clickInfo.event.endStr,
     allDay: clickInfo.event.allDay,
-    color: clickInfo.event.backgroundColor,
+    is_public: clickInfo.event.extendedProps.is_public !== undefined ? clickInfo.event.extendedProps.is_public : true,
     description: clickInfo.event.extendedProps.description || "",
     user: clickInfo.event.extendedProps.user || null,
     participants: clickInfo.event.extendedProps.participants || [],
@@ -3845,7 +3911,7 @@ function startEditSchedule() {
     start_at: formatDateTimeLocal(startDate),
     end_at: formatDateTimeLocal(endDate),
     all_day: selectedScheduleDetail.value.allDay,
-    color: selectedScheduleDetail.value.color,
+    is_public: selectedScheduleDetail.value.is_public !== undefined ? selectedScheduleDetail.value.is_public : true,
     participant_ids: selectedScheduleDetail.value.participants?.map(p => p.id) || [],
     expense_category: selectedScheduleDetail.value.expense_category || '',
     processing: false,
@@ -3891,7 +3957,7 @@ function updateScheduleFromDashboard() {
     start_at: editScheduleForm.value.start_at,
     end_at: editScheduleForm.value.end_at,
     all_day: editScheduleForm.value.all_day,
-    color: editScheduleForm.value.color,
+    is_public: editScheduleForm.value.is_public !== undefined ? editScheduleForm.value.is_public : true,
     user_id: selectedScheduleDetail.value.user?.id,
     participant_ids: editScheduleForm.value.participant_ids || [],
     expense_category: editScheduleForm.value.expense_category || null,
@@ -3937,6 +4003,7 @@ function updateScheduleFromDashboard() {
         selectedScheduleDetail.value.expense_category = editScheduleForm.value.expense_category || null;
         selectedScheduleDetail.value.title = editScheduleForm.value.title;
         selectedScheduleDetail.value.description = editScheduleForm.value.description || '';
+        selectedScheduleDetail.value.is_public = editScheduleForm.value.is_public !== undefined ? editScheduleForm.value.is_public : true;
       }
       
       showEditModal.value = false;
@@ -4011,6 +4078,7 @@ function handleEventDrop(dropInfo) {
     all_day: dropInfo.event.allDay,
     user_id: event.extendedProps.user?.id,
     participant_ids: participantIds,
+    is_public: event.extendedProps.is_public !== undefined ? event.extendedProps.is_public : true,
   };
 
   axios
@@ -4059,6 +4127,7 @@ function handleEventResize(resizeInfo) {
     all_day: resizeInfo.event.allDay,
     user_id: event.extendedProps.user?.id,
     participant_ids: participantIds,
+    is_public: event.extendedProps.is_public !== undefined ? event.extendedProps.is_public : true,
   };
 
   axios
@@ -4250,7 +4319,7 @@ function createScheduleFromDashboard() {
         start_at: '',
         end_at: '',
         all_day: false,
-        color: '#3788d8',
+        is_public: true,
         participant_ids: [],
         expense_category: '',
         processing: false,

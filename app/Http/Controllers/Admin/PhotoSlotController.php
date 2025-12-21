@@ -147,7 +147,7 @@ class PhotoSlotController extends Controller
                 'start_at' => $shootDate->copy()->setTime(0, 0, 1),
                 'end_at' => $shootDate->copy()->setTime(23, 59, 59),
                 'all_day' => true,
-                'color' => '#fe1616',
+                'is_public' => true,
             ]);
 
             // 担当店舗に所属するスタッフ全員を参加者として登録
@@ -365,7 +365,7 @@ class PhotoSlotController extends Controller
             'start_at' => $shootDate->copy()->setTime(0, 0, 1),
             'end_at' => $shootDate->copy()->setTime(23, 59, 59),
             'all_day' => true,
-            'color' => '#fe1616',
+            'is_public' => true,
         ]);
 
         // 担当店舗に所属するスタッフ全員を参加者として登録

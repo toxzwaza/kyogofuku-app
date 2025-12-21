@@ -18,14 +18,15 @@ class StaffSchedule extends Model
         'start_at',
         'end_at',
         'all_day',
-        'color',
         'expense_category',
+        'is_public',
     ];
 
     protected $casts = [
         'start_at' => 'datetime',
         'end_at' => 'datetime',
         'all_day' => 'boolean',
+        'is_public' => 'boolean',
     ];
 
     /**

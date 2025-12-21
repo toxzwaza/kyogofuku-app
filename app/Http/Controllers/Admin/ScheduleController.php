@@ -126,6 +126,9 @@ class ScheduleController extends Controller
                 $query->whereHas('participantUsers', function($q) use ($shopUserIds) {
                     $q->whereIn('users.id', $shopUserIds);
                 });
+                
+                // 店舗単位の場合は公開スケジュールのみ表示
+                $query->where('is_public', true);
             }
         } elseif ($mode === 'user' && $userId) {
             // ユーザー単位：特定のユーザーが参加者として登録されているスケジュールを取得
@@ -141,11 +144,10 @@ class ScheduleController extends Controller
                 'start' => $schedule->start_at->toIso8601String(),
                 'end' => $schedule->end_at ? $schedule->end_at->toIso8601String() : $schedule->start_at->toIso8601String(),
                 'allDay' => $schedule->all_day,
-                'backgroundColor' => $schedule->color,
-                'borderColor' => $schedule->color,
                 'expense_category' => $schedule->expense_category,
                 'extendedProps' => [
                     'description' => $schedule->description,
+                    'is_public' => $schedule->is_public ?? true,
                     'user' => $schedule->user ? [
                         'id' => $schedule->user->id,
                         'name' => $schedule->user->name,
@@ -175,7 +177,7 @@ class ScheduleController extends Controller
             'start_at' => 'required|date',
             'end_at' => 'required|date|after_or_equal:start_at',
             'all_day' => 'boolean',
-            'color' => 'nullable|string|max:7',
+            'is_public' => 'boolean',
             'user_id' => 'required|exists:users,id',
             'participant_ids' => 'nullable|array',
             'participant_ids.*' => 'exists:users,id',
@@ -187,9 +189,9 @@ class ScheduleController extends Controller
             $validated['user_id'] = auth()->id();
         }
 
-        // デフォルトの色を設定
-        if (!isset($validated['color'])) {
-            $validated['color'] = '#3788d8';
+        // デフォルトのis_publicを設定
+        if (!isset($validated['is_public'])) {
+            $validated['is_public'] = true;
         }
 
         $participantIds = $validated['participant_ids'] ?? [];
@@ -212,10 +214,9 @@ class ScheduleController extends Controller
                 'start' => $schedule->start_at->toIso8601String(),
                 'end' => $schedule->end_at->toIso8601String(),
                 'allDay' => $schedule->all_day,
-                'backgroundColor' => $schedule->color,
-                'borderColor' => $schedule->color,
                 'extendedProps' => [
                     'description' => $schedule->description,
+                    'is_public' => $schedule->is_public ?? true,
                     'user' => $schedule->user ? [
                         'id' => $schedule->user->id,
                         'name' => $schedule->user->name,
@@ -245,7 +246,7 @@ class ScheduleController extends Controller
             'start_at' => 'required|date',
             'end_at' => 'nullable|date|after_or_equal:start_at',
             'all_day' => 'boolean',
-            'color' => 'nullable|string|max:7',
+            'is_public' => 'boolean',
             'user_id' => 'required|exists:users,id',
             'participant_ids' => 'nullable|array',
             'participant_ids.*' => 'exists:users,id',
@@ -290,11 +291,10 @@ class ScheduleController extends Controller
                 'start' => $schedule->start_at->toIso8601String(),
                 'end' => $schedule->end_at->toIso8601String(),
                 'allDay' => $schedule->all_day,
-                'backgroundColor' => $schedule->color,
-                'borderColor' => $schedule->color,
                 'expense_category' => $schedule->expense_category,
                 'extendedProps' => [
                     'description' => $schedule->description,
+                    'is_public' => $schedule->is_public ?? true,
                     'user' => $schedule->user ? [
                         'id' => $schedule->user->id,
                         'name' => $schedule->user->name,
