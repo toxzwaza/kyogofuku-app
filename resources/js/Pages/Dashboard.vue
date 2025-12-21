@@ -490,6 +490,33 @@
                     </div>
                   </div>
 
+                  <!-- 前撮り情報（photo_slotが存在する場合のみ表示） -->
+                  <div v-if="selectedScheduleDetail.photo_slot" class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        前撮り会場
+                      </label>
+                      <p class="text-sm font-medium text-gray-900">
+                        {{ selectedScheduleDetail.photo_slot.studio?.name || "-" }}
+                      </p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        担当店舗
+                      </label>
+                      <div v-if="selectedScheduleDetail.photo_slot.shops && selectedScheduleDetail.photo_slot.shops.length > 0" class="flex flex-wrap gap-2">
+                        <span
+                          v-for="shop in selectedScheduleDetail.photo_slot.shops"
+                          :key="shop.id"
+                          class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-medium"
+                        >
+                          {{ shop.name }}
+                        </span>
+                      </div>
+                      <p v-else class="text-sm text-gray-500 italic">担当店舗なし</p>
+                    </div>
+                  </div>
+
                   <!-- ステータス情報 -->
                   <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -2944,11 +2971,71 @@ function darkenColor(hex, percent) {
 function handleShopEventDidMount(info) {
   const event = info.event;
   const participants = event.extendedProps?.participants || [];
+  const photoSlotId = event.extendedProps?.photo_slot_id;
+  const el = info.el;
+  
+  // 前撮りスケジュール（photo_slot_idが存在する場合）は背景色を黒よりのグレーにする
+  if (photoSlotId && el) {
+    const darkGrayColor = '#1f2937'; // 黒よりのグレー
+    const darkGrayBgColor = addAlphaToColor(darkGrayColor, 0.95);
+    
+    el.style.setProperty('background-color', darkGrayBgColor, 'important');
+    el.style.setProperty('backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+    el.style.setProperty('-webkit-backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+    el.style.setProperty('border-color', addAlphaToColor(darkGrayColor, 0.5), 'important');
+    el.style.setProperty('border-width', '1px', 'important');
+    el.style.setProperty('border-style', 'solid', 'important');
+    el.style.setProperty('border-radius', '12px', 'important');
+    el.style.setProperty('box-shadow', '0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)', 'important');
+    
+    // 子要素の.timed-eventも背景を透明にして親の色を見せる
+    const timedEvent = el.querySelector('.timed-event');
+    if (timedEvent) {
+      timedEvent.style.background = 'transparent';
+      timedEvent.style.setProperty('border-left', 'none', 'important');
+      timedEvent.style.setProperty('border-radius', '12px', 'important');
+      timedEvent.style.setProperty('padding', '8px 10px', 'important');
+      timedEvent.style.setProperty('box-shadow', 'none', 'important');
+    }
+    
+    // テキスト色を白色にする（黒背景なので）
+    const eventTitle = el.querySelector('.event-title');
+    if (eventTitle) {
+      eventTitle.style.setProperty('color', '#ffffff', 'important');
+      eventTitle.style.setProperty('font-weight', '700', 'important');
+      eventTitle.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.5)', 'important');
+    }
+    
+    const eventUser = el.querySelector('.event-user');
+    if (eventUser) {
+      eventUser.style.setProperty('color', 'rgba(255, 255, 255, 0.9)', 'important');
+      eventUser.style.setProperty('font-weight', '600', 'important');
+      eventUser.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.5)', 'important');
+    }
+    
+    const eventTime = el.querySelector('.event-time');
+    if (eventTime) {
+      const darkerGray = darkenColor(darkGrayColor, 10);
+      const timeBgColor = addAlphaToColor(darkerGray, 0.9);
+      
+      eventTime.style.setProperty('color', '#ffffff', 'important');
+      eventTime.style.setProperty('background-color', timeBgColor, 'important');
+      eventTime.style.setProperty('backdrop-filter', 'blur(8px) saturate(150%)', 'important');
+      eventTime.style.setProperty('-webkit-backdrop-filter', 'blur(8px) saturate(150%)', 'important');
+      eventTime.style.setProperty('font-weight', '700', 'important');
+      eventTime.style.setProperty('padding', '5px 10px', 'important');
+      eventTime.style.setProperty('border-radius', '8px', 'important');
+      eventTime.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.2)', 'important');
+      eventTime.style.setProperty('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)', 'important');
+      eventTime.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.5)', 'important');
+    }
+    
+    return; // 前撮りスケジュールの場合はここで終了（theme_colorの処理はスキップ）
+  }
   
   // 参加者が1人の場合、そのユーザーのtheme_colorを直接DOM要素に適用
   if (participants.length === 1 && participants[0].theme_color) {
     const themeColor = participants[0].theme_color;
-    const el = info.el;
     
     if (el) {
       // 背景色の明るさを判定
@@ -3852,6 +3939,7 @@ function handleEventClick(clickInfo) {
     user: clickInfo.event.extendedProps.user || null,
     participants: clickInfo.event.extendedProps.participants || [],
     expense_category: clickInfo.event.extendedProps.expense_category || null,
+    photo_slot: clickInfo.event.extendedProps.photo_slot || null,
   };
   showScheduleDetail.value = true;
 }

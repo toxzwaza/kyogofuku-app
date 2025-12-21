@@ -79,7 +79,7 @@ class ScheduleController extends Controller
         $shopId = $request->input('shop_id');
         $userId = $request->input('user_id');
 
-        $query = StaffSchedule::with(['user', 'participantUsers']);
+        $query = StaffSchedule::with(['user', 'participantUsers', 'photoSlot.studio', 'photoSlot.shops']);
 
         // 日付範囲でフィルタリング
         if ($start && $end) {
@@ -148,6 +148,20 @@ class ScheduleController extends Controller
                 'extendedProps' => [
                     'description' => $schedule->description,
                     'is_public' => $schedule->is_public ?? true,
+                    'photo_slot_id' => $schedule->photo_slot_id,
+                    'photo_slot' => $schedule->photoSlot ? [
+                        'id' => $schedule->photoSlot->id,
+                        'studio' => $schedule->photoSlot->studio ? [
+                            'id' => $schedule->photoSlot->studio->id,
+                            'name' => $schedule->photoSlot->studio->name,
+                        ] : null,
+                        'shops' => $schedule->photoSlot->shops->map(function($shop) {
+                            return [
+                                'id' => $shop->id,
+                                'name' => $shop->name,
+                            ];
+                        })->toArray(),
+                    ] : null,
                     'user' => $schedule->user ? [
                         'id' => $schedule->user->id,
                         'name' => $schedule->user->name,
