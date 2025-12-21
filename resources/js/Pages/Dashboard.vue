@@ -2757,8 +2757,16 @@ onMounted(() => {
     
     // ユーザー単位カレンダーの現在時刻インジケーターを初期化
     if (userCalendar.value) {
-      // カレンダーのレンダリング完了を待つ
+      // デバッグ: カレンダーの初期状態を確認
       setTimeout(() => {
+        const calendarApi = userCalendar.value.getApi();
+        const view = calendarApi.view;
+        console.log('[ユーザー単位カレンダー] onMounted後の状態:');
+        console.log('  calendarApi.currentData.currentDate:', calendarApi.currentData.currentDate);
+        console.log('  view.activeStart:', view.activeStart?.toLocaleString('ja-JP'));
+        console.log('  view.activeEnd:', view.activeEnd?.toLocaleString('ja-JP'));
+        console.log('  view.title:', view.title);
+        
         updateCurrentTimeIndicator();
         // 30秒ごとに現在時刻のインジケーターを更新
         currentTimeIndicatorInterval = setInterval(() => {
@@ -3372,21 +3380,63 @@ function getCenteredDateRange() {
 
 // ユーザー単位カレンダーオプション（7日間表示）
 const userCalendarOptions = computed(() => {
-  // 本日の日付を中心として前3日後3日の合計7日間の開始日を計算
-  const startDate = getCenteredDateRange();
+  // 本日を含む7日間を表示するため、今日から3日前を開始日とする
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // 時刻を00:00:00にリセット
+  const targetStartDate = new Date(today);
+  targetStartDate.setDate(today.getDate() - 3); // 本日から3日前を開始日とする（本日を中心として前3日後3日）
+  
+  // timeGridWeekビューは、指定した日を含む週の開始日（日曜日）から表示される
+  // そのため、durationを使用しても週単位で表示される可能性がある
+  // 解決策: 表示したい開始日（今日から3日前）を含む週の開始日（日曜日）を計算する
+  // しかし、これでは週単位の表示になってしまう
+  
+  // より正確な方法: 表示したい開始日（今日から3日前）をそのまま使用し、
+  // FullCalendarがその日を含む週を表示する場合は、週の開始日を計算して調整する
+  
+  // timeGridWeekビューは、指定した日を含む週の開始日（日曜日）から表示される
+  // 今日を含む週を表示するために、今日の日付をそのまま使用する
+  // 今日が日曜日の場合は、その週の開始日として使用される
+  // 今日が日曜日以外の場合は、今日を含む週の開始日（日曜日）から表示される
+  
+  // デバッグ: 日付情報を出力
+  console.log('[ユーザー単位カレンダー] 日付計算:');
+  console.log('  today:', today.toISOString(), today.toLocaleString('ja-JP'));
+  console.log('  targetStartDate (3日前):', targetStartDate.toISOString(), targetStartDate.toLocaleString('ja-JP'));
+  console.log('  today.getDate():', today.getDate());
+  console.log('  today.getDay():', today.getDay(), '(0=日, 1=月, ...)');
+  console.log('  targetStartDate.getDate():', targetStartDate.getDate());
+  console.log('  targetStartDate.getDay():', targetStartDate.getDay(), '(0=日, 1=月, ...)');
+  
+  // timeGridWeekビューは週単位で表示するため、duration: { days: 7 }は機能しない
+  // 解決策: 今日の日付をinitialDateに設定することで、今日を含む週が表示される
+  // しかし、これでは「今日から3日前」を開始日として表示できない
+  
+  // 別の解決策: カスタムビューを作成するか、datesSetイベントで調整する
+  // ここでは、まず今日の日付を使用して、今日を含む週が表示されるようにする
   
   return {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: "timeGridWeek",
-    duration: { days: 7 }, // 7日間表示（前3日 + 本日 + 後3日）
-    initialDate: startDate, // 本日を中心とする前後7日間の開始日
+    duration: { days: 7 }, // 7日間表示（前3日 + 本日 + 後3日） - timeGridWeekでは機能しない可能性がある
+    initialDate: today, // 今日の日付を使用 - 今日を含む週が表示される
     locale: jaLocale,
+    firstDay: 0, // 週の開始日を日曜日に設定
     customButtons: {
       customToday: {
         text: '今日',
         click: function() {
           // 本日を中心として前3日後3日の合計7日間を表示
-          const centeredStartDate = getCenteredDateRange();
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const centeredStartDate = new Date(today);
+          centeredStartDate.setDate(today.getDate() - 3);
+          
+          // デバッグ: 今日ボタンクリック時の日付情報
+          console.log('[ユーザー単位カレンダー] 今日ボタンクリック:');
+          console.log('  today:', today.toISOString(), today.toLocaleString('ja-JP'));
+          console.log('  centeredStartDate:', centeredStartDate.toISOString(), centeredStartDate.toLocaleString('ja-JP'));
+          
           if (userCalendar.value) {
             userCalendar.value.getApi().gotoDate(centeredStartDate);
           }
@@ -3651,6 +3701,38 @@ function handleUserDateSelect(selectInfo) {
 
 // ユーザー単位カレンダーの日付が変更されたときのハンドラー
 function handleUserCalendarDatesSet(dateInfo) {
+  // デバッグ: カレンダーが実際に表示している日付範囲を出力
+  console.log('[ユーザー単位カレンダー] datesSet イベント:');
+  console.log('  startStr:', dateInfo.startStr);
+  console.log('  endStr:', dateInfo.endStr);
+  console.log('  start (Date):', new Date(dateInfo.startStr).toLocaleString('ja-JP'));
+  console.log('  end (Date):', new Date(dateInfo.endStr).toLocaleString('ja-JP'));
+  console.log('  view.type:', dateInfo.view.type);
+  console.log('  view.title:', dateInfo.view.title);
+  
+  // 今日の日付と比較
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startDate = new Date(dateInfo.startStr);
+  startDate.setHours(0, 0, 0, 0);
+  const endDate = new Date(dateInfo.endStr);
+  endDate.setHours(0, 0, 0, 0);
+  const todayInRange = today >= startDate && today < endDate;
+  console.log('  今日の日付:', today.toISOString(), today.toLocaleString('ja-JP'));
+  console.log('  今日が表示範囲内:', todayInRange);
+  console.log('  表示範囲の開始日:', startDate.toISOString(), startDate.toLocaleString('ja-JP'));
+  console.log('  表示範囲の終了日:', endDate.toISOString(), endDate.toLocaleString('ja-JP'));
+  
+  // 今日から3日前の日付も計算
+  const targetStartDate = new Date(today);
+  targetStartDate.setDate(today.getDate() - 3);
+  targetStartDate.setHours(0, 0, 0, 0);
+  console.log('  目的の開始日（今日から3日前）:', targetStartDate.toISOString(), targetStartDate.toLocaleString('ja-JP'));
+  const targetEndDate = new Date(today);
+  targetEndDate.setDate(today.getDate() + 3);
+  targetEndDate.setHours(0, 0, 0, 0);
+  console.log('  目的の終了日（今日から3日後）:', targetEndDate.toISOString(), targetEndDate.toLocaleString('ja-JP'));
+  
   // カレンダーのレンダリング後に現在時刻の線を更新
   nextTick(() => {
     // レンダリング完了を待つために少し遅延させる
