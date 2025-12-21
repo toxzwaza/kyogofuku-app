@@ -3144,7 +3144,69 @@ function handleUserEventDidMount(info) {
   const event = info.event;
   const participants = event.extendedProps?.participants || [];
   const isPublic = event.extendedProps?.is_public !== undefined ? event.extendedProps.is_public : true;
+  const photoSlotId = event.extendedProps?.photo_slot_id;
   const el = info.el;
+  
+  // 前撮りスケジュール（photo_slot_idが存在する場合）は背景色を黒よりのグレーにし、非公開スケジュールと同じスタイルを適用
+  if (photoSlotId && el) {
+    const darkGrayColor = '#1f2937'; // 黒よりのグレー（店舗単位と同じ）
+    const darkGrayBgColor = addAlphaToColor(darkGrayColor, 0.9); // 非公開スケジュールと同じ透明度（0.9）
+    
+    // 非公開スケジュールと同じスタイルを適用（色のみ黒よりのグレー）
+    el.style.setProperty('background-color', darkGrayBgColor, 'important');
+    el.style.setProperty('backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+    el.style.setProperty('-webkit-backdrop-filter', 'blur(12px) saturate(180%)', 'important');
+    el.style.setProperty('border-color', addAlphaToColor(darkGrayColor, 0.5), 'important');
+    el.style.setProperty('border-width', '1px', 'important');
+    el.style.setProperty('border-style', 'solid', 'important');
+    el.style.setProperty('border-radius', '12px', 'important'); // 非公開スケジュールと同じ
+    // box-shadow: 非公開スケジュールと同じスタイル（色のみ黒よりのグレーに変更）
+    // rgba(220, 38, 38, 0.3) → rgba(31, 41, 55, 0.3) (#1f2937のRGB値)
+    el.style.setProperty('box-shadow', '0 4px 16px rgba(31, 41, 55, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)', 'important');
+    
+    // 子要素の.timed-eventも背景を透明にして親の色を見せる
+    const timedEvent = el.querySelector('.timed-event');
+    if (timedEvent) {
+      timedEvent.style.background = 'transparent';
+      timedEvent.style.setProperty('border-left', 'none', 'important');
+      timedEvent.style.setProperty('border-radius', '12px', 'important'); // 非公開スケジュールと同じ
+      timedEvent.style.setProperty('padding', '8px 10px', 'important'); // 非公開スケジュールと同じパディング
+      timedEvent.style.setProperty('box-shadow', 'none', 'important');
+    }
+    
+    // テキスト色を白色にする（黒背景なので）
+    const eventTitle = el.querySelector('.event-title');
+    if (eventTitle) {
+      eventTitle.style.setProperty('color', '#ffffff', 'important');
+      eventTitle.style.setProperty('font-weight', '600', 'important'); // 終日スケジュールと同じ
+      eventTitle.style.setProperty('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.5)', 'important');
+    }
+    
+    const eventUser = el.querySelector('.event-user');
+    if (eventUser) {
+      eventUser.style.setProperty('color', 'rgba(255, 255, 255, 0.85)', 'important'); // 終日スケジュールと同じ
+      eventUser.style.setProperty('font-size', '0.7rem', 'important'); // 終日スケジュールと同じ
+      eventUser.style.setProperty('font-weight', '500', 'important');
+    }
+    
+    // 時間表示がある場合は非表示にする（終日スケジュールは時間を表示しない）
+    const eventTime = el.querySelector('.event-time');
+    if (eventTime) {
+      eventTime.style.setProperty('display', 'none', 'important');
+    }
+    
+    const fcEventTitle = el.querySelector('.fc-event-title');
+    if (fcEventTitle) {
+      fcEventTitle.style.setProperty('color', '#ffffff', 'important');
+    }
+    
+    const fcEventTime = el.querySelector('.fc-event-time');
+    if (fcEventTime) {
+      fcEventTime.style.setProperty('display', 'none', 'important'); // 時間を非表示
+    }
+    
+    return; // 前撮りスケジュールの場合はここで終了（非公開やtheme_colorの処理はスキップ）
+  }
   
   // 非公開の場合は背景色を赤色にする
   if (!isPublic && el) {
