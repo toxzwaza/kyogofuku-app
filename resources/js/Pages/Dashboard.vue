@@ -2980,10 +2980,11 @@ function handleShopEventDidMount(info) {
   const event = info.event;
   const participants = event.extendedProps?.participants || [];
   const photoSlotId = event.extendedProps?.photo_slot_id;
+  const allDay = event.allDay; // allDayプロパティを取得
   const el = info.el;
   
-  // 前撮りスケジュール（photo_slot_idが存在する場合）は背景色を黒よりのグレーにする
-  if (photoSlotId && el) {
+  // 前撮りスケジュール（photo_slot_idが存在し、終日の場合）は背景色を黒よりのグレーにする
+  if (photoSlotId && allDay && el) {
     const darkGrayColor = '#1f2937'; // 黒よりのグレー
     const darkGrayBgColor = addAlphaToColor(darkGrayColor, 0.95);
     
@@ -3145,10 +3146,11 @@ function handleUserEventDidMount(info) {
   const participants = event.extendedProps?.participants || [];
   const isPublic = event.extendedProps?.is_public !== undefined ? event.extendedProps.is_public : true;
   const photoSlotId = event.extendedProps?.photo_slot_id;
+  const allDay = event.allDay; // allDayプロパティを取得
   const el = info.el;
   
-  // 前撮りスケジュール（photo_slot_idが存在する場合）は背景色を黒よりのグレーにし、非公開スケジュールと同じスタイルを適用
-  if (photoSlotId && el) {
+  // 前撮りスケジュール（photo_slot_idが存在し、終日の場合）は背景色を黒よりのグレーにし、非公開スケジュールと同じスタイルを適用
+  if (photoSlotId && allDay && el) {
     const darkGrayColor = '#1f2937'; // 黒よりのグレー（店舗単位と同じ）
     const darkGrayBgColor = addAlphaToColor(darkGrayColor, 0.9); // 非公開スケジュールと同じ透明度（0.9）
     
@@ -3579,7 +3581,20 @@ function loadShopSchedules(info, successCallback, failureCallback) {
         // 参加者が1人の場合、そのユーザーのtheme_colorを使用
         filteredData = filteredData.map(event => {
           const participants = event.extendedProps?.participants || [];
+          const photoSlotId = event.extendedProps?.photo_slot_id;
+          const allDay = event.allDay; // allDayプロパティを取得
           
+          // 終日前撮りスケジュールの場合は黒グレーを適用
+          if (photoSlotId && allDay) {
+            const darkGrayColor = '#1f2937';
+            return {
+              ...event,
+              backgroundColor: darkGrayColor,
+              borderColor: darkGrayColor,
+            };
+          }
+          
+          // 時間指定の前撮りや通常のスケジュールはテーマカラーを適用
           if (participants.length === 1 && participants[0].theme_color) {
             const themeColor = participants[0].theme_color;
             return {
@@ -3675,7 +3690,20 @@ function loadUserSchedules(info, successCallback, failureCallback) {
         // 参加者が1人の場合、そのユーザーのtheme_colorを使用
         const processedData = response.data.map(event => {
           const participants = event.extendedProps?.participants || [];
+          const photoSlotId = event.extendedProps?.photo_slot_id;
+          const allDay = event.allDay; // allDayプロパティを取得
           
+          // 終日前撮りスケジュールの場合は黒グレーを適用
+          if (photoSlotId && allDay) {
+            const darkGrayColor = '#1f2937';
+            return {
+              ...event,
+              backgroundColor: darkGrayColor,
+              borderColor: darkGrayColor,
+            };
+          }
+          
+          // 時間指定の前撮りや通常のスケジュールはテーマカラーを適用
           if (participants.length === 1 && participants[0].theme_color) {
             const themeColor = participants[0].theme_color;
             return {
