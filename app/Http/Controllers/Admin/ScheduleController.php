@@ -146,6 +146,8 @@ class ScheduleController extends Controller
                 'allDay' => $schedule->all_day,
                 'expense_category' => $schedule->expense_category,
                 'extendedProps' => [
+                    'original_start' => $schedule->start_at->toIso8601String(),
+                    'original_end' => $schedule->end_at ? $schedule->end_at->toIso8601String() : $schedule->start_at->toIso8601String(),
                     'description' => $schedule->description,
                     'is_public' => $schedule->is_public ?? true,
                     'photo_slot_id' => $schedule->photo_slot_id,

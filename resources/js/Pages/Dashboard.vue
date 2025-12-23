@@ -4072,18 +4072,41 @@ function canEditSchedule(schedule) {
 }
 
 function handleEventClick(clickInfo) {
+  const event = clickInfo.event;
+  
+  // extendedPropsに元の日時が保存されている場合は、それを優先的に使用
+  // これにより、FullCalendarが日時を調整した場合でも、元の値を取得できる
+  let startDateTime = event.extendedProps?.original_start || event.startStr || (event.start ? event.start.toISOString() : '');
+  let endDateTime = event.extendedProps?.original_end || event.endStr || (event.end ? event.end.toISOString() : '');
+  
+  // 文字列の場合はそのまま使用、Dateオブジェクトの場合はISO文字列に変換
+  if (startDateTime instanceof Date) {
+    startDateTime = startDateTime.toISOString();
+  }
+  if (endDateTime instanceof Date) {
+    endDateTime = endDateTime.toISOString();
+  }
+  
+  // 日時が取得できなかった場合のフォールバック
+  if (!startDateTime && event.start) {
+    startDateTime = event.start.toISOString();
+  }
+  if (!endDateTime && event.end) {
+    endDateTime = event.end.toISOString();
+  }
+  
   selectedScheduleDetail.value = {
-    id: clickInfo.event.id,
-    title: clickInfo.event.title,
-    start: clickInfo.event.startStr,
-    end: clickInfo.event.endStr,
-    allDay: clickInfo.event.allDay,
-    is_public: clickInfo.event.extendedProps.is_public !== undefined ? clickInfo.event.extendedProps.is_public : true,
-    description: clickInfo.event.extendedProps.description || "",
-    user: clickInfo.event.extendedProps.user || null,
-    participants: clickInfo.event.extendedProps.participants || [],
-    expense_category: clickInfo.event.extendedProps.expense_category || null,
-    photo_slot: clickInfo.event.extendedProps.photo_slot || null,
+    id: event.id,
+    title: event.title,
+    start: startDateTime,
+    end: endDateTime,
+    allDay: event.allDay,
+    is_public: event.extendedProps.is_public !== undefined ? event.extendedProps.is_public : true,
+    description: event.extendedProps.description || "",
+    user: event.extendedProps.user || null,
+    participants: event.extendedProps.participants || [],
+    expense_category: event.extendedProps.expense_category || null,
+    photo_slot: event.extendedProps.photo_slot || null,
   };
   showScheduleDetail.value = true;
 }
@@ -4386,7 +4409,9 @@ function handleEventResize(resizeInfo) {
 
 const formatDateTime = (datetime) => {
   if (!datetime) return "-";
-    const date = new Date(datetime);
+  const date = new Date(datetime);
+  // 無効な日付の場合は"-"を返す
+  if (isNaN(date.getTime())) return "-";
   return date.toLocaleString("ja-JP");
 };
 

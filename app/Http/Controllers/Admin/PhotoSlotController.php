@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\StaffSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PhotoSlotController extends Controller
@@ -140,14 +141,27 @@ class PhotoSlotController extends Controller
             $studioName = $firstCreatedSlot->studio ? $firstCreatedSlot->studio->name : '未設定';
             
             $shootDate = Carbon::parse($firstCreatedSlot->shoot_date);
+            
+            // 選択された時間の中で一番早い時間と一番遅い時間を取得
+            $sortedTimes = collect($validated['shoot_times'])->sort()->values();
+            $earliestTime = $sortedTimes->first();
+            $latestTime = $sortedTimes->last();
+            
+            // 一番早い時間をstart_atに設定
+            [$startHour, $startMinute] = explode(':', $earliestTime);
+            $startAt = $shootDate->copy()->setTime((int)$startHour, (int)$startMinute, 0);
+            
+            // 一番遅い時間をend_atに設定
+            [$endHour, $endMinute] = explode(':', $latestTime);
+            $endAt = $shootDate->copy()->setTime((int)$endHour, (int)$endMinute, 0);
+            
             $schedule = StaffSchedule::create([
                 'user_id' => $request->user()->id,
                 'photo_slot_id' => $firstCreatedSlot->id,
                 'title' => '[前撮り]' . $studioName,
-                'start_at' => $shootDate->copy()->setTime(0, 0, 1),
-                'end_at' => $shootDate->copy()->setTime(23, 59, 59),
+                'start_at' => $startAt,
+                'end_at' => $endAt,
                 'all_day' => true,
-                'is_public' => true,
             ]);
 
             // 担当店舗に所属するスタッフ全員を参加者として登録
@@ -335,55 +349,87 @@ class PhotoSlotController extends Controller
             ->with('success', '前撮り枠を削除しました。');
     }
 
-    /**
-     * 前撮り枠に対するスケジュールを作成
-     */
     public function createSchedule(Request $request)
     {
-        $validated = $request->validate([
-            'photo_slot_id' => 'required|exists:photo_slots,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'photo_slot_id' => 'required|exists:photo_slots,id',
+            ]);
 
-        $photoSlot = PhotoSlot::with(['studio', 'shops.users'])->findOrFail($validated['photo_slot_id']);
+            $photoSlot = PhotoSlot::with(['studio', 'shops.users'])->findOrFail($validated['photo_slot_id']);
 
-        // 既にスケジュールが存在するか確認
-        $existingSchedule = StaffSchedule::where('photo_slot_id', $photoSlot->id)->first();
-        if ($existingSchedule) {
+            // 既にスケジュールが存在するか確認
+            $existingSchedule = StaffSchedule::where('photo_slot_id', $photoSlot->id)->first();
+            if ($existingSchedule) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'この前撮り枠には既にスケジュールが登録されています。',
+                ], 400);
+            }
+
+            // shoot_dateが存在するか確認
+            if (!$photoSlot->shoot_date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '前撮り枠の撮影日が設定されていません。',
+                ], 400);
+            }
+
+            // 認証ユーザーの確認
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '認証が必要です。',
+                ], 401);
+            }
+
+            $studioName = $photoSlot->studio ? $photoSlot->studio->name : '未設定';
+            $shootDate = Carbon::parse($photoSlot->shoot_date);
+
+            $schedule = StaffSchedule::create([
+                'user_id' => $user->id,
+                'photo_slot_id' => $photoSlot->id,
+                'title' => '[前撮り]' . $studioName,
+                'start_at' => $shootDate->copy()->setTime(0, 0, 1),
+                'end_at' => $shootDate->copy()->setTime(23, 59, 59),
+                'all_day' => true,
+                'is_public' => true,
+            ]);
+
+            // 担当店舗に所属するスタッフ全員を参加者として登録
+            $participantUserIds = [];
+            foreach ($photoSlot->shops as $shop) {
+                foreach ($shop->users as $user) {
+                    $participantUserIds[] = $user->id;
+                }
+            }
+            if (!empty($participantUserIds)) {
+                $schedule->participantUsers()->sync(array_unique($participantUserIds));
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'スケジュールを作成しました。',
+                'schedule_id' => $schedule->id,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'この前撮り枠には既にスケジュールが登録されています。',
-            ], 400);
+                'message' => 'バリデーションエラー: ' . $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('スケジュール作成エラー: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'photo_slot_id' => $request->input('photo_slot_id'),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'スケジュールの作成に失敗しました: ' . $e->getMessage(),
+            ], 500);
         }
-
-        $studioName = $photoSlot->studio ? $photoSlot->studio->name : '未設定';
-        $shootDate = Carbon::parse($photoSlot->shoot_date);
-
-        $schedule = StaffSchedule::create([
-            'user_id' => $request->user()->id,
-            'photo_slot_id' => $photoSlot->id,
-            'title' => '[前撮り]' . $studioName,
-            'start_at' => $shootDate->copy()->setTime(0, 0, 1),
-            'end_at' => $shootDate->copy()->setTime(23, 59, 59),
-            'all_day' => true,
-            'is_public' => true,
-        ]);
-
-        // 担当店舗に所属するスタッフ全員を参加者として登録
-        $participantUserIds = [];
-        foreach ($photoSlot->shops as $shop) {
-            foreach ($shop->users as $user) {
-                $participantUserIds[] = $user->id;
-            }
-        }
-        if (!empty($participantUserIds)) {
-            $schedule->participantUsers()->sync(array_unique($participantUserIds));
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'スケジュールを作成しました。',
-            'schedule_id' => $schedule->id,
-        ]);
     }
 }
 
