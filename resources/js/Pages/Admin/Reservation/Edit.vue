@@ -204,7 +204,7 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">担当者指定</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">担当者指名</label>
                                         <input
                                             v-model="form.staff_name"
                                             type="text"
