@@ -5,22 +5,16 @@
             <h1 class="text-3xl font-bold mb-4">{{ event.title }}</h1>
             <div v-if="event.description" class="text-gray-700 mb-6" v-html="event.description"></div>
 
-            <!-- 開催店舗 -->
-            <div v-if="shops && shops.length > 0" class="mb-6">
-                <h2 class="text-xl font-semibold mb-4">開催店舗</h2>
+            <!-- 開催会場 -->
+            <div v-if="eventVenues && eventVenues.length > 0" class="mb-6">
+                <h2 class="text-xl font-semibold mb-4">開催会場</h2>
                 <div class="space-y-4">
-                    <div v-for="shop in shops" :key="shop.id" class="bg-gray-50 p-4 rounded-lg flex items-start space-x-4">
-                        <div v-if="shop.image_url" class="flex-shrink-0">
-                            <img
-                                :src="shop.image_url"
-                                :alt="shop.name"
-                                class="w-24 h-24 object-cover rounded"
-                            />
-                        </div>
+                    <div v-for="venue in eventVenues" :key="venue.id" class="bg-gray-50 p-4 rounded-lg flex items-start space-x-4">
                         <div class="flex-1">
-                            <p class="font-semibold">{{ shop.name }}</p>
-                            <p v-if="shop.address" class="text-sm text-gray-600">{{ shop.address }}</p>
-                            <p v-if="shop.phone" class="text-sm text-gray-600">{{ shop.phone }}</p>
+                            <p class="font-semibold">{{ venue.name }}</p>
+                            <p v-if="venue.description" class="text-sm text-gray-600 mb-2" v-html="venue.description"></p>
+                            <p v-if="venue.address" class="text-sm text-gray-600">{{ venue.address }}</p>
+                            <p v-if="venue.phone" class="text-sm text-gray-600">{{ venue.phone }}</p>
                         </div>
                     </div>
                 </div>
@@ -326,6 +320,14 @@ const props = defineProps({
 const emit = defineEmits(['submitted', 'timeslot-selected', 'confirm']);
 
 const internalSelectedTimeslot = ref(props.selectedTimeslot || null);
+
+// event_venueから会場を取得（event.venuesが利用可能な場合はそれを使用、そうでない場合はvenuesプロップを使用）
+const eventVenues = computed(() => {
+    if (props.event?.venues && props.event.venues.length > 0) {
+        return props.event.venues;
+    }
+    return props.venues || [];
+});
 
 // 予約枠を日付ごとにグループ化
 const groupedTimeslots = computed(() => {
