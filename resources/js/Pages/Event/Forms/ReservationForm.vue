@@ -8,13 +8,50 @@
             <!-- 開催会場 -->
             <div v-if="eventVenues && eventVenues.length > 0" class="mb-6">
                 <h2 class="text-xl font-semibold mb-4">開催会場</h2>
-                <div class="space-y-4">
-                    <div v-for="venue in eventVenues" :key="venue.id" class="bg-gray-50 p-4 rounded-lg flex items-start space-x-4">
-                        <div class="flex-1">
-                            <p class="font-semibold">{{ venue.name }}</p>
-                            <p v-if="venue.description" class="text-sm text-gray-600 mb-2" v-html="venue.description"></p>
-                            <p v-if="venue.address" class="text-sm text-gray-600">{{ venue.address }}</p>
-                            <p v-if="venue.phone" class="text-sm text-gray-600">{{ venue.phone }}</p>
+                <div class="space-y-6">
+                    <div v-for="venue in eventVenues" :key="venue.id" class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                        <!-- 画像とテキストのグリッドレイアウト -->
+                        <div class="md:flex">
+                            <!-- テキスト情報（左側または上側） -->
+                            <div class="flex-1 p-6">
+                                <h3 class="font-bold text-xl text-gray-900 mb-3">{{ venue.name }}</h3>
+                                
+                                <div v-if="venue.description" class="text-sm text-gray-700 mb-4 leading-relaxed" v-html="venue.description"></div>
+                                
+                                <div class="space-y-3">
+                                    <!-- 住所 -->
+                                    <div v-if="venue.address" class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0 mt-0.5">
+                                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm text-gray-700 flex-1">{{ venue.address }}</p>
+                                    </div>
+                                    
+                                    <!-- 電話番号 -->
+                                    <div v-if="venue.phone" class="flex items-center space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                            </svg>
+                                        </div>
+                                        <a :href="`tel:${venue.phone}`" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                            {{ venue.phone }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 画像（右側または下側） -->
+                            <div v-if="venue.image_url" class="md:w-1/2 lg:w-2/5 flex-shrink-0">
+                                <img
+                                    :src="venue.image_url"
+                                    :alt="venue.name"
+                                    class="w-full h-full object-cover"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

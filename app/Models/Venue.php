@@ -14,11 +14,16 @@ class Venue extends Model
         'description',
         'address',
         'phone',
+        'image',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+    ];
+
+    protected $appends = [
+        'image_url',
     ];
 
     /**
@@ -35,6 +40,20 @@ class Venue extends Model
     public function reservations()
     {
         return $this->hasMany(EventReservation::class);
+    }
+
+    /**
+     * Storage URLを取得
+     */
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image) {
+            return null;
+        }
+        if (str_starts_with($this->image, 'http')) {
+            return $this->image;
+        }
+        return asset('storage/' . $this->image);
     }
 }
 

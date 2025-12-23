@@ -82,6 +82,7 @@ class EventController extends Controller
                     'description' => $venue->description,
                     'address' => $venue->address,
                     'phone' => $venue->phone,
+                    'image_url' => $venue->image_url,
                 ];
             })->values();
         }

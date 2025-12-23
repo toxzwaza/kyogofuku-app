@@ -169,10 +169,18 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         ->where('ipAddress', '.*')
         ->name('activity-logs.unblock');
     
-    // 会場管理（イベント単位）
-    Route::post('/events/{event}/venues', [AdminVenueController::class, 'store'])->name('events.venues.store');
+    // 会場管理
+    Route::get('/venues', [AdminVenueController::class, 'index'])->name('venues.index');
+    Route::get('/venues/create', [AdminVenueController::class, 'create'])->name('venues.create');
+    Route::post('/venues', [AdminVenueController::class, 'store'])->name('venues.store');
+    Route::get('/venues/{venue}', [AdminVenueController::class, 'show'])->name('venues.show');
+    Route::get('/venues/{venue}/edit', [AdminVenueController::class, 'edit'])->name('venues.edit');
     Route::put('/venues/{venue}', [AdminVenueController::class, 'update'])->name('venues.update');
-    Route::delete('/events/{event}/venues/{venue}', [AdminVenueController::class, 'destroy'])->name('events.venues.destroy');
+    Route::delete('/venues/{venue}', [AdminVenueController::class, 'destroy'])->name('venues.destroy');
+    
+    // 会場管理（イベント単位）
+    Route::post('/events/{event}/venues', [AdminVenueController::class, 'storeForEvent'])->name('events.venues.store');
+    Route::delete('/events/{event}/venues/{venue}', [AdminVenueController::class, 'destroyFromEvent'])->name('events.venues.destroy');
     
     // スケジュール管理
     Route::get('/schedules', [AdminScheduleController::class, 'show'])->name('schedules.show');
