@@ -431,5 +431,96 @@ class PhotoSlotController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 個別時間枠の担当者スケジュールを作成（顧客が紐づいている場合）
+     */
+    public function createSlotSchedule(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'photo_slot_id' => 'required|exists:photo_slots,id',
+            ]);
+
+            $photoSlot = PhotoSlot::with(['customer', 'user', 'studio'])->findOrFail($validated['photo_slot_id']);
+
+            // 顧客が紐づいていない場合はエラー
+            if (!$photoSlot->customer) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '顧客が紐づいていない前撮り枠にはスケジュールを登録できません。',
+                ], 400);
+            }
+
+            // 担当者が設定されていない場合はエラー
+            if (!$photoSlot->user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '担当者が設定されていない前撮り枠にはスケジュールを登録できません。',
+                ], 400);
+            }
+
+            // 既にスケジュールが存在するか確認
+            $existingSchedule = StaffSchedule::where('photo_slot_id', $photoSlot->id)->first();
+            if ($existingSchedule) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'この前撮り枠には既にスケジュールが登録されています。',
+                ], 400);
+            }
+
+            // shoot_dateが存在するか確認
+            if (!$photoSlot->shoot_date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '前撮り枠の撮影日が設定されていません。',
+                ], 400);
+            }
+
+            $customerName = $photoSlot->customer->name;
+            $shootDate = Carbon::parse($photoSlot->shoot_date);
+            
+            // 撮影時間を取得してstart_atとend_atを設定
+            $shootTime = Carbon::parse($photoSlot->shoot_time);
+            $startAt = $shootDate->copy()->setTime($shootTime->hour, $shootTime->minute, 0);
+            // 30分後をend_atとする
+            $endAt = $startAt->copy()->addMinutes(30);
+
+            $schedule = StaffSchedule::create([
+                'user_id' => $photoSlot->user->id, // 担当者をuser_idに設定
+                'photo_slot_id' => $photoSlot->id,
+                'title' => '[前撮り]' . $customerName,
+                'start_at' => $startAt,
+                'end_at' => $endAt,
+                'all_day' => false,
+                'is_public' => true,
+            ]);
+
+            // 担当者を参加者として追加
+            $schedule->participantUsers()->sync([$photoSlot->user->id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'スケジュールを作成しました。',
+                'schedule_id' => $schedule->id,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'バリデーションエラー: ' . $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('個別スケジュール作成エラー: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'photo_slot_id' => $request->input('photo_slot_id'),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'スケジュールの作成に失敗しました: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
 

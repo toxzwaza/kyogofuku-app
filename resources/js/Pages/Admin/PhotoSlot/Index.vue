@@ -320,6 +320,46 @@
                               編集
                             </button>
                             <button
+                              v-if="slot.customer && slot.user && !isSlotScheduled(slot.id)"
+                              @click="createSlotSchedule(slot)"
+                              :disabled="creatingSlotSchedule === slot.id"
+                              class="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                            >
+                              <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                              {{ creatingSlotSchedule === slot.id ? "登録中..." : "カレンダー追加" }}
+                            </button>
+                            <span
+                              v-if="slot.customer && slot.user && isSlotScheduled(slot.id)"
+                              class="px-3 py-1 bg-gray-200 text-gray-600 text-sm rounded-md flex items-center gap-1"
+                            >
+                              <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                              登録済
+                            </span>
+                            <button
                               v-else
                               @click="confirmDelete(slot)"
                               class="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
@@ -961,6 +1001,7 @@ const selectedDateKey = ref("");
 const editShopUsers = ref([]);
 const expandedDates = ref(new Set());
 const creatingSchedule = ref(false);
+const creatingSlotSchedule = ref(null); // 個別時間枠のスケジュール作成中フラグ
 const dateScheduleStatus = ref(new Map()); // 日付ごとのスケジュール登録状況
 
 // 絞り込み条件
@@ -1465,6 +1506,43 @@ const createScheduleForDate = async (date, dateGroup) => {
     alert("スケジュールの作成に失敗しました。");
   } finally {
     creatingSchedule.value = false;
+  }
+};
+
+// 個別時間枠がスケジュール登録済みか確認
+const isSlotScheduled = (slotId) => {
+  return props.scheduledSlotIds && props.scheduledSlotIds.includes(slotId);
+};
+
+// 個別時間枠のスケジュールを作成
+const createSlotSchedule = async (slot) => {
+  if (creatingSlotSchedule.value === slot.id) return;
+  if (!slot.customer || !slot.user) {
+    alert("顧客または担当者が設定されていないため、スケジュールを登録できません。");
+    return;
+  }
+
+  creatingSlotSchedule.value = slot.id;
+
+  try {
+    const response = await axios.post(
+      route("admin.photo-slots.create-slot-schedule"),
+      {
+        photo_slot_id: slot.id,
+      }
+    );
+
+    if (response.data.success) {
+      alert("担当者のスケジュールに登録しました。");
+      // ページをリロードして最新の状態を反映
+      router.reload();
+    }
+  } catch (error) {
+    console.error("スケジュール作成エラー:", error);
+    const errorMessage = error.response?.data?.message || "スケジュールの作成に失敗しました。";
+    alert(errorMessage);
+  } finally {
+    creatingSlotSchedule.value = null;
   }
 };
 </script>
