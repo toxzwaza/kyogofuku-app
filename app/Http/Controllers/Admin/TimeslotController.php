@@ -37,14 +37,26 @@ class TimeslotController extends Controller
     /**
      * 予約枠追加フォームを表示
      */
-    public function create(Event $event)
+    public function create(Event $event, Request $request)
     {
         $event->load('venues');
         $venues = $event->venues;
 
+        $duplicateTimeslot = null;
+        if ($request->has('duplicate')) {
+            $duplicateTimeslot = EventTimeslot::find($request->duplicate);
+            // イベントIDが一致することを確認
+            if ($duplicateTimeslot && $duplicateTimeslot->event_id === $event->id) {
+                $duplicateTimeslot->load('venue');
+            } else {
+                $duplicateTimeslot = null;
+            }
+        }
+
         return Inertia::render('Admin/Timeslot/Create', [
             'event' => $event,
             'venues' => $venues,
+            'duplicateTimeslot' => $duplicateTimeslot,
         ]);
     }
 

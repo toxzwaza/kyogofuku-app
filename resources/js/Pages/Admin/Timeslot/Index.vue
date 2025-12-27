@@ -90,8 +90,17 @@
                                                         <span class="px-2 py-1 text-xs rounded-full" :class="timeslot.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
                                                             {{ timeslot.is_active ? '有効' : '無効' }}
                                                         </span>
-                                                    </div>
-                                                    <div class="flex items-center space-x-2">
+                                                </div>
+                                                <div class="flex items-center space-x-2">
+                                                    <Link
+                                                        :href="`${route('admin.events.timeslots.create', event.id)}?duplicate=${timeslot.id}`"
+                                                        class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-sm hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                                                        title="複製"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </Link>
                                                     <button
                                                         @click="adjustCapacity(timeslot.id, -1)"
                                                         :disabled="timeslot.capacity <= (timeslot.capacity - timeslot.remaining_capacity) || adjustingTimeslotId === timeslot.id"
