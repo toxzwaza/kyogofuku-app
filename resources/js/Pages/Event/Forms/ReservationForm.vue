@@ -59,35 +59,58 @@
 
         </div>
 
+        <!-- 会場選択 -->
+        <div v-if="eventVenues && eventVenues.length > 0" class="mb-6">
+            <h2 class="text-xl font-semibold mb-4">ご来店会場 <span class="text-red-500">*</span></h2>
+            <select
+                v-model="form.venue_id"
+                required
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            >
+                <option value="">選択してください</option>
+                <option v-for="venue in eventVenues" :key="venue.id" :value="venue.id">
+                    {{ venue.name }}
+                </option>
+            </select>
+        </div>
+
         <!-- 予約可能な日時 -->
-        <div v-if="timeslots && timeslots.length > 0" class="mb-6">
+        <div class="mb-6">
             <h2 class="text-xl font-semibold mb-4">予約可能な日時</h2>
-            <div v-if="!internalSelectedTimeslot" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                <p class="text-yellow-800">予約日時を選択してください。</p>
+            <div v-if="!form.venue_id" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+                <p class="text-yellow-800">会場を選択してください。</p>
             </div>
-            <div class="space-y-6">
-                <div
-                    v-for="(dateGroup, date) in groupedTimeslots"
-                    :key="date"
-                    class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
-                >
-                    <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ formatDate(date) }}</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                            <button
-                                type="button"
-                                v-for="timeslot in dateGroup"
-                                :key="timeslot.id"
-                                @click="selectTimeslot(timeslot)"
-                                :class="[
-                                    'p-3 rounded-lg border-2 transition text-left',
-                                    internalSelectedTimeslot?.id === timeslot.id
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200 hover:border-blue-300 bg-white'
-                                ]"
-                            >
-                            <p class="font-semibold text-sm mb-1">{{ formatTime(timeslot.start_at) }}</p>
-                            <p class="text-xs text-gray-600">残り{{ getRemainingCapacity(timeslot) }}枠</p>
-                        </button>
+            <div v-else-if="filteredTimeslots && filteredTimeslots.length === 0" class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded">
+                <p class="text-gray-600">選択された会場には予約可能な日時がありません。</p>
+            </div>
+            <div v-else-if="filteredTimeslots && filteredTimeslots.length > 0">
+                <div v-if="!internalSelectedTimeslot" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+                    <p class="text-yellow-800">予約日時を選択してください。</p>
+                </div>
+                <div class="space-y-6">
+                    <div
+                        v-for="(dateGroup, date) in groupedTimeslots"
+                        :key="date"
+                        class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
+                    >
+                        <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ formatDate(date) }}</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                <button
+                                    type="button"
+                                    v-for="timeslot in dateGroup"
+                                    :key="timeslot.id"
+                                    @click="selectTimeslot(timeslot)"
+                                    :class="[
+                                        'p-3 rounded-lg border-2 transition text-left',
+                                        internalSelectedTimeslot?.id === timeslot.id
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-blue-300 bg-white'
+                                    ]"
+                                >
+                                <p class="font-semibold text-sm mb-1">{{ formatTime(timeslot.start_at) }}</p>
+                                <p class="text-xs text-gray-600">残り{{ getRemainingCapacity(timeslot) }}枠</p>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -141,20 +164,6 @@
                     required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ご来店会場 <span class="text-red-500">*</span></label>
-                <select
-                    v-model="form.venue_id"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                >
-                    <option value="">選択してください</option>
-                    <option v-for="venue in venues" :key="venue.id" :value="venue.id">
-                        {{ venue.name }}
-                    </option>
-                </select>
             </div>
 
             <div>
@@ -366,11 +375,23 @@ const eventVenues = computed(() => {
     return props.venues || [];
 });
 
+// 選択された会場でフィルタリングされた予約枠
+const filteredTimeslots = computed(() => {
+    if (!props.timeslots || props.timeslots.length === 0) return [];
+    if (!form.venue_id) return [];
+    
+    return props.timeslots.filter(timeslot => {
+        // venue_idがnullの場合は、すべての会場で利用可能とみなす（後方互換性のため）
+        // venue_idが設定されている場合は、選択された会場と一致するもののみ
+        return !timeslot.venue_id || timeslot.venue_id == form.venue_id;
+    });
+});
+
 // 予約枠を日付ごとにグループ化
 const groupedTimeslots = computed(() => {
-    if (!props.timeslots || props.timeslots.length === 0) return {};
+    if (!filteredTimeslots.value || filteredTimeslots.value.length === 0) return {};
     const groups = {};
-    props.timeslots.forEach(timeslot => {
+    filteredTimeslots.value.forEach(timeslot => {
         const date = new Date(timeslot.start_at);
         const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         if (!groups[dateKey]) {
@@ -498,11 +519,17 @@ watch(() => form.birth_date, (newBirthDate) => {
 });
 
 // 会場が一つしかない場合はデフォルトで選択
-watch(() => props.venues, (newVenues) => {
+watch(() => eventVenues.value, (newVenues) => {
     if (newVenues && newVenues.length === 1 && !form.venue_id) {
         form.venue_id = newVenues[0].id;
     }
 }, { immediate: true });
+
+// 会場が変更された場合、選択されている予約枠をクリア
+watch(() => form.venue_id, () => {
+    internalSelectedTimeslot.value = null;
+    form.reservation_datetime = '';
+});
 
 const processing = ref(false);
 

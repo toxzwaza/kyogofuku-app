@@ -26,6 +26,30 @@
                         <form @submit.prevent="submit">
                             <div class="space-y-4">
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">会場</label>
+                                    <select
+                                        v-model="form.venue_id"
+                                        :disabled="venues.length === 1"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option :value="null">選択してください</option>
+                                        <option
+                                            v-for="venue in venues"
+                                            :key="venue.id"
+                                            :value="venue.id"
+                                        >
+                                            {{ venue.name }}
+                                        </option>
+                                    </select>
+                                    <p v-if="venues.length === 1" class="mt-1 text-sm text-gray-500">
+                                        このイベントには会場が1つしかないため、自動選択されます。
+                                    </p>
+                                    <p v-if="venues.length === 0" class="mt-1 text-sm text-orange-500">
+                                        このイベントには会場が登録されていません。
+                                    </p>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">開始日時 <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.start_at"
@@ -91,9 +115,11 @@ import { computed } from 'vue';
 
 const props = defineProps({
     timeslot: Object,
+    venues: Array,
 });
 
 const form = useForm({
+    venue_id: props.timeslot.venue_id || (props.venues.length === 1 ? props.venues[0].id : null),
     start_at: formatDateTimeForInput(props.timeslot.start_at),
     capacity: props.timeslot.capacity,
     is_active: props.timeslot.is_active,

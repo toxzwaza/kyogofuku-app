@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventTimeslot;
+use App\Models\Venue;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -37,8 +38,12 @@ class TimeslotController extends Controller
      */
     public function create(Event $event)
     {
+        $event->load('venues');
+        $venues = $event->venues;
+
         return Inertia::render('Admin/Timeslot/Create', [
             'event' => $event,
+            'venues' => $venues,
         ]);
     }
 
@@ -47,11 +52,25 @@ class TimeslotController extends Controller
      */
     public function store(Request $request, Event $event)
     {
+        $event->load('venues');
+        
         $validated = $request->validate([
+            'venue_id' => 'nullable|exists:venues,id',
             'start_at' => 'required|date',
             'capacity' => 'required|integer|min:1',
             'is_active' => 'boolean',
         ]);
+
+        // 会場が1つしかない場合は自動選択
+        if (empty($validated['venue_id']) && $event->venues->count() === 1) {
+            $validated['venue_id'] = $event->venues->first()->id;
+        }
+
+        // 選択された会場がイベントに関連付けられているか確認
+        if (!empty($validated['venue_id']) && !$event->venues->contains('id', $validated['venue_id'])) {
+            return redirect()->back()
+                ->withErrors(['venue_id' => '選択された会場はこのイベントに関連付けられていません。']);
+        }
 
         $validated['event_id'] = $event->id;
         $validated['is_active'] = $request->has('is_active') ? $request->is_active : true;
@@ -67,7 +86,9 @@ class TimeslotController extends Controller
      */
     public function edit(EventTimeslot $timeslot)
     {
-        $timeslot->load('event');
+        $timeslot->load('event', 'venue');
+        $timeslot->event->load('venues');
+        $venues = $timeslot->event->venues;
         
         $reservationCount = $timeslot->event->reservations()
             ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
@@ -76,6 +97,7 @@ class TimeslotController extends Controller
 
         return Inertia::render('Admin/Timeslot/Edit', [
             'timeslot' => $timeslot,
+            'venues' => $venues,
         ]);
     }
 
@@ -84,11 +106,26 @@ class TimeslotController extends Controller
      */
     public function update(Request $request, EventTimeslot $timeslot)
     {
+        $timeslot->load('event');
+        $timeslot->event->load('venues');
+        
         $validated = $request->validate([
+            'venue_id' => 'nullable|exists:venues,id',
             'start_at' => 'required|date',
             'capacity' => 'required|integer|min:1',
             'is_active' => 'boolean',
         ]);
+
+        // 会場が1つしかない場合は自動選択
+        if (empty($validated['venue_id']) && $timeslot->event->venues->count() === 1) {
+            $validated['venue_id'] = $timeslot->event->venues->first()->id;
+        }
+
+        // 選択された会場がイベントに関連付けられているか確認
+        if (!empty($validated['venue_id']) && !$timeslot->event->venues->contains('id', $validated['venue_id'])) {
+            return redirect()->back()
+                ->withErrors(['venue_id' => '選択された会場はこのイベントに関連付けられていません。']);
+        }
 
         // 既存の予約数を超えないようにcapacityをチェック
         $reservationCount = $timeslot->event->reservations()

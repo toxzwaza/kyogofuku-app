@@ -11,6 +11,7 @@ class EventTimeslot extends Model
 
     protected $fillable = [
         'event_id',
+        'venue_id',
         'start_at',
         'capacity',
         'is_active',
@@ -28,6 +29,14 @@ class EventTimeslot extends Model
     public function event()
     {
         return $this->belongsTo(Event::class);
+    }
+
+    /**
+     * 会場とのリレーション
+     */
+    public function venue()
+    {
+        return $this->belongsTo(Venue::class);
     }
 
     /**
