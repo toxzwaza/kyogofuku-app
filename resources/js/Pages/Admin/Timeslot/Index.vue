@@ -59,37 +59,39 @@
 
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <!-- 日付ごとにグループ化して表示 -->
-                        <div v-if="groupedTimeslots && Object.keys(groupedTimeslots).length > 0" class="space-y-6">
+                        <!-- 会場ごと、その中で日付ごとにグループ化して表示 -->
+                        <div v-if="groupedByVenue && Object.keys(groupedByVenue).length > 0" class="space-y-8">
                             <div
-                                v-for="(dateGroup, date) in groupedTimeslots"
-                                :key="date"
-                                class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
+                                v-for="(venueGroup, venueKey) in groupedByVenue"
+                                :key="venueKey"
+                                class="border-b border-gray-300 pb-8 last:border-b-0 last:pb-0"
                             >
-                                <h3 class="text-xl font-semibold my-4 text-gray-800">{{ formatDateHeader(date) }}</h3>
-                                <div class="space-y-4">
-                                    <div
-                                        v-for="timeslot in dateGroup"
-                                        :key="timeslot.id"
-                                        class="border border-gray-200 rounded-lg overflow-hidden"
-                                    >
-                                        <!-- 時間枠ヘッダー -->
-                                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                                            <div class="flex justify-between items-center">
-                                                <div class="flex items-center space-x-4">
-                                                    <span class="text-lg font-semibold text-gray-900">{{ formatTime(timeslot.start_at) }}</span>
-                                                    <span class="text-sm text-gray-600">
-                                                        定員: {{ timeslot.capacity }}枠
-                                                        <span class="mx-2">|</span>
-                                                        予約済み: {{ timeslot.capacity - timeslot.remaining_capacity }}枠
-                                                        <span class="mx-2">|</span>
-                                                        残り: <span :class="timeslot.remaining_capacity > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">{{ timeslot.remaining_capacity }}枠</span>
-                                                    </span>
-                                                    <span class="px-2 py-1 text-xs rounded-full" :class="timeslot.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
-                                                        {{ timeslot.is_active ? '有効' : '無効' }}
-                                                    </span>
-                                                </div>
-                                                <div class="flex items-center space-x-2">
+                                <h2 class="text-2xl font-bold mb-6 text-indigo-700">{{ getVenueName(venueKey) }}</h2>
+                                <div v-for="(dateGroup, date) in venueGroup" :key="date" class="mb-6">
+                                    <h3 class="text-xl font-semibold my-4 text-gray-800">{{ formatDateHeader(date) }}</h3>
+                                    <div class="space-y-4">
+                                        <div
+                                            v-for="timeslot in dateGroup"
+                                            :key="timeslot.id"
+                                            class="border border-gray-200 rounded-lg overflow-hidden"
+                                        >
+                                            <!-- 時間枠ヘッダー -->
+                                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                                <div class="flex justify-between items-center">
+                                                    <div class="flex items-center space-x-4">
+                                                        <span class="text-lg font-semibold text-gray-900">{{ formatTime(timeslot.start_at) }}</span>
+                                                        <span class="text-sm text-gray-600">
+                                                            定員: {{ timeslot.capacity }}枠
+                                                            <span class="mx-2">|</span>
+                                                            予約済み: {{ timeslot.capacity - timeslot.remaining_capacity }}枠
+                                                            <span class="mx-2">|</span>
+                                                            残り: <span :class="timeslot.remaining_capacity > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">{{ timeslot.remaining_capacity }}枠</span>
+                                                        </span>
+                                                        <span class="px-2 py-1 text-xs rounded-full" :class="timeslot.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                                                            {{ timeslot.is_active ? '有効' : '無効' }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex items-center space-x-2">
                                                     <button
                                                         @click="adjustCapacity(timeslot.id, -1)"
                                                         :disabled="timeslot.capacity <= (timeslot.capacity - timeslot.remaining_capacity) || adjustingTimeslotId === timeslot.id"
@@ -132,7 +134,7 @@
 
                                         <!-- 詳細情報 -->
                                         <div class="p-4 bg-white">
-                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                                                 <div>
                                                     <span class="text-gray-500">ID:</span>
                                                     <span class="ml-2 text-gray-900 font-medium">{{ timeslot.id }}</span>
@@ -140,6 +142,10 @@
                                                 <div>
                                                     <span class="text-gray-500">開始日時:</span>
                                                     <span class="ml-2 text-gray-900">{{ formatDateTime(timeslot.start_at) }}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="text-gray-500">会場:</span>
+                                                    <span class="ml-2 text-gray-900">{{ timeslot.venue?.name || '会場未設定' }}</span>
                                                 </div>
                                                 <div>
                                                     <span class="text-gray-500">状態:</span>
@@ -151,6 +157,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
                                     </div>
                                 </div>
                             </div>
@@ -178,26 +185,49 @@ const props = defineProps({
 
 const adjustingTimeslotId = ref(null);
 
-// 予約枠を日付ごとにグループ化
-const groupedTimeslots = computed(() => {
+// 予約枠を会場ごと、その中で日付ごとにグループ化
+const groupedByVenue = computed(() => {
     if (!props.timeslots || props.timeslots.length === 0) return {};
-    const groups = {};
+    
+    // まず会場ごとにグループ化
+    const venueGroups = {};
     props.timeslots.forEach(timeslot => {
+        // venue_idがnullの場合は「会場未設定」として扱う
+        const venueKey = timeslot.venue_id || 'no_venue';
+        if (!venueGroups[venueKey]) {
+            venueGroups[venueKey] = {};
+        }
+        
+        // 日付ごとにグループ化
         const date = new Date(timeslot.start_at);
         const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        if (!groups[dateKey]) {
-            groups[dateKey] = [];
+        if (!venueGroups[venueKey][dateKey]) {
+            venueGroups[venueKey][dateKey] = [];
         }
-        groups[dateKey].push(timeslot);
+        venueGroups[venueKey][dateKey].push(timeslot);
     });
-    // 各日付の枠を時間順にソート
-    Object.keys(groups).forEach(dateKey => {
-        groups[dateKey].sort((a, b) => {
-            return new Date(a.start_at) - new Date(b.start_at);
+    
+    // 各会場の各日付の枠を時間順にソート
+    Object.keys(venueGroups).forEach(venueKey => {
+        Object.keys(venueGroups[venueKey]).forEach(dateKey => {
+            venueGroups[venueKey][dateKey].sort((a, b) => {
+                return new Date(a.start_at) - new Date(b.start_at);
+            });
         });
     });
-    return groups;
+    
+    return venueGroups;
 });
+
+// 会場名を取得
+const getVenueName = (venueKey) => {
+    if (venueKey === 'no_venue') {
+        return '会場未設定';
+    }
+    // venueKeyはvenue_idなので、timeslotsから該当するvenueを探す
+    const timeslot = props.timeslots.find(t => t.venue_id == venueKey);
+    return timeslot?.venue?.name || `会場ID: ${venueKey}`;
+};
 
 const formatDateTime = (datetime) => {
     if (!datetime) return '-';

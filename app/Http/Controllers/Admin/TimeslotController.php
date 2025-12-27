@@ -17,6 +17,7 @@ class TimeslotController extends Controller
     public function index(Event $event)
     {
         $timeslots = EventTimeslot::where('event_id', $event->id)
+            ->with('venue')
             ->orderBy('start_at', 'asc')
             ->get()
             ->map(function ($timeslot) use ($event) {
