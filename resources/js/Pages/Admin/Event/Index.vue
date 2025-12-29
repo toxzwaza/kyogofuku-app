@@ -50,13 +50,14 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">公開状態</label>
                                 <select
-                                    v-model="searchForm.is_public"
+                                    v-model="searchForm.public_status"
                                     @change="search"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                 >
-                                    <option :value="true">公開中</option>
-                                    <option :value="false">非公開</option>
-                                    <option value="">すべて</option>
+                                    <option value="active">公開中</option>
+                                    <option value="ended">受付終了</option>
+                                    <option value="private">非公開</option>
+                                    <option value="all">すべて</option>
                                 </select>
                             </div>
                         </div>
@@ -112,8 +113,8 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 py-1 text-xs rounded-full" :class="event.is_public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
-                                                {{ event.is_public ? '公開' : '非公開' }}
+                                            <span class="px-2 py-1 text-xs rounded-full" :class="getPublicStatusClass(event)">
+                                                {{ getPublicStatusLabel(event) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -171,14 +172,14 @@ const props = defineProps({
 const searchForm = reactive({
     form_type: props.filters?.form_type || '',
     shop_id: props.filters?.shop_id || '',
-    is_public: props.filters?.is_public !== undefined ? props.filters.is_public : true,
+    public_status: props.filters?.public_status || 'active',
 });
 
 const search = () => {
     router.get(route('admin.events.index'), {
         form_type: searchForm.form_type || undefined,
         shop_id: searchForm.shop_id || undefined,
-        is_public: searchForm.is_public !== '' ? searchForm.is_public : undefined,
+        public_status: searchForm.public_status !== 'all' ? searchForm.public_status : undefined,
     }, {
         preserveState: true,
         preserveScroll: true,
@@ -188,9 +189,9 @@ const search = () => {
 const resetFilters = () => {
     searchForm.form_type = '';
     searchForm.shop_id = '';
-    searchForm.is_public = true;
+    searchForm.public_status = 'active';
     router.get(route('admin.events.index'), {
-        is_public: true,
+        public_status: 'active',
     }, {
         preserveState: true,
         preserveScroll: true,
@@ -216,6 +217,38 @@ const formatDate = (date) => {
         month: 'long',
         day: 'numeric',
     });
+};
+
+const getPublicStatusLabel = (event) => {
+    if (!event.is_public) {
+        return '非公開';
+    }
+    if (event.end_at) {
+        const endDate = new Date(event.end_at);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        if (endDate < today) {
+            return '受付終了';
+        }
+    }
+    return '公開';
+};
+
+const getPublicStatusClass = (event) => {
+    if (!event.is_public) {
+        return 'bg-gray-100 text-gray-800';
+    }
+    if (event.end_at) {
+        const endDate = new Date(event.end_at);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        if (endDate < today) {
+            return 'bg-orange-100 text-orange-800';
+        }
+    }
+    return 'bg-green-100 text-green-800';
 };
 </script>
 

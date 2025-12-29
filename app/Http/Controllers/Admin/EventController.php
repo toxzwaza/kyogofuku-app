@@ -43,8 +43,26 @@ class EventController extends Controller
         }
 
         // 公開状態でフィルタリング（デフォルトは公開中）
-        $isPublic = $request->has('is_public') ? $request->is_public : true;
-        $query->where('is_public', $isPublic);
+        $publicStatus = $request->filled('public_status') ? $request->public_status : 'active';
+        $today = now()->startOfDay();
+        
+        if ($publicStatus === 'active') {
+            // 公開中：is_public = 1 かつ (end_atがnull または end_at >= 今日)
+            $query->where('is_public', true)
+                ->where(function($q) use ($today) {
+                    $q->whereNull('end_at')
+                      ->orWhere('end_at', '>=', $today);
+                });
+        } elseif ($publicStatus === 'ended') {
+            // 受付終了：is_public = 1 かつ end_at < 今日
+            $query->where('is_public', true)
+                ->whereNotNull('end_at')
+                ->where('end_at', '<', $today);
+        } elseif ($publicStatus === 'private') {
+            // 非公開：is_public = 0
+            $query->where('is_public', false);
+        }
+        // 'all'の場合はフィルタリングしない
 
         $events = $query->orderBy('created_at', 'desc')
             ->paginate(20)
@@ -58,7 +76,7 @@ class EventController extends Controller
             'filters' => [
                 'form_type' => $request->form_type ?? '',
                 'shop_id' => $shopId,
-                'is_public' => $isPublic,
+                'public_status' => $publicStatus,
             ],
         ]);
     }
