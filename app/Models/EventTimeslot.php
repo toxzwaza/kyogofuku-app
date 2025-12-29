@@ -44,9 +44,19 @@ class EventTimeslot extends Model
      */
     public function getRemainingCapacityAttribute()
     {
-        $reservationCount = $this->event->reservations()
-            ->where('reservation_datetime', $this->start_at->format('Y-m-d H:i:s'))
-            ->count();
+        // 予約を取得（会場IDと時間が一致するもののみ）
+        $reservationQuery = $this->event->reservations()
+            ->where('reservation_datetime', $this->start_at->format('Y-m-d H:i:s'));
+        
+        // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
+        if ($this->venue_id) {
+            $reservationQuery->where('venue_id', $this->venue_id);
+        } else {
+            // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
+            $reservationQuery->whereNull('venue_id');
+        }
+        
+        $reservationCount = $reservationQuery->count();
         
         return max(0, $this->capacity - $reservationCount);
     }

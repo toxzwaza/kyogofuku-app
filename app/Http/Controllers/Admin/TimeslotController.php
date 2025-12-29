@@ -21,9 +21,19 @@ class TimeslotController extends Controller
             ->orderBy('start_at', 'asc')
             ->get()
             ->map(function ($timeslot) use ($event) {
-                $reservationCount = $event->reservations()
-                    ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
-                    ->count();
+                // 予約を取得（会場IDと時間が一致するもののみ）
+                $reservationQuery = $event->reservations()
+                    ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+                
+                // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
+                if ($timeslot->venue_id) {
+                    $reservationQuery->where('venue_id', $timeslot->venue_id);
+                } else {
+                    // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
+                    $reservationQuery->whereNull('venue_id');
+                }
+                
+                $reservationCount = $reservationQuery->count();
                 $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
                 return $timeslot;
             });
@@ -103,9 +113,19 @@ class TimeslotController extends Controller
         $timeslot->event->load('venues');
         $venues = $timeslot->event->venues;
         
-        $reservationCount = $timeslot->event->reservations()
-            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
-            ->count();
+        // 予約を取得（会場IDと時間が一致するもののみ）
+        $reservationQuery = $timeslot->event->reservations()
+            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+        
+        // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
+        if ($timeslot->venue_id) {
+            $reservationQuery->where('venue_id', $timeslot->venue_id);
+        } else {
+            // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
+            $reservationQuery->whereNull('venue_id');
+        }
+        
+        $reservationCount = $reservationQuery->count();
         $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
 
         return Inertia::render('Admin/Timeslot/Edit', [
@@ -141,9 +161,19 @@ class TimeslotController extends Controller
         }
 
         // 既存の予約数を超えないようにcapacityをチェック
-        $reservationCount = $timeslot->event->reservations()
-            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
-            ->count();
+        // 予約を取得（会場IDと時間が一致するもののみ）
+        $reservationQuery = $timeslot->event->reservations()
+            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+        
+        // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
+        if ($timeslot->venue_id) {
+            $reservationQuery->where('venue_id', $timeslot->venue_id);
+        } else {
+            // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
+            $reservationQuery->whereNull('venue_id');
+        }
+        
+        $reservationCount = $reservationQuery->count();
 
         if ($validated['capacity'] < $reservationCount) {
             return redirect()->back()
@@ -166,9 +196,19 @@ class TimeslotController extends Controller
         $eventId = $timeslot->event_id;
         
         // 既存の予約がある場合は削除不可
-        $reservationCount = $timeslot->event->reservations()
-            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
-            ->count();
+        // 予約を取得（会場IDと時間が一致するもののみ）
+        $reservationQuery = $timeslot->event->reservations()
+            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+        
+        // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
+        if ($timeslot->venue_id) {
+            $reservationQuery->where('venue_id', $timeslot->venue_id);
+        } else {
+            // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
+            $reservationQuery->whereNull('venue_id');
+        }
+        
+        $reservationCount = $reservationQuery->count();
 
         if ($reservationCount > 0) {
             return redirect()->back()
@@ -202,9 +242,19 @@ class TimeslotController extends Controller
 
         // 既存の予約数を超えないようにチェック（減少の場合）
         if ($validated['amount'] < 0) {
-            $reservationCount = $timeslot->event->reservations()
-                ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
-                ->count();
+            // 予約を取得（会場IDと時間が一致するもののみ）
+            $reservationQuery = $timeslot->event->reservations()
+                ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+            
+            // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
+            if ($timeslot->venue_id) {
+                $reservationQuery->where('venue_id', $timeslot->venue_id);
+            } else {
+                // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
+                $reservationQuery->whereNull('venue_id');
+            }
+            
+            $reservationCount = $reservationQuery->count();
 
             if ($newCapacity < $reservationCount) {
                 return response()->json([
@@ -217,9 +267,19 @@ class TimeslotController extends Controller
         $timeslot->update(['capacity' => $newCapacity]);
 
         // 更新後の情報を返す
-        $reservationCount = $timeslot->event->reservations()
-            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
-            ->count();
+        // 予約を取得（会場IDと時間が一致するもののみ）
+        $reservationQuery = $timeslot->event->reservations()
+            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+        
+        // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
+        if ($timeslot->venue_id) {
+            $reservationQuery->where('venue_id', $timeslot->venue_id);
+        } else {
+            // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
+            $reservationQuery->whereNull('venue_id');
+        }
+        
+        $reservationCount = $reservationQuery->count();
 
         return response()->json([
             'success' => true,
