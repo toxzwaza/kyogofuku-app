@@ -68,6 +68,7 @@ class EventController extends Controller
                 'name' => $shop->name,
                 'address' => $shop->address,
                 'phone' => $shop->phone,
+                'image' => $shop->image,
                 'image_url' => $shop->image_url,
             ];
         });

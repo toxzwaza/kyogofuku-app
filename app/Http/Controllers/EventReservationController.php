@@ -306,6 +306,26 @@ class EventReservationController extends Controller
     {
         $lineController = new LineWebhookController();
         
+        // お問い合わせフォームの場合は固定のLINEグループIDを使用
+        if ($event->form_type === 'contact') {
+            $contactLineGroupId = 'C751689acd660faedc8de93d279184ac5';
+            try {
+                $this->sendLineNotificationToGroup($lineController, $event, $reservation, $contactLineGroupId);
+                Log::info('お問い合わせフォームのLINE通知を送信しました（固定LINEグループID）', [
+                    'event_id' => $event->id,
+                    'reservation_id' => $reservation->id,
+                    'line_group_id' => $contactLineGroupId,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('お問い合わせフォームのLINE通知の送信に失敗しました: ' . $e->getMessage(), [
+                    'event_id' => $event->id,
+                    'reservation_id' => $reservation->id,
+                    'line_group_id' => $contactLineGroupId,
+                ]);
+            }
+            return;
+        }
+        
         // イベントに関連する店舗を取得
         $event->load('shops');
         $shops = $event->shops;
@@ -464,6 +484,19 @@ class EventReservationController extends Controller
             
             if ($reservation->postal_code) {
                 $message .= "郵便番号: {$reservation->postal_code}\n";
+            }
+        } elseif ($event->form_type === 'contact') {
+            // お問い合わせフォームの場合、担当店舗を表示
+            $event->load('shops');
+            $shops = $event->shops;
+            
+            if ($shops->isNotEmpty()) {
+                $message .= "\n━━━━━━━━━━━━━━━━\n";
+                $message .= "🏪 担当店舗\n";
+                $message .= "━━━━━━━━━━━━━━━━\n";
+                
+                $shopNames = $shops->pluck('name')->toArray();
+                $message .= implode('、', $shopNames) . "\n";
             }
         }
 

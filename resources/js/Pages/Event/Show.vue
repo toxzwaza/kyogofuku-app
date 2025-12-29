@@ -21,7 +21,7 @@
             <div v-if="event.description" class="text-gray-700 mb-8" v-html="event.description"></div>
 
             <!-- 店舗情報 -->
-            <div v-if="shops && shops.length > 0" class="mb-8">
+            <!-- <div v-if="shops && shops.length > 0" class="mb-8">
                 <h2 class="text-xl font-semibold mb-4">開催店舗</h2>
                 <div class="space-y-4">
                     <div v-for="shop in shops" :key="shop.id" class="bg-white p-4 rounded-lg shadow flex items-start space-x-4">
@@ -39,13 +39,14 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
             <!-- フォーム表示 -->
             <div v-if="currentStep === 'form'" class="bg-white p-6 rounded-lg shadow">
                 <component
                     :is="formComponent"
                     :event="event"
+                    :shops="shops"
                     :selected-timeslot="selectedTimeslot"
                     :documents="documents"
                     @confirm="handleConfirm"
