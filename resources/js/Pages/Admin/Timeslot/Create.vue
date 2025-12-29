@@ -24,7 +24,6 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">会場</label>
                                     <select
                                         v-model="form.venue_id"
-                                        :disabled="venues.length === 1"
                                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     >
                                         <option :value="null">選択してください</option>
@@ -36,9 +35,6 @@
                                             {{ venue.name }}
                                         </option>
                                     </select>
-                                    <p v-if="venues.length === 1" class="mt-1 text-sm text-gray-500">
-                                        このイベントには会場が1つしかないため、自動選択されます。
-                                    </p>
                                     <p v-if="venues.length === 0" class="mt-1 text-sm text-orange-500">
                                         このイベントには会場が登録されていません。
                                     </p>

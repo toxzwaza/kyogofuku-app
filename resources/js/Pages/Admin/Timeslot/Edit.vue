@@ -16,6 +16,34 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <!-- 成功メッセージ -->
+                <div v-if="$page.props.flash?.success" class="mb-6 rounded-md bg-green-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-green-800">{{ $page.props.flash.success }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- エラーメッセージ -->
+                <div v-if="$page.props.errors?.error" class="mb-6 rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800">{{ $page.props.errors.error }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div v-if="timeslot.remaining_capacity !== undefined" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
@@ -29,8 +57,10 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">会場</label>
                                     <select
                                         v-model="form.venue_id"
-                                        :disabled="venues.length === 1"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        :class="[
+                                            'w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
+                                            form.errors.venue_id ? 'border-red-300' : ''
+                                        ]"
                                     >
                                         <option :value="null">選択してください</option>
                                         <option
@@ -41,10 +71,8 @@
                                             {{ venue.name }}
                                         </option>
                                     </select>
-                                    <p v-if="venues.length === 1" class="mt-1 text-sm text-gray-500">
-                                        このイベントには会場が1つしかないため、自動選択されます。
-                                    </p>
-                                    <p v-if="venues.length === 0" class="mt-1 text-sm text-orange-500">
+                                    <p v-if="form.errors.venue_id" class="mt-1 text-sm text-red-600">{{ form.errors.venue_id }}</p>
+                                    <p v-else-if="venues.length === 0" class="mt-1 text-sm text-orange-500">
                                         このイベントには会場が登録されていません。
                                     </p>
                                 </div>
@@ -55,8 +83,12 @@
                                         v-model="form.start_at"
                                         type="datetime-local"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        :class="[
+                                            'w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
+                                            form.errors.start_at ? 'border-red-300' : ''
+                                        ]"
                                     />
+                                    <p v-if="form.errors.start_at" class="mt-1 text-sm text-red-600">{{ form.errors.start_at }}</p>
                                 </div>
 
                                 <div>
@@ -66,9 +98,13 @@
                                         type="number"
                                         :min="Math.max(1, timeslot.capacity - timeslot.remaining_capacity)"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        :class="[
+                                            'w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
+                                            form.errors.capacity ? 'border-red-300' : ''
+                                        ]"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">
+                                    <p v-if="form.errors.capacity" class="mt-1 text-sm text-red-600">{{ form.errors.capacity }}</p>
+                                    <p v-else class="mt-1 text-sm text-gray-500">
                                         最小値: {{ Math.max(1, timeslot.capacity - timeslot.remaining_capacity) }}（既存の予約数を下回ることはできません）
                                     </p>
                                 </div>
@@ -118,13 +154,6 @@ const props = defineProps({
     venues: Array,
 });
 
-const form = useForm({
-    venue_id: props.timeslot.venue_id || (props.venues.length === 1 ? props.venues[0].id : null),
-    start_at: formatDateTimeForInput(props.timeslot.start_at),
-    capacity: props.timeslot.capacity,
-    is_active: props.timeslot.is_active,
-});
-
 const formatDateTimeForInput = (datetime) => {
     if (!datetime) return '';
     const date = new Date(datetime);
@@ -135,6 +164,13 @@ const formatDateTimeForInput = (datetime) => {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
+
+const form = useForm({
+    venue_id: props.timeslot.venue_id || (props.venues.length === 1 ? props.venues[0].id : null),
+    start_at: formatDateTimeForInput(props.timeslot.start_at),
+    capacity: props.timeslot.capacity,
+    is_active: props.timeslot.is_active,
+});
 
 const submit = () => {
     form.put(route('admin.timeslots.update', props.timeslot.id));
