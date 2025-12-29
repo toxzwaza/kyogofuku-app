@@ -61,6 +61,36 @@ class EventController extends Controller
             ];
         });
 
+        // スライドショー位置情報を取得
+        $slideshowPositions = \Illuminate\Support\Facades\DB::table('event_slideshow_positions')
+            ->where('event_id', $event->id)
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->position => $item->slideshow_id];
+            })
+            ->toArray();
+
+        // スライドショー情報を取得
+        $slideshows = [];
+        if (!empty($slideshowPositions)) {
+            $slideshowIds = array_values($slideshowPositions);
+            $slideshowModels = \App\Models\Slideshow::with('images')->whereIn('id', $slideshowIds)->get();
+            foreach ($slideshowModels as $slideshow) {
+                $slideshows[$slideshow->id] = [
+                    'id' => $slideshow->id,
+                    'name' => $slideshow->name,
+                    'images' => $slideshow->images->map(function ($image) {
+                        return [
+                            'id' => $image->id,
+                            'path' => $image->url,
+                            'alt' => $image->alt,
+                            'sort_order' => $image->sort_order,
+                        ];
+                    })->sortBy('sort_order')->values()->toArray(),
+                ];
+            }
+        }
+
         // 店舗の画像URLを変換
         $shops = $event->shops->map(function ($shop) {
             return [
@@ -104,6 +134,8 @@ class EventController extends Controller
         return Inertia::render('Event/Show', [
             'event' => $event,
             'images' => $images,
+            'slideshowPositions' => $slideshowPositions,
+            'slideshows' => $slideshows,
             'timeslots' => $availableTimeslots,
             'shops' => $shops,
             'venues' => $venues,

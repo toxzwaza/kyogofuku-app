@@ -73,5 +73,14 @@ class Event extends Model
         return $this->belongsToMany(Document::class, 'event_document');
     }
 
+    /**
+     * スライドショーとの多対多リレーション（中間テーブル: event_slideshow_positions）
+     */
+    public function slideshows()
+    {
+        return $this->belongsToMany(Slideshow::class, 'event_slideshow_positions')
+            ->withPivot('position')
+            ->withTimestamps();
+    }
 }
 

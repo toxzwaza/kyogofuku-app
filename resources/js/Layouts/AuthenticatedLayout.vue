@@ -52,6 +52,7 @@ const menuItems = [
             { label: 'イベント一覧', route: 'admin.events.index' },
             { label: 'イベント作成', route: 'admin.events.create' },
             { label: '開催会場一覧', route: 'admin.venues.index' },
+            { label: 'スライドショー一覧', route: 'admin.slideshows.index' },
         ],
     },
     {
@@ -135,7 +136,7 @@ const menuItems = [
                                             route().current(menu.route.replace('.index', '.*')) || 
                                             (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*'))) ||
                                             (menu.key === 'customers' && route().current('admin.customer-tags.*')) ||
-                                            (menu.key === 'events' && route().current('admin.venues.*'))
+                                            (menu.key === 'events' && (route().current('admin.venues.*') || route().current('admin.slideshows.*')))
                                                 ? 'theme-active-link'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
                                         ]"
@@ -261,7 +262,7 @@ const menuItems = [
                         <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
                             ダッシュボード
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*') && !route().current('admin.venues.*')">
+                        <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*') && !route().current('admin.venues.*') && !route().current('admin.slideshows.*')">
                             イベント管理
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.index')" class="pl-8">
@@ -272,6 +273,9 @@ const menuItems = [
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.venues.index')" :active="route().current('admin.venues.*')" class="pl-8">
                             開催会場一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.slideshows.index')" :active="route().current('admin.slideshows.*')" class="pl-8">
+                            スライドショー一覧
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.photo-slots.index')" :active="route().current('admin.photo-slots.*')">
                             前撮り管理

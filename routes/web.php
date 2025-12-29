@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\PhotoSlotController as AdminPhotoSlotController;
 use App\Http\Controllers\Admin\PhotoStudioController as AdminPhotoStudioController;
 use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagController;
+use App\Http\Controllers\Admin\SlideshowController as AdminSlideshowController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineTestController;
 use App\Http\Controllers\ProfileController;
@@ -95,6 +96,18 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/events/{event}/images', [AdminEventImageController::class, 'store'])->name('events.images.store');
     Route::delete('/images/{image}', [AdminEventImageController::class, 'destroy'])->name('images.destroy');
     Route::post('/events/{event}/images/sort', [AdminEventImageController::class, 'updateSortOrder'])->name('events.images.sort');
+    Route::post('/events/{event}/slideshow-positions', [AdminEventImageController::class, 'updateSlideshowPositions'])->name('events.slideshow-positions.update');
+    
+    // スライドショー管理
+    Route::get('/slideshows', [AdminSlideshowController::class, 'index'])->name('slideshows.index');
+    Route::get('/slideshows/create', [AdminSlideshowController::class, 'create'])->name('slideshows.create');
+    Route::post('/slideshows', [AdminSlideshowController::class, 'store'])->name('slideshows.store');
+    Route::get('/slideshows/{slideshow}', [AdminSlideshowController::class, 'show'])->name('slideshows.show');
+    Route::put('/slideshows/{slideshow}', [AdminSlideshowController::class, 'update'])->name('slideshows.update');
+    Route::delete('/slideshows/{slideshow}', [AdminSlideshowController::class, 'destroy'])->name('slideshows.destroy');
+    Route::post('/slideshows/{slideshow}/images', [AdminSlideshowController::class, 'storeImage'])->name('slideshows.images.store');
+    Route::delete('/slideshow-images/{image}', [AdminSlideshowController::class, 'destroyImage'])->name('slideshow-images.destroy');
+    Route::post('/slideshows/{slideshow}/images/sort', [AdminSlideshowController::class, 'updateImageSortOrder'])->name('slideshows.images.sort');
     
     // 予約管理
     Route::get('/events/{event}/reservations', [AdminReservationController::class, 'index'])->name('events.reservations.index');

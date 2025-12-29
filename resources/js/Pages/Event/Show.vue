@@ -2,16 +2,22 @@
     <Head :title="event.title" />
 
     <div class="min-h-screen" style="background-color: rgb(233, 226, 220);">
-        <!-- イベント画像（縦並び） -->
+        <!-- イベント画像とスライドショー（縦並び） -->
         <div class="w-full md:flex md:justify-center">
             <div class="w-full md:max-w-4xl">
-                <img
-                    v-for="image in images"
-                    :key="image.id"
-                    :src="image.path"
-                    :alt="image.alt || event.title"
-                    class="w-full object-cover md:mx-auto"
-                />
+                <template v-for="(item, index) in displayItems" :key="`${item.type}-${item.id || index}`">
+                    <!-- 画像 -->
+                    <img
+                        v-if="item.type === 'image'"
+                        :src="item.data.path"
+                        :alt="item.data.alt || event.title"
+                        class="w-full object-cover md:mx-auto"
+                    />
+                    <!-- スライドショー -->
+                    <div v-else-if="item.type === 'slideshow'" class="w-full">
+                        <Slideshow :images="item.data.images" />
+                    </div>
+                </template>
             </div>
         </div>
 
@@ -223,10 +229,19 @@
 <script setup>
 import { ref, computed, defineAsyncComponent } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
+import Slideshow from '@/Components/Slideshow.vue';
 
 const props = defineProps({
     event: Object,
     images: Array,
+    slideshowPositions: {
+        type: Object,
+        default: () => ({}),
+    },
+    slideshows: {
+        type: Object,
+        default: () => ({}),
+    },
     timeslots: Array,
     shops: Array,
     venues: Array,
@@ -348,5 +363,44 @@ const closeForm = () => {
     currentStep.value = 'form';
     confirmFormData.value = null;
 };
+
+// 画像とスライドショーを順序付けして配列化
+const displayItems = computed(() => {
+    const items = [];
+    const positions = props.slideshowPositions || {};
+    const slideshows = props.slideshows || {};
+    const images = props.images || [];
+
+    // 最初の画像の前にスライドショーがある場合
+    if (positions['0'] && slideshows[positions['0']]) {
+        items.push({
+            type: 'slideshow',
+            id: `slideshow-0`,
+            data: slideshows[positions['0']],
+        });
+    }
+
+    // 画像とスライドショーを交互に配置
+    images.forEach((image, index) => {
+        // 画像を追加
+        items.push({
+            type: 'image',
+            id: `image-${image.id}`,
+            data: image,
+        });
+
+        // この画像の後にスライドショーがある場合
+        const position = index + 1;
+        if (positions[position.toString()] && slideshows[positions[position.toString()]]) {
+            items.push({
+                type: 'slideshow',
+                id: `slideshow-${position}`,
+                data: slideshows[positions[position.toString()]],
+            });
+        }
+    });
+
+    return items;
+});
 </script>
 

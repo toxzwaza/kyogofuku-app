@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventImage;
+use App\Models\Slideshow;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -17,10 +19,20 @@ class EventImageController extends Controller
     public function index(Event $event)
     {
         $images = $event->images()->orderBy('sort_order')->get();
+        $slideshows = Slideshow::orderBy('created_at', 'desc')->get();
+        $slideshowPositions = DB::table('event_slideshow_positions')
+            ->where('event_id', $event->id)
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->position => $item->slideshow_id];
+            })
+            ->toArray();
 
         return Inertia::render('Admin/EventImage/Index', [
             'event' => $event,
             'images' => $images,
+            'slideshows' => $slideshows,
+            'slideshowPositions' => $slideshowPositions,
         ]);
     }
 
@@ -98,6 +110,39 @@ class EventImageController extends Controller
 
         return redirect()->route('admin.events.images.index', $event->id)
             ->with('success', 'ソート順を更新しました。');
+    }
+
+    /**
+     * スライドショー位置を更新
+     */
+    public function updateSlideshowPositions(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'positions' => 'required|array',
+            'positions.*.position' => 'required|integer|min:0',
+            'positions.*.slideshow_id' => 'nullable|exists:slideshows,id',
+        ]);
+
+        // 既存の位置情報を削除
+        DB::table('event_slideshow_positions')
+            ->where('event_id', $event->id)
+            ->delete();
+
+        // 新しい位置情報を追加
+        foreach ($validated['positions'] as $positionData) {
+            if (!empty($positionData['slideshow_id'])) {
+                DB::table('event_slideshow_positions')->insert([
+                    'event_id' => $event->id,
+                    'slideshow_id' => $positionData['slideshow_id'],
+                    'position' => $positionData['position'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.events.images.index', $event->id)
+            ->with('success', 'スライドショー位置を更新しました。');
     }
 }
 
