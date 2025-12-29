@@ -16,7 +16,7 @@
         </div>
 
         <!-- 開催会場（予約フォームの場合のみ） -->
-        <div v-if="event.form_type === 'reservation' && venues && venues.length > 0" class="max-w-4xl mx-auto px-4 py-8">
+        <div v-if="event.form_type === 'reservation' && venues && venues.length > 0" :class="['max-w-4xl mx-auto px-4 py-8', !isEnded && !showSuccess ? 'pb-32' : '']">
             <div class="mb-6">
                 <h2 class="text-xl font-semibold mb-4">開催会場</h2>
                 <div class="space-y-6">
