@@ -291,10 +291,27 @@ class SesInboundMailController extends Controller
         
         // 各店舗のLINEグループに通知を送信
         $lineController = new LineWebhookController();
+        
+        // 送信済みのline_group_idを記録する配列
+        $sentGroupIds = [];
+        
         foreach ($shops as $shop) {
             if (!empty($shop->line_group_id)) {
+                // 同じline_group_idに既に送信済みの場合はスキップ
+                if (in_array($shop->line_group_id, $sentGroupIds)) {
+                    Log::info('同じLINEグループIDに既に通知を送信済みのためスキップ', [
+                        'email_id' => $email->id,
+                        'shop_id' => $shop->id,
+                        'shop_name' => $shop->name,
+                        'line_group_id' => $shop->line_group_id,
+                    ]);
+                    continue;
+                }
+                
                 try {
                     $lineController->pushToLineGroup($message, $shop->line_group_id);
+                    // 送信済みのline_group_idを記録
+                    $sentGroupIds[] = $shop->line_group_id;
                     Log::info('LINE notification sent for email', [
                         'email_id' => $email->id,
                         'shop_id' => $shop->id,

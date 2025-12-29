@@ -319,11 +319,27 @@ class EventReservationController extends Controller
             return;
         }
         
+        // 送信済みのline_group_idを記録する配列
+        $sentGroupIds = [];
+        
         // 各店舗のLINEグループIDに通知を送信
         foreach ($shops as $shop) {
             if (!empty($shop->line_group_id)) {
+                // 同じline_group_idに既に送信済みの場合はスキップ
+                if (in_array($shop->line_group_id, $sentGroupIds)) {
+                    Log::info('同じLINEグループIDに既に通知を送信済みのためスキップ', [
+                        'shop_id' => $shop->id,
+                        'shop_name' => $shop->name,
+                        'line_group_id' => $shop->line_group_id,
+                        'reservation_id' => $reservation->id,
+                    ]);
+                    continue;
+                }
+                
                 try {
                     $this->sendLineNotificationToGroup($lineController, $event, $reservation, $shop->line_group_id);
+                    // 送信済みのline_group_idを記録
+                    $sentGroupIds[] = $shop->line_group_id;
                 } catch (\Exception $e) {
                     Log::error('LINE通知の送信に失敗しました（店舗ID: ' . $shop->id . '）: ' . $e->getMessage(), [
                         'shop_id' => $shop->id,
