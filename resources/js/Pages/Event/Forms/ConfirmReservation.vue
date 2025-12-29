@@ -117,6 +117,10 @@ const props = defineProps({
     event: Object,
     formData: Object,
     venues: Array,
+    fromAdmin: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['back']);
@@ -153,7 +157,11 @@ const formatDate = (dateString) => {
 
 const submit = () => {
     processing.value = true;
-    const form = useForm(props.formData);
+    const form = useForm({
+        ...props.formData,
+        from_admin: props.fromAdmin || props.formData.from_admin || false,
+        timeslot_id: props.formData.timeslot_id, // 予約枠IDを含める
+    });
     
     // 送信後、成功ページにリダイレクトされる
     form.post(route('event.reserve', props.event.id), {

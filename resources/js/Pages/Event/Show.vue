@@ -129,6 +129,7 @@
                             :venues="venues"
                             :timeslots="timeslots"
                             :selected-timeslot="selectedTimeslot"
+                            :from-admin="fromAdmin"
                             @confirm="handleConfirm"
                             @timeslot-selected="selectTimeslot"
                         />
@@ -141,6 +142,7 @@
                             :event="event"
                             :form-data="confirmFormData"
                             :venues="venues"
+                            :from-admin="fromAdmin"
                             @back="currentStep = 'form'"
                         />
                     </div>
@@ -189,6 +191,24 @@ const selectedTimeslot = ref(null);
 const showReservationForm = ref(false);
 const currentStep = ref(props.showSuccess ? 'success' : 'form'); // 'form', 'confirm', 'success'
 const confirmFormData = ref(props.successFormData || null);
+
+// URLパラメータからfrom_adminとtimeslot_idを取得
+const urlParams = new URLSearchParams(window.location.search);
+const fromAdmin = urlParams.get('from_admin') === '1';
+const urlTimeslotId = urlParams.get('timeslot_id');
+
+// 管理画面からのアクセスの場合、予約フォームを自動的に開く
+if (fromAdmin && props.event.form_type === 'reservation' && !props.isEnded) {
+    showReservationForm.value = true;
+    
+    // URLパラメータから予約枠を取得して選択
+    if (urlTimeslotId && props.timeslots) {
+        const timeslotFromUrl = props.timeslots.find(t => t.id == urlTimeslotId);
+        if (timeslotFromUrl) {
+            selectedTimeslot.value = timeslotFromUrl;
+        }
+    }
+}
 
 const formComponent = computed(() => {
     const formType = props.event.form_type;
@@ -247,7 +267,11 @@ const getRemainingCapacity = (timeslot) => {
 };
 
 const handleConfirm = (formData) => {
-    confirmFormData.value = formData;
+    // from_adminフラグをformDataに追加
+    confirmFormData.value = {
+        ...formData,
+        from_admin: fromAdmin,
+    };
     currentStep.value = 'confirm';
 };
 

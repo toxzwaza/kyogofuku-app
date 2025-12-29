@@ -361,11 +361,29 @@ const props = defineProps({
     venues: Array,
     timeslots: Array,
     selectedTimeslot: Object,
+    fromAdmin: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['submitted', 'timeslot-selected', 'confirm']);
 
 const internalSelectedTimeslot = ref(props.selectedTimeslot || null);
+
+// URLパラメータから予約枠を取得して自動選択（timeslot_idのみ）
+if (props.timeslots && props.timeslots.length > 0) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTimeslotId = urlParams.get('timeslot_id');
+    
+    if (urlTimeslotId) {
+        // timeslot_idが指定されている場合、そのIDで直接検索
+        const matchingTimeslot = props.timeslots.find(t => t.id == urlTimeslotId);
+        if (matchingTimeslot) {
+            internalSelectedTimeslot.value = matchingTimeslot;
+        }
+    }
+}
 
 // event_venueから会場を取得（event.venuesが利用可能な場合はそれを使用、そうでない場合はvenuesプロップを使用）
 const eventVenues = computed(() => {
@@ -521,20 +539,22 @@ watch(() => form.birth_date, (newBirthDate) => {
 // 会場が一つしかない場合はデフォルトで選択
 watch(() => eventVenues.value, (newVenues) => {
     if (newVenues && newVenues.length === 1 && !form.venue_id) {
+        // 会場が一つしかない場合は自動選択
         form.venue_id = newVenues[0].id;
     }
 }, { immediate: true });
 
-// 会場が変更された場合、選択されている予約枠をクリア
-watch(() => form.venue_id, () => {
-    internalSelectedTimeslot.value = null;
-    form.reservation_datetime = '';
-});
-
-const processing = ref(false);
-
+// 予約枠が選択された場合、会場を自動選択
 watch(() => internalSelectedTimeslot.value, (newTimeslot) => {
     if (newTimeslot) {
+        // 予約枠から会場IDを取得して自動選択
+        if (newTimeslot.venue_id && !form.venue_id) {
+            const venue = eventVenues.value.find(v => v.id === newTimeslot.venue_id);
+            if (venue) {
+                form.venue_id = venue.id;
+            }
+        }
+        
         // start_atをY-m-d H:i:s形式の文字列に変換
         const date = new Date(newTimeslot.start_at);
         const year = date.getFullYear();
@@ -546,6 +566,24 @@ watch(() => internalSelectedTimeslot.value, (newTimeslot) => {
         form.reservation_datetime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     }
 }, { immediate: true });
+
+// 会場が変更された場合、選択されている予約枠をクリア（予約枠の会場と一致しない場合のみ）
+watch(() => form.venue_id, (newVenueId, oldVenueId) => {
+    // 初期化時はスキップ
+    if (oldVenueId === undefined) return;
+    
+    // 予約枠が選択されている場合、会場が一致しない場合は予約枠をクリア
+    if (internalSelectedTimeslot.value) {
+        const timeslotVenueId = internalSelectedTimeslot.value.venue_id;
+        // 予約枠に会場IDが設定されている場合、選択された会場と一致しない場合はクリア
+        if (timeslotVenueId && timeslotVenueId != newVenueId) {
+            internalSelectedTimeslot.value = null;
+            form.reservation_datetime = '';
+        }
+    }
+});
+
+const processing = ref(false);
 
 const formatDateTime = (datetime) => {
     const date = new Date(datetime);
@@ -568,6 +606,8 @@ const submit = () => {
     emit('confirm', {
         ...form.data(),
         reservation_datetime: form.reservation_datetime,
+        timeslot_id: internalSelectedTimeslot.value.id, // 予約枠IDを追加
+        from_admin: props.fromAdmin,
     });
 };
 </script>

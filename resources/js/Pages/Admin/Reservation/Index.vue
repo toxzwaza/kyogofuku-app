@@ -134,14 +134,20 @@
 
                         <!-- 日付表示（予約フォームの場合のみ） -->
                         <div v-if="event.form_type === 'reservation' && activeTab === 'schedule'" class="space-y-6">
-                            <div v-if="groupedTimeslots && Object.keys(groupedTimeslots).length > 0">
+                            <div v-if="groupedByVenue && Object.keys(groupedByVenue).length > 0">
                                 <div
-                                    v-for="(dateGroup, date) in groupedTimeslots"
-                                    :key="date"
-                                    class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
+                                    v-for="(venueGroup, venueKey) in groupedByVenue"
+                                    :key="venueKey"
+                                    class="border-b border-gray-300 pb-8 last:border-b-0 last:pb-0"
                                 >
-                                    <h3 class="text-xl font-semibold my-4 text-gray-800">{{ formatDateHeader(date) }}</h3>
-                                    <div class="space-y-4">
+                                    <h2 class="text-2xl font-bold mb-6 text-indigo-700">{{ getVenueName(venueKey) }}</h2>
+                                    <div
+                                        v-for="(dateGroup, date) in venueGroup"
+                                        :key="date"
+                                        class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0 mb-6"
+                                    >
+                                        <h3 class="text-xl font-semibold my-4 text-gray-800">{{ formatDateHeader(date) }}</h3>
+                                        <div class="space-y-4">
                                         <div
                                             v-for="timeslot in dateGroup"
                                             :key="timeslot.id"
@@ -162,6 +168,21 @@
                                                         </span>
                                                     </div>
                                                     <div class="flex items-center space-x-2">
+                                                        <Link
+                                                            v-if="timeslot.remaining_capacity > 0"
+                                                            :href="getReservationUrl(timeslot)"
+                                                            class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-sm hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                                                            title="予約登録"
+                                                        >
+                                                            予約登録
+                                                        </Link>
+                                                        <span
+                                                            v-else
+                                                            class="px-3 py-1.5 text-sm font-medium text-gray-400 bg-gray-200 rounded-lg cursor-not-allowed"
+                                                            title="枠なし"
+                                                        >
+                                                            枠なし
+                                                        </span>
                                                         <button
                                                             @click="adjustCapacity(timeslot.id, -1)"
                                                             :disabled="timeslot.capacity <= timeslot.reservations.length || adjustingTimeslotId === timeslot.id"
@@ -272,6 +293,7 @@
                                             <div v-else class="p-4 text-center text-gray-500 text-sm">
                                                 この時間枠には予約がありません
                                             </div>
+                                        </div>
                                         </div>
                                     </div>
                                 </div>
@@ -550,26 +572,64 @@ const props = defineProps({
 const activeTab = ref(props.event.form_type === 'reservation' ? 'schedule' : 'cards');
 const adjustingTimeslotId = ref(null);
 
-// 予約枠を日付ごとにグループ化
-const groupedTimeslots = computed(() => {
+// 予約枠を会場ごと、その中で日付ごとにグループ化
+const groupedByVenue = computed(() => {
     if (!props.timeslotsWithReservations || props.timeslotsWithReservations.length === 0) return {};
-    const groups = {};
+    
+    // まず会場ごとにグループ化
+    const venueGroups = {};
     props.timeslotsWithReservations.forEach(timeslot => {
+        // venue_idがnullの場合は「会場未設定」として扱う
+        const venueKey = timeslot.venue_id || 'no_venue';
+        if (!venueGroups[venueKey]) {
+            venueGroups[venueKey] = {};
+        }
+        
+        // 日付ごとにグループ化
         const date = new Date(timeslot.start_at);
         const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        if (!groups[dateKey]) {
-            groups[dateKey] = [];
+        if (!venueGroups[venueKey][dateKey]) {
+            venueGroups[venueKey][dateKey] = [];
         }
-        groups[dateKey].push(timeslot);
+        venueGroups[venueKey][dateKey].push(timeslot);
     });
-    // 各日付の枠を時間順にソート
-    Object.keys(groups).forEach(dateKey => {
-        groups[dateKey].sort((a, b) => {
-            return new Date(a.start_at) - new Date(b.start_at);
+    
+    // 各会場の各日付の枠を時間順にソート
+    Object.keys(venueGroups).forEach(venueKey => {
+        Object.keys(venueGroups[venueKey]).forEach(dateKey => {
+            venueGroups[venueKey][dateKey].sort((a, b) => {
+                return new Date(a.start_at) - new Date(b.start_at);
+            });
         });
     });
-    return groups;
+    
+    return venueGroups;
 });
+
+// 会場名を取得
+const getVenueName = (venueKey) => {
+    if (venueKey === 'no_venue') {
+        return '会場未設定';
+    }
+    // venueKeyはvenue_idなので、timeslotsWithReservationsから該当するvenueを探す
+    const timeslot = props.timeslotsWithReservations.find(t => t.venue_id == venueKey);
+    return timeslot?.venue?.name || `会場ID: ${venueKey}`;
+};
+
+// 予約登録URLを生成（予約枠IDのみ）
+const getReservationUrl = (timeslot) => {
+    const baseUrl = route('event.show', props.event.slug);
+    const params = new URLSearchParams({
+        from_admin: '1',
+    });
+    
+    // 予約枠IDのみを追加
+    if (timeslot.id) {
+        params.append('timeslot_id', timeslot.id);
+    }
+    
+    return `${baseUrl}?${params.toString()}`;
+};
 
 const formatDateTime = (datetime) => {
     if (!datetime) return '-';

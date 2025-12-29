@@ -42,6 +42,7 @@ class EventReservationController extends Controller
         if ($event->form_type === 'reservation') {
             $rules['reservation_datetime'] = 'nullable|string';
             $rules['venue_id'] = 'nullable|exists:venues,id';
+            $rules['timeslot_id'] = 'nullable|exists:event_timeslots,id';
             $rules['has_visited_before'] = 'boolean';
             $rules['seijin_year'] = 'nullable|integer|min:2000|max:2100';
             $rules['referred_by_name'] = 'nullable|string|max:255';
@@ -78,30 +79,82 @@ class EventReservationController extends Controller
         }
 
         // 予約フォームの場合、予約枠の検証
-        if ($event->form_type === 'reservation' && $request->reservation_datetime) {
-            $reservationDatetime = \Carbon\Carbon::parse($request->reservation_datetime);
-            
-            $timeslot = EventTimeslot::where('event_id', $event->id)
-                ->where('start_at', $reservationDatetime->format('Y-m-d H:i:s'))
-                ->where('is_active', true)
-                ->first();
+        $timeslot = null;
+        $venueId = null;
+        $reservationDatetime = null;
+        
+        if ($event->form_type === 'reservation') {
+            if ($request->timeslot_id) {
+                // 予約枠IDが指定されている場合、そのIDで直接取得
+                $timeslot = EventTimeslot::where('event_id', $event->id)
+                    ->where('id', $request->timeslot_id)
+                    ->where('is_active', true)
+                    ->first();
 
-            if (!$timeslot) {
-                throw ValidationException::withMessages([
-                    'reservation_datetime' => ['選択された予約枠が見つかりません。'],
-                ]);
+                if (!$timeslot) {
+                    throw ValidationException::withMessages([
+                        'timeslot_id' => ['選択された予約枠が見つかりません。'],
+                    ]);
+                }
+
+                // 予約枠から会場IDと予約日時を取得
+                $venueId = $timeslot->venue_id ?? $request->venue_id;
+                $reservationDatetime = $timeslot->start_at->format('Y-m-d H:i:s');
+                
+                // 残枠チェック（予約枠IDに基づいて、同じ会場・同じ時間の予約のみカウント）
+                $reservationCountQuery = EventReservation::where('event_id', $event->id)
+                    ->where('reservation_datetime', $reservationDatetime);
+                
+                // 予約枠に会場IDが設定されている場合、同じ会場の予約のみカウント
+                if ($timeslot->venue_id) {
+                    $reservationCountQuery->where('venue_id', $timeslot->venue_id);
+                } else {
+                    // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみカウント
+                    $reservationCountQuery->whereNull('venue_id');
+                }
+                
+                $reservationCount = $reservationCountQuery->count();
+
+                if ($reservationCount >= $timeslot->capacity) {
+                    throw ValidationException::withMessages([
+                        'timeslot_id' => ['この予約枠は満席です。'],
+                    ]);
+                }
+            } elseif ($request->reservation_datetime) {
+                // 予約枠IDが指定されていない場合のフォールバック（既存の処理）
+                $reservationDatetime = \Carbon\Carbon::parse($request->reservation_datetime);
+                
+                $timeslot = EventTimeslot::where('event_id', $event->id)
+                    ->where('start_at', $reservationDatetime->format('Y-m-d H:i:s'))
+                    ->where('is_active', true)
+                    ->first();
+
+                if (!$timeslot) {
+                    throw ValidationException::withMessages([
+                        'reservation_datetime' => ['選択された予約枠が見つかりません。'],
+                    ]);
+                }
+
+                // 残枠チェック
+                $reservationCount = EventReservation::where('event_id', $event->id)
+                    ->where('reservation_datetime', $reservationDatetime->format('Y-m-d H:i:s'))
+                    ->count();
+
+                if ($reservationCount >= $timeslot->capacity) {
+                    throw ValidationException::withMessages([
+                        'reservation_datetime' => ['この予約枠は満席です。'],
+                    ]);
+                }
+                
+                $venueId = $request->venue_id;
+                $reservationDatetime = $reservationDatetime->format('Y-m-d H:i:s');
+            } else {
+                $venueId = $request->venue_id;
+                $reservationDatetime = $request->reservation_datetime;
             }
-
-            // 残枠チェック
-            $reservationCount = EventReservation::where('event_id', $event->id)
-                ->where('reservation_datetime', $reservationDatetime->format('Y-m-d H:i:s'))
-                ->count();
-
-            if ($reservationCount >= $timeslot->capacity) {
-                throw ValidationException::withMessages([
-                    'reservation_datetime' => ['この予約枠は満席です。'],
-                ]);
-            }
+        } else {
+            $venueId = $request->venue_id;
+            $reservationDatetime = $request->reservation_datetime;
         }
 
         $reservation = EventReservation::create([
@@ -112,8 +165,8 @@ class EventReservationController extends Controller
             'phone' => $request->phone,
             'request_method' => $request->request_method,
             'postal_code' => $request->postal_code,
-            'reservation_datetime' => $request->reservation_datetime,
-            'venue_id' => $request->venue_id,
+            'reservation_datetime' => $reservationDatetime,
+            'venue_id' => $venueId,
             'has_visited_before' => $request->has('has_visited_before') ? $request->has_visited_before : false,
             'address' => $request->address,
             'birth_date' => $request->birth_date,
@@ -159,17 +212,28 @@ class EventReservationController extends Controller
             ]);
         }
 
-        // 受付完了メールを送信（エラーが発生しても予約処理は続行）
-        try {
-            $this->sendReservationConfirmationEmail($reservation);
-        } catch (\Exception $e) {
-            Log::error('受付完了メールの送信に失敗しました: ' . $e->getMessage(), [
-                'reservation_id' => $reservation->id,
-                'event_id' => $event->id,
-            ]);
+        // 管理画面からの登録の場合はメール送信をスキップ
+        $fromAdmin = $request->has('from_admin') && $request->from_admin;
+        if (!$fromAdmin) {
+            // 受付完了メールを送信（エラーが発生しても予約処理は続行）
+            try {
+                $this->sendReservationConfirmationEmail($reservation);
+            } catch (\Exception $e) {
+                Log::error('受付完了メールの送信に失敗しました: ' . $e->getMessage(), [
+                    'reservation_id' => $reservation->id,
+                    'event_id' => $event->id,
+                ]);
+            }
         }
 
-        // 成功ページにリダイレクト（Inertiaリクエストの場合も正しく動作する）
+        // 管理画面からの登録の場合は予約一覧画面へリダイレクト
+        if ($fromAdmin) {
+            return redirect()
+                ->route('admin.events.reservations.index', $event->id)
+                ->with('success', '予約を登録しました。');
+        }
+
+        // 通常の場合は成功ページへリダイレクト（Inertiaリクエストの場合も正しく動作する）
         return redirect()->route('event.reserve.success', $event->id);
     }
 

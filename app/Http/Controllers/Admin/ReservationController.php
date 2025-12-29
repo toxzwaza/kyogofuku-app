@@ -35,15 +35,26 @@ class ReservationController extends Controller
         $timeslotsWithReservations = null;
         
         if ($event->form_type === 'reservation') {
-            $timeslots = $event->timeslots()->where('is_active', true)->orderBy('start_at', 'asc')->get();
+            $timeslots = $event->timeslots()->with('venue')->where('is_active', true)->orderBy('start_at', 'asc')->get();
             $totalCapacity = $timeslots->sum('capacity');
             $totalReserved = 0;
             
             // 各予約枠に予約情報を紐付け
             $timeslotsWithReservations = $timeslots->map(function ($timeslot) use ($event, &$totalReserved) {
-                $timeslotReservations = $event->reservations()
+                // 予約を取得（会場IDと時間が一致するもののみ）
+                $timeslotReservationsQuery = $event->reservations()
                     ->with(['venue', 'statusUpdatedBy'])
-                    ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
+                    ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+                
+                // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
+                if ($timeslot->venue_id) {
+                    $timeslotReservationsQuery->where('venue_id', $timeslot->venue_id);
+                } else {
+                    // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
+                    $timeslotReservationsQuery->whereNull('venue_id');
+                }
+                
+                $timeslotReservations = $timeslotReservationsQuery
                     ->orderBy('created_at', 'asc')
                     ->get();
                 
@@ -52,6 +63,11 @@ class ReservationController extends Controller
                 
                 return [
                     'id' => $timeslot->id,
+                    'venue_id' => $timeslot->venue_id,
+                    'venue' => $timeslot->venue ? [
+                        'id' => $timeslot->venue->id,
+                        'name' => $timeslot->venue->name,
+                    ] : null,
                     'start_at' => $timeslot->start_at->format('Y-m-d H:i:s'),
                     'capacity' => $timeslot->capacity,
                     'remaining_capacity' => max(0, $timeslot->capacity - $reservedCount),
