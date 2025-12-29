@@ -14,12 +14,11 @@
                     >
                         画像追加
                     </Link>
-                    <Link
-                        :href="route('admin.events.index')"
-                        class="text-indigo-600 hover:text-indigo-900"
-                    >
-                        ← イベント一覧に戻る
-                    </Link>
+                    <ActionButton
+                        variant="back"
+                        label="イベント詳細へ戻る"
+                        :href="route('admin.events.show', event.id)"
+                    />
                 </div>
             </div>
         </template>
@@ -150,6 +149,7 @@
 import { ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import ActionButton from '@/Components/ActionButton.vue';
 
 const props = defineProps({
     event: Object,

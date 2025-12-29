@@ -7,9 +7,11 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     予約一覧 - {{ event.title }}
                 </h2>
-                <Link :href="route('admin.events.index')" class="text-indigo-600 hover:text-indigo-900">
-                    ← イベント一覧に戻る
-                </Link>
+                <ActionButton
+                    variant="back"
+                    label="イベント詳細へ戻る"
+                    :href="route('admin.events.show', event.id)"
+                />
             </div>
         </template>
 
@@ -559,6 +561,7 @@ import { ref, computed, onMounted } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
+import ActionButton from '@/Components/ActionButton.vue';
 
 const props = defineProps({
     event: Object,
