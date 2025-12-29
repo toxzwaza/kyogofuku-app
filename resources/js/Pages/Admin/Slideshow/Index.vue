@@ -69,3 +69,4 @@ const deleteSlideshow = (id) => {
 };
 </script>
 
+
