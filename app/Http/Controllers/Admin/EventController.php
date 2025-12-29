@@ -18,14 +18,48 @@ class EventController extends Controller
     /**
      * イベント一覧を表示
      */
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::with(['shops'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $currentUser = $request->user();
+        $currentUserShops = $currentUser->shops()->withPivot('main')->get();
+        
+        // デフォルト店舗を取得（メイン店舗、なければ最初の店舗）
+        $defaultShop = $currentUserShops->firstWhere('pivot.main', true) ?? $currentUserShops->first();
+        $defaultShopId = $defaultShop ? $defaultShop->id : null;
+        
+        $query = Event::with(['shops']);
+
+        // フォーム種別でフィルタリング
+        if ($request->filled('form_type')) {
+            $query->where('form_type', $request->form_type);
+        }
+
+        // 店舗でフィルタリング（デフォルトはログインユーザーのメイン店舗）
+        $shopId = $request->filled('shop_id') ? $request->shop_id : $defaultShopId;
+        if ($shopId) {
+            $query->whereHas('shops', function($q) use ($shopId) {
+                $q->where('shops.id', $shopId);
+            });
+        }
+
+        // 公開状態でフィルタリング（デフォルトは公開中）
+        $isPublic = $request->has('is_public') ? $request->is_public : true;
+        $query->where('is_public', $isPublic);
+
+        $events = $query->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
+        $shops = Shop::where('is_active', true)->get();
 
         return Inertia::render('Admin/Event/Index', [
             'events' => $events,
+            'shops' => $shops,
+            'filters' => [
+                'form_type' => $request->form_type ?? '',
+                'shop_id' => $shopId,
+                'is_public' => $isPublic,
+            ],
         ]);
     }
 

@@ -11,6 +11,66 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <!-- 絞り込みブロック -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">絞り込み</h3>
+                            <button @click="resetFilters" class="text-sm text-gray-600 hover:text-gray-800">
+                                リセット
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">フォーム種別</label>
+                                <select
+                                    v-model="searchForm.form_type"
+                                    @change="search"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option value="">すべて</option>
+                                    <option value="reservation">予約</option>
+                                    <option value="document">資料請求</option>
+                                    <option value="contact">問い合わせ</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">担当店舗</label>
+                                <select
+                                    v-model="searchForm.shop_id"
+                                    @change="search"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option value="">すべての店舗</option>
+                                    <option v-for="shop in shops" :key="shop.id" :value="shop.id">
+                                        {{ shop.name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">公開状態</label>
+                                <select
+                                    v-model="searchForm.is_public"
+                                    @change="search"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option :value="true">公開中</option>
+                                    <option :value="false">非公開</option>
+                                    <option value="">すべて</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button
+                                @click="search"
+                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
+                            >
+                                検索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="overflow-x-auto">
@@ -97,13 +157,45 @@
 </template>
 
 <script setup>
+import { reactive } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 
-defineProps({
+const props = defineProps({
     events: Object,
+    shops: Array,
+    filters: Object,
 });
+
+const searchForm = reactive({
+    form_type: props.filters?.form_type || '',
+    shop_id: props.filters?.shop_id || '',
+    is_public: props.filters?.is_public !== undefined ? props.filters.is_public : true,
+});
+
+const search = () => {
+    router.get(route('admin.events.index'), {
+        form_type: searchForm.form_type || undefined,
+        shop_id: searchForm.shop_id || undefined,
+        is_public: searchForm.is_public !== '' ? searchForm.is_public : undefined,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+const resetFilters = () => {
+    searchForm.form_type = '';
+    searchForm.shop_id = '';
+    searchForm.is_public = true;
+    router.get(route('admin.events.index'), {
+        is_public: true,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
 
 const getFormTypeLabel = (formType) => {
     const labels = {
