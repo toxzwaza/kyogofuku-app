@@ -15,10 +15,10 @@
             </div>
         </div>
 
-        <!-- イベント情報（予約フォーム以外の場合のみ表示） -->
-        <div v-if="event.form_type !== 'reservation'" class="max-w-4xl mx-auto px-4 py-8">
-            <h1 class="text-3xl font-bold mb-4">{{ event.title }}</h1>
-            <div v-if="event.description" class="text-gray-700 mb-8" v-html="event.description"></div>
+        <!-- イベント情報（予約フォーム以外の場合、または成功ページ表示時） -->
+        <div v-if="event.form_type !== 'reservation' || showSuccess" class="max-w-4xl mx-auto px-4 py-8">
+            <h1 v-if="!showSuccess" class="text-3xl font-bold mb-4">{{ event.title }}</h1>
+            <div v-if="event.description && !showSuccess" class="text-gray-700 mb-8" v-html="event.description"></div>
 
             <!-- 店舗情報 -->
             <!-- <div v-if="shops && shops.length > 0" class="mb-8">
@@ -42,7 +42,7 @@
             </div> -->
 
             <!-- フォーム表示 -->
-            <div v-if="currentStep === 'form'" class="bg-white p-6 rounded-lg shadow">
+            <div v-if="currentStep === 'form' && !showSuccess" class="bg-white p-6 rounded-lg shadow">
                 <component
                     :is="formComponent"
                     :event="event"
@@ -54,7 +54,7 @@
             </div>
 
             <!-- 確認ページ表示 -->
-            <div v-if="currentStep === 'confirm'" class="bg-white p-6 rounded-lg shadow">
+            <div v-if="currentStep === 'confirm' && !showSuccess" class="bg-white p-6 rounded-lg shadow">
                 <component
                     :is="confirmComponent"
                     :event="event"
@@ -64,11 +64,13 @@
                 />
             </div>
 
-            <!-- 送信完了ページ表示 -->
-            <div v-if="currentStep === 'success'" class="bg-white p-6 rounded-lg shadow">
+            <!-- 送信完了ページ表示（通常ページとして表示） -->
+            <div v-if="currentStep === 'success' || showSuccess" class="bg-white p-6 rounded-lg shadow">
                 <component
                     :is="successComponent"
-                    :form-data="confirmFormData"
+                    :form-data="confirmFormData || successFormData"
+                    :event="event"
+                    :venues="venues"
                     @close="handleSuccessClose"
                 />
             </div>
@@ -83,8 +85,8 @@
             </div>
         </div>
 
-        <!-- 固定ボタン（予約フォームの場合のみ、かつ終了していない場合） -->
-        <div v-if="event.form_type === 'reservation' && !isEnded" class="fixed bottom-0 left-0 right-0 z-50 p-4" style="background-color: rgba(0, 0, 0, 0.9);">
+        <!-- 固定ボタン（予約フォームの場合のみ、かつ終了していない場合、かつ成功ページ表示時ではない場合） -->
+        <div v-if="event.form_type === 'reservation' && !isEnded && !showSuccess" class="fixed bottom-0 left-0 right-0 z-50 p-4" style="background-color: rgba(0, 0, 0, 0.9);">
             <div class="max-w-4xl mx-auto flex gap-4">
                 <button
                     @click="showReservationForm = true"
@@ -101,9 +103,9 @@
             </div>
         </div>
 
-        <!-- 予約フォームモーダル（終了していない場合のみ） -->
+        <!-- 予約フォームモーダル（終了していない場合、かつ成功ページ表示時ではない場合のみ） -->
         <div
-            v-if="showReservationForm && event.form_type === 'reservation' && !isEnded"
+            v-if="showReservationForm && event.form_type === 'reservation' && !isEnded && !showSuccess"
             class="fixed inset-0 z-50 flex items-center justify-center p-4"
             style="background-color: rgba(0, 0, 0, 0.5);"
             @click.self="closeForm"
@@ -198,8 +200,8 @@ const urlParams = new URLSearchParams(window.location.search);
 const fromAdmin = urlParams.get('from_admin') === '1';
 const urlTimeslotId = urlParams.get('timeslot_id');
 
-// 管理画面からのアクセスの場合、予約フォームを自動的に開く
-if (fromAdmin && props.event.form_type === 'reservation' && !props.isEnded) {
+// 管理画面からのアクセスの場合、予約フォームを自動的に開く（成功ページ表示時は開かない）
+if (fromAdmin && props.event.form_type === 'reservation' && !props.isEnded && !props.showSuccess) {
     showReservationForm.value = true;
     
     // URLパラメータから予約枠を取得して選択
@@ -209,6 +211,11 @@ if (fromAdmin && props.event.form_type === 'reservation' && !props.isEnded) {
             selectedTimeslot.value = timeslotFromUrl;
         }
     }
+}
+
+// 成功ページ表示時はモーダルを閉じる
+if (props.showSuccess) {
+    showReservationForm.value = false;
 }
 
 const formComponent = computed(() => {
