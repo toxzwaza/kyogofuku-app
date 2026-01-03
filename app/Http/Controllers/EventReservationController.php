@@ -551,7 +551,7 @@ class EventReservationController extends Controller
             'to' => $reservation->email,
             'subject' => $mailable->envelope()->subject,
             'text_body' => view('mail.reservation_confirmation_plain', ['reservation' => $reservation])->render(),
-            'html_body' => null,
+            'html_body' => view('mail.reservation_confirmation', ['reservation' => $reservation])->render(),
             'raw_email' => $rawEmail,
             'event_reservation_id' => $reservation->id,
             'email_thread_id' => $emailThread->id,

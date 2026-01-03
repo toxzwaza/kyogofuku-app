@@ -57,6 +57,7 @@ class ReservationConfirmationMail extends Mailable
     public function content()
     {
         return new Content(
+            html: 'mail.reservation_confirmation',
             text: 'mail.reservation_confirmation_plain',
         );
     }
