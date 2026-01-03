@@ -3,7 +3,7 @@
 
     <div class="min-h-screen" style="background-color: rgb(233, 226, 220);">
         <!-- イベント画像とスライドショー（縦並び） -->
-        <div class="w-full md:flex md:justify-center">
+        <div v-if="!showSuccess" class="w-full md:flex md:justify-center">
             <div class="w-full md:max-w-4xl">
                 <template v-for="(item, index) in displayItems" :key="`${item.type}-${item.id || index}`">
                     <!-- 画像 -->
@@ -22,7 +22,7 @@
         </div>
 
         <!-- 開催会場（予約フォームの場合のみ） -->
-        <div v-if="event.form_type === 'reservation' && venues && venues.length > 0" :class="['max-w-4xl mx-auto px-4 py-8', !isEnded && !showSuccess ? 'pb-32' : '']">
+        <div v-if="event.form_type === 'reservation' && venues && venues.length > 0 && !showSuccess" :class="['max-w-4xl mx-auto px-4 py-8', !isEnded && !showSuccess ? 'pb-32' : '']">
             <div class="mb-6">
                 <h2 class="text-xl font-semibold mb-4">開催会場</h2>
                 <div class="space-y-6">
@@ -171,7 +171,7 @@
             @click.self="closeForm"
         >
             <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
                     <h2 class="text-2xl font-bold">予約フォーム</h2>
                     <button
                         @click="closeForm"
@@ -199,7 +199,7 @@
                     </div>
 
                     <!-- 確認ページ表示 -->
-                    <div v-if="currentStep === 'confirm'">
+                    <div v-if="currentStep === 'confirm'" class="relative z-0">
                         <component
                             :is="confirmComponent"
                             :event="event"
