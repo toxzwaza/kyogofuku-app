@@ -130,6 +130,10 @@
                                                 </span>
                                             </dd>
                                         </div>
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500">GTM ID</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">{{ event.gtm_id || '未設定' }}</dd>
+                                        </div>
                                     </dl>
                                 </div>
 
@@ -192,6 +196,18 @@
                                                         />
                                                         <span class="ml-2 text-sm text-gray-700">公開</span>
                                                     </label>
+                                                </div>
+
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">GTM ID</label>
+                                                    <input
+                                                        v-model="editForm.gtm_id"
+                                                        type="text"
+                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        placeholder="例: GTM-5NP4QCSB"
+                                                    />
+                                                    <p class="mt-1 text-xs text-gray-500">Google Tag Manager IDを入力してください（任意）</p>
+                                                    <div v-if="editForm.errors.gtm_id" class="mt-1 text-sm text-red-600">{{ editForm.errors.gtm_id }}</div>
                                                 </div>
                                             </div>
 
@@ -918,6 +934,7 @@ const editForm = useForm({
     is_public: props.event.is_public,
     shop_ids: props.event.shops ? props.event.shops.map(shop => shop.id) : [],
     document_ids: props.event.documents ? props.event.documents.map(doc => doc.id) : [],
+    gtm_id: props.event.gtm_id || '',
 });
 
 const newVenueForm = useForm({
@@ -1002,6 +1019,7 @@ const startEdit = () => {
     editForm.is_public = props.event.is_public;
     editForm.shop_ids = props.event.shops ? props.event.shops.map(shop => shop.id) : [];
     editForm.document_ids = props.event.documents ? props.event.documents.map(doc => doc.id) : [];
+    editForm.gtm_id = props.event.gtm_id || '';
 };
 
 const cancelEdit = () => {

@@ -100,6 +100,18 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">GTM ID</label>
+                                    <input
+                                        v-model="form.gtm_id"
+                                        type="text"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        placeholder="例: GTM-5NP4QCSB"
+                                    />
+                                    <p class="mt-1 text-xs text-gray-500">Google Tag Manager IDを入力してください（任意）</p>
+                                    <div v-if="form.errors.gtm_id" class="mt-1 text-sm text-red-600">{{ form.errors.gtm_id }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">開催店舗</label>
                                     <div class="space-y-2">
                                         <label
@@ -383,6 +395,7 @@ const form = useForm({
     new_venue_address: '',
     new_venue_phone: '',
     is_public: true,
+    gtm_id: '',
 });
 
 const slugError = ref('');
