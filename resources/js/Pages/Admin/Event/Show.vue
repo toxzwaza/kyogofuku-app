@@ -123,6 +123,18 @@
                                             <dd class="mt-1 text-sm text-gray-900">{{ formatDate(event.end_at) }}</dd>
                                         </div>
                                         <div>
+                                            <dt class="text-sm font-medium text-gray-500">GTM ID</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">{{ event.gtm_id || '未設定' }}</dd>
+                                        </div>
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500">成功ページURLテキスト</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">
+                                                <span v-if="event.success_text">{{ event.success_text }}</span>
+                                                <span v-else class="text-gray-400">未設定</span>
+                                            </dd>
+                                        </div>
+                                        
+                                        <div>
                                             <dt class="text-sm font-medium text-gray-500">公開状態</dt>
                                             <dd class="mt-1">
                                                 <span class="px-2 py-1 text-xs rounded-full" :class="event.is_public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
@@ -130,10 +142,7 @@
                                                 </span>
                                             </dd>
                                         </div>
-                                        <div>
-                                            <dt class="text-sm font-medium text-gray-500">GTM ID</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ event.gtm_id || '未設定' }}</dd>
-                                        </div>
+
                                     </dl>
                                 </div>
 

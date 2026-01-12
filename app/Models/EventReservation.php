@@ -111,5 +111,13 @@ class EventReservation extends Model
     {
         return $this->belongsTo(Document::class);
     }
+
+    /**
+     * UTMトラッキングとのリレーション
+     */
+    public function utmTracking()
+    {
+        return $this->hasOne(EventUtmTracking::class);
+    }
 }
 

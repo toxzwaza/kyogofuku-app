@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\EventUtmTracking;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -129,6 +130,19 @@ class EventController extends Controller
                     'thumbnail_url' => $document->thumbnail_url,
                 ];
             })->values();
+        }
+
+        // UTMパラメータがある場合、トラッキングレコードを作成
+        $request = request();
+        if ($request->hasAny(['utm_source', 'utm_medium', 'utm_campaign', 'utm_id'])) {
+            EventUtmTracking::create([
+                'session_id' => $request->session()->getId(),
+                'event_id' => $event->id,
+                'utm_source' => $request->input('utm_source'),
+                'utm_medium' => $request->input('utm_medium'),
+                'utm_campaign' => $request->input('utm_campaign'),
+                'utm_id' => $request->input('utm_id'),
+            ]);
         }
 
         return Inertia::render('Event/Show', [

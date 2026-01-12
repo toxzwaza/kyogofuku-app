@@ -84,5 +84,13 @@ class Event extends Model
             ->withPivot('position')
             ->withTimestamps();
     }
+
+    /**
+     * UTMトラッキングとのリレーション
+     */
+    public function utmTrackings()
+    {
+        return $this->hasMany(EventUtmTracking::class);
+    }
 }
 
