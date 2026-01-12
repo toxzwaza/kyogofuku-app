@@ -18,6 +18,7 @@ class Event extends Model
         'end_at',
         'is_public',
         'gtm_id',
+        'success_text',
     ];
 
     protected $casts = [

@@ -209,6 +209,20 @@
                                                     <p class="mt-1 text-xs text-gray-500">Google Tag Manager IDを入力してください（任意）</p>
                                                     <div v-if="editForm.errors.gtm_id" class="mt-1 text-sm text-red-600">{{ editForm.errors.gtm_id }}</div>
                                                 </div>
+
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">成功ページURLテキスト</label>
+                                                    <input
+                                                        v-model="editForm.success_text"
+                                                        type="text"
+                                                        @input="validateSuccessText"
+                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        :class="successTextError ? 'border-red-500' : ''"
+                                                    />
+                                                    <p class="mt-1 text-xs text-gray-500">成功ページのURLに含めるテキストを入力してください（任意）。設定すると `/event/{event}/reserve/success/{text}` の形式になります。英数字、ハイフン、アンダースコアのみ使用可能です。</p>
+                                                    <div v-if="successTextError" class="mt-1 text-sm text-red-600">{{ successTextError }}</div>
+                                                    <div v-if="editForm.errors.success_text" class="mt-1 text-sm text-red-600">{{ editForm.errors.success_text }}</div>
+                                                </div>
                                             </div>
 
                                             <div>
@@ -904,6 +918,7 @@ const showAddDocumentForm = ref(false);
 const editingDocuments = reactive({});
 const editingDocumentForms = reactive({});
 const documents = ref(props.allDocuments || []);
+const successTextError = ref('');
 
 // 資料一覧を更新
 const refreshDocuments = async () => {
@@ -935,6 +950,7 @@ const editForm = useForm({
     shop_ids: props.event.shops ? props.event.shops.map(shop => shop.id) : [],
     document_ids: props.event.documents ? props.event.documents.map(doc => doc.id) : [],
     gtm_id: props.event.gtm_id || '',
+    success_text: props.event.success_text || '',
 });
 
 const newVenueForm = useForm({
@@ -1020,15 +1036,45 @@ const startEdit = () => {
     editForm.shop_ids = props.event.shops ? props.event.shops.map(shop => shop.id) : [];
     editForm.document_ids = props.event.documents ? props.event.documents.map(doc => doc.id) : [];
     editForm.gtm_id = props.event.gtm_id || '';
+    editForm.success_text = props.event.success_text || '';
+    successTextError.value = '';
 };
 
 const cancelEdit = () => {
     isEditing.value = false;
     editForm.reset();
     editForm.clearErrors();
+    successTextError.value = '';
+};
+
+// success_textのバリデーション
+const validateSuccessText = () => {
+    successTextError.value = '';
+    
+    if (!editForm.success_text) {
+        return;
+    }
+    
+    // マルチバイト文字のチェック
+    if (/[^\x00-\x7F]/.test(editForm.success_text)) {
+        successTextError.value = '成功ページURLテキストには英数字、ハイフン、アンダースコアのみ使用できます。マルチバイト文字は使用できません。';
+        return;
+    }
+    
+    // 英数字、ハイフン、アンダースコアのみ許可
+    if (!/^[a-zA-Z0-9_-]+$/.test(editForm.success_text)) {
+        successTextError.value = '成功ページURLテキストには英数字、ハイフン(-)、アンダースコア(_)のみ使用できます。';
+        return;
+    }
 };
 
 const updateEvent = () => {
+    // success_textのバリデーション
+    validateSuccessText();
+    if (successTextError.value) {
+        return;
+    }
+    
     editForm.transform((data) => ({
         ...data,
         _method: 'PUT',
@@ -1036,6 +1082,7 @@ const updateEvent = () => {
         preserveScroll: true,
         onSuccess: () => {
             isEditing.value = false;
+            successTextError.value = '';
             // 資料一覧を更新
             refreshDocuments();
         },

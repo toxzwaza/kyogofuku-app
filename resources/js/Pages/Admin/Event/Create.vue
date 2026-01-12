@@ -112,6 +112,20 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">成功ページURLテキスト</label>
+                                    <input
+                                        v-model="form.success_text"
+                                        type="text"
+                                        @input="validateSuccessText"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        :class="successTextError ? 'border-red-500' : ''"
+                                    />
+                                    <p class="mt-1 text-xs text-gray-500">成功ページのURLに含めるテキストを入力してください（任意）。設定すると `/event/{event}/reserve/success/{text}` の形式になります。英数字、ハイフン、アンダースコアのみ使用可能です。</p>
+                                    <div v-if="successTextError" class="mt-1 text-sm text-red-600">{{ successTextError }}</div>
+                                    <div v-if="form.errors.success_text" class="mt-1 text-sm text-red-600">{{ form.errors.success_text }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">開催店舗</label>
                                     <div class="space-y-2">
                                         <label
@@ -396,9 +410,11 @@ const form = useForm({
     new_venue_phone: '',
     is_public: true,
     gtm_id: '',
+    success_text: '',
 });
 
 const slugError = ref('');
+const successTextError = ref('');
 
 // ランダムな10桁の英数字文字列を生成
 const generateRandomString = (length = 10) => {
@@ -458,6 +474,27 @@ const validateSlug = () => {
 const generateSlug = () => {
     form.slug = generateDefaultSlug();
     slugError.value = '';
+};
+
+// success_textのバリデーション
+const validateSuccessText = () => {
+    successTextError.value = '';
+    
+    if (!form.success_text) {
+        return;
+    }
+    
+    // マルチバイト文字のチェック
+    if (/[^\x00-\x7F]/.test(form.success_text)) {
+        successTextError.value = '成功ページURLテキストには英数字、ハイフン、アンダースコアのみ使用できます。マルチバイト文字は使用できません。';
+        return;
+    }
+    
+    // 英数字、ハイフン、アンダースコアのみ許可
+    if (!/^[a-zA-Z0-9_-]+$/.test(form.success_text)) {
+        successTextError.value = '成功ページURLテキストには英数字、ハイフン(-)、アンダースコア(_)のみ使用できます。';
+        return;
+    }
 };
 
 const documents = ref(props.documents || []);
@@ -563,6 +600,12 @@ const submit = () => {
     // slugのバリデーション
     validateSlug();
     if (slugError.value) {
+        return;
+    }
+    
+    // success_textのバリデーション
+    validateSuccessText();
+    if (successTextError.value) {
         return;
     }
     

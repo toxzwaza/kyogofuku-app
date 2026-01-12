@@ -234,14 +234,36 @@ class EventReservationController extends Controller
         }
 
         // 通常の場合は成功ページへリダイレクト（Inertiaリクエストの場合も正しく動作する）
+        // success_textが設定されている場合はURLに含める
+        if ($event->success_text) {
+            return redirect()->route('event.reserve.success', [$event->id, $event->success_text]);
+        }
         return redirect()->route('event.reserve.success', $event->id);
     }
 
     /**
      * 送信完了ページを表示
      */
-    public function success(Request $request, Event $event)
+    public function success(Request $request, Event $event, $text = null)
     {
+        // イベント情報を再取得（success_textを取得するため）
+        $event = Event::where('id', $event->id)
+            ->where('is_public', true)
+            ->firstOrFail();
+        
+        // success_textが設定されている場合
+        if ($event->success_text) {
+            // textパラメータがnullまたは一致しない場合は、正しいURLにリダイレクト
+            if ($text !== $event->success_text) {
+                return redirect()->route('event.reserve.success', [$event->id, $event->success_text]);
+            }
+        } else {
+            // success_textが設定されていない場合、textパラメータがnullでない場合は従来のURLにリダイレクト
+            if ($text !== null) {
+                return redirect()->route('event.reserve.success', $event->id);
+            }
+        }
+        
         // セッションから送信データを取得
         $formData = $request->session()->get('formData');
 
@@ -250,11 +272,8 @@ class EventReservationController extends Controller
             return redirect()->route('event.show', $event->slug);
         }
 
-        // イベント情報を取得
-        $event = Event::with(['images', 'venues'])
-            ->where('id', $event->id)
-            ->where('is_public', true)
-            ->firstOrFail();
+        // イベント情報をロード（リレーションを含む）
+        $event->load(['images', 'venues']);
 
         // 会場情報（予約フォームの場合のみ）
         $venues = [];
