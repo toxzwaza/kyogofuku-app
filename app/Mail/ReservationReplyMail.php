@@ -41,19 +41,24 @@ class ReservationReplyMail extends Mailable
      */
     public function envelope()
     {
-        // スレッド番号を件名に追加
+        // スレッドの基本件名（[threadNo]とRe:を除いた部分）
         $baseSubject = $this->emailThread->subject;
         
-        // 新規メール（inReplyToがnull）の場合はRe:を付けない
-        // 既存スレッドへの返信の場合はRe:を追加
-        if ($this->inReplyTo !== null) {
-            // 既にRe:が含まれていない場合のみ追加
-            if (!preg_match('/^Re:\s*/i', $baseSubject)) {
-                $baseSubject = 'Re: ' . $baseSubject;
-            }
-        }
+        // [threadNo]を削除（既に含まれている場合）
+        $baseSubject = preg_replace('/^\[\d+\]\s*/', '', $baseSubject);
         
-        $subject = "[{$this->emailThread->id}] {$baseSubject}";
+        // Re:を削除（既に含まれている場合）
+        $baseSubject = preg_replace('/^Re:\s*/i', '', $baseSubject);
+        $baseSubject = trim($baseSubject);
+        
+        // Subject形式：返信の場合は "Re: [threadNo] xxx"、新規の場合は "[threadNo] xxx"
+        if ($this->inReplyTo !== null) {
+            // 返信の場合：Re: を先頭に配置
+            $subject = "Re: [{$this->emailThread->id}] {$baseSubject}";
+        } else {
+            // 新規メールの場合
+            $subject = "[{$this->emailThread->id}] {$baseSubject}";
+        }
         
         return new Envelope(
             subject: $subject,

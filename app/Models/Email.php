@@ -12,9 +12,12 @@ class Email extends Model
 
     protected $fillable = [
         'message_id',
+        'ses_smtp_id',
         'from',
         'to',
         'subject',
+        'in_reply_to',
+        'references',
         'text_body',
         'html_body',
         'raw_email',

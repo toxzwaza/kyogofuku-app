@@ -435,66 +435,39 @@ class ReservationController extends Controller
                 return redirect()->back()->with('error', 'このスレッドはこの予約に紐づいていません。');
             }
 
-            // スレッド内の最新のメールを取得（返信先として使用）
-            $latestEmail = $emailThread->emails()->orderBy('created_at', 'desc')->first();
-            $rawInReplyTo = $latestEmail ? $latestEmail->message_id : null;
+            // スレッド内の最新の受信メール（fromが予約者のメールアドレス）を取得（In-Reply-To用）
+            $latestReceivedEmail = $emailThread->emails()
+                ->where('from', $reservation->email)
+                ->orderBy('created_at', 'desc')
+                ->first();
             
-            // message_idが<...>形式でない場合は自動的に<...>で囲む（RFC 5322準拠）
-            $inReplyTo = $rawInReplyTo ? (preg_match('/^<.*>$/', $rawInReplyTo) ? $rawInReplyTo : '<' . $rawInReplyTo . '>') : null;
+            // In-Reply-To：最新の受信メールのMessage-IDを使用（そのまま使用、修正しない）
+            $inReplyTo = $latestReceivedEmail && $latestReceivedEmail->message_id 
+                ? $latestReceivedEmail->message_id 
+                : null;
             
-            // @domainがない場合は自動的に追加（RFC 5322準拠）
-            if ($inReplyTo && !preg_match('/@/', $inReplyTo)) {
-                // @domainがない場合、デフォルトのドメインを追加
-                $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'kyogofuku-event.com';
-                // <...>の中身を取得して@domainを追加
-                $inReplyTo = preg_replace('/^<(.+)>$/', '<$1@' . $domain . '>', $inReplyTo);
-            }
-            
-            // デバッグ用ログ：message_idの形式を確認
-            Log::info('返信メール送信準備 - message_id形式確認', [
-                'email_thread_id' => $emailThread->id,
-                'latest_email_id' => $latestEmail ? $latestEmail->id : null,
-                'latest_email_subject' => $latestEmail ? $latestEmail->subject : null,
-                'raw_message_id' => $rawInReplyTo,
-                'formatted_message_id' => $inReplyTo,
-                'message_id_format_check' => $rawInReplyTo ? (preg_match('/^<.*>$/', $rawInReplyTo) ? 'RFC 5322形式（正常）' : '形式不正（<>で囲まれていない）→自動修正') : 'null',
-                'has_domain' => $inReplyTo ? (preg_match('/@/', $inReplyTo) ? 'あり' : 'なし→自動追加') : 'null',
-                'message_id_length' => $rawInReplyTo ? strlen($rawInReplyTo) : 0,
-            ]);
-            
-            // スレッド内のすべてのメールのMessage-IDを取得（References用）
-            $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'kyogofuku-event.com';
+            // スレッド内のすべてのメールのMessage-IDを取得（References用：古い順）
+            // message_idはそのまま使用（修正しない）
             $allMessageIds = $emailThread->emails()
                 ->orderBy('created_at', 'asc')
                 ->pluck('message_id')
                 ->filter()
-                ->map(function($msgId) use ($domain) {
-                    // message_idが<...>形式でない場合は自動的に<...>で囲む
-                    $formatted = preg_match('/^<.*>$/', $msgId) ? $msgId : '<' . $msgId . '>';
-                    
-                    // @domainがない場合は自動的に追加
-                    if (!preg_match('/@/', $formatted)) {
-                        $formatted = preg_replace('/^<(.+)>$/', '<$1@' . $domain . '>', $formatted);
-                    }
-                    
-                    return $formatted;
-                });
+                ->values();
             
-            // デバッグ用ログ：スレッド内の全メールのmessage_id形式を確認
-            Log::info('返信メール送信準備 - スレッド内全メールのmessage_id確認', [
-                'email_thread_id' => $emailThread->id,
-                'total_emails' => $allMessageIds->count(),
-                'message_ids' => $allMessageIds->map(function($msgId) {
-                    return [
-                        'value' => $msgId,
-                        'format' => preg_match('/^<.*>$/', $msgId) ? 'RFC 5322形式' : '形式不正',
-                        'has_domain' => preg_match('/@/', $msgId) ? 'あり' : 'なし',
-                        'length' => strlen($msgId),
-                    ];
-                })->toArray(),
-            ]);
-            
+            // References：スレッド内のすべてのMessage-IDを古い順にスペース区切りで結合
             $references = $allMessageIds->implode(' ');
+            
+            // デバッグ用ログ：返信メール送信準備
+            Log::info('返信メール送信準備 - ヘッダー情報確認', [
+                'email_thread_id' => $emailThread->id,
+                'latest_received_email_id' => $latestReceivedEmail ? $latestReceivedEmail->id : null,
+                'latest_received_email_from' => $latestReceivedEmail ? $latestReceivedEmail->from : null,
+                'latest_received_email_message_id' => $latestReceivedEmail ? $latestReceivedEmail->message_id : null,
+                'in_reply_to' => $inReplyTo,
+                'references' => $references,
+                'total_emails_in_thread' => $allMessageIds->count(),
+                'all_message_ids' => $allMessageIds->toArray(),
+            ]);
         }
 
         // メールを送信
@@ -517,9 +490,11 @@ class ReservationController extends Controller
         
         // デバッグ用：実際に送信されたメールのヘッダーを確認
         Log::info('返信メール送信 - ヘッダー確認', [
+            'email_thread_id' => $emailThread->id,
+            'subject' => $mailable->envelope()->subject,
             'in_reply_to' => $inReplyTo,
             'references' => $references,
-            'email_thread_id' => $emailThread->id,
+            'in_reply_to_format_check' => $inReplyTo ? (preg_match('/^<.*@.*>$/', $inReplyTo) ? 'RFC 5322形式（正常）' : '形式不正') : 'null',
         ]);
 
         // Message-IDを生成（RFC 5322形式）

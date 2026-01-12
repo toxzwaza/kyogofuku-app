@@ -58,25 +58,57 @@ class SesInboundMailController extends Controller
                     $subject = $mimeMessage->getHeaderValue('Subject');
                     $from = $mimeMessage->getHeaderValue('From');
                     $to = $mimeMessage->getHeaderValue('To');
-                    $rawMessageId = $mail['messageId'] ?? null;
                     
-                    // message_idが<...>形式でない場合は自動的に<...>で囲む（RFC 5322準拠）
-                    // AWS SESのmessageIdは通常<...>形式だが、念のため確認
-                    $messageId = $rawMessageId ? (preg_match('/^<.*>$/', $rawMessageId) ? $rawMessageId : '<' . $rawMessageId . '>') : null;
+                    // SESのSMTP idを保存（参考用）
+                    $sesSmtpId = $mail['messageId'] ?? null;
                     
-                    // @domainがない場合は自動的に追加（RFC 5322準拠）
-                    if ($messageId && !preg_match('/@/', $messageId)) {
-                        // @domainがない場合、デフォルトのドメインを追加
-                        $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'kyogofuku-event.com';
-                        // <...>の中身を取得して@domainを追加
-                        $messageId = preg_replace('/^<(.+)>$/', '<$1@' . $domain . '>', $messageId);
-                        
-                        Log::info('受信メール - message_idに@domainを追加', [
-                            'raw_message_id' => $rawMessageId,
-                            'formatted_message_id' => $messageId,
-                            'domain' => $domain,
-                        ]);
+                    // raw_emailのヘッダーからMessage-IDを抽出（重要：SESのSMTP idではなく、実際のメールヘッダーのMessage-IDを使用）
+                    $messageId = $mimeMessage->getHeaderValue('Message-ID');
+                    if (!$messageId) {
+                        // ヘッダーから取得できない場合、raw_emailから正規表現で抽出
+                        if (preg_match('/^Message-ID:\s*(<[^>]+>)/mi', $rawEmail, $matches)) {
+                            $messageId = trim($matches[1]);
+                        }
                     }
+                    
+                    // In-Reply-Toヘッダーを抽出
+                    $inReplyTo = $mimeMessage->getHeaderValue('In-Reply-To');
+                    if (!$inReplyTo) {
+                        // ヘッダーから取得できない場合、raw_emailから正規表現で抽出
+                        if (preg_match('/^In-Reply-To:\s*(<[^>]+>)/mi', $rawEmail, $matches)) {
+                            $inReplyTo = trim($matches[1]);
+                        }
+                    }
+                    
+                    // Referencesヘッダーを抽出（複数のMessage-IDがスペース区切りで含まれる可能性がある）
+                    $references = null;
+                    try {
+                        $referencesHeader = $mimeMessage->getHeader('References');
+                        if ($referencesHeader) {
+                            $references = $referencesHeader->getValue();
+                        }
+                    } catch (\Exception $e) {
+                        // ヘッダー取得に失敗した場合、raw_emailから正規表現で抽出
+                    }
+                    
+                    if (!$references) {
+                        // ヘッダーから取得できない場合、raw_emailから正規表現で抽出
+                        // 複数行にまたがる可能性があるため、改行とスペースを処理
+                        if (preg_match('/^References:\s*((?:<[^>]+>\s*)+)/mi', $rawEmail, $matches)) {
+                            $references = trim($matches[1]);
+                            // 複数行にまたがる場合の処理（改行と連続するスペースを単一スペースに）
+                            $references = preg_replace('/\s+/', ' ', $references);
+                        }
+                    }
+                    
+                    // デバッグ用ログ：抽出したヘッダー情報
+                    Log::info('受信メール - ヘッダー抽出結果', [
+                        'ses_smtp_id' => $sesSmtpId,
+                        'message_id_from_header' => $messageId,
+                        'in_reply_to' => $inReplyTo,
+                        'references' => $references,
+                        'message_id_format_check' => $messageId ? (preg_match('/^<.*@.*>$/', $messageId) ? 'RFC 5322形式（正常）' : '形式不正') : 'null',
+                    ]);
                     
                     // 件名からスレッド番号を抽出
                     $emailThreadId = null;
@@ -158,20 +190,27 @@ class SesInboundMailController extends Controller
                     }
                     
                     // デバッグ用：受信したメールの生データをログに記録
-                    Log::info('受信メール取得 - raw_email', [
+                    // raw_emailは長いので、最初の1000文字のみ記録
+                    Log::info('受信メール取得 - raw_email（ヘッダー部分）', [
                         'message_id' => $messageId,
+                        'ses_smtp_id' => $sesSmtpId,
                         'from' => $from,
                         'to' => $to,
                         'subject' => $subject,
-                        'raw_email' => $rawEmail,
+                        'in_reply_to' => $inReplyTo,
+                        'references' => $references,
+                        'raw_email_header_preview' => substr($rawEmail, 0, 1000),
                     ]);
                     
                     // メールをデータベースに保存
                     $email = Email::create([
-                        'message_id' => $messageId,
+                        'message_id' => $messageId, // 実際のメールヘッダーのMessage-ID
+                        'ses_smtp_id' => $sesSmtpId, // SESのSMTP id（参考用）
                         'from' => $from,
                         'to' => $to,
                         'subject' => $subject,
+                        'in_reply_to' => $inReplyTo,
+                        'references' => $references,
                         'event_reservation_id' => $eventReservationId,
                         'email_thread_id' => $emailThreadId,
                         'text_body' => $textBody,
@@ -183,6 +222,9 @@ class SesInboundMailController extends Controller
                     Log::info('受信メール保存完了', [
                         'email_id' => $email->id,
                         'message_id' => $messageId,
+                        'ses_smtp_id' => $sesSmtpId,
+                        'in_reply_to' => $inReplyTo,
+                        'references' => $references,
                     ]);
                     
                     // 添付ファイルを保存
