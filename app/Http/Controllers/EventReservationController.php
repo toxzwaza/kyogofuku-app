@@ -588,8 +588,11 @@ class EventReservationController extends Controller
         // または、送信後にメール内容を再構築して保存
         $rawEmail = $this->buildRawEmail($mailable, $reservation->email);
         
+        // Message-IDを生成（RFC 5322形式：<...>で囲む）
+        $messageId = '<reservation-confirmation-' . $reservation->id . '-' . now()->timestamp . '@' . parse_url(config('app.url'), PHP_URL_HOST) . '>';
+        
         Email::create([
-            'message_id' => 'reservation-confirmation-' . $reservation->id . '-' . now()->timestamp,
+            'message_id' => $messageId,
             'from' => config('mail.from.address'),
             'to' => $reservation->email,
             'subject' => $mailable->envelope()->subject,

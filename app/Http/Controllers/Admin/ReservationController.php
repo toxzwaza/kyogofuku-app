@@ -437,23 +437,31 @@ class ReservationController extends Controller
 
             // スレッド内の最新のメールを取得（返信先として使用）
             $latestEmail = $emailThread->emails()->orderBy('created_at', 'desc')->first();
-            $inReplyTo = $latestEmail ? $latestEmail->message_id : null;
+            $rawInReplyTo = $latestEmail ? $latestEmail->message_id : null;
+            
+            // message_idが<...>形式でない場合は自動的に<...>で囲む（RFC 5322準拠）
+            $inReplyTo = $rawInReplyTo ? (preg_match('/^<.*>$/', $rawInReplyTo) ? $rawInReplyTo : '<' . $rawInReplyTo . '>') : null;
             
             // デバッグ用ログ：message_idの形式を確認
             Log::info('返信メール送信準備 - message_id形式確認', [
                 'email_thread_id' => $emailThread->id,
                 'latest_email_id' => $latestEmail ? $latestEmail->id : null,
                 'latest_email_subject' => $latestEmail ? $latestEmail->subject : null,
-                'message_id' => $inReplyTo,
-                'message_id_format_check' => $inReplyTo ? (preg_match('/^<.*>$/', $inReplyTo) ? 'RFC 5322形式（正常）' : '形式不正（<>で囲まれていない）') : 'null',
-                'message_id_length' => $inReplyTo ? strlen($inReplyTo) : 0,
+                'raw_message_id' => $rawInReplyTo,
+                'formatted_message_id' => $inReplyTo,
+                'message_id_format_check' => $rawInReplyTo ? (preg_match('/^<.*>$/', $rawInReplyTo) ? 'RFC 5322形式（正常）' : '形式不正（<>で囲まれていない）→自動修正') : 'null',
+                'message_id_length' => $rawInReplyTo ? strlen($rawInReplyTo) : 0,
             ]);
             
             // スレッド内のすべてのメールのMessage-IDを取得（References用）
             $allMessageIds = $emailThread->emails()
                 ->orderBy('created_at', 'asc')
                 ->pluck('message_id')
-                ->filter();
+                ->filter()
+                ->map(function($msgId) {
+                    // message_idが<...>形式でない場合は自動的に<...>で囲む
+                    return preg_match('/^<.*>$/', $msgId) ? $msgId : '<' . $msgId . '>';
+                });
             
             // デバッグ用ログ：スレッド内の全メールのmessage_id形式を確認
             Log::info('返信メール送信準備 - スレッド内全メールのmessage_id確認', [
@@ -472,19 +480,8 @@ class ReservationController extends Controller
         }
 
         // メールを送信
+        // In-Reply-ToとReferencesヘッダーはReservationReplyMailクラス内で設定される
         $mailable = new ReservationReplyMail($emailThread, $reservation->email, $validated['message'], $inReplyTo, $references);
-        
-        // カスタムヘッダーを追加（新規メールの場合は設定しない）
-        if ($inReplyTo || $references) {
-            $mailable->withSwiftMessage(function ($swiftMessage) use ($inReplyTo, $references) {
-                if ($inReplyTo) {
-                    $swiftMessage->getHeaders()->addTextHeader('In-Reply-To', $inReplyTo);
-                }
-                if ($references) {
-                    $swiftMessage->getHeaders()->addTextHeader('References', $references);
-                }
-            });
-        }
         
         Mail::to($reservation->email)->send($mailable);
 

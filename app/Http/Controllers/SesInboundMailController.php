@@ -58,7 +58,11 @@ class SesInboundMailController extends Controller
                     $subject = $mimeMessage->getHeaderValue('Subject');
                     $from = $mimeMessage->getHeaderValue('From');
                     $to = $mimeMessage->getHeaderValue('To');
-                    $messageId = $mail['messageId'] ?? null;
+                    $rawMessageId = $mail['messageId'] ?? null;
+                    
+                    // message_idが<...>形式でない場合は自動的に<...>で囲む（RFC 5322準拠）
+                    // AWS SESのmessageIdは通常<...>形式だが、念のため確認
+                    $messageId = $rawMessageId ? (preg_match('/^<.*>$/', $rawMessageId) ? $rawMessageId : '<' . $rawMessageId . '>') : null;
                     
                     // 件名からスレッド番号を抽出
                     $emailThreadId = null;
