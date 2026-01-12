@@ -132,18 +132,16 @@ class EventController extends Controller
             })->values();
         }
 
-        // UTMパラメータがある場合、トラッキングレコードを作成
+        // UTMトラッキングレコードを作成（UTMパラメータがない場合はHPを補填）
         $request = request();
-        if ($request->hasAny(['utm_source', 'utm_medium', 'utm_campaign', 'utm_id'])) {
-            EventUtmTracking::create([
-                'session_id' => $request->session()->getId(),
-                'event_id' => $event->id,
-                'utm_source' => $request->input('utm_source'),
-                'utm_medium' => $request->input('utm_medium'),
-                'utm_campaign' => $request->input('utm_campaign'),
-                'utm_id' => $request->input('utm_id'),
-            ]);
-        }
+        EventUtmTracking::create([
+            'session_id' => $request->session()->getId(),
+            'event_id' => $event->id,
+            'utm_source' => $request->input('utm_source') ?: 'HP',
+            'utm_medium' => $request->input('utm_medium'),
+            'utm_campaign' => $request->input('utm_campaign'),
+            'utm_id' => $request->input('utm_id'),
+        ]);
 
         return Inertia::render('Event/Show', [
             'event' => $event,
