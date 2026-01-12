@@ -439,12 +439,36 @@ class ReservationController extends Controller
             $latestEmail = $emailThread->emails()->orderBy('created_at', 'desc')->first();
             $inReplyTo = $latestEmail ? $latestEmail->message_id : null;
             
+            // デバッグ用ログ：message_idの形式を確認
+            Log::info('返信メール送信準備 - message_id形式確認', [
+                'email_thread_id' => $emailThread->id,
+                'latest_email_id' => $latestEmail ? $latestEmail->id : null,
+                'latest_email_subject' => $latestEmail ? $latestEmail->subject : null,
+                'message_id' => $inReplyTo,
+                'message_id_format_check' => $inReplyTo ? (preg_match('/^<.*>$/', $inReplyTo) ? 'RFC 5322形式（正常）' : '形式不正（<>で囲まれていない）') : 'null',
+                'message_id_length' => $inReplyTo ? strlen($inReplyTo) : 0,
+            ]);
+            
             // スレッド内のすべてのメールのMessage-IDを取得（References用）
-            $references = $emailThread->emails()
+            $allMessageIds = $emailThread->emails()
                 ->orderBy('created_at', 'asc')
                 ->pluck('message_id')
-                ->filter()
-                ->implode(' ');
+                ->filter();
+            
+            // デバッグ用ログ：スレッド内の全メールのmessage_id形式を確認
+            Log::info('返信メール送信準備 - スレッド内全メールのmessage_id確認', [
+                'email_thread_id' => $emailThread->id,
+                'total_emails' => $allMessageIds->count(),
+                'message_ids' => $allMessageIds->map(function($msgId) {
+                    return [
+                        'value' => $msgId,
+                        'format' => preg_match('/^<.*>$/', $msgId) ? 'RFC 5322形式' : '形式不正',
+                        'length' => strlen($msgId),
+                    ];
+                })->toArray(),
+            ]);
+            
+            $references = $allMessageIds->implode(' ');
         }
 
         // メールを送信
