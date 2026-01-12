@@ -55,24 +55,10 @@ class ReservationReplyMail extends Mailable
         
         $subject = "[{$this->emailThread->id}] {$baseSubject}";
         
-        $envelope = new Envelope(
+        return new Envelope(
             subject: $subject,
             replyTo: 'reply@reply.kyogofuku-hirata.jp',
         );
-        
-        // In-Reply-ToとReferencesヘッダーを設定（返信の場合のみ）
-        if ($this->inReplyTo || $this->references) {
-            $this->withSwiftMessage(function ($swiftMessage) {
-                if ($this->inReplyTo) {
-                    $swiftMessage->getHeaders()->addTextHeader('In-Reply-To', $this->inReplyTo);
-                }
-                if ($this->references) {
-                    $swiftMessage->getHeaders()->addTextHeader('References', $this->references);
-                }
-            });
-        }
-        
-        return $envelope;
     }
 
     /**

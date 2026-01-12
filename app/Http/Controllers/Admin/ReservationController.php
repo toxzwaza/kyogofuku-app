@@ -480,10 +480,29 @@ class ReservationController extends Controller
         }
 
         // メールを送信
-        // In-Reply-ToとReferencesヘッダーはReservationReplyMailクラス内で設定される
         $mailable = new ReservationReplyMail($emailThread, $reservation->email, $validated['message'], $inReplyTo, $references);
         
+        // In-Reply-ToとReferencesヘッダーを設定（返信の場合のみ）
+        // envelope()とcontent()を使う場合、withSwiftMessageはコントローラー側で呼ぶ必要がある
+        if ($inReplyTo || $references) {
+            $mailable->withSwiftMessage(function ($swiftMessage) use ($inReplyTo, $references) {
+                if ($inReplyTo) {
+                    $swiftMessage->getHeaders()->addTextHeader('In-Reply-To', $inReplyTo);
+                }
+                if ($references) {
+                    $swiftMessage->getHeaders()->addTextHeader('References', $references);
+                }
+            });
+        }
+        
         Mail::to($reservation->email)->send($mailable);
+        
+        // デバッグ用：実際に送信されたメールのヘッダーを確認
+        Log::info('返信メール送信 - ヘッダー確認', [
+            'in_reply_to' => $inReplyTo,
+            'references' => $references,
+            'email_thread_id' => $emailThread->id,
+        ]);
 
         // Message-IDを生成（RFC 5322形式）
         $messageId = '<reservation-reply-' . $reservation->id . '-' . now()->timestamp . '@' . parse_url(config('app.url'), PHP_URL_HOST) . '>';
