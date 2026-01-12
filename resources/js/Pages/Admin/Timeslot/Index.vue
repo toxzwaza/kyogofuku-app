@@ -27,9 +27,9 @@
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
                 <!-- 成功メッセージ -->
-                <div v-if="$page.props.flash?.success" class="mb-6 rounded-md bg-green-50 p-4">
+                <div v-if="$page.props.flash?.success" class="rounded-md bg-green-50 p-4">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -42,8 +42,15 @@
                     </div>
                 </div>
 
+                <!-- 操作ナビゲーション -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <EventNavigation :event="event" :show-url-button="false" />
+                    </div>
+                </div>
+
                 <!-- エラーメッセージ -->
-                <div v-if="$page.props.errors?.error" class="mb-6 rounded-md bg-red-50 p-4">
+                <div v-if="$page.props.errors?.error" class="rounded-md bg-red-50 p-4">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
@@ -195,6 +202,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import ActionButton from '@/Components/ActionButton.vue';
+import EventNavigation from '@/Components/EventNavigation.vue';
 
 const props = defineProps({
     event: Object,

@@ -24,7 +24,14 @@
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <!-- 操作ナビゲーション -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <EventNavigation :event="event" :show-url-button="false" />
+                    </div>
+                </div>
+
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div v-if="images && images.length > 0" class="space-y-4">
@@ -150,6 +157,7 @@ import { ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import ActionButton from '@/Components/ActionButton.vue';
+import EventNavigation from '@/Components/EventNavigation.vue';
 
 const props = defineProps({
     event: Object,
