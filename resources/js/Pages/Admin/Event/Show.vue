@@ -163,6 +163,22 @@
                                                 </div>
 
                                                 <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">スラッグ <span class="text-red-500">*</span></label>
+                                                    <input
+                                                        v-model="editForm.slug"
+                                                        type="text"
+                                                        required
+                                                        @input="validateSlug"
+                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        :class="slugError ? 'border-red-500' : ''"
+                                                        placeholder="例: event-slug-2024"
+                                                    />
+                                                    <p class="mt-1 text-xs text-gray-500">URLに使用される文字列です。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
+                                                    <div v-if="slugError" class="mt-1 text-sm text-red-600">{{ slugError }}</div>
+                                                    <div v-if="editForm.errors.slug" class="mt-1 text-sm text-red-600">{{ editForm.errors.slug }}</div>
+                                                </div>
+
+                                                <div>
                                                     <label class="block text-sm font-medium text-gray-700 mb-1">フォーム種別 <span class="text-red-500">*</span></label>
                                                     <select
                                                         v-model="editForm.form_type"
@@ -928,6 +944,7 @@ const editingDocuments = reactive({});
 const editingDocumentForms = reactive({});
 const documents = ref(props.allDocuments || []);
 const successTextError = ref('');
+const slugError = ref('');
 
 // 資料一覧を更新
 const refreshDocuments = async () => {
@@ -951,6 +968,7 @@ const newDocument = ref({
 
 const editForm = useForm({
     title: props.event.title,
+    slug: props.event.slug || '',
     description: props.event.description || '',
     form_type: props.event.form_type,
     start_at: props.event.start_at ? new Date(props.event.start_at).toISOString().split('T')[0] : '',
@@ -1037,6 +1055,7 @@ const deleteVenue = (venueId) => {
 const startEdit = () => {
     isEditing.value = true;
     editForm.title = props.event.title;
+    editForm.slug = props.event.slug || '';
     editForm.description = props.event.description || '';
     editForm.form_type = props.event.form_type;
     editForm.start_at = props.event.start_at ? new Date(props.event.start_at).toISOString().split('T')[0] : '';
@@ -1047,6 +1066,7 @@ const startEdit = () => {
     editForm.gtm_id = props.event.gtm_id || '';
     editForm.success_text = props.event.success_text || '';
     successTextError.value = '';
+    slugError.value = '';
 };
 
 const cancelEdit = () => {
@@ -1054,6 +1074,28 @@ const cancelEdit = () => {
     editForm.reset();
     editForm.clearErrors();
     successTextError.value = '';
+    slugError.value = '';
+};
+
+// slugのバリデーション
+const validateSlug = () => {
+    slugError.value = '';
+    
+    if (!editForm.slug) {
+        return;
+    }
+    
+    // マルチバイト文字のチェック
+    if (/[^\x00-\x7F]/.test(editForm.slug)) {
+        slugError.value = 'スラッグには英数字、ハイフン、アンダースコアのみ使用できます。マルチバイト文字は使用できません。';
+        return;
+    }
+    
+    // 英数字、ハイフン、アンダースコアのみ許可
+    if (!/^[a-zA-Z0-9_-]+$/.test(editForm.slug)) {
+        slugError.value = 'スラッグには英数字、ハイフン(-)、アンダースコア(_)のみ使用できます。';
+        return;
+    }
 };
 
 // success_textのバリデーション
@@ -1078,6 +1120,12 @@ const validateSuccessText = () => {
 };
 
 const updateEvent = () => {
+    // slugのバリデーション
+    validateSlug();
+    if (slugError.value) {
+        return;
+    }
+    
     // success_textのバリデーション
     validateSuccessText();
     if (successTextError.value) {
@@ -1092,6 +1140,7 @@ const updateEvent = () => {
         onSuccess: () => {
             isEditing.value = false;
             successTextError.value = '';
+            slugError.value = '';
             // 資料一覧を更新
             refreshDocuments();
         },

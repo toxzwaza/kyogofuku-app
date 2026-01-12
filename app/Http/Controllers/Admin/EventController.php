@@ -204,6 +204,7 @@ class EventController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|regex:/^[a-zA-Z0-9_-]+$/|unique:events,slug,' . $event->id,
             'description' => 'nullable|string',
             'form_type' => 'required|in:reservation,document,contact',
             'start_at' => 'nullable|date',
@@ -223,18 +224,6 @@ class EventController extends Controller
         }
         if ($request->has('end_at') && $request->end_at) {
             $validated['end_at'] = explode('T', $request->end_at)[0];
-        }
-
-        // slugを更新（タイトルが変更された場合のみ）
-        if ($event->title !== $validated['title']) {
-            $baseSlug = Str::slug($validated['title']);
-            $slug = $baseSlug;
-            $counter = 1;
-            while (Event::where('slug', $slug)->where('id', '!=', $event->id)->exists()) {
-                $slug = $baseSlug . '-' . $counter;
-                $counter++;
-            }
-            $validated['slug'] = $slug;
         }
 
         $validated['is_public'] = $request->has('is_public') ? $request->is_public : true;
