@@ -424,10 +424,12 @@
                         </label>
                         <select
                           v-model="replyForm.email_thread_id"
+                          @change="onThreadChange"
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          required
+                          :required="!isNewEmail"
                         >
                           <option value="">スレッドを選択してください</option>
+                          <option value="new">新規メール作成</option>
                           <option
                             v-for="thread in sortedEmailThreads"
                             :key="thread.id"
@@ -438,6 +440,26 @@
                         </select>
                       </div>
 
+                      <!-- 新規メール作成時の件名入力フィールド -->
+                      <div v-if="isNewEmail">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                          件名 <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          v-model="replyForm.subject"
+                          type="text"
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          placeholder="メールの件名を入力してください"
+                          required
+                        />
+                        <div
+                          v-if="replyForm.errors.subject"
+                          class="mt-1 text-sm text-red-600"
+                        >
+                          {{ replyForm.errors.subject }}
+                        </div>
+                      </div>
+
                       <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                           メッセージ
@@ -446,7 +468,7 @@
                           v-model="replyForm.message"
                           rows="8"
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          placeholder="返信メッセージを入力してください"
+                          :placeholder="isNewEmail ? 'メッセージを入力してください' : '返信メッセージを入力してください'"
                           required
                         ></textarea>
                       </div>
@@ -457,7 +479,7 @@
                           :disabled="replyForm.processing || isSendingEmail"
                           class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150"
                         >
-                          {{ (replyForm.processing || isSendingEmail) ? "送信中..." : "返信メールを送信" }}
+                          {{ (replyForm.processing || isSendingEmail) ? "送信中..." : (isNewEmail ? "メールを送信" : "返信メールを送信") }}
                         </button>
                       </div>
                     </div>
@@ -465,9 +487,9 @@
                 </div>
                 
                 <!-- メールやり取り表示エリア -->
-                <div v-if="sortedEmailThreads && sortedEmailThreads.length > 0" class="space-y-6">
+                <div v-if="filteredEmailThreads && filteredEmailThreads.length > 0" class="space-y-6">
                   <div
-                    v-for="thread in sortedEmailThreads"
+                    v-for="thread in filteredEmailThreads"
                     :key="thread.id"
                     class="border border-gray-200 rounded-lg p-4"
                   >
@@ -1228,22 +1250,59 @@ function removeFromSchedule() {
 // 返信メールフォーム
 const replyForm = useForm({
   email_thread_id: "",
+  subject: "",
   message: "",
 });
 
 const isSendingEmail = ref(false);
+const selectedThreadId = ref(null);
+
+// 新規メール作成かどうかを判定
+const isNewEmail = computed(() => {
+  return replyForm.email_thread_id === "new" || replyForm.email_thread_id === "";
+});
+
+// 選択されたスレッドのメールのみ表示
+const filteredEmailThreads = computed(() => {
+  if (!selectedThreadId.value) {
+    return sortedEmailThreads.value;
+  }
+  return sortedEmailThreads.value.filter(thread => thread.id === selectedThreadId.value);
+});
+
+// スレッド選択時の処理
+const onThreadChange = () => {
+  if (replyForm.email_thread_id === "new" || replyForm.email_thread_id === "") {
+    selectedThreadId.value = null;
+    replyForm.subject = "";
+  } else {
+    selectedThreadId.value = replyForm.email_thread_id;
+  }
+};
 
 const sendReplyEmail = () => {
-  console.log('返信メール送信開始', {
+  console.log('メール送信開始', {
     reservation_id: props.reservation.id,
     email_thread_id: replyForm.email_thread_id,
+    is_new_email: isNewEmail.value,
+    subject: replyForm.subject,
     message_length: replyForm.message.length,
   });
 
-  if (!replyForm.email_thread_id) {
-    console.error('スレッドIDが選択されていません');
-    alert('スレッドを選択してください');
-    return;
+  // 新規メール作成の場合
+  if (isNewEmail.value) {
+    if (!replyForm.subject || replyForm.subject.trim() === '') {
+      console.error('件名が入力されていません');
+      alert('件名を入力してください');
+      return;
+    }
+  } else {
+    // 既存スレッドへの返信の場合
+    if (!replyForm.email_thread_id) {
+      console.error('スレッドIDが選択されていません');
+      alert('スレッドを選択してください');
+      return;
+    }
   }
 
   if (!replyForm.message || replyForm.message.trim() === '') {
@@ -1255,35 +1314,65 @@ const sendReplyEmail = () => {
   // ローディング開始
   isSendingEmail.value = true;
 
-  replyForm.post(
+  // 新規メール作成の場合はemail_thread_idをnullに設定
+  const formData = {
+    email_thread_id: isNewEmail.value ? null : replyForm.email_thread_id,
+    subject: isNewEmail.value ? replyForm.subject : null,
+    message: replyForm.message,
+  };
+
+  replyForm.transform(() => formData).post(
     route("admin.reservations.reply-email", props.reservation.id),
     {
       onSuccess: (page) => {
-        console.log('返信メール送信成功', page);
+        console.log('メール送信成功', page);
         
         // 成功メッセージを表示
-        const successMessage = page.props.flash?.success || page.props.success || '返信メールを送信しました。';
+        const successMessage = page.props.flash?.success || page.props.success || (isNewEmail.value ? 'メールを送信しました。' : '返信メールを送信しました。');
         alert(successMessage);
+        
+        // 新規メール作成の場合、作成したスレッドIDを保存
+        const wasNewEmail = isNewEmail.value;
+        // 既存スレッドへの返信の場合、選択したスレッドIDを保存
+        const previousThreadId = !wasNewEmail ? replyForm.email_thread_id : null;
         
         // フォームをリセット
         replyForm.reset();
+        replyForm.email_thread_id = "";
+        replyForm.subject = "";
+        replyForm.message = "";
         
         // メールスレッドを再読み込み（少し待ってから実行）
         setTimeout(() => {
           router.reload({ 
             only: ["emailThreads"],
             preserveScroll: true,
+            onSuccess: (reloadedPage) => {
+              // 新規作成した場合、最新のスレッド（新規作成したもの）を自動選択
+              if (wasNewEmail && sortedEmailThreads.value && sortedEmailThreads.value.length > 0) {
+                selectedThreadId.value = sortedEmailThreads.value[0].id;
+                replyForm.email_thread_id = sortedEmailThreads.value[0].id;
+              } else if (!wasNewEmail && previousThreadId) {
+                // 既存スレッドへの返信の場合、選択したスレッドを維持
+                selectedThreadId.value = previousThreadId;
+                replyForm.email_thread_id = previousThreadId;
+              } else {
+                selectedThreadId.value = null;
+              }
+            }
           });
         }, 500);
       },
       onError: (errors) => {
-        console.error('返信メール送信エラー', errors);
+        console.error('メール送信エラー', errors);
         
         // エラーメッセージを表示
-        let errorMessage = '返信メールの送信に失敗しました。';
+        let errorMessage = isNewEmail.value ? 'メールの送信に失敗しました。' : '返信メールの送信に失敗しました。';
         
         if (errors.email_thread_id) {
           errorMessage = 'スレッドの選択に問題があります: ' + (Array.isArray(errors.email_thread_id) ? errors.email_thread_id[0] : errors.email_thread_id);
+        } else if (errors.subject) {
+          errorMessage = '件名に問題があります: ' + (Array.isArray(errors.subject) ? errors.subject[0] : errors.subject);
         } else if (errors.message && Array.isArray(errors.message)) {
           errorMessage = 'メッセージに問題があります: ' + errors.message[0];
         } else if (errors.message) {
@@ -1293,7 +1382,7 @@ const sendReplyEmail = () => {
         alert(errorMessage);
       },
       onFinish: () => {
-        console.log('返信メール送信処理完了');
+        console.log('メール送信処理完了');
         // ローディング終了
         isSendingEmail.value = false;
       },
@@ -1312,9 +1401,11 @@ onMounted(() => {
   // メールスレッドが1つだけの場合は自動選択（新しい順にソート済みの最初のスレッド）
   if (sortedEmailThreads.value && sortedEmailThreads.value.length === 1) {
     replyForm.email_thread_id = sortedEmailThreads.value[0].id;
+    selectedThreadId.value = sortedEmailThreads.value[0].id;
   } else if (sortedEmailThreads.value && sortedEmailThreads.value.length > 0) {
     // 複数のスレッドがある場合、最新のスレッドを自動選択
     replyForm.email_thread_id = sortedEmailThreads.value[0].id;
+    selectedThreadId.value = sortedEmailThreads.value[0].id;
   }
 });
 </script>

@@ -397,46 +397,70 @@ class ReservationController extends Controller
     }
 
     /**
-     * 返信メールを送信
+     * 返信メールを送信（新規メール作成にも対応）
      */
     public function sendReplyEmail(Request $request, EventReservation $reservation)
     {
-        $validated = $request->validate([
-            'email_thread_id' => 'required|exists:email_threads,id',
+        // バリデーションルールを条件分岐
+        $rules = [
             'message' => 'required|string',
-        ]);
+        ];
 
-        // スレッドを取得
-        $emailThread = EmailThread::with('emails')->findOrFail($validated['email_thread_id']);
-        
-        // スレッドがこの予約に紐づいているか確認
-        if ($emailThread->event_reservation_id !== $reservation->id) {
-            return redirect()->back()->with('error', 'このスレッドはこの予約に紐づいていません。');
+        // email_thread_idが存在する場合は既存スレッドへの返信
+        if ($request->has('email_thread_id') && $request->email_thread_id !== null) {
+            $rules['email_thread_id'] = 'required|exists:email_threads,id';
+        } else {
+            // 新規メール作成の場合は件名が必須
+            $rules['subject'] = 'required|string|max:255';
         }
 
-        // スレッド内の最新のメールを取得（返信先として使用）
-        $latestEmail = $emailThread->emails()->orderBy('created_at', 'desc')->first();
-        $inReplyTo = $latestEmail ? $latestEmail->message_id : null;
-        
-        // スレッド内のすべてのメールのMessage-IDを取得（References用）
-        $references = $emailThread->emails()
-            ->orderBy('created_at', 'asc')
-            ->pluck('message_id')
-            ->filter()
-            ->implode(' ');
+        $validated = $request->validate($rules);
+
+        // 新規スレッド作成または既存スレッド取得
+        if (!isset($validated['email_thread_id']) || $validated['email_thread_id'] === null) {
+            // 新規スレッドを作成
+            $emailThread = EmailThread::create([
+                'event_reservation_id' => $reservation->id,
+                'subject' => $validated['subject'],
+            ]);
+            
+            $inReplyTo = null;
+            $references = null;
+        } else {
+            // 既存スレッドを取得
+            $emailThread = EmailThread::with('emails')->findOrFail($validated['email_thread_id']);
+            
+            // スレッドがこの予約に紐づいているか確認
+            if ($emailThread->event_reservation_id !== $reservation->id) {
+                return redirect()->back()->with('error', 'このスレッドはこの予約に紐づいていません。');
+            }
+
+            // スレッド内の最新のメールを取得（返信先として使用）
+            $latestEmail = $emailThread->emails()->orderBy('created_at', 'desc')->first();
+            $inReplyTo = $latestEmail ? $latestEmail->message_id : null;
+            
+            // スレッド内のすべてのメールのMessage-IDを取得（References用）
+            $references = $emailThread->emails()
+                ->orderBy('created_at', 'asc')
+                ->pluck('message_id')
+                ->filter()
+                ->implode(' ');
+        }
 
         // メールを送信
         $mailable = new ReservationReplyMail($emailThread, $reservation->email, $validated['message'], $inReplyTo, $references);
         
-        // カスタムヘッダーを追加
-        $mailable->withSwiftMessage(function ($swiftMessage) use ($inReplyTo, $references) {
-            if ($inReplyTo) {
-                $swiftMessage->getHeaders()->addTextHeader('In-Reply-To', $inReplyTo);
-            }
-            if ($references) {
-                $swiftMessage->getHeaders()->addTextHeader('References', $references);
-            }
-        });
+        // カスタムヘッダーを追加（新規メールの場合は設定しない）
+        if ($inReplyTo || $references) {
+            $mailable->withSwiftMessage(function ($swiftMessage) use ($inReplyTo, $references) {
+                if ($inReplyTo) {
+                    $swiftMessage->getHeaders()->addTextHeader('In-Reply-To', $inReplyTo);
+                }
+                if ($references) {
+                    $swiftMessage->getHeaders()->addTextHeader('References', $references);
+                }
+            });
+        }
         
         Mail::to($reservation->email)->send($mailable);
 
@@ -461,13 +485,15 @@ class ReservationController extends Controller
             'email_thread_id' => $emailThread->id,
         ]);
 
-        Log::info('返信メールを送信しました', [
+        $logMessage = isset($validated['email_thread_id']) ? '返信メールを送信しました' : '新規メールを送信しました';
+        Log::info($logMessage, [
             'reservation_id' => $reservation->id,
             'email' => $reservation->email,
             'email_thread_id' => $emailThread->id,
         ]);
 
-        return redirect()->back()->with('success', '返信メールを送信しました。');
+        $successMessage = isset($validated['email_thread_id']) ? '返信メールを送信しました。' : 'メールを送信しました。';
+        return redirect()->back()->with('success', $successMessage);
     }
 
     /**
