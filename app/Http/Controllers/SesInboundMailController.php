@@ -64,6 +64,20 @@ class SesInboundMailController extends Controller
                     // AWS SESのmessageIdは通常<...>形式だが、念のため確認
                     $messageId = $rawMessageId ? (preg_match('/^<.*>$/', $rawMessageId) ? $rawMessageId : '<' . $rawMessageId . '>') : null;
                     
+                    // @domainがない場合は自動的に追加（RFC 5322準拠）
+                    if ($messageId && !preg_match('/@/', $messageId)) {
+                        // @domainがない場合、デフォルトのドメインを追加
+                        $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'kyogofuku-event.com';
+                        // <...>の中身を取得して@domainを追加
+                        $messageId = preg_replace('/^<(.+)>$/', '<$1@' . $domain . '>', $messageId);
+                        
+                        Log::info('受信メール - message_idに@domainを追加', [
+                            'raw_message_id' => $rawMessageId,
+                            'formatted_message_id' => $messageId,
+                            'domain' => $domain,
+                        ]);
+                    }
+                    
                     // 件名からスレッド番号を抽出
                     $emailThreadId = null;
                     $eventReservationId = null;
@@ -143,6 +157,15 @@ class SesInboundMailController extends Controller
                         }
                     }
                     
+                    // デバッグ用：受信したメールの生データをログに記録
+                    Log::info('受信メール取得 - raw_email', [
+                        'message_id' => $messageId,
+                        'from' => $from,
+                        'to' => $to,
+                        'subject' => $subject,
+                        'raw_email' => $rawEmail,
+                    ]);
+                    
                     // メールをデータベースに保存
                     $email = Email::create([
                         'message_id' => $messageId,
@@ -154,6 +177,12 @@ class SesInboundMailController extends Controller
                         'text_body' => $textBody,
                         'html_body' => $htmlBody,
                         'raw_email' => $rawEmail,
+                    ]);
+                    
+                    // デバッグ用：保存後のemail_idをログに記録
+                    Log::info('受信メール保存完了', [
+                        'email_id' => $email->id,
+                        'message_id' => $messageId,
                     ]);
                     
                     // 添付ファイルを保存

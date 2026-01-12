@@ -442,6 +442,14 @@ class ReservationController extends Controller
             // message_idが<...>形式でない場合は自動的に<...>で囲む（RFC 5322準拠）
             $inReplyTo = $rawInReplyTo ? (preg_match('/^<.*>$/', $rawInReplyTo) ? $rawInReplyTo : '<' . $rawInReplyTo . '>') : null;
             
+            // @domainがない場合は自動的に追加（RFC 5322準拠）
+            if ($inReplyTo && !preg_match('/@/', $inReplyTo)) {
+                // @domainがない場合、デフォルトのドメインを追加
+                $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'kyogofuku-event.com';
+                // <...>の中身を取得して@domainを追加
+                $inReplyTo = preg_replace('/^<(.+)>$/', '<$1@' . $domain . '>', $inReplyTo);
+            }
+            
             // デバッグ用ログ：message_idの形式を確認
             Log::info('返信メール送信準備 - message_id形式確認', [
                 'email_thread_id' => $emailThread->id,
@@ -450,17 +458,26 @@ class ReservationController extends Controller
                 'raw_message_id' => $rawInReplyTo,
                 'formatted_message_id' => $inReplyTo,
                 'message_id_format_check' => $rawInReplyTo ? (preg_match('/^<.*>$/', $rawInReplyTo) ? 'RFC 5322形式（正常）' : '形式不正（<>で囲まれていない）→自動修正') : 'null',
+                'has_domain' => $inReplyTo ? (preg_match('/@/', $inReplyTo) ? 'あり' : 'なし→自動追加') : 'null',
                 'message_id_length' => $rawInReplyTo ? strlen($rawInReplyTo) : 0,
             ]);
             
             // スレッド内のすべてのメールのMessage-IDを取得（References用）
+            $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'kyogofuku-event.com';
             $allMessageIds = $emailThread->emails()
                 ->orderBy('created_at', 'asc')
                 ->pluck('message_id')
                 ->filter()
-                ->map(function($msgId) {
+                ->map(function($msgId) use ($domain) {
                     // message_idが<...>形式でない場合は自動的に<...>で囲む
-                    return preg_match('/^<.*>$/', $msgId) ? $msgId : '<' . $msgId . '>';
+                    $formatted = preg_match('/^<.*>$/', $msgId) ? $msgId : '<' . $msgId . '>';
+                    
+                    // @domainがない場合は自動的に追加
+                    if (!preg_match('/@/', $formatted)) {
+                        $formatted = preg_replace('/^<(.+)>$/', '<$1@' . $domain . '>', $formatted);
+                    }
+                    
+                    return $formatted;
                 });
             
             // デバッグ用ログ：スレッド内の全メールのmessage_id形式を確認
@@ -471,6 +488,7 @@ class ReservationController extends Controller
                     return [
                         'value' => $msgId,
                         'format' => preg_match('/^<.*>$/', $msgId) ? 'RFC 5322形式' : '形式不正',
+                        'has_domain' => preg_match('/@/', $msgId) ? 'あり' : 'なし',
                         'length' => strlen($msgId),
                     ];
                 })->toArray(),
@@ -509,6 +527,13 @@ class ReservationController extends Controller
 
         // 送信したメールをデータベースに保存
         $rawEmail = $this->buildRawEmail($mailable, $reservation->email, $emailThread, $validated['message'], $messageId, $inReplyTo, $references);
+        
+        // デバッグ用：実際に送信されたメールの生データをログに記録
+        Log::info('返信メール送信 - raw_email', [
+            'reservation_id' => $reservation->id,
+            'email_thread_id' => $emailThread->id,
+            'raw_email' => $rawEmail,
+        ]);
         
         Email::create([
             'message_id' => $messageId,
