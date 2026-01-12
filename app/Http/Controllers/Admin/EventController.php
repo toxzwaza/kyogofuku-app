@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentImage;
 use App\Models\Event;
 use App\Models\Shop;
+use App\Models\UtmSource;
 use App\Models\Venue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -188,12 +189,49 @@ class EventController extends Controller
         $allVenues = Venue::where('is_active', true)->get();
         $allShops = Shop::where('is_active', true)->get();
         $allDocuments = Document::orderBy('created_at', 'desc')->get();
+        $utmSources = UtmSource::where('is_active', true)->orderBy('sort_order')->get();
 
         return Inertia::render('Admin/Event/Show', [
             'event' => $event,
             'allVenues' => $allVenues,
             'allShops' => $allShops,
             'allDocuments' => $allDocuments,
+            'utmSources' => $utmSources,
+        ]);
+    }
+
+    /**
+     * UTMソース付きURLを生成（存在しないソースは追加）
+     */
+    public function generateUrl(Request $request, Event $event)
+    {
+        $request->validate([
+            'utm_source' => 'required|string|max:255',
+        ]);
+
+        $utmSourceName = $request->input('utm_source');
+        
+        // 既存のソースを検索（名前で検索、大文字小文字を区別しない）
+        $utmSource = UtmSource::whereRaw('LOWER(name) = ?', [strtolower($utmSourceName)])->first();
+        
+        // 存在しない場合は新規作成
+        if (!$utmSource) {
+            $maxSortOrder = UtmSource::max('sort_order') ?? 0;
+            $utmSource = UtmSource::create([
+                'name' => $utmSourceName,
+                'is_active' => true,
+                'sort_order' => $maxSortOrder + 1,
+            ]);
+        }
+
+        // URLを生成
+        $baseUrl = route('event.show', $event->slug);
+        $url = $baseUrl . '?utm_source=' . urlencode($utmSource->name);
+
+        return response()->json([
+            'success' => true,
+            'url' => $url,
+            'utm_source' => $utmSource,
         ]);
     }
 

@@ -69,6 +69,15 @@
                                         </svg>
                                         枠管理
                                     </Link>
+                                    <button
+                                        @click="openUrlModal"
+                                        class="group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-700 rounded-lg shadow-sm hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-200"
+                                    >
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        URL発行
+                                    </button>
                                 </div>
                             </div>
 
@@ -918,6 +927,106 @@
                 </div>
             </div>
         </div>
+
+        <!-- URL発行モーダル -->
+        <transition name="modal">
+            <div
+                v-if="showUrlModal"
+                class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="showUrlModal = false"
+            >
+                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <!-- ヘッダー -->
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            URL発行
+                        </h3>
+                        <button
+                            @click="showUrlModal = false"
+                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- コンテンツ -->
+                    <div class="overflow-y-auto flex-1 px-6 py-5">
+                        <div class="space-y-4">
+                            <!-- UTMソース入力 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    UTMソース
+                                </label>
+                                <input
+                                    type="text"
+                                    v-model="utmSourceInput"
+                                    list="utm-sources-list"
+                                    placeholder="UTMソースを入力または選択"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                                <datalist id="utm-sources-list">
+                                    <option
+                                        v-for="source in props.utmSources"
+                                        :key="source.id"
+                                        :value="source.name"
+                                    />
+                                </datalist>
+                            </div>
+
+                            <!-- URL発行ボタン -->
+                            <div>
+                                <button
+                                    @click="generateUrl"
+                                    :disabled="!utmSourceInput || isGeneratingUrl"
+                                    class="w-full inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <svg v-if="isGeneratingUrl" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    {{ isGeneratingUrl ? 'URL生成中...' : 'URL発行' }}
+                                </button>
+                            </div>
+
+                            <!-- 生成されたURL表示 -->
+                            <div v-if="generatedUrl">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    生成されたURL
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        :value="generatedUrl"
+                                        readonly
+                                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+                                    />
+                                    <button
+                                        @click="copyToClipboard"
+                                        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                    >
+                                        <svg v-if="!copied" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        {{ copied ? 'コピーしました' : 'コピー' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
     </AuthenticatedLayout>
 </template>
 
@@ -933,6 +1042,7 @@ const props = defineProps({
     allVenues: Array,
     allShops: Array,
     allDocuments: Array,
+    utmSources: Array,
 });
 
 const isEditing = ref(false);
@@ -945,6 +1055,62 @@ const editingDocumentForms = reactive({});
 const documents = ref(props.allDocuments || []);
 const successTextError = ref('');
 const slugError = ref('');
+
+// URL発行モーダル関連
+const showUrlModal = ref(false);
+const utmSourceInput = ref('');
+const generatedUrl = ref('');
+const copied = ref(false);
+const isGeneratingUrl = ref(false);
+
+// URLを生成
+const generateUrl = async () => {
+    if (!utmSourceInput.value || !utmSourceInput.value.trim()) {
+        alert('UTMソースを入力してください。');
+        return;
+    }
+
+    isGeneratingUrl.value = true;
+    try {
+        const response = await axios.post(route('admin.events.generate-url', props.event.id), {
+            utm_source: utmSourceInput.value.trim(),
+        });
+
+        if (response.data.success) {
+            generatedUrl.value = response.data.url;
+        }
+    } catch (error) {
+        console.error('URLの生成に失敗しました:', error);
+        alert('URLの生成に失敗しました。');
+    } finally {
+        isGeneratingUrl.value = false;
+    }
+};
+
+// クリップボードにコピー
+const copyToClipboard = async () => {
+    if (!generatedUrl.value) {
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(generatedUrl.value);
+        copied.value = true;
+        setTimeout(() => {
+            copied.value = false;
+        }, 2000);
+    } catch (err) {
+        console.error('クリップボードへのコピーに失敗しました:', err);
+        alert('クリップボードへのコピーに失敗しました。');
+    }
+};
+
+// モーダルを開いたときに選択をリセット
+const openUrlModal = () => {
+    utmSourceInput.value = '';
+    generatedUrl.value = '';
+    copied.value = false;
+    showUrlModal.value = true;
+};
 
 // 資料一覧を更新
 const refreshDocuments = async () => {
@@ -1342,4 +1508,28 @@ const deleteDocument = async (documentId) => {
     }
 };
 </script>
+
+<style scoped>
+/* モーダルアニメーション */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.1s ease;
+}
+
+.modal-enter-active .relative,
+.modal-leave-active .relative {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .relative,
+.modal-leave-to .relative {
+  transform: scale(0.98) translateY(-10px);
+  opacity: 0;
+}
+</style>
 
