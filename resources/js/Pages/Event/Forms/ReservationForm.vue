@@ -372,8 +372,8 @@ const emit = defineEmits(['submitted', 'timeslot-selected', 'confirm']);
 const internalSelectedTimeslot = ref(props.selectedTimeslot || null);
 
 // URLパラメータから予約枠を取得して自動選択（timeslot_idのみ）
+const urlParams = new URLSearchParams(window.location.search);
 if (props.timeslots && props.timeslots.length > 0) {
-    const urlParams = new URLSearchParams(window.location.search);
     const urlTimeslotId = urlParams.get('timeslot_id');
     
     if (urlTimeslotId) {
@@ -453,27 +453,40 @@ const getRemainingCapacity = (timeslot) => {
     return timeslot.remaining_capacity || 0;
 };
 
+// URLパラメータからフォームの初期値を取得
+const getUrlParam = (key, defaultValue = '') => {
+    return urlParams.has(key) ? urlParams.get(key) : defaultValue;
+};
+
+const getUrlParamArray = (key, defaultValue = []) => {
+    if (urlParams.has(key)) {
+        const value = urlParams.get(key);
+        return value.split(',').map(p => p.trim()).filter(p => p);
+    }
+    return defaultValue;
+};
+
 const form = useForm({
-    name: '',
-    email: '',
-    phone: '',
+    name: getUrlParam('name', ''),
+    email: getUrlParam('email', ''),
+    phone: getUrlParam('phone', ''),
     reservation_datetime: '',
     venue_id: null,
-    has_visited_before: false,
-    address: '',
-    birth_date: '',
+    has_visited_before: urlParams.has('has_visited_before') ? urlParams.get('has_visited_before') === 'true' : false,
+    address: getUrlParam('address', ''),
+    birth_date: getUrlParam('birth_date', ''),
     seijin_year: null,
-    referred_by_name: '',
-    furigana: '',
+    referred_by_name: getUrlParam('referred_by_name', ''),
+    furigana: getUrlParam('furigana', ''),
     school_name: '',
     staff_name: '',
     visit_reasons: [],
     visit_reason_other: '',
     parking_usage: '',
     parking_car_count: null,
-    considering_plans: [],
+    considering_plans: getUrlParamArray('considering_plans', []),
     heard_from: '',
-    inquiry_message: '',
+    inquiry_message: getUrlParam('inquiry_message', ''),
 });
 
 // 検討中のプランの選択肢
