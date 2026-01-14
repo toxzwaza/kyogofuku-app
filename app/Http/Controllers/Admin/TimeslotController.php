@@ -63,45 +63,131 @@ class TimeslotController extends Controller
             }
         }
 
+        // 会場IDが指定されている場合、既存予約枠を取得
+        $existingTimeslots = collect();
+        if ($request->has('venue_id') && $request->venue_id) {
+            $existingTimeslots = EventTimeslot::where('event_id', $event->id)
+                ->where('venue_id', $request->venue_id)
+                ->with('venue')
+                ->orderBy('start_at', 'asc')
+                ->get();
+        }
+
         return Inertia::render('Admin/Timeslot/Create', [
             'event' => $event,
             'venues' => $venues,
             'duplicateTimeslot' => $duplicateTimeslot,
+            'existingTimeslots' => $existingTimeslots,
         ]);
     }
 
     /**
-     * 予約枠を保存
+     * 予約枠を保存（複数件一括登録対応）
      */
     public function store(Request $request, Event $event)
     {
         $event->load('venues');
         
-        $validated = $request->validate([
-            'venue_id' => 'nullable|exists:venues,id',
-            'start_at' => 'required|date',
-            'capacity' => 'required|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
+        // 配列形式（一括登録）か単一形式（後方互換性）かを判定
+        if ($request->has('timeslots') && is_array($request->timeslots)) {
+            // 一括登録モード
+            $validated = $request->validate([
+                'timeslots' => 'required|array|min:1',
+                'timeslots.*.venue_id' => 'nullable|exists:venues,id',
+                'timeslots.*.start_at' => 'required|date',
+                'timeslots.*.capacity' => 'required|integer|min:1',
+                'timeslots.*.is_active' => 'boolean',
+            ]);
 
-        // 会場が1つしかない場合は自動選択
-        if (empty($validated['venue_id']) && $event->venues->count() === 1) {
-            $validated['venue_id'] = $event->venues->first()->id;
+            $createdCount = 0;
+            $skippedCount = 0;
+            $errors = [];
+
+            foreach ($validated['timeslots'] as $index => $timeslotData) {
+                try {
+                    // 会場が1つしかない場合は自動選択
+                    if (empty($timeslotData['venue_id']) && $event->venues->count() === 1) {
+                        $timeslotData['venue_id'] = $event->venues->first()->id;
+                    }
+
+                    // 選択された会場がイベントに関連付けられているか確認
+                    if (!empty($timeslotData['venue_id']) && !$event->venues->contains('id', $timeslotData['venue_id'])) {
+                        $skippedCount++;
+                        $errors[] = ($index + 1) . "件目: 選択された会場はこのイベントに関連付けられていません。";
+                        continue;
+                    }
+
+                    // 同じイベント、会場、開始日時の組み合わせが既に存在するかチェック
+                    $existingTimeslot = EventTimeslot::where('event_id', $event->id)
+                        ->where('start_at', $timeslotData['start_at']);
+                    
+                    if (!empty($timeslotData['venue_id'])) {
+                        $existingTimeslot->where('venue_id', $timeslotData['venue_id']);
+                    } else {
+                        $existingTimeslot->whereNull('venue_id');
+                    }
+                    
+                    $existing = $existingTimeslot->first();
+
+                    if ($existing) {
+                        $skippedCount++;
+                        $startAtFormatted = date('Y-m-d H:i', strtotime($timeslotData['start_at']));
+                        $errors[] = ($index + 1) . "件目: {$startAtFormatted} の予約枠は既に存在するためスキップしました。";
+                        continue;
+                    }
+
+                    $timeslotData['event_id'] = $event->id;
+                    $timeslotData['is_active'] = isset($timeslotData['is_active']) ? $timeslotData['is_active'] : true;
+
+                    EventTimeslot::create($timeslotData);
+                    $createdCount++;
+                } catch (\Exception $e) {
+                    $skippedCount++;
+                    $errors[] = ($index + 1) . "件目: 登録に失敗しました。(" . $e->getMessage() . ")";
+                }
+            }
+
+            $message = "{$createdCount}件の予約枠を追加しました。";
+            if ($skippedCount > 0) {
+                $message .= " {$skippedCount}件がスキップされました。";
+            }
+
+            $redirect = redirect()->route('admin.events.timeslots.index', $event->id)
+                ->with('success', $message);
+
+            if (!empty($errors)) {
+                $redirect->with('errors', $errors);
+            }
+
+            return $redirect;
+        } else {
+            // 単一登録モード（後方互換性）
+            $validated = $request->validate([
+                'venue_id' => 'nullable|exists:venues,id',
+                'start_at' => 'required|date',
+                'capacity' => 'required|integer|min:1',
+                'is_active' => 'boolean',
+            ]);
+
+            // 会場が1つしかない場合は自動選択
+            if (empty($validated['venue_id']) && $event->venues->count() === 1) {
+                $validated['venue_id'] = $event->venues->first()->id;
+            }
+
+            // 選択された会場がイベントに関連付けられているか確認
+            if (!empty($validated['venue_id']) && !$event->venues->contains('id', $validated['venue_id'])) {
+                return redirect()->back()
+                    ->withErrors(['venue_id' => '選択された会場はこのイベントに関連付けられていません。']);
+            }
+
+            $validated['event_id'] = $event->id;
+            $validated['is_active'] = $request->has('is_active') ? $request->is_active : true;
+
+            EventTimeslot::create($validated);
+
+            return redirect()->route('admin.events.timeslots.index', $event->id)
+                ->with('success', '予約枠を追加しました。');
         }
-
-        // 選択された会場がイベントに関連付けられているか確認
-        if (!empty($validated['venue_id']) && !$event->venues->contains('id', $validated['venue_id'])) {
-            return redirect()->back()
-                ->withErrors(['venue_id' => '選択された会場はこのイベントに関連付けられていません。']);
-        }
-
-        $validated['event_id'] = $event->id;
-        $validated['is_active'] = $request->has('is_active') ? $request->is_active : true;
-
-        EventTimeslot::create($validated);
-
-        return redirect()->route('admin.events.timeslots.index', $event->id)
-            ->with('success', '予約枠を追加しました。');
     }
 
     /**
