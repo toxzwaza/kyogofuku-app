@@ -23,19 +23,67 @@ class ReservationController extends Controller
     /**
      * イベント別予約一覧を表示
      */
-    public function index(Event $event)
+    public function index(Request $request, Event $event)
     {
-        $reservations = EventReservation::with(['venue', 'statusUpdatedBy'])
-            ->where('event_id', $event->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        // 会場リストを取得
+        $venues = $event->venues()->where('is_active', true)->orderBy('name')->get();
+        
+        // 予約クエリを作成
+        $reservationsQuery = EventReservation::with(['venue', 'statusUpdatedBy'])
+            ->where('event_id', $event->id);
+        
+        // 会場で絞り込み
+        if ($request->filled('venue_id')) {
+            $reservationsQuery->where('venue_id', $request->venue_id);
+        }
+        
+        // 時間で絞り込み（予約フォームの場合のみ）
+        if ($event->form_type === 'reservation' && $request->filled('reservation_datetime')) {
+            $reservationsQuery->where('reservation_datetime', $request->reservation_datetime);
+        }
+        
+        $reservations = $reservationsQuery->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+        
+        // 時間リストを取得（予約フォームの場合のみ、フィルター用）
+        $filterTimeslots = [];
+        if ($event->form_type === 'reservation') {
+            $timeslotsQuery = $event->timeslots()->with('venue')->where('is_active', true);
+            
+            // 会場が選択されている場合、その会場の時間のみ取得
+            if ($request->filled('venue_id')) {
+                $timeslotsQuery->where('venue_id', $request->venue_id);
+            }
+            
+            $filterTimeslots = $timeslotsQuery->orderBy('start_at', 'asc')->get()
+                ->map(function ($timeslot) {
+                    return [
+                        'id' => $timeslot->id,
+                        'start_at' => $timeslot->start_at->format('Y-m-d H:i:s'),
+                        'venue_id' => $timeslot->venue_id,
+                    ];
+                });
+        }
 
         // 予約枠の統計情報と日付別グループ化（予約フォームの場合のみ）
         $timeslotStats = null;
         $timeslotsWithReservations = null;
         
         if ($event->form_type === 'reservation') {
-            $timeslots = $event->timeslots()->with('venue')->where('is_active', true)->orderBy('start_at', 'asc')->get();
+            $timeslotsQuery = $event->timeslots()->with('venue')->where('is_active', true);
+            
+            // 会場で絞り込み
+            if ($request->filled('venue_id')) {
+                $timeslotsQuery->where('venue_id', $request->venue_id);
+            }
+            
+            // 時間で絞り込み
+            if ($request->filled('reservation_datetime')) {
+                $timeslotsQuery->where('start_at', $request->reservation_datetime);
+            }
+            
+            $timeslots = $timeslotsQuery->orderBy('start_at', 'asc')->get();
             $totalCapacity = $timeslots->sum('capacity');
             $totalReserved = 0;
             
@@ -116,6 +164,17 @@ class ReservationController extends Controller
             'reservations' => $reservations,
             'timeslotStats' => $timeslotStats,
             'timeslotsWithReservations' => $timeslotsWithReservations,
+            'venues' => $venues->map(function ($venue) {
+                return [
+                    'id' => $venue->id,
+                    'name' => $venue->name,
+                ];
+            }),
+            'filterTimeslots' => $filterTimeslots,
+            'filters' => [
+                'venue_id' => $request->venue_id ?? null,
+                'reservation_datetime' => $request->reservation_datetime ?? null,
+            ],
         ]);
     }
 

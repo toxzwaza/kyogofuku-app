@@ -153,6 +153,52 @@
 
                         <!-- 日付表示（予約フォームの場合のみ） -->
                         <div v-if="event.form_type === 'reservation' && activeTab === 'schedule'" class="space-y-6">
+                            <!-- 絞り込みUI -->
+                            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="flex flex-col md:flex-row md:items-end gap-4">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">会場</label>
+                                        <select
+                                            v-model="filterVenueId"
+                                            @change="onVenueChange"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        >
+                                            <option value="">すべて</option>
+                                            <option v-for="venue in venues" :key="venue.id" :value="venue.id">
+                                                {{ venue.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">時間</label>
+                                        <select
+                                            v-model="filterReservationDatetime"
+                                            :disabled="!filterVenueId"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">すべて</option>
+                                            <option v-for="timeslot in availableTimeslots" :key="timeslot.id" :value="timeslot.start_at">
+                                                {{ formatDateTime(timeslot.start_at) }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button
+                                            @click="applyFilters"
+                                            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        >
+                                            絞り込み
+                                        </button>
+                                        <button
+                                            @click="resetFilters"
+                                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                        >
+                                            リセット
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div v-if="groupedByVenue && Object.keys(groupedByVenue).length > 0">
                                 <div
                                     v-for="(venueGroup, venueKey) in groupedByVenue"
@@ -432,7 +478,54 @@
                         </div>
 
                         <!-- テーブル表示 -->
-                        <div v-if="activeTab === 'table'" class="overflow-x-auto">
+                        <div v-if="activeTab === 'table'">
+                            <!-- 絞り込みUI（予約フォームの場合のみ） -->
+                            <div v-if="event.form_type === 'reservation'" class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="flex flex-col md:flex-row md:items-end gap-4">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">会場</label>
+                                        <select
+                                            v-model="filterVenueId"
+                                            @change="onVenueChange"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        >
+                                            <option value="">すべて</option>
+                                            <option v-for="venue in venues" :key="venue.id" :value="venue.id">
+                                                {{ venue.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">時間</label>
+                                        <select
+                                            v-model="filterReservationDatetime"
+                                            :disabled="!filterVenueId"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">すべて</option>
+                                            <option v-for="timeslot in availableTimeslots" :key="timeslot.id" :value="timeslot.start_at">
+                                                {{ formatDateTime(timeslot.start_at) }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button
+                                            @click="applyFilters"
+                                            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        >
+                                            絞り込み
+                                        </button>
+                                        <button
+                                            @click="resetFilters"
+                                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                        >
+                                            リセット
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
@@ -547,6 +640,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            </div>
                         </div>
 
                         <!-- ページネーション -->
@@ -586,12 +680,63 @@ const props = defineProps({
     reservations: Object,
     timeslotStats: Object,
     timeslotsWithReservations: Array,
+    venues: Array,
+    filterTimeslots: Array,
+    filters: Object,
     success: String,
 });
 
 // 予約フォームの場合は日付表示をデフォルト、それ以外はカード表示をデフォルト
 const activeTab = ref(props.event.form_type === 'reservation' ? 'schedule' : 'cards');
 const adjustingTimeslotId = ref(null);
+
+// 絞り込み用のstate
+const filterVenueId = ref(props.filters?.venue_id || '');
+const filterReservationDatetime = ref(props.filters?.reservation_datetime || '');
+
+// 選択可能な時間リスト（会場が選択されている場合、その会場の時間のみ表示）
+const availableTimeslots = computed(() => {
+    if (!filterVenueId.value) {
+        // 会場が選択されていない場合、すべての時間を返す
+        return props.filterTimeslots || [];
+    }
+    // 会場が選択されている場合、その会場の時間のみ返す
+    return (props.filterTimeslots || []).filter(timeslot => {
+        return timeslot.venue_id == filterVenueId.value;
+    });
+});
+
+// 会場変更時の処理
+const onVenueChange = () => {
+    // 会場が変更されたら時間をリセット
+    filterReservationDatetime.value = '';
+};
+
+// フィルターを適用
+const applyFilters = () => {
+    const params = {};
+    if (filterVenueId.value) {
+        params.venue_id = filterVenueId.value;
+    }
+    if (filterReservationDatetime.value) {
+        params.reservation_datetime = filterReservationDatetime.value;
+    }
+    
+    router.get(route('admin.events.reservations.index', props.event.id), params, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+// フィルターをリセット
+const resetFilters = () => {
+    filterVenueId.value = '';
+    filterReservationDatetime.value = '';
+    router.get(route('admin.events.reservations.index', props.event.id), {}, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
 
 // 予約枠を会場ごと、その中で日付ごとにグループ化
 const groupedByVenue = computed(() => {
