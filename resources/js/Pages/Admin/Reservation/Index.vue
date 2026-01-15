@@ -1527,9 +1527,8 @@
           </button>
         </div>
         <div class="p-6">
-          <div class="flex gap-6">
-            <!-- 左側: 設定エリア -->
-            <div class="w-1/3 flex-shrink-0">
+            <!-- 設定エリア -->
+            <div class="w-full">
               <!-- 向き選択 -->
               <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -1572,19 +1571,44 @@
                 />
               </div>
 
-              <!-- 行の縦幅選択 -->
+              <!-- メモ欄設定 -->
               <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  行の縦幅 (px)
+                  メモ欄
                 </label>
-                <input
-                  type="number"
-                  v-model.number="printRowHeight"
-                  min="20"
-                  max="60"
-                  step="1"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
+                <div class="flex gap-4 mb-3">
+                  <label class="flex items-center">
+                    <input
+                      type="radio"
+                      v-model="printMemoEnabled"
+                      :value="true"
+                      class="mr-2"
+                    />
+                    <span>あり</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input
+                      type="radio"
+                      v-model="printMemoEnabled"
+                      :value="false"
+                      class="mr-2"
+                    />
+                    <span>なし</span>
+                  </label>
+                </div>
+                <div v-if="printMemoEnabled" class="mt-3">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    メモ欄のサイズ (px)
+                  </label>
+                  <input
+                    type="number"
+                    v-model.number="printMemoSize"
+                    min="50"
+                    max="300"
+                    step="10"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
               </div>
 
               <!-- カラム選択 -->
@@ -1629,107 +1653,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- 右側: プレビューエリア -->
-            <div class="flex-1 min-w-0">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                プレビュー
-              </label>
-              <div
-                class="border-2 border-gray-300 rounded-lg p-6 bg-gradient-to-br from-gray-50 to-white overflow-auto shadow-inner"
-                :style="{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                }"
-              >
-                <div
-                  v-for="page in calculatePages.pages"
-                  :key="page.pageNumber"
-                  :id="page.pageNumber === 1 ? 'print-preview' : ''"
-                  :class="page.pageNumber === 1 ? '' : 'print-preview-page'"
-                  :style="previewStyle"
-                >
-                  <h2
-                    class="text-center mb-4 font-bold text-gray-800"
-                    :style="{
-                      fontSize: `${parseFloat(printFontSize.value) + 2}px`,
-                      marginBottom: '15px',
-                      textAlign: 'center',
-                      color: '#1f2937',
-                      fontWeight: 'bold',
-                    }"
-                  >
-                    予約一覧 - {{ event.title }}
-                  </h2>
-                  <table
-                    style="border-collapse: collapse; width: 100%; margin-top: 15px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); table-layout: fixed;"
-                  >
-                    <thead>
-                      <tr>
-                        <th
-                          v-for="column in selectedPrintColumnsList"
-                          :key="column.key"
-                          :style="{
-                            border: '1px solid #9ca3af',
-                            padding: '4px 6px',
-                            textAlign: 'left',
-                            wordWrap: 'break-word',
-                            wordBreak: 'break-word',
-                            whiteSpace: 'normal',
-                            lineHeight: '1.4',
-                            background: 'linear-gradient(to bottom, #f3f4f6, #e5e7eb)',
-                            fontWeight: '600',
-                            fontSize: `${parseFloat(printFontSize.value) - 1}px`,
-                            color: '#374151',
-                            height: `${parseFloat(printRowHeight.value) - 2}px`,
-                            verticalAlign: 'middle',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            overflow: 'hidden',
-                          }"
-                        >
-                          {{ column.label }}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr
-                        v-for="(reservation, index) in page.reservations"
-                        :key="reservation.id"
-                        :style="{
-                          backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
-                          height: `${printRowHeight.value}px`,
-                        }"
-                      >
-                        <td
-                          v-for="column in selectedPrintColumnsList"
-                          :key="column.key"
-                          :style="{
-                            border: '1px solid #9ca3af',
-                            padding: '8px 12px',
-                            textAlign: 'left',
-                            wordWrap: 'break-word',
-                            wordBreak: 'break-word',
-                            whiteSpace: 'normal',
-                            lineHeight: '1.4',
-                            fontSize: `${printFontSize.value}px`,
-                            color: '#1f2937',
-                            height: `${printRowHeight.value}px`,
-                            verticalAlign: 'top',
-                            overflow: 'hidden',
-                          }"
-                        >
-                          <span v-html="getColumnValue(reservation, column.key)"></span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- ボタン -->
           <div class="flex justify-end space-x-3 mt-6">
@@ -1792,8 +1715,9 @@ const loadPrintSettings = () => {
         paperSize: settings.paperSize || 'A4',
         orientation: settings.orientation || 'portrait',
         fontSize: settings.fontSize || '12',
-        rowHeight: settings.rowHeight || '30',
-        selectedColumns: settings.selectedColumns || []
+        selectedColumns: settings.selectedColumns || [],
+        memoEnabled: settings.memoEnabled !== undefined ? settings.memoEnabled : false,
+        memoSize: settings.memoSize || '100'
       };
     } catch (e) {
       console.error('Failed to load print settings:', e);
@@ -1803,8 +1727,9 @@ const loadPrintSettings = () => {
     paperSize: 'A4',
     orientation: 'portrait',
     fontSize: '12',
-    rowHeight: '30',
-    selectedColumns: []
+    selectedColumns: [],
+    memoEnabled: false,
+    memoSize: '100'
   };
 };
 
@@ -1814,8 +1739,9 @@ const savePrintSettings = () => {
     paperSize: printPaperSize.value,
     orientation: printOrientation.value,
     fontSize: printFontSize.value,
-    rowHeight: printRowHeight.value,
-    selectedColumns: selectedPrintColumns.value
+    selectedColumns: selectedPrintColumns.value,
+    memoEnabled: printMemoEnabled.value,
+    memoSize: printMemoSize.value
   };
   localStorage.setItem('printSettings', JSON.stringify(settings));
 };
@@ -1828,8 +1754,12 @@ const showPrintModal = ref(false);
 const printPaperSize = ref("A4");
 const printOrientation = ref(initialSettings.orientation);
 const printFontSize = ref(Number(initialSettings.fontSize));
-const printRowHeight = ref(Number(initialSettings.rowHeight));
 const selectedPrintColumns = ref(initialSettings.selectedColumns);
+const printMemoEnabled = ref(initialSettings.memoEnabled);
+const printMemoSize = ref(Number(initialSettings.memoSize));
+
+// 行の高さは固定値（30px）
+const printRowHeight = 30;
 
 // 絞り込み用のstate
 const filterVenueId = ref(props.filters?.venue_id || "");
@@ -2049,15 +1979,81 @@ const calculatePages = computed(() => {
   const marginPx = 10 * mmToPx * 2; // 上下マージン（1cm = 10mm）
   const paddingPx = 20 * 2; // 上下パディング
   const headerHeightPx = parseFloat(printFontSize.value) + 2 + 15 + 15; // タイトル + マージン
-  const tableHeaderHeightPx = parseFloat(printRowHeight.value) - 2;
+  const tableHeaderHeightPx = printRowHeight - 2;
+  const dateHeaderHeightPx = parseFloat(printFontSize.value) + 1 + 8 + 12 + 5; // 日付ヘッダー + マージン
   
   // 利用可能な高さ
   const availableHeightPx = pageHeightPx - marginPx - paddingPx - headerHeightPx - tableHeaderHeightPx;
   
   // 1ページに収まる行数
-  const rowsPerPage = Math.floor(availableHeightPx / parseFloat(printRowHeight.value));
+  const rowsPerPage = Math.floor(availableHeightPx / printRowHeight);
   
-  // ページごとにデータを分割
+  // 予約フォームの場合：日付ごとにグループ化
+  if (props.event.form_type === "reservation") {
+    const pages = [];
+    const groups = groupedReservationsByDate.value;
+    let currentPage = {
+      pageNumber: 1,
+      dateGroups: [],
+      currentHeight: headerHeightPx
+    };
+    
+    groups.forEach((group) => {
+      const groupHeight = dateHeaderHeightPx + (group.reservations.length * printRowHeight) + tableHeaderHeightPx + 15;
+      
+      // 現在のページに収まるか確認
+      if (currentPage.currentHeight + groupHeight > availableHeightPx && currentPage.dateGroups.length > 0) {
+        // 新しいページを作成
+        pages.push(currentPage);
+        currentPage = {
+          pageNumber: pages.length + 1,
+          dateGroups: [],
+          currentHeight: headerHeightPx
+        };
+      }
+      
+      // グループが1ページに収まらない場合は分割
+      if (groupHeight > availableHeightPx) {
+        // グループを分割
+        const rowsPerPageForGroup = Math.floor((availableHeightPx - dateHeaderHeightPx - tableHeaderHeightPx - 15) / printRowHeight);
+        
+        for (let i = 0; i < group.reservations.length; i += rowsPerPageForGroup) {
+          if (currentPage.dateGroups.length > 0) {
+            pages.push(currentPage);
+            currentPage = {
+              pageNumber: pages.length + 1,
+              dateGroups: [],
+              currentHeight: headerHeightPx
+            };
+          }
+          
+          currentPage.dateGroups.push({
+            date: group.date,
+            dateDisplay: i === 0 ? group.dateDisplay : null, // 最初の部分のみ日付ヘッダーを表示
+            reservations: group.reservations.slice(i, i + rowsPerPageForGroup)
+          });
+          currentPage.currentHeight = headerHeightPx + dateHeaderHeightPx + (currentPage.dateGroups[0].reservations.length * printRowHeight) + tableHeaderHeightPx + 15;
+        }
+      } else {
+        // グループをそのまま追加
+        currentPage.dateGroups.push(group);
+        currentPage.currentHeight += groupHeight;
+      }
+    });
+    
+    // 最後のページを追加
+    if (currentPage.dateGroups.length > 0) {
+      pages.push(currentPage);
+    }
+    
+    return {
+      rowsPerPage,
+      pages,
+      totalPages: pages.length
+    };
+  }
+  
+  // 予約フォーム以外の場合：通常のページ分割
   const pages = [];
   const reservations = sortedReservations.value;
   
@@ -2492,7 +2488,8 @@ const openPrintModal = () => {
   printPaperSize.value = "A4"; // 用紙サイズはA4に固定
   printOrientation.value = settings.orientation;
   printFontSize.value = settings.fontSize;
-  printRowHeight.value = settings.rowHeight;
+  printMemoEnabled.value = settings.memoEnabled !== undefined ? settings.memoEnabled : false;
+  printMemoSize.value = settings.memoSize || 100;
   
   // カラムが保存されていない、または無効な場合は全カラムを選択
   if (settings.selectedColumns.length === 0 || 
@@ -2591,23 +2588,74 @@ const printTable = () => {
   // 設定を保存
   savePrintSettings();
 
-  // すべてのページ要素を取得
-  const firstPageElement = document.getElementById('print-preview');
-  const otherPageElements = document.querySelectorAll('.print-preview-page');
+  // 選択されたカラムのみを順序通りに取得
+  const columns = selectedPrintColumnsList.value;
   
-  if (!firstPageElement) {
-    alert("プレビュー要素が見つかりません。");
-    return;
+  // メモ欄がある場合は列の最後に追加
+  const finalColumns = [...columns];
+  if (printMemoEnabled.value) {
+    finalColumns.push({ key: 'memo', label: 'メモ' });
   }
 
-  // すべてのページ要素をクローン
-  const allPages = [firstPageElement.cloneNode(true)];
-  otherPageElements.forEach((element) => {
-    allPages.push(element.cloneNode(true));
-  });
+  // ページごとにHTMLを生成
+  const pages = calculatePages.value.pages;
+  let pagesHTML = '';
 
-  // すべてのページのHTMLを結合
-  const pagesHTML = allPages.map((element) => element.outerHTML).join('');
+  pages.forEach((page) => {
+    let pageHTML = '<div class="print-page">';
+    pageHTML += `<h2 style="font-size: ${parseFloat(printFontSize.value) + 2}px; margin-bottom: 15px; text-align: center; color: #1f2937; font-weight: bold;">予約一覧 - ${props.event.title}</h2>`;
+
+    // 予約フォームの場合：日付ごとにグループ化
+    if (props.event.form_type === "reservation" && page.dateGroups) {
+      page.dateGroups.forEach((group) => {
+        if (group.dateDisplay) {
+          pageHTML += `<div class="date-header" style="background-color: #f3f4f6; padding: 4px 6px; margin-top: 10px; margin-bottom: 5px; font-size: ${parseFloat(printFontSize.value) + 1}px; font-weight: bold; color: #374151; border-bottom: 2px solid #9ca3af;">${group.dateDisplay}</div>`;
+        }
+        pageHTML += '<table style="border-collapse: collapse; width: 100%; margin-top: 5px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); table-layout: fixed;">';
+        pageHTML += '<thead><tr>';
+        finalColumns.forEach((col) => {
+          const isMemo = col.key === 'memo';
+          const widthStyle = isMemo ? `width: ${printMemoSize.value}px;` : '';
+          pageHTML += `<th style="border: 1px solid #9ca3af; padding: 2px 4px; text-align: left; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4; background: linear-gradient(to bottom, #f3f4f6, #e5e7eb); font-weight: 600; font-size: ${parseFloat(printFontSize.value) - 1}px; color: #374151; height: ${printRowHeight - 2}px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; overflow: hidden; ${widthStyle}">${col.label}</th>`;
+        });
+        pageHTML += '</tr></thead><tbody>';
+        group.reservations.forEach((reservation, index) => {
+          pageHTML += `<tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'}; height: ${printRowHeight}px;">`;
+          finalColumns.forEach((col) => {
+            const isMemo = col.key === 'memo';
+            const value = isMemo ? '' : getColumnValue(reservation, col.key);
+            const widthStyle = isMemo ? `width: ${printMemoSize.value}px;` : '';
+            pageHTML += `<td style="border: 1px solid #9ca3af; padding: 3px 5px; text-align: left; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4; font-size: ${printFontSize.value}px; color: #1f2937; height: ${printRowHeight}px; vertical-align: top; overflow: hidden; ${widthStyle}">${value}</td>`;
+          });
+          pageHTML += '</tr>';
+        });
+        pageHTML += '</tbody></table>';
+      });
+    } else {
+      // 予約フォーム以外の場合：通常の表示
+      pageHTML += '<table style="border-collapse: collapse; width: 100%; margin-top: 15px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); table-layout: fixed;">';
+      pageHTML += '<thead><tr>';
+      finalColumns.forEach((col) => {
+        const isMemo = col.key === 'memo';
+        const widthStyle = isMemo ? `width: ${printMemoSize.value}px;` : '';
+        pageHTML += `<th style="border: 1px solid #9ca3af; padding: 4px 6px; text-align: left; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4; background: linear-gradient(to bottom, #f3f4f6, #e5e7eb); font-weight: 600; font-size: ${parseFloat(printFontSize.value) - 1}px; color: #374151; height: ${printRowHeight - 2}px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; overflow: hidden; ${widthStyle}">${col.label}</th>`;
+      });
+      pageHTML += '</tr></thead><tbody>';
+      page.reservations.forEach((reservation, index) => {
+        pageHTML += `<tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'}; height: ${printRowHeight}px;">`;
+        finalColumns.forEach((col) => {
+          const isMemo = col.key === 'memo';
+          const value = isMemo ? '' : getColumnValue(reservation, col.key);
+          const widthStyle = isMemo ? `width: ${printMemoSize.value}px;` : '';
+          pageHTML += `<td style="border: 1px solid #9ca3af; padding: 8px 12px; text-align: left; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4; font-size: ${printFontSize.value}px; color: #1f2937; height: ${printRowHeight}px; vertical-align: top; overflow: hidden; ${widthStyle}">${value}</td>`;
+        });
+        pageHTML += '</tr>';
+      });
+      pageHTML += '</tbody></table>';
+    }
+    pageHTML += '</div>';
+    pagesHTML += pageHTML;
+  });
 
   // 印刷用HTMLを生成
   let html = `
@@ -2626,7 +2674,7 @@ const printTable = () => {
           margin: 0;
           padding: 0;
         }
-        #print-preview, .print-preview-page {
+        .print-page {
           width: 100%;
           ${printOrientation.value === 'portrait' ? 'aspect-ratio: 210 / 297;' : 'aspect-ratio: 297 / 210;'}
           margin: 0 auto 20px auto;
@@ -2635,7 +2683,7 @@ const printTable = () => {
           box-sizing: border-box;
           page-break-after: always;
         }
-        .print-preview-page:last-child {
+        .print-page:last-child {
           page-break-after: auto;
         }
         table {
@@ -2651,12 +2699,21 @@ const printTable = () => {
         tfoot {
           display: table-footer-group;
         }
+        .date-header {
+          background-color: #f3f4f6;
+          padding: 8px 12px;
+          margin-top: 10px;
+          margin-bottom: 5px;
+          font-weight: bold;
+          color: #374151;
+          border-bottom: 2px solid #9ca3af;
+        }
         @media print {
           body {
             margin: 0;
             padding: 0;
           }
-          #print-preview, .print-preview-page {
+          .print-page {
             width: 100%;
             ${printOrientation.value === 'portrait' ? 'aspect-ratio: 210 / 297;' : 'aspect-ratio: 297 / 210;'}
             margin: 0;
@@ -2665,7 +2722,7 @@ const printTable = () => {
             box-sizing: border-box;
             page-break-after: always;
           }
-          .print-preview-page:last-child {
+          .print-page:last-child {
             page-break-after: auto;
           }
         }
@@ -2682,25 +2739,46 @@ const printTable = () => {
   if (printWindow) {
     printWindow.document.write(html);
     printWindow.document.close();
+    
+    let printExecuted = false;
+    
+    // 印刷が実行されたかどうかを検知
+    printWindow.addEventListener('beforeprint', () => {
+      printExecuted = true;
+    });
+    
     printWindow.onload = () => {
       setTimeout(() => {
         printWindow.print();
-        // 印刷ダイアログが閉じられたらウィンドウを閉じる
-        setTimeout(() => {
-          printWindow.close();
+        
+        // 印刷ウィンドウが閉じられたときにモーダルを表示
+        const checkClosed = setInterval(() => {
+          if (printWindow.closed) {
+            clearInterval(checkClosed);
+            // 印刷が実行されなかった場合（キャンセル）または実行された場合でも、モーダルを表示
+            showPrintModal.value = true;
+          }
         }, 100);
+        
+        // 印刷ダイアログが閉じられた後もモーダルを表示するためのフォールバック
+        // afterprintイベントは印刷が完了したときに発火
+        printWindow.addEventListener('afterprint', () => {
+          setTimeout(() => {
+            if (!printWindow.closed) {
+              printWindow.close();
+            }
+            showPrintModal.value = true;
+          }, 100);
+        });
       }, 250);
     };
   } else {
     alert("ポップアップがブロックされています。ブラウザの設定を確認してください。");
   }
-
-  // モーダルを閉じる
-  closePrintModal();
 };
 
 // 設定変更時に自動保存（モーダル表示中のみ）
-watch([printPaperSize, printOrientation, printFontSize, printRowHeight, selectedPrintColumns], () => {
+watch([printPaperSize, printOrientation, printFontSize, selectedPrintColumns, printMemoEnabled, printMemoSize], () => {
   if (showPrintModal.value) {
     savePrintSettings();
   }
