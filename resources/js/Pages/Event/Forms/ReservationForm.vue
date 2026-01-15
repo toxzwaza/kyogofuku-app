@@ -138,10 +138,11 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ <span class="text-red-500">*</span></label>
                 <input
                     v-model="form.furigana"
                     type="text"
+                    required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
             </div>
@@ -191,19 +192,21 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">住所</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">住所 <span class="text-red-500">*</span></label>
                 <input
                     v-model="form.address"
                     type="text"
+                    required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">生年月日</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">生年月日 <span class="text-red-500">*</span></label>
                 <input
                     v-model="form.birth_date"
                     type="date"
+                    required
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
             </div>
