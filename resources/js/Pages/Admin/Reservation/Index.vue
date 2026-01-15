@@ -280,7 +280,7 @@
                         :key="timeslot.id"
                         :value="timeslot.start_at"
                       >
-                        {{ formatDateTime(timeslot.start_at) }}
+                        {{ formatDateTimeForOption(timeslot.start_at) }}
                       </option>
                     </select>
                   </div>
@@ -567,7 +567,7 @@
                                 </div>
                                 <div class="text-xs text-gray-500 mt-2">
                                   登録日時:
-                                  {{ formatDateTime(reservation.created_at) }}
+                                  <span v-html="formatDateTime(reservation.created_at)"></span>
                                 </div>
                               </div>
                               <div class="flex space-x-2 ml-4">
@@ -741,7 +741,7 @@
 
                     <!-- 登録日時 -->
                     <div class="text-xs text-gray-500 mb-4">
-                      登録: {{ formatDateTime(reservation.created_at) }}
+                      登録: <span v-html="formatDateTime(reservation.created_at)"></span>
                     </div>
 
                     <!-- 操作ボタン -->
@@ -880,7 +880,7 @@
                         :key="timeslot.id"
                         :value="timeslot.start_at"
                       >
-                        {{ formatDateTime(timeslot.start_at) }}
+                        {{ formatDateTimeForOption(timeslot.start_at) }}
                       </option>
                     </select>
                   </div>
@@ -899,6 +899,29 @@
                     </button>
                   </div>
                 </div>
+              </div>
+
+              <!-- 出力ボタン -->
+              <div class="mb-4 flex justify-end">
+                <button
+                  @click="openPrintModal"
+                  class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 inline-flex items-center"
+                >
+                  <svg
+                    class="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                    />
+                  </svg>
+                  出力
+                </button>
               </div>
 
               <div class="overflow-x-auto">
@@ -1076,133 +1099,188 @@
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
-                    <tr
-                      v-for="reservation in sortedReservations"
-                      :key="reservation.id"
-                    >
-                      <td
-                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                      >
-                        {{ reservation.id }}
-                      </td>
-
-                      <!-- 予約フォームの場合 -->
-                      <template v-if="event.form_type === 'reservation'">
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    <!-- 予約フォームの場合：日付ごとにテーブルを分ける -->
+                    <template v-if="event.form_type === 'reservation'">
+                      <template v-for="group in groupedReservationsByDate" :key="group.date || 'no-date'">
+                        <!-- 日付ヘッダー行 -->
+                        <tr class="bg-gray-100">
+                          <td :colspan="18" class="px-6 py-3 text-sm font-semibold text-gray-700">
+                            {{ group.dateDisplay }}
+                          </td>
+                        </tr>
+                        <!-- 予約データ行 -->
+                        <tr
+                          v-for="reservation in group.reservations"
+                          :key="reservation.id"
                         >
-                          {{
-                            reservation.reservation_datetime
-                              ? formatDateTime(reservation.reservation_datetime)
-                              : "-"
-                          }}
-                        </td>
-                      </template>
-
-                      <td
-                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                      >
-                        {{ reservation.name }}
-                      </td>
-                      <td
-                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                      >
-                        {{ reservation.email }}
-                      </td>
-                      <td
-                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                      >
-                        {{ reservation.phone }}
-                      </td>
-
-                      <!-- 予約フォームの場合 -->
-                      <template v-if="event.form_type === 'reservation'">
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{ reservation.venue ? reservation.venue.name : "-" }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{ reservation.furigana || "-" }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{ reservation.has_visited_before ? "あり" : "なし" }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{ reservation.address || "-" }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{
-                            reservation.birth_date
-                              ? formatDate(reservation.birth_date)
-                              : "-"
-                          }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{
-                            reservation.seijin_year
-                              ? reservation.seijin_year + "年"
-                              : "-"
-                          }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{ reservation.school_name || "-" }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{ reservation.parking_usage || "-" }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{
-                            reservation.considering_plans &&
-                            reservation.considering_plans.length > 0
-                              ? reservation.considering_plans.join(", ")
-                              : "-"
-                          }}
-                        </td>
-                        <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                        >
-                          {{ reservation.referred_by_name || "-" }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <span
-                            v-if="reservation.status"
-                            :class="getStatusBadgeClass(reservation.status)"
-                            class="px-2 py-1 text-xs font-medium rounded-full"
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                           >
-                            {{ reservation.status
-                            }}<span v-if="reservation.status_updated_by"
-                              >:{{ reservation.status_updated_by.name }}</span
+                            {{ reservation.id }}
+                          </td>
+                          <td
+                            class="px-6 py-4 text-sm text-gray-900"
+                          >
+                            <span
+                              v-if="reservation.reservation_datetime"
                             >
-                          </span>
-                          <span v-else class="text-sm text-gray-500">-</span>
+                              {{ formatTimeOnly(reservation.reservation_datetime) }}
+                            </span>
+                            <span v-else>-</span>
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.name }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.email }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.phone }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.venue ? reservation.venue.name : "-" }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.furigana || "-" }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.has_visited_before ? "あり" : "なし" }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.address || "-" }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{
+                              reservation.birth_date
+                                ? formatDate(reservation.birth_date)
+                                : "-"
+                            }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{
+                              reservation.seijin_year
+                                ? reservation.seijin_year + "年"
+                                : "-"
+                            }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.school_name || "-" }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.parking_usage || "-" }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{
+                              reservation.considering_plans &&
+                              reservation.considering_plans.length > 0
+                                ? reservation.considering_plans.join(", ")
+                                : "-"
+                            }}
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{ reservation.referred_by_name || "-" }}
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span
+                              v-if="reservation.status"
+                              :class="getStatusBadgeClass(reservation.status)"
+                              class="px-2 py-1 text-xs font-medium rounded-full"
+                            >
+                              {{ reservation.status
+                              }}<span v-if="reservation.status_updated_by"
+                                >:{{ reservation.status_updated_by.name }}</span
+                              >
+                            </span>
+                            <span v-else class="text-sm text-gray-500">-</span>
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {{
+                              reservation.status_updated_by
+                                ? reservation.status_updated_by.name
+                                : "-"
+                            }}
+                          </td>
+                          <td
+                            class="px-6 py-4 text-sm text-gray-900"
+                          >
+                            <span v-html="formatDateTime(reservation.created_at)"></span>
+                          </td>
+                          <td
+                            class="px-6 py-4 whitespace-nowrap text-sm font-medium"
+                          >
+                            <Link
+                              :href="
+                                route('admin.reservations.show', reservation.id)
+                              "
+                              class="text-indigo-600 hover:text-indigo-900 mr-4"
+                            >
+                              詳細
+                            </Link>
+                            <button
+                              @click="deleteReservation(reservation.id)"
+                              class="text-red-600 hover:text-red-900"
+                            >
+                              削除
+                            </button>
+                          </td>
+                        </tr>
+                      </template>
+                    </template>
+                    
+                    <!-- 予約フォーム以外の場合：通常の表示 -->
+                    <template v-else>
+                      <tr
+                        v-for="reservation in sortedReservations"
+                        :key="reservation.id"
+                      >
+                        <td
+                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        >
+                          {{ reservation.id }}
                         </td>
                         <td
                           class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                         >
-                          {{
-                            reservation.status_updated_by
-                              ? reservation.status_updated_by.name
-                              : "-"
-                          }}
+                          {{ reservation.name }}
                         </td>
-                      </template>
+                        <td
+                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        >
+                          {{ reservation.email }}
+                        </td>
+                        <td
+                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        >
+                          {{ reservation.phone }}
+                        </td>
 
                       <!-- 資料請求フォームの場合 -->
                       <template v-if="event.form_type === 'document'">
@@ -1296,9 +1374,9 @@
                       </template>
 
                       <td
-                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        class="px-6 py-4 text-sm text-gray-900"
                       >
-                        {{ formatDateTime(reservation.created_at) }}
+                        <span v-html="formatDateTime(reservation.created_at)"></span>
                       </td>
                       <td
                         class="px-6 py-4 whitespace-nowrap text-sm font-medium"
@@ -1319,6 +1397,7 @@
                         </button>
                       </td>
                     </tr>
+                    </template>
                   </tbody>
                 </table>
               </div>
@@ -1413,11 +1492,268 @@
         </div>
       </div>
     </div>
+
+    <!-- 印刷プレビューモーダル -->
+    <div
+      v-if="showPrintModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style="background-color: rgba(0, 0, 0, 0.5);"
+      @click.self="closePrintModal"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div
+          class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10"
+        >
+          <h2 class="text-2xl font-bold">印刷設定</h2>
+          <button
+            @click="closePrintModal"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="flex gap-6">
+            <!-- 左側: 設定エリア -->
+            <div class="w-1/3 flex-shrink-0">
+              <!-- 向き選択 -->
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  向き
+                </label>
+                <div class="flex gap-4">
+                  <label class="flex items-center">
+                    <input
+                      type="radio"
+                      v-model="printOrientation"
+                      value="portrait"
+                      class="mr-2"
+                    />
+                    <span>縦向き</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input
+                      type="radio"
+                      v-model="printOrientation"
+                      value="landscape"
+                      class="mr-2"
+                    />
+                    <span>横向き</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- フォントサイズ選択 -->
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  フォントサイズ (px)
+                </label>
+                <input
+                  type="number"
+                  v-model.number="printFontSize"
+                  min="8"
+                  max="24"
+                  step="1"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <!-- 行の縦幅選択 -->
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  行の縦幅 (px)
+                </label>
+                <input
+                  type="number"
+                  v-model.number="printRowHeight"
+                  min="20"
+                  max="60"
+                  step="1"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <!-- カラム選択 -->
+              <div class="mb-6">
+                <div class="flex justify-between items-center mb-3">
+                  <label class="block text-sm font-medium text-gray-700">
+                    印刷に含めるカラム
+                  </label>
+                  <div class="flex gap-2">
+                    <button
+                      @click="selectAllColumns"
+                      class="px-3 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                    >
+                      すべて選択
+                    </button>
+                    <button
+                      @click="deselectAllColumns"
+                      class="px-3 py-1 text-xs font-medium text-gray-600 hover:text-gray-800"
+                    >
+                      すべて解除
+                    </button>
+                  </div>
+                </div>
+                <div
+                  class="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto"
+                >
+                  <div
+                    v-for="column in printColumns"
+                    :key="column.key"
+                    class="mb-2"
+                  >
+                    <label class="flex items-center">
+                      <input
+                        type="checkbox"
+                        v-model="selectedPrintColumns"
+                        :value="column.key"
+                        class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span class="text-sm text-gray-700">{{ column.label }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右側: プレビューエリア -->
+            <div class="flex-1 min-w-0">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                プレビュー
+              </label>
+              <div
+                class="border-2 border-gray-300 rounded-lg p-6 bg-gradient-to-br from-gray-50 to-white overflow-auto shadow-inner"
+                :style="{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                }"
+              >
+                <div
+                  v-for="page in calculatePages.pages"
+                  :key="page.pageNumber"
+                  :id="page.pageNumber === 1 ? 'print-preview' : ''"
+                  :class="page.pageNumber === 1 ? '' : 'print-preview-page'"
+                  :style="previewStyle"
+                >
+                  <h2
+                    class="text-center mb-4 font-bold text-gray-800"
+                    :style="{
+                      fontSize: `${parseFloat(printFontSize.value) + 2}px`,
+                      marginBottom: '15px',
+                      textAlign: 'center',
+                      color: '#1f2937',
+                      fontWeight: 'bold',
+                    }"
+                  >
+                    予約一覧 - {{ event.title }}
+                  </h2>
+                  <table
+                    style="border-collapse: collapse; width: 100%; margin-top: 15px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); table-layout: fixed;"
+                  >
+                    <thead>
+                      <tr>
+                        <th
+                          v-for="column in selectedPrintColumnsList"
+                          :key="column.key"
+                          :style="{
+                            border: '1px solid #9ca3af',
+                            padding: '4px 6px',
+                            textAlign: 'left',
+                            wordWrap: 'break-word',
+                            wordBreak: 'break-word',
+                            whiteSpace: 'normal',
+                            lineHeight: '1.4',
+                            background: 'linear-gradient(to bottom, #f3f4f6, #e5e7eb)',
+                            fontWeight: '600',
+                            fontSize: `${parseFloat(printFontSize.value) - 1}px`,
+                            color: '#374151',
+                            height: `${parseFloat(printRowHeight.value) - 2}px`,
+                            verticalAlign: 'middle',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            overflow: 'hidden',
+                          }"
+                        >
+                          {{ column.label }}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="(reservation, index) in page.reservations"
+                        :key="reservation.id"
+                        :style="{
+                          backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
+                          height: `${printRowHeight.value}px`,
+                        }"
+                      >
+                        <td
+                          v-for="column in selectedPrintColumnsList"
+                          :key="column.key"
+                          :style="{
+                            border: '1px solid #9ca3af',
+                            padding: '8px 12px',
+                            textAlign: 'left',
+                            wordWrap: 'break-word',
+                            wordBreak: 'break-word',
+                            whiteSpace: 'normal',
+                            lineHeight: '1.4',
+                            fontSize: `${printFontSize.value}px`,
+                            color: '#1f2937',
+                            height: `${printRowHeight.value}px`,
+                            verticalAlign: 'top',
+                            overflow: 'hidden',
+                          }"
+                        >
+                          <span v-html="getColumnValue(reservation, column.key)"></span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ボタン -->
+          <div class="flex justify-end space-x-3 mt-6">
+            <button
+              @click="closePrintModal"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              キャンセル
+            </button>
+            <button
+              @click="printTable"
+              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+            >
+              印刷
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import axios from "axios";
@@ -1445,6 +1781,55 @@ const adjustingTimeslotId = ref(null);
 const showTextReservationModal = ref(false);
 const textReservationInput = ref("");
 const selectedTimeslotForTextReservation = ref(null);
+
+// 印刷設定の読み込み
+const loadPrintSettings = () => {
+  const savedSettings = localStorage.getItem('printSettings');
+  if (savedSettings) {
+    try {
+      const settings = JSON.parse(savedSettings);
+      return {
+        paperSize: settings.paperSize || 'A4',
+        orientation: settings.orientation || 'portrait',
+        fontSize: settings.fontSize || '12',
+        rowHeight: settings.rowHeight || '30',
+        selectedColumns: settings.selectedColumns || []
+      };
+    } catch (e) {
+      console.error('Failed to load print settings:', e);
+    }
+  }
+  return {
+    paperSize: 'A4',
+    orientation: 'portrait',
+    fontSize: '12',
+    rowHeight: '30',
+    selectedColumns: []
+  };
+};
+
+// 印刷設定の保存
+const savePrintSettings = () => {
+  const settings = {
+    paperSize: printPaperSize.value,
+    orientation: printOrientation.value,
+    fontSize: printFontSize.value,
+    rowHeight: printRowHeight.value,
+    selectedColumns: selectedPrintColumns.value
+  };
+  localStorage.setItem('printSettings', JSON.stringify(settings));
+};
+
+// 初期設定を読み込む
+const initialSettings = loadPrintSettings();
+
+// 印刷モーダルの状態（用紙サイズはA4に固定）
+const showPrintModal = ref(false);
+const printPaperSize = ref("A4");
+const printOrientation = ref(initialSettings.orientation);
+const printFontSize = ref(Number(initialSettings.fontSize));
+const printRowHeight = ref(Number(initialSettings.rowHeight));
+const selectedPrintColumns = ref(initialSettings.selectedColumns);
 
 // 絞り込み用のstate
 const filterVenueId = ref(props.filters?.venue_id || "");
@@ -1537,6 +1922,177 @@ const sortedReservations = computed(() => {
 
   // 予約フォーム以外の場合は元のデータをそのまま返す
   return props.reservations.data;
+});
+
+// 予約データを日付ごとにグループ化（予約フォームの場合のみ）
+const groupedReservationsByDate = computed(() => {
+  if (props.event.form_type !== "reservation") {
+    return [];
+  }
+
+  const groups = {};
+  const reservationsWithoutDate = [];
+
+  sortedReservations.value.forEach((reservation) => {
+    if (!reservation.reservation_datetime) {
+      reservationsWithoutDate.push(reservation);
+      return;
+    }
+
+    const date = new Date(reservation.reservation_datetime);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    
+    if (!groups[dateKey]) {
+      groups[dateKey] = {
+        date: dateKey,
+        dateDisplay: formatDateHeader(reservation.reservation_datetime),
+        reservations: []
+      };
+    }
+    
+    groups[dateKey].reservations.push(reservation);
+  });
+
+  // 日付ごとにソート（日付の昇順）
+  const sortedGroups = Object.values(groups).sort((a, b) => {
+    return new Date(a.date) - new Date(b.date);
+  });
+
+  // 予約日時がないものは最後に追加
+  if (reservationsWithoutDate.length > 0) {
+    sortedGroups.push({
+      date: null,
+      dateDisplay: "予約日時なし",
+      reservations: reservationsWithoutDate
+    });
+  }
+
+  return sortedGroups;
+});
+
+// 印刷用カラムリスト（表示テーブルの順序と一致）
+const printColumns = computed(() => {
+  const columns = [];
+
+  // IDは常に最初
+  columns.push({ key: "id", label: "ID" });
+
+  if (props.event.form_type === "reservation") {
+    // 予約フォームの場合
+    columns.push(
+      { key: "reservation_datetime", label: "予約日時" },
+      { key: "name", label: "お名前" },
+      { key: "email", label: "メール" },
+      { key: "phone", label: "電話番号" },
+      { key: "venue", label: "ご来店会場" },
+      { key: "furigana", label: "フリガナ" },
+      { key: "has_visited_before", label: "過去来店" },
+      { key: "address", label: "住所" },
+      { key: "birth_date", label: "生年月日" },
+      { key: "seijin_year", label: "成人式予定年" },
+      { key: "school_name", label: "学校名" },
+      { key: "parking_usage", label: "駐車場利用" },
+      { key: "considering_plans", label: "検討中のプラン" },
+      { key: "referred_by_name", label: "ご紹介者様" },
+      { key: "status", label: "ステータス" },
+      { key: "status_updated_by", label: "ステータス更新者" },
+      { key: "created_at", label: "登録日時" }
+    );
+  } else if (props.event.form_type === "document") {
+    // 資料請求フォームの場合
+    columns.push(
+      { key: "name", label: "お名前" },
+      { key: "email", label: "メール" },
+      { key: "phone", label: "電話番号" },
+      { key: "request_method", label: "請求方法" },
+      { key: "furigana", label: "フリガナ" },
+      { key: "birth_date", label: "生年月日" },
+      { key: "postal_code", label: "郵便番号" },
+      { key: "address", label: "住所" },
+      { key: "privacy_agreed", label: "個人情報同意" },
+      { key: "status", label: "ステータス" },
+      { key: "status_updated_by", label: "ステータス更新者" },
+      { key: "created_at", label: "登録日時" }
+    );
+  } else if (props.event.form_type === "contact") {
+    // お問い合わせフォームの場合
+    columns.push(
+      { key: "name", label: "お名前" },
+      { key: "email", label: "メール" },
+      { key: "phone", label: "電話番号" },
+      { key: "heard_from", label: "問い合わせ回答方法" },
+      { key: "status", label: "ステータス" },
+      { key: "status_updated_by", label: "ステータス更新者" },
+      { key: "created_at", label: "登録日時" }
+    );
+  }
+
+  return columns;
+});
+
+// 選択されたカラムのみを順序通りに返す
+const selectedPrintColumnsList = computed(() => {
+  return printColumns.value.filter((col) =>
+    selectedPrintColumns.value.includes(col.key)
+  );
+});
+
+// ページ分割の計算
+const calculatePages = computed(() => {
+  // A4サイズの高さ（px単位、96dpiを想定）
+  // A4縦向き: 297mm ≈ 1122px, A4横向き: 210mm ≈ 794px
+  const mmToPx = 3.779527559; // 1mm = 3.779527559px (96dpi)
+  const pageHeightMm = printOrientation.value === 'portrait' ? 297 : 210;
+  const pageHeightPx = pageHeightMm * mmToPx;
+  
+  // マージンとパディングを考慮
+  const marginPx = 10 * mmToPx * 2; // 上下マージン（1cm = 10mm）
+  const paddingPx = 20 * 2; // 上下パディング
+  const headerHeightPx = parseFloat(printFontSize.value) + 2 + 15 + 15; // タイトル + マージン
+  const tableHeaderHeightPx = parseFloat(printRowHeight.value) - 2;
+  
+  // 利用可能な高さ
+  const availableHeightPx = pageHeightPx - marginPx - paddingPx - headerHeightPx - tableHeaderHeightPx;
+  
+  // 1ページに収まる行数
+  const rowsPerPage = Math.floor(availableHeightPx / parseFloat(printRowHeight.value));
+  
+  // ページごとにデータを分割
+  const pages = [];
+  const reservations = sortedReservations.value;
+  
+  for (let i = 0; i < reservations.length; i += rowsPerPage) {
+    pages.push({
+      pageNumber: Math.floor(i / rowsPerPage) + 1,
+      reservations: reservations.slice(i, i + rowsPerPage)
+    });
+  }
+  
+  return {
+    rowsPerPage,
+    pages,
+    totalPages: pages.length
+  };
+});
+
+// プレビュー用のスタイル
+const previewStyle = computed(() => {
+  // A4のアスペクト比を計算（縦向き: 210/297, 横向き: 297/210）
+  const aspectRatio = printOrientation.value === 'portrait' ? 210 / 297 : 297 / 210;
+
+  return {
+    width: "100%",
+    aspectRatio: aspectRatio,
+    fontSize: `${printFontSize.value}px`,
+    fontFamily:
+      "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif",
+    margin: "0 auto 20px auto",
+    padding: "20px",
+    backgroundColor: "#ffffff",
+    boxSizing: "border-box",
+    display: "block",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+  };
 });
 
 // 会場変更時の処理
@@ -1653,7 +2209,31 @@ const getReservationUrl = (timeslot) => {
 const formatDateTime = (datetime) => {
   if (!datetime) return "-";
   const date = new Date(datetime);
-  return date.toLocaleString("ja-JP");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${month}/${day} ${hours}:${minutes}`;
+};
+
+// 時間のみを表示（hh:mm）
+const formatTimeOnly = (datetime) => {
+  if (!datetime) return "-";
+  const date = new Date(datetime);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+// 選択肢などで使用する日時フォーマット（改行なし）
+const formatDateTimeForOption = (datetime) => {
+  if (!datetime) return "-";
+  const date = new Date(datetime);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${month}/${day} ${hours}:${minutes}`;
 };
 
 const formatDate = (dateString) => {
@@ -1904,6 +2484,227 @@ const proceedToReservationFromText = () => {
   closeTextReservationModal();
   window.location.href = `${baseUrl}?${params.toString()}`;
 };
+
+// 印刷モーダルを開く
+const openPrintModal = () => {
+  // 保存された設定を読み込む
+  const settings = loadPrintSettings();
+  printPaperSize.value = "A4"; // 用紙サイズはA4に固定
+  printOrientation.value = settings.orientation;
+  printFontSize.value = settings.fontSize;
+  printRowHeight.value = settings.rowHeight;
+  
+  // カラムが保存されていない、または無効な場合は全カラムを選択
+  if (settings.selectedColumns.length === 0 || 
+      !settings.selectedColumns.every(col => 
+        printColumns.value.some(c => c.key === col)
+      )) {
+    selectedPrintColumns.value = printColumns.value.map((col) => col.key);
+  } else {
+    selectedPrintColumns.value = settings.selectedColumns;
+  }
+  
+  showPrintModal.value = true;
+};
+
+// 印刷モーダルを閉じる
+const closePrintModal = () => {
+  showPrintModal.value = false;
+};
+
+// 全カラムを選択
+const selectAllColumns = () => {
+  selectedPrintColumns.value = printColumns.value.map((col) => col.key);
+};
+
+// 全カラムを解除
+const deselectAllColumns = () => {
+  selectedPrintColumns.value = [];
+};
+
+// カラムの値を取得するヘルパー関数
+const getColumnValue = (reservation, columnKey) => {
+  switch (columnKey) {
+    case "id":
+      return reservation.id;
+    case "name":
+      return reservation.name;
+    case "email":
+      return reservation.email;
+    case "phone":
+      return reservation.phone || "-";
+    case "reservation_datetime":
+      return reservation.reservation_datetime
+        ? formatTimeOnly(reservation.reservation_datetime)
+        : "-";
+    case "venue":
+      return reservation.venue ? reservation.venue.name : "-";
+    case "furigana":
+      return reservation.furigana || "-";
+    case "has_visited_before":
+      return reservation.has_visited_before ? "あり" : "なし";
+    case "address":
+      return reservation.address || "-";
+    case "birth_date":
+      return reservation.birth_date ? formatDate(reservation.birth_date) : "-";
+    case "seijin_year":
+      return reservation.seijin_year ? reservation.seijin_year + "年" : "-";
+    case "school_name":
+      return reservation.school_name || "-";
+    case "parking_usage":
+      return reservation.parking_usage || "-";
+    case "considering_plans":
+      return reservation.considering_plans &&
+        reservation.considering_plans.length > 0
+        ? reservation.considering_plans.join(", ")
+        : "-";
+    case "referred_by_name":
+      return reservation.referred_by_name || "-";
+    case "status":
+      return reservation.status || "-";
+    case "status_updated_by":
+      return reservation.status_updated_by
+        ? reservation.status_updated_by.name
+        : "-";
+    case "request_method":
+      return reservation.request_method || "-";
+    case "postal_code":
+      return reservation.postal_code || "-";
+    case "privacy_agreed":
+      return reservation.privacy_agreed ? "同意" : "-";
+    case "heard_from":
+      return reservation.heard_from || "-";
+    case "created_at":
+      return formatDateTime(reservation.created_at);
+    default:
+      return "-";
+  }
+};
+
+// テーブルを印刷
+const printTable = () => {
+  if (selectedPrintColumns.value.length === 0) {
+    alert("少なくとも1つのカラムを選択してください。");
+    return;
+  }
+
+  // 設定を保存
+  savePrintSettings();
+
+  // すべてのページ要素を取得
+  const firstPageElement = document.getElementById('print-preview');
+  const otherPageElements = document.querySelectorAll('.print-preview-page');
+  
+  if (!firstPageElement) {
+    alert("プレビュー要素が見つかりません。");
+    return;
+  }
+
+  // すべてのページ要素をクローン
+  const allPages = [firstPageElement.cloneNode(true)];
+  otherPageElements.forEach((element) => {
+    allPages.push(element.cloneNode(true));
+  });
+
+  // すべてのページのHTMLを結合
+  const pagesHTML = allPages.map((element) => element.outerHTML).join('');
+
+  // 印刷用HTMLを生成
+  let html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>予約一覧 - ${props.event.title}</title>
+      <style>
+        @page {
+          size: ${printPaperSize.value} ${printOrientation.value};
+          margin: 1cm;
+        }
+        body {
+          font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
+          margin: 0;
+          padding: 0;
+        }
+        #print-preview, .print-preview-page {
+          width: 100%;
+          ${printOrientation.value === 'portrait' ? 'aspect-ratio: 210 / 297;' : 'aspect-ratio: 297 / 210;'}
+          margin: 0 auto 20px auto;
+          padding: 20px;
+          background-color: #ffffff;
+          box-sizing: border-box;
+          page-break-after: always;
+        }
+        .print-preview-page:last-child {
+          page-break-after: auto;
+        }
+        table {
+          page-break-inside: auto;
+        }
+        tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        thead {
+          display: table-header-group;
+        }
+        tfoot {
+          display: table-footer-group;
+        }
+        @media print {
+          body {
+            margin: 0;
+            padding: 0;
+          }
+          #print-preview, .print-preview-page {
+            width: 100%;
+            ${printOrientation.value === 'portrait' ? 'aspect-ratio: 210 / 297;' : 'aspect-ratio: 297 / 210;'}
+            margin: 0;
+            padding: 20px;
+            background-color: #ffffff;
+            box-sizing: border-box;
+            page-break-after: always;
+          }
+          .print-preview-page:last-child {
+            page-break-after: auto;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      ${pagesHTML}
+    </body>
+    </html>
+  `;
+
+  // 新しいウィンドウを開いて印刷
+  const printWindow = window.open("", "_blank");
+  if (printWindow) {
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+        // 印刷ダイアログが閉じられたらウィンドウを閉じる
+        setTimeout(() => {
+          printWindow.close();
+        }, 100);
+      }, 250);
+    };
+  } else {
+    alert("ポップアップがブロックされています。ブラウザの設定を確認してください。");
+  }
+
+  // モーダルを閉じる
+  closePrintModal();
+};
+
+// 設定変更時に自動保存（モーダル表示中のみ）
+watch([printPaperSize, printOrientation, printFontSize, printRowHeight, selectedPrintColumns], () => {
+  if (showPrintModal.value) {
+    savePrintSettings();
+  }
+}, { deep: true });
 
 onMounted(() => {
   if (props.success) {
