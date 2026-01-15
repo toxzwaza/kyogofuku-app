@@ -800,129 +800,181 @@
 
             <!-- テーブル表示 -->
             <div v-if="activeTab === 'table'">
-              <!-- 並べ替えUI（予約フォームの場合のみ） -->
-              <div
-                v-if="event.form_type === 'reservation'"
-                class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
-              >
+              <!-- 各種操作 -->
+              <div class="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
                 <h3 class="text-sm font-semibold text-gray-700 mb-4">
-                  並べ替え
+                  各種操作
                 </h3>
-                <div class="flex flex-col md:flex-row md:items-end gap-4">
-                  <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
-                      >予約日付</label
-                    >
-                    <select
-                      v-model="sortDateOrder"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    >
-                      <option value="asc">新しい順</option>
-                      <option value="desc">古い順</option>
-                    </select>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
-                      >予約時間</label
-                    >
-                    <select
-                      v-model="sortTimeOrder"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    >
-                      <option value="asc">新しい順</option>
-                      <option value="desc">古い順</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 絞り込みUI（予約フォームの場合のみ） -->
-              <div
-                v-if="event.form_type === 'reservation'"
-                class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                <h3 class="text-sm font-semibold text-gray-700 mb-4">
-                  絞り込み
-                </h3>
-                <div class="flex flex-col md:flex-row md:items-end gap-4">
-                  <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
-                      >会場</label
-                    >
-                    <select
-                      v-model="filterVenueId"
-                      @change="onVenueChangeAndApply"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    >
-                      <option value="">すべて</option>
-                      <option
-                        v-for="venue in venues"
-                        :key="venue.id"
-                        :value="venue.id"
-                      >
-                        {{ venue.name }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
-                      >時間</label
-                    >
-                    <select
-                      v-model="filterReservationDatetime"
-                      @change="applyFilters"
-                      :disabled="!filterVenueId"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">すべて</option>
-                      <option
-                        v-for="timeslot in availableTimeslots"
-                        :key="timeslot.id"
-                        :value="timeslot.start_at"
-                      >
-                        {{ formatDateTimeForOption(timeslot.start_at) }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="flex gap-2">
-                    <button
-                      @click="applyFilters"
-                      class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      絞り込み
-                    </button>
-                    <button
-                      @click="resetFilters"
-                      class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                    >
-                      リセット
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 出力ボタン -->
-              <div class="mb-4 flex justify-end">
-                <button
-                  @click="openPrintModal"
-                  class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 inline-flex items-center"
-                >
-                  <svg
-                    class="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                
+                <!-- 印刷ボタン -->
+                <div class="mb-4">
+                  <button
+                    @click="openPrintModal"
+                    class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 inline-flex items-center"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                    />
-                  </svg>
-                  出力
-                </button>
+                    <svg
+                      class="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                      />
+                    </svg>
+                    印刷
+                  </button>
+                </div>
+
+                <!-- 並べ替えと絞り込み（予約フォームの場合のみ） -->
+                <div
+                  v-if="event.form_type === 'reservation'"
+                  class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  <!-- 並べ替えUI -->
+                  <div class="bg-blue-50 rounded-lg border border-blue-200 overflow-hidden">
+                    <button
+                      @click="isSortOpen = !isSortOpen"
+                      class="w-full p-4 flex justify-between items-center hover:bg-blue-100 transition-colors duration-200"
+                    >
+                      <h3 class="text-sm font-semibold text-gray-700">
+                        並べ替え
+                      </h3>
+                      <svg
+                        class="w-5 h-5 text-gray-600 transition-transform duration-200"
+                        :class="{ 'rotate-180': isSortOpen }"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                    <div v-show="isSortOpen" class="px-4 pb-4">
+                      <div class="flex flex-col gap-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                            >予約日付</label
+                          >
+                          <select
+                            v-model="sortDateOrder"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          >
+                            <option value="asc">新しい順</option>
+                            <option value="desc">古い順</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                            >予約時間</label
+                          >
+                          <select
+                            v-model="sortTimeOrder"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          >
+                            <option value="asc">新しい順</option>
+                            <option value="desc">古い順</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 絞り込みUI -->
+                  <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                    <button
+                      @click="isFilterOpen = !isFilterOpen"
+                      class="w-full p-4 flex justify-between items-center hover:bg-gray-100 transition-colors duration-200"
+                    >
+                      <h3 class="text-sm font-semibold text-gray-700">
+                        絞り込み
+                      </h3>
+                      <svg
+                        class="w-5 h-5 text-gray-600 transition-transform duration-200"
+                        :class="{ 'rotate-180': isFilterOpen }"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                    <div v-show="isFilterOpen" class="px-4 pb-4">
+                      <div class="flex flex-col gap-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                            >会場</label
+                          >
+                          <select
+                            v-model="filterVenueId"
+                            @change="onVenueChangeAndApply"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          >
+                            <option value="">すべて</option>
+                            <option
+                              v-for="venue in venues"
+                              :key="venue.id"
+                              :value="venue.id"
+                            >
+                              {{ venue.name }}
+                            </option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                            >時間</label
+                          >
+                          <select
+                            v-model="filterReservationDatetime"
+                            @change="applyFilters"
+                            :disabled="!filterVenueId"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          >
+                            <option value="">すべて</option>
+                            <option
+                              v-for="timeslot in availableTimeslots"
+                              :key="timeslot.id"
+                              :value="timeslot.start_at"
+                            >
+                              {{ formatDateTimeForOption(timeslot.start_at) }}
+                            </option>
+                          </select>
+                        </div>
+                        <div class="flex gap-2">
+                          <button
+                            @click="applyFilters"
+                            class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                          >
+                            絞り込み
+                          </button>
+                          <button
+                            @click="resetFilters"
+                            class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                          >
+                            リセット
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              <!-- 区切り線 -->
+              <div class="mb-6 border-t border-gray-300"></div>
 
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -1403,28 +1455,6 @@
               </div>
             </div>
 
-            <!-- ページネーション -->
-            <div
-              v-if="reservations.links && reservations.links.length > 3"
-              class="mt-6"
-            >
-              <div class="flex justify-center">
-                <Link
-                  v-for="link in reservations.links"
-                  :key="link.label"
-                  :href="link.url"
-                  :class="[
-                    'px-4 py-2 mx-1 rounded-md text-sm',
-                    link.active
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300',
-                    !link.url ? 'opacity-50 cursor-not-allowed' : '',
-                  ]"
-                >
-                  <span v-html="link.label"></span>
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -1700,6 +1730,10 @@ const activeTab = ref(
 );
 const adjustingTimeslotId = ref(null);
 
+// アコーディオンの開閉状態
+const isSortOpen = ref(false);
+const isFilterOpen = ref(false);
+
 // テキストから予約登録モーダルの状態
 const showTextReservationModal = ref(false);
 const textReservationInput = ref("");
@@ -1785,13 +1819,13 @@ const availableTimeslots = computed(() => {
 
 // 並べ替えられた予約データ
 const sortedReservations = computed(() => {
-  if (!props.reservations || !props.reservations.data) {
+  if (!props.reservations || !Array.isArray(props.reservations) || props.reservations.length === 0) {
     return [];
   }
 
   // 予約フォームの場合のみ並べ替えを適用
   if (props.event.form_type === "reservation") {
-    const data = [...props.reservations.data];
+    const data = [...props.reservations];
 
     return data.sort((a, b) => {
       // 予約日時がない場合は最後に配置
@@ -1851,7 +1885,7 @@ const sortedReservations = computed(() => {
   }
 
   // 予約フォーム以外の場合は元のデータをそのまま返す
-  return props.reservations.data;
+  return props.reservations;
 });
 
 // 予約データを日付ごとにグループ化（予約フォームの場合のみ）

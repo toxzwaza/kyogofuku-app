@@ -42,9 +42,7 @@ class ReservationController extends Controller
             $reservationsQuery->where('reservation_datetime', $request->reservation_datetime);
         }
         
-        $reservations = $reservationsQuery->orderBy('created_at', 'desc')
-            ->paginate(20)
-            ->withQueryString();
+        $reservations = $reservationsQuery->orderBy('created_at', 'desc')->get();
         
         // 時間リストを取得（予約フォームの場合のみ、フィルター用）
         $filterTimeslots = [];
