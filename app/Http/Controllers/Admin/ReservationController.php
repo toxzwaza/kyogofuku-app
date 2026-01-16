@@ -249,6 +249,14 @@ class ReservationController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // イベントの開催店舗情報を取得
+        $event = $reservation->event;
+        $eventShops = $event->shops()
+            ->where('shops.is_active', true)
+            ->select('shops.id', 'shops.name')
+            ->orderBy('shops.name')
+            ->get();
+
         return Inertia::render('Admin/Reservation/Show', [
             'reservation' => $reservation,
             'event' => $reservation->event,
@@ -261,6 +269,12 @@ class ReservationController extends Controller
                 'name' => $currentUser->name,
             ] : null,
             'userShops' => $userShops->map(function($shop) {
+                return [
+                    'id' => $shop->id,
+                    'name' => $shop->name,
+                ];
+            }),
+            'eventShops' => $eventShops->map(function($shop) {
                 return [
                     'id' => $shop->id,
                     'name' => $shop->name,
@@ -480,10 +494,10 @@ class ReservationController extends Controller
             'color' => '#3788d8',
         ]);
 
-        // 作成者を参加者として追加
-        $participantIds = [$validated['user_id']];
+        // 参加者を設定（user_idは自動で含めない - チェックボックスで選択された場合のみ含める）
+        $participantIds = [];
         if (!empty($validated['participant_ids'])) {
-            $participantIds = array_unique(array_merge($participantIds, $validated['participant_ids']));
+            $participantIds = $validated['participant_ids'];
         }
         $schedule->participantUsers()->sync($participantIds);
 

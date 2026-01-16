@@ -821,49 +821,6 @@
                     <div class="mb-4">
                       <label
                         class="block text-sm font-medium text-gray-700 mb-1"
-                        >店舗</label
-                      >
-                      <select
-                        v-model="scheduleForm.selectedShopId"
-                        @change="onShopChangeForSchedule"
-                        required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      >
-                        <option value="">店舗を選択してください</option>
-                        <option
-                          v-for="shop in userShops"
-                          :key="shop.id"
-                          :value="shop.id"
-                        >
-                          {{ shop.name }}
-                        </option>
-                      </select>
-                    </div>
-
-                    <div class="mb-4">
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
-                        >スタッフ</label
-                      >
-                      <select
-                        v-model="scheduleForm.user_id"
-                        required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      >
-                        <option value="">スタッフを選択してください</option>
-                        <option
-                          v-for="user in shopUsersForSchedule"
-                          :key="user.id"
-                          :value="user.id"
-                        >
-                          {{ user.name }}
-                        </option>
-                      </select>
-                    </div>
-
-                    <div class="mb-4">
-                      <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
                         >開始日時</label
                       >
                       <input
@@ -903,34 +860,78 @@
                         class="block text-sm font-medium text-gray-700 mb-1"
                         >参加者</label
                       >
-                      <div v-if="scheduleForm.selectedShopId" class="space-y-2">
-                        <div
-                          v-for="user in shopUsersForSchedule"
-                          :key="user.id"
-                          class="flex items-center"
+                      
+                      <!-- 店舗選択（参加者追加用） -->
+                      <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">店舗を選択して参加者を追加</label>
+                        <select
+                          v-model="scheduleForm.selectedShopId"
+                          @change="onShopChangeForSchedule"
+                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         >
-                          <input
-                            :id="`participant-${user.id}`"
-                            type="checkbox"
-                            :checked="isParticipantAddedForSchedule(user.id)"
-                            @change="
-                              toggleParticipantForSchedule(
-                                user.id,
-                                $event.target.checked
-                              )
-                            "
-                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <label
-                            :for="`participant-${user.id}`"
-                            class="ml-2 text-sm text-gray-700"
+                          <option value="">店舗を選択してください</option>
+                          <option
+                            v-for="shop in eventShops"
+                            :key="shop.id"
+                            :value="shop.id"
                           >
-                            {{ user.name }}
+                            {{ shop.name }}
+                          </option>
+                        </select>
+                      </div>
+
+                      <!-- 参加者追加済み一覧 -->
+                      <div v-if="addedParticipantsForSchedule.length > 0" class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
+                        <div class="flex flex-wrap gap-2">
+                          <span
+                            v-for="participant in addedParticipantsForSchedule"
+                            :key="participant.id"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            {{ participant.name }}
+                            <button
+                              type="button"
+                              @click="removeParticipantForSchedule(participant.id)"
+                              class="ml-1 text-indigo-600 hover:text-indigo-800 font-bold"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- 店舗ユーザー一覧（チェックボックス） -->
+                      <div v-if="scheduleForm.selectedShopId && shopUsersForSchedule.length > 0" class="space-y-2">
+                        <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">
+                          <label
+                            v-for="user in shopUsersForSchedule"
+                            :key="user.id"
+                            class="flex items-center space-x-2 p-2 rounded-lg transition-colors cursor-pointer hover:bg-gray-50"
+                          >
+                            <input
+                              :id="`participant-${user.id}`"
+                              type="checkbox"
+                              :checked="isParticipantAddedForSchedule(user.id)"
+                              @change="
+                                toggleParticipantForSchedule(
+                                  user.id,
+                                  $event.target.checked
+                                )
+                              "
+                              class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span class="text-sm text-gray-900">
+                              {{ user.name }}
+                            </span>
                           </label>
                         </div>
                       </div>
-                      <p v-else class="text-sm text-gray-500">
-                        店舗を選択してください
+                      <p v-else-if="!scheduleForm.selectedShopId" class="text-sm text-gray-500">
+                        店舗を選択すると、その店舗に所属するユーザーが表示されます
                       </p>
                     </div>
 
@@ -994,6 +995,7 @@ const props = defineProps({
   schedule: Object,
   currentUser: Object,
   userShops: Array,
+  eventShops: Array,
 });
 
 const formatDateTime = (datetime) => {
@@ -1087,6 +1089,7 @@ const getStatusBadgeClass = (status) => {
 
 // スケジュール関連
 const userShops = computed(() => props.userShops || []);
+const eventShops = computed(() => props.eventShops || []);
 const shopUsersForSchedule = ref([]);
 const addedParticipantsForSchedule = ref([]);
 
@@ -1117,7 +1120,7 @@ const scheduleForm = useForm({
   title: getDefaultTitle(),
   description: getDefaultDescription(),
   selectedShopId: "",
-  user_id: "",
+  user_id: props.currentUser ? props.currentUser.id : "",
   start_at: props.reservation.reservation_datetime
     ? formatDateTimeForInput(props.reservation.reservation_datetime)
     : "",
@@ -1148,7 +1151,6 @@ function formatDateTimeForInput(datetime, addHours = 0) {
 async function onShopChangeForSchedule() {
   if (!scheduleForm.selectedShopId) {
     shopUsersForSchedule.value = [];
-    scheduleForm.user_id = "";
     return;
   }
 
@@ -1157,14 +1159,6 @@ async function onShopChangeForSchedule() {
       params: { shop_id: scheduleForm.selectedShopId },
     });
     shopUsersForSchedule.value = response.data;
-
-    // デフォルトでログインユーザーを選択
-    if (
-      props.currentUser &&
-      shopUsersForSchedule.value.some((u) => u.id === props.currentUser.id)
-    ) {
-      scheduleForm.user_id = props.currentUser.id;
-    }
   } catch (error) {
     console.error("店舗ユーザーの取得に失敗しました:", error);
     shopUsersForSchedule.value = [];
@@ -1195,19 +1189,31 @@ function toggleParticipantForSchedule(userId, checked) {
   }
 }
 
+// 参加者を削除（バッジから）
+function removeParticipantForSchedule(userId) {
+  addedParticipantsForSchedule.value =
+    addedParticipantsForSchedule.value.filter((p) => p.id !== userId);
+  scheduleForm.participant_ids = addedParticipantsForSchedule.value.map(
+    (p) => p.id
+  );
+}
+
 // スケジュールに追加
 function addToSchedule() {
-  scheduleForm.processing = true;
+  // ログインユーザーをuser_idとして使用
+  if (!props.currentUser || !props.currentUser.id) {
+    alert("ログインユーザー情報が取得できません。");
+    return;
+  }
 
-  const formData = {
-    title: scheduleForm.title,
-    description: scheduleForm.description,
-    user_id: scheduleForm.user_id,
-    start_at: scheduleForm.start_at,
-    end_at: scheduleForm.end_at,
-    all_day: scheduleForm.all_day,
-    participant_ids: scheduleForm.participant_ids,
-  };
+  const user_id = props.currentUser.id;
+
+  // チェックボックスで選択された参加者のみを使用（ログインユーザーは自動で含めない）
+  const participantIds = scheduleForm.participant_ids || [];
+
+  // フォームデータを更新
+  scheduleForm.user_id = user_id;
+  scheduleForm.participant_ids = participantIds;
 
   scheduleForm.post(
     route("admin.reservations.schedule.add", props.reservation.id),
@@ -1217,12 +1223,18 @@ function addToSchedule() {
         scheduleForm.title = getDefaultTitle();
         scheduleForm.description = getDefaultDescription();
         scheduleForm.selectedShopId = "";
+        scheduleForm.user_id = props.currentUser ? props.currentUser.id : "";
         shopUsersForSchedule.value = [];
         addedParticipantsForSchedule.value = [];
         router.reload({ only: ["schedule"] });
       },
-      onError: () => {
+      onError: (errors) => {
         scheduleForm.processing = false;
+        // エラーメッセージを表示
+        if (errors && Object.keys(errors).length > 0) {
+          const errorMessages = Object.values(errors).flat();
+          alert(errorMessages.join("\n"));
+        }
       },
     }
   );
@@ -1392,12 +1404,6 @@ const sendReplyEmail = () => {
 
 // 初期化
 onMounted(() => {
-  // デフォルトで最初の店舗を選択
-  if (userShops.value.length > 0) {
-    scheduleForm.selectedShopId = userShops.value[0].id;
-    onShopChangeForSchedule();
-  }
-  
   // メールスレッドが1つだけの場合は自動選択（新しい順にソート済みの最初のスレッド）
   if (sortedEmailThreads.value && sortedEmailThreads.value.length === 1) {
     replyForm.email_thread_id = sortedEmailThreads.value[0].id;
@@ -1406,6 +1412,12 @@ onMounted(() => {
     // 複数のスレッドがある場合、最新のスレッドを自動選択
     replyForm.email_thread_id = sortedEmailThreads.value[0].id;
     selectedThreadId.value = sortedEmailThreads.value[0].id;
+  }
+
+  // ログインユーザーの所属店舗の最初の店舗を自動選択
+  if (userShops.value.length > 0) {
+    scheduleForm.selectedShopId = userShops.value[0].id;
+    onShopChangeForSchedule();
   }
 });
 </script>
