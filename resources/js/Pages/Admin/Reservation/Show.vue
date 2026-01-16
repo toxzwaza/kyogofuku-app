@@ -858,7 +858,7 @@
                     <div class="mb-4">
                       <label
                         class="block text-sm font-medium text-gray-700 mb-1"
-                        >参加者</label
+                        >担当者</label
                       >
                       
                       <!-- 店舗選択（参加者追加用） -->
