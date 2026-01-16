@@ -564,6 +564,25 @@
                                       {{ plan }}
                                     </span>
                                   </div>
+                                  <div
+                                    v-if="
+                                      reservation.schedule &&
+                                      reservation.schedule.participantUsers &&
+                                      reservation.schedule.participantUsers.length > 0
+                                    "
+                                    class="md:col-span-2"
+                                  >
+                                    <span class="text-gray-500 mr-2"
+                                      >担当者:</span
+                                    >
+                                    <span
+                                      v-for="participant in reservation.schedule.participantUsers"
+                                      :key="participant.id"
+                                      class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full mr-1"
+                                    >
+                                      {{ participant.name }}
+                                    </span>
+                                  </div>
                                 </div>
                                 <div class="text-xs text-gray-500 mt-2">
                                   登録日時:
@@ -1073,6 +1092,11 @@
                         >
                           ステータス更新者
                         </th>
+                        <th
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          担当者
+                        </th>
                       </template>
 
                       <!-- 資料請求フォームの場合 -->
@@ -1117,6 +1141,11 @@
                         >
                           ステータス更新者
                         </th>
+                        <th
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          担当者
+                        </th>
                       </template>
 
                       <!-- お問い合わせフォームの場合 -->
@@ -1135,6 +1164,11 @@
                           class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           ステータス更新者
+                        </th>
+                        <th
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          担当者
                         </th>
                       </template>
 
@@ -1156,7 +1190,7 @@
                       <template v-for="group in groupedReservationsByDate" :key="group.date || 'no-date'">
                         <!-- 日付ヘッダー行 -->
                         <tr class="bg-gray-100">
-                          <td :colspan="18" class="px-6 py-3 text-sm font-semibold text-gray-700">
+                          <td :colspan="19" class="px-6 py-3 text-sm font-semibold text-gray-700">
                             {{ group.dateDisplay }}
                           </td>
                         </tr>
@@ -1280,6 +1314,24 @@
                                 : "-"
                             }}
                           </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span
+                              v-if="
+                                reservation.schedule &&
+                                reservation.schedule.participantUsers &&
+                                reservation.schedule.participantUsers.length > 0
+                              "
+                            >
+                              <span
+                                v-for="participant in reservation.schedule.participantUsers"
+                                :key="participant.id"
+                                class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full mr-1"
+                              >
+                                {{ participant.name }}
+                              </span>
+                            </span>
+                            <span v-else class="text-sm text-gray-500">-</span>
+                          </td>
                           <td
                             class="px-6 py-4 text-sm text-gray-900"
                           >
@@ -1392,6 +1444,24 @@
                               : "-"
                           }}
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <span
+                            v-if="
+                              reservation.schedule &&
+                              reservation.schedule.participantUsers &&
+                              reservation.schedule.participantUsers.length > 0
+                            "
+                          >
+                            <span
+                              v-for="participant in reservation.schedule.participantUsers"
+                              :key="participant.id"
+                              class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full mr-1"
+                            >
+                              {{ participant.name }}
+                            </span>
+                          </span>
+                          <span v-else class="text-sm text-gray-500">-</span>
+                        </td>
                       </template>
 
                       <!-- お問い合わせフォームの場合 -->
@@ -1422,6 +1492,24 @@
                               ? reservation.status_updated_by.name
                               : "-"
                           }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <span
+                            v-if="
+                              reservation.schedule &&
+                              reservation.schedule.participantUsers &&
+                              reservation.schedule.participantUsers.length > 0
+                            "
+                          >
+                            <span
+                              v-for="participant in reservation.schedule.participantUsers"
+                              :key="participant.id"
+                              class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full mr-1"
+                            >
+                              {{ participant.name }}
+                            </span>
+                          </span>
+                          <span v-else class="text-sm text-gray-500">-</span>
                         </td>
                       </template>
 
@@ -1960,6 +2048,7 @@ const printColumns = computed(() => {
       { key: "referred_by_name", label: "ご紹介者様" },
       { key: "status", label: "ステータス" },
       { key: "status_updated_by", label: "ステータス更新者" },
+      { key: "participants", label: "担当者" },
       { key: "created_at", label: "登録日時" }
     );
   } else if (props.event.form_type === "document") {
@@ -1976,6 +2065,7 @@ const printColumns = computed(() => {
       { key: "privacy_agreed", label: "個人情報同意" },
       { key: "status", label: "ステータス" },
       { key: "status_updated_by", label: "ステータス更新者" },
+      { key: "participants", label: "担当者" },
       { key: "created_at", label: "登録日時" }
     );
   } else if (props.event.form_type === "contact") {
@@ -1987,6 +2077,7 @@ const printColumns = computed(() => {
       { key: "heard_from", label: "問い合わせ回答方法" },
       { key: "status", label: "ステータス" },
       { key: "status_updated_by", label: "ステータス更新者" },
+      { key: "participants", label: "担当者" },
       { key: "created_at", label: "登録日時" }
     );
   }
@@ -2605,6 +2696,17 @@ const getColumnValue = (reservation, columnKey) => {
       return reservation.privacy_agreed ? "同意" : "-";
     case "heard_from":
       return reservation.heard_from || "-";
+    case "participants":
+      if (
+        reservation.schedule &&
+        reservation.schedule.participantUsers &&
+        reservation.schedule.participantUsers.length > 0
+      ) {
+        return reservation.schedule.participantUsers
+          .map((p) => p.name)
+          .join(", ");
+      }
+      return "-";
     case "created_at":
       return formatDateTime(reservation.created_at);
     default:

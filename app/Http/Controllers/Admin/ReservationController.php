@@ -29,7 +29,7 @@ class ReservationController extends Controller
         $venues = $event->venues()->where('is_active', true)->orderBy('name')->get();
         
         // 予約クエリを作成
-        $reservationsQuery = EventReservation::with(['venue', 'statusUpdatedBy'])
+        $reservationsQuery = EventReservation::with(['venue', 'statusUpdatedBy', 'schedule.participantUsers'])
             ->where('event_id', $event->id);
         
         // 会場で絞り込み
@@ -42,7 +42,49 @@ class ReservationController extends Controller
             $reservationsQuery->where('reservation_datetime', $request->reservation_datetime);
         }
         
-        $reservations = $reservationsQuery->orderBy('created_at', 'desc')->get();
+        $reservations = $reservationsQuery->orderBy('created_at', 'desc')->get()->map(function ($reservation) {
+            return [
+                'id' => $reservation->id,
+                'name' => $reservation->name,
+                'email' => $reservation->email,
+                'phone' => $reservation->phone,
+                'venue' => $reservation->venue ? [
+                    'id' => $reservation->venue->id,
+                    'name' => $reservation->venue->name,
+                ] : null,
+                'furigana' => $reservation->furigana,
+                'has_visited_before' => $reservation->has_visited_before,
+                'address' => $reservation->address,
+                'birth_date' => $reservation->birth_date,
+                'seijin_year' => $reservation->seijin_year,
+                'school_name' => $reservation->school_name,
+                'parking_usage' => $reservation->parking_usage,
+                'parking_car_count' => $reservation->parking_car_count,
+                'considering_plans' => $reservation->considering_plans,
+                'referred_by_name' => $reservation->referred_by_name,
+                'inquiry_message' => $reservation->inquiry_message,
+                'status' => $reservation->status,
+                'status_updated_by' => $reservation->statusUpdatedBy ? [
+                    'id' => $reservation->statusUpdatedBy->id,
+                    'name' => $reservation->statusUpdatedBy->name,
+                ] : null,
+                'reservation_datetime' => $reservation->reservation_datetime,
+                'request_method' => $reservation->request_method,
+                'postal_code' => $reservation->postal_code,
+                'privacy_agreed' => $reservation->privacy_agreed,
+                'heard_from' => $reservation->heard_from,
+                'created_at' => $reservation->created_at->format('Y-m-d H:i:s'),
+                'schedule' => $reservation->schedule ? [
+                    'id' => $reservation->schedule->id,
+                    'participantUsers' => $reservation->schedule->participantUsers->map(function ($user) {
+                        return [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                        ];
+                    })->toArray(),
+                ] : null,
+            ];
+        });
         
         // 時間リストを取得（予約フォームの場合のみ、フィルター用）
         $filterTimeslots = [];
@@ -89,7 +131,7 @@ class ReservationController extends Controller
             $timeslotsWithReservations = $timeslots->map(function ($timeslot) use ($event, &$totalReserved) {
                 // 予約を取得（会場IDと時間が一致するもののみ）
                 $timeslotReservationsQuery = $event->reservations()
-                    ->with(['venue', 'statusUpdatedBy'])
+                    ->with(['venue', 'statusUpdatedBy', 'schedule.participantUsers'])
                     ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
                 
                 // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
@@ -144,6 +186,15 @@ class ReservationController extends Controller
                                 'name' => $reservation->statusUpdatedBy->name,
                             ] : null,
                             'created_at' => $reservation->created_at->format('Y-m-d H:i:s'),
+                            'schedule' => $reservation->schedule ? [
+                                'id' => $reservation->schedule->id,
+                                'participantUsers' => $reservation->schedule->participantUsers->map(function ($user) {
+                                    return [
+                                        'id' => $user->id,
+                                        'name' => $user->name,
+                                    ];
+                                })->toArray(),
+                            ] : null,
                         ];
                     })->values(),
                 ];
