@@ -299,14 +299,17 @@ const formatDateTimeForDisplay = (datetime) => {
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 };
 
-// 日付と時分を組み合わせてISO形式に変換
+// 日付と時分を組み合わせてローカル時刻のISO形式に変換
 const combineDateTimeToISO = (date, hour, minute) => {
     if (!date || hour === null || hour === undefined || minute === null || minute === undefined) {
         return null;
     }
-    const dateObj = new Date(date);
-    dateObj.setHours(parseInt(hour), parseInt(minute), 0, 0);
-    return dateObj.toISOString();
+    // ローカル時刻として扱い、UTC変換を避ける
+    const hourStr = String(parseInt(hour)).padStart(2, '0');
+    const minuteStr = String(parseInt(minute)).padStart(2, '0');
+    const secondStr = '00';
+    // YYYY-MM-DD HH:mm:ss 形式で返す（Laravelがタイムゾーン設定に基づいて処理）
+    return `${date} ${hourStr}:${minuteStr}:${secondStr}`;
 };
 
 // 複製元の予約枠がある場合は、その値を初期値として使用
