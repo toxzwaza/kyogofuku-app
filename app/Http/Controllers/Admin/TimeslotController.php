@@ -156,7 +156,8 @@ class TimeslotController extends Controller
                 ->with('success', $message);
 
             if (!empty($errors)) {
-                $redirect->with('errors', $errors);
+                // Inertiaはerrorsキーに対してMessageBagを期待するため、別のキーでエラーメッセージを渡す
+                $redirect->with('errorMessages', $errors);
             }
 
             return $redirect;
