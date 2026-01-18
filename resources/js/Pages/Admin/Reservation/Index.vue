@@ -266,21 +266,41 @@
                   </div>
                   <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 mb-2"
-                      >時間</label
+                      >日付</label
                     >
                     <select
-                      v-model="filterReservationDatetime"
-                      @change="applyFilters"
+                      v-model="filterReservationDate"
+                      @change="onDateChange"
                       :disabled="!filterVenueId"
                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       <option value="">すべて</option>
                       <option
-                        v-for="timeslot in availableTimeslots"
-                        :key="timeslot.id"
-                        :value="timeslot.start_at"
+                        v-for="date in availableDates"
+                        :key="date"
+                        :value="date"
                       >
-                        {{ formatDateTimeForOption(timeslot.start_at) }}
+                        {{ formatDateForOption(date) }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >時間</label
+                    >
+                    <select
+                      v-model="filterReservationTime"
+                      @change="applyFilters"
+                      :disabled="!filterVenueId || !filterReservationDate"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">すべて</option>
+                      <option
+                        v-for="time in availableTimes"
+                        :key="time"
+                        :value="time"
+                      >
+                        {{ time }}
                       </option>
                     </select>
                   </div>
@@ -954,21 +974,41 @@
                         </div>
                         <div>
                           <label class="block text-sm font-medium text-gray-700 mb-2"
-                            >時間</label
+                            >日付</label
                           >
                           <select
-                            v-model="filterReservationDatetime"
-                            @change="applyFilters"
+                            v-model="filterReservationDate"
+                            @change="onDateChange"
                             :disabled="!filterVenueId"
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                           >
                             <option value="">すべて</option>
                             <option
-                              v-for="timeslot in availableTimeslots"
-                              :key="timeslot.id"
-                              :value="timeslot.start_at"
+                              v-for="date in availableDates"
+                              :key="date"
+                              :value="date"
                             >
-                              {{ formatDateTimeForOption(timeslot.start_at) }}
+                              {{ formatDateForOption(date) }}
+                            </option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                            >時間</label
+                          >
+                          <select
+                            v-model="filterReservationTime"
+                            @change="applyFilters"
+                            :disabled="!filterVenueId || !filterReservationDate"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          >
+                            <option value="">すべて</option>
+                            <option
+                              v-for="time in availableTimes"
+                              :key="time"
+                              :value="time"
+                            >
+                              {{ time }}
                             </option>
                           </select>
                         </div>
@@ -1889,6 +1929,19 @@ const filterReservationDatetime = ref(
   props.filters?.reservation_datetime || ""
 );
 
+// 日付と時間を分離したフィルター
+// 既存のfilterReservationDatetimeから初期値を設定
+const initialDatetime = props.filters?.reservation_datetime || "";
+let initialDate = "";
+let initialTime = "";
+if (initialDatetime) {
+  const date = new Date(initialDatetime);
+  initialDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  initialTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+const filterReservationDate = ref(initialDate);
+const filterReservationTime = ref(initialTime);
+
 // 並べ替え用のstate（デフォルトは新しい順）
 const sortDateOrder = ref("asc");
 const sortTimeOrder = ref("asc");
@@ -1903,6 +1956,34 @@ const availableTimeslots = computed(() => {
   return (props.filterTimeslots || []).filter((timeslot) => {
     return timeslot.venue_id == filterVenueId.value;
   });
+});
+
+// 選択可能な日付リスト（重複を除去し、ソート）
+const availableDates = computed(() => {
+  const dates = new Set();
+  availableTimeslots.value.forEach((timeslot) => {
+    const date = new Date(timeslot.start_at);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    dates.add(dateKey);
+  });
+  return Array.from(dates).sort();
+});
+
+// 選択可能な時間リスト（選択された日付に対応する時間のみ）
+const availableTimes = computed(() => {
+  if (!filterReservationDate.value) {
+    return [];
+  }
+  const times = new Set();
+  availableTimeslots.value.forEach((timeslot) => {
+    const date = new Date(timeslot.start_at);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    if (dateKey === filterReservationDate.value) {
+      const timeKey = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      times.add(timeKey);
+    }
+  });
+  return Array.from(times).sort();
 });
 
 // 並べ替えられた予約データ
@@ -2218,16 +2299,23 @@ const previewStyle = computed(() => {
 
 // 会場変更時の処理
 const onVenueChange = () => {
-  // 会場が変更されたら時間をリセット
-  filterReservationDatetime.value = "";
+  // 会場が変更されたら日付と時間をリセット
+  filterReservationDate.value = "";
+  filterReservationTime.value = "";
 };
 
-// 会場変更時に時間をリセットして自動的に絞り込みを適用
+// 会場変更時に日付と時間をリセットして自動的に絞り込みを適用
 const onVenueChangeAndApply = () => {
-  // 会場が変更されたら時間をリセット
-  filterReservationDatetime.value = "";
+  // 会場が変更されたら日付と時間をリセット
+  filterReservationDate.value = "";
+  filterReservationTime.value = "";
   // 自動的に絞り込みを適用
   applyFilters();
+};
+
+// 日付変更時に時間をリセット
+const onDateChange = () => {
+  filterReservationTime.value = "";
 };
 
 // フィルターを適用
@@ -2236,8 +2324,12 @@ const applyFilters = () => {
   if (filterVenueId.value) {
     params.venue_id = filterVenueId.value;
   }
-  if (filterReservationDatetime.value) {
-    params.reservation_datetime = filterReservationDatetime.value;
+  // 日付と時間を組み合わせてreservation_datetimeとして送信
+  if (filterReservationDate.value && filterReservationTime.value) {
+    params.reservation_datetime = `${filterReservationDate.value} ${filterReservationTime.value}:00`;
+  } else if (filterReservationDate.value) {
+    // 日付のみの場合、その日の最初の時間を設定（後方互換性のため）
+    params.reservation_datetime = filterReservationDate.value;
   }
 
   router.get(route("admin.events.reservations.index", props.event.id), params, {
@@ -2249,7 +2341,8 @@ const applyFilters = () => {
 // フィルターをリセット
 const resetFilters = () => {
   filterVenueId.value = "";
-  filterReservationDatetime.value = "";
+  filterReservationDate.value = "";
+  filterReservationTime.value = "";
   router.get(
     route("admin.events.reservations.index", props.event.id),
     {},
@@ -2361,6 +2454,15 @@ const formatDate = (dateString) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
   return date.toLocaleDateString("ja-JP");
+};
+
+// 日付選択肢用のフォーマット（YYYY-MM-DD形式から表示用に変換）
+const formatDateForOption = (dateString) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString + "T00:00:00");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}/${month}/${day}`;
 };
 
 const formatDateHeader = (dateString) => {
@@ -2535,6 +2637,41 @@ const parseTextReservation = (text) => {
     const month = String(birthDateMatch[2]).padStart(2, "0");
     const day = String(birthDateMatch[3]).padStart(2, "0");
     data.birth_date = `${year}-${month}-${day}`;
+    
+    console.log('[デバッグ] 生年月日抽出:', {
+      year,
+      month,
+      day,
+      birth_date: data.birth_date
+    });
+    
+    // 生年月日から成人式予定年を自動計算
+    try {
+      const birthYear = parseInt(year, 10);
+      const seijinYear = birthYear + 20;
+      const currentYear = new Date().getFullYear();
+      
+      console.log('[デバッグ] 成人式予定年計算:', {
+        birthYear,
+        seijinYear,
+        currentYear,
+        minYear: currentYear,
+        maxYear: currentYear + 10,
+        isInRange: seijinYear >= currentYear && seijinYear <= currentYear + 10
+      });
+      
+      // 現在年から10年後の範囲内であれば設定
+      if (seijinYear >= currentYear && seijinYear <= currentYear + 10) {
+        data.seijin_year = seijinYear;
+        console.log('[デバッグ] 成人式予定年を設定:', seijinYear);
+      } else {
+        console.warn('[デバッグ] 成人式予定年が範囲外のため設定されませんでした:', seijinYear);
+      }
+    } catch (error) {
+      console.error('[デバッグ] 成人式予定年の計算エラー:', error);
+    }
+  } else {
+    console.log('[デバッグ] 生年月日のマッチがありません');
   }
 
   // 【 ご検討中のプラン 】 振袖レンタルプラン
@@ -2580,6 +2717,10 @@ const proceedToReservationFromText = () => {
 
   // テキストから情報を抽出
   const extractedData = parseTextReservation(textReservationInput.value);
+  
+  console.log('[デバッグ] 抽出されたデータ:', extractedData);
+  console.log('[デバッグ] seijin_yearの値:', extractedData.seijin_year);
+  console.log('[デバッグ] seijin_yearの型:', typeof extractedData.seijin_year);
 
   // 予約登録URLを生成
   const baseUrl = route("event.show", props.event.slug);
@@ -2591,15 +2732,22 @@ const proceedToReservationFromText = () => {
   // 抽出したデータをURLパラメータに追加
   Object.keys(extractedData).forEach((key) => {
     const value = extractedData[key];
+    console.log(`[デバッグ] パラメータ追加処理: ${key} =`, value, `(型: ${typeof value})`);
     if (value !== null && value !== undefined && value !== "") {
       if (Array.isArray(value)) {
         // 配列の場合はカンマ区切りで追加
         params.append(key, value.join(","));
+        console.log(`[デバッグ] 配列として追加: ${key} = ${value.join(",")}`);
       } else {
         params.append(key, value);
+        console.log(`[デバッグ] 値を追加: ${key} = ${value}`);
       }
+    } else {
+      console.log(`[デバッグ] 値が空のためスキップ: ${key}`);
     }
   });
+  
+  console.log('[デバッグ] 最終的なURLパラメータ:', params.toString());
 
   // モーダルを閉じて遷移
   closeTextReservationModal();

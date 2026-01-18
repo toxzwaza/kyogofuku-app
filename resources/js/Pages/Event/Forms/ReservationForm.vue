@@ -469,46 +469,6 @@ const getUrlParamArray = (key, defaultValue = []) => {
     return defaultValue;
 };
 
-const form = useForm({
-    name: getUrlParam('name', ''),
-    email: getUrlParam('email', ''),
-    phone: getUrlParam('phone', ''),
-    reservation_datetime: '',
-    venue_id: null,
-    has_visited_before: urlParams.has('has_visited_before') ? urlParams.get('has_visited_before') === 'true' : false,
-    address: getUrlParam('address', ''),
-    birth_date: getUrlParam('birth_date', ''),
-    seijin_year: null,
-    referred_by_name: getUrlParam('referred_by_name', ''),
-    furigana: getUrlParam('furigana', ''),
-    school_name: '',
-    staff_name: '',
-    visit_reasons: [],
-    visit_reason_other: '',
-    parking_usage: '',
-    parking_car_count: null,
-    considering_plans: getUrlParamArray('considering_plans', []),
-    heard_from: '',
-    inquiry_message: getUrlParam('inquiry_message', ''),
-});
-
-// 検討中のプランの選択肢
-const availablePlans = [
-    '振袖レンタルプラン',
-    '振袖購入プラン',
-    'ママ振りフォトプラン',
-    'フォトレンタルプラン',
-];
-
-// 来店動機の選択肢
-const visitReasonOptions = [
-    { value: '紹介', label: '紹介' },
-    { value: 'DM・カタログ', label: 'DM・カタログ' },
-    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
-    { value: 'WEB広告', label: 'WEB広告' },
-    { value: 'その他', label: 'その他(テキスト入力)' },
-];
-
 // 成人式予定年の選択肢（現在年から10年後まで）
 const currentYear = new Date().getFullYear();
 const seijinYears = Array.from({ length: 11 }, (_, i) => currentYear + i);
@@ -540,6 +500,68 @@ const calculateSeijinYear = (birthDate) => {
         return null;
     }
 };
+
+// URLパラメータから生年月日と成人式予定年を取得
+const urlBirthDate = getUrlParam('birth_date', '');
+const urlSeijinYear = urlParams.has('seijin_year') ? parseInt(urlParams.get('seijin_year'), 10) : null;
+
+// URLパラメータから成人式予定年が取得できない場合、生年月日から計算
+let initialSeijinYear = urlSeijinYear;
+if (!initialSeijinYear && urlBirthDate) {
+    initialSeijinYear = calculateSeijinYear(urlBirthDate);
+}
+
+console.log('[デバッグ] URLパラメータから取得:', {
+    urlBirthDate,
+    urlSeijinYear,
+    initialSeijinYear,
+    calculatedFromBirthDate: !urlSeijinYear && urlBirthDate
+});
+
+const form = useForm({
+    name: getUrlParam('name', ''),
+    email: getUrlParam('email', ''),
+    phone: getUrlParam('phone', ''),
+    reservation_datetime: '',
+    venue_id: null,
+    has_visited_before: urlParams.has('has_visited_before') ? urlParams.get('has_visited_before') === 'true' : false,
+    address: getUrlParam('address', ''),
+    birth_date: urlBirthDate,
+    seijin_year: initialSeijinYear,
+    referred_by_name: getUrlParam('referred_by_name', ''),
+    furigana: getUrlParam('furigana', ''),
+    school_name: '',
+    staff_name: '',
+    visit_reasons: [],
+    visit_reason_other: '',
+    parking_usage: '',
+    parking_car_count: null,
+    considering_plans: getUrlParamArray('considering_plans', []),
+    heard_from: '',
+    inquiry_message: getUrlParam('inquiry_message', ''),
+});
+
+console.log('[デバッグ] フォーム初期値:', {
+    birth_date: form.birth_date,
+    seijin_year: form.seijin_year
+});
+
+// 検討中のプランの選択肢
+const availablePlans = [
+    '振袖レンタルプラン',
+    '振袖購入プラン',
+    'ママ振りフォトプラン',
+    'フォトレンタルプラン',
+];
+
+// 来店動機の選択肢
+const visitReasonOptions = [
+    { value: '紹介', label: '紹介' },
+    { value: 'DM・カタログ', label: 'DM・カタログ' },
+    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
+    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'その他', label: 'その他(テキスト入力)' },
+];
 
 // 生年月日の変更を監視して、成人式予定年を自動選択
 watch(() => form.birth_date, (newBirthDate) => {
