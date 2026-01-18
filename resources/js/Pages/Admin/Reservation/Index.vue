@@ -2885,7 +2885,7 @@ const printTable = () => {
   const pages = calculatePages.value.pages;
   let pagesHTML = '';
 
-  pages.forEach((page) => {
+  pages.forEach((page, index) => {
     let pageHTML = '<div class="print-page">';
     pageHTML += `<h2 style="font-size: ${parseFloat(printFontSize.value) + 2}px; margin-bottom: 15px; text-align: center; color: #1f2937; font-weight: bold;">予約一覧 - ${props.event.title}</h2>`;
 
@@ -2958,18 +2958,6 @@ const printTable = () => {
           margin: 0;
           padding: 0;
         }
-        .print-page {
-          width: 100%;
-          ${printOrientation.value === 'portrait' ? 'aspect-ratio: 210 / 297;' : 'aspect-ratio: 297 / 210;'}
-          margin: 0 auto 20px auto;
-          padding: 20px;
-          background-color: #ffffff;
-          box-sizing: border-box;
-          page-break-after: always;
-        }
-        .print-page:last-child {
-          page-break-after: auto;
-        }
         table {
           page-break-inside: auto;
         }
@@ -2996,18 +2984,6 @@ const printTable = () => {
           body {
             margin: 0;
             padding: 0;
-          }
-          .print-page {
-            width: 100%;
-            ${printOrientation.value === 'portrait' ? 'aspect-ratio: 210 / 297;' : 'aspect-ratio: 297 / 210;'}
-            margin: 0;
-            padding: 20px;
-            background-color: #ffffff;
-            box-sizing: border-box;
-            page-break-after: always;
-          }
-          .print-page:last-child {
-            page-break-after: auto;
           }
         }
       </style>
