@@ -39,7 +39,14 @@ class ReservationController extends Controller
         
         // 時間で絞り込み（予約フォームの場合のみ）
         if ($event->form_type === 'reservation' && $request->filled('reservation_datetime')) {
-            $reservationsQuery->where('reservation_datetime', $request->reservation_datetime);
+            $datetime = $request->reservation_datetime;
+            // 日付のみ（YYYY-MM-DD形式）の場合は、その日のすべての予約を取得
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $datetime)) {
+                $reservationsQuery->whereDate('reservation_datetime', $datetime);
+            } else {
+                // 日時形式（YYYY-MM-DD HH:MM:SS形式）の場合は完全一致
+                $reservationsQuery->where('reservation_datetime', $datetime);
+            }
         }
         
         $reservations = $reservationsQuery->orderBy('created_at', 'desc')->get()->map(function ($reservation) {
@@ -120,7 +127,14 @@ class ReservationController extends Controller
             
             // 時間で絞り込み
             if ($request->filled('reservation_datetime')) {
-                $timeslotsQuery->where('start_at', $request->reservation_datetime);
+                $datetime = $request->reservation_datetime;
+                // 日付のみ（YYYY-MM-DD形式）の場合は、その日のすべての予約枠を取得
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $datetime)) {
+                    $timeslotsQuery->whereDate('start_at', $datetime);
+                } else {
+                    // 日時形式（YYYY-MM-DD HH:MM:SS形式）の場合は完全一致
+                    $timeslotsQuery->where('start_at', $datetime);
+                }
             }
             
             $timeslots = $timeslotsQuery->orderBy('start_at', 'asc')->get();

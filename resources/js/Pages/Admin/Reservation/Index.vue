@@ -2313,9 +2313,10 @@ const onVenueChangeAndApply = () => {
   applyFilters();
 };
 
-// 日付変更時に時間をリセット
+// 日付変更時に時間をリセットしてフィルターを適用
 const onDateChange = () => {
   filterReservationTime.value = "";
+  applyFilters();
 };
 
 // フィルターを適用
