@@ -692,23 +692,63 @@
                       <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                         開始日時 <span class="text-red-500">*</span>
                       </label>
-                      <input
-                        v-model="createScheduleForm.start_at"
-                        type="datetime-local"
-                        required
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                      />
+                      <div class="grid grid-cols-3 gap-2">
+                        <select
+                          v-model="startDateTime.date"
+                          @change="updateStartDateTime"
+                          required
+                          class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        >
+                          <option v-for="date in dateOptions" :key="date.value" :value="date.value">{{ date.label }}</option>
+                        </select>
+                        <select
+                          v-model="startDateTime.hour"
+                          @change="updateStartDateTime"
+                          required
+                          class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        >
+                          <option v-for="hour in hourOptions" :key="hour" :value="hour">{{ String(hour).padStart(2, '0') }}</option>
+                        </select>
+                        <select
+                          v-model="startDateTime.minute"
+                          @change="updateStartDateTime"
+                          required
+                          class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        >
+                          <option v-for="minute in minuteOptions" :key="minute" :value="minute">{{ String(minute).padStart(2, '0') }}</option>
+                        </select>
+                      </div>
                     </div>
                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                         終了日時 <span class="text-red-500">*</span>
                       </label>
-                      <input
-                        v-model="createScheduleForm.end_at"
-                        type="datetime-local"
-                        required
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                      />
+                      <div class="grid grid-cols-3 gap-2">
+                        <select
+                          v-model="endDateTime.date"
+                          @change="updateEndDateTime"
+                          required
+                          class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        >
+                          <option v-for="date in dateOptions" :key="date.value" :value="date.value">{{ date.label }}</option>
+                        </select>
+                        <select
+                          v-model="endDateTime.hour"
+                          @change="updateEndDateTime"
+                          required
+                          class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        >
+                          <option v-for="hour in hourOptions" :key="hour" :value="hour">{{ String(hour).padStart(2, '0') }}</option>
+                        </select>
+                        <select
+                          v-model="endDateTime.minute"
+                          @change="updateEndDateTime"
+                          required
+                          class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        >
+                          <option v-for="minute in minuteOptions" :key="minute" :value="minute">{{ String(minute).padStart(2, '0') }}</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -4059,6 +4099,10 @@ function handleDateSelect(selectInfo) {
   createScheduleForm.value.end_at = formatDateTimeLocal(endDate);
   createScheduleForm.value.all_day = selectInfo.allDay;
   
+  // セレクトボックスの値も更新
+  parseDateTimeToSelect(createScheduleForm.value.start_at, startDateTime);
+  parseDateTimeToSelect(createScheduleForm.value.end_at, endDateTime);
+  
   // 参加者リストをクリアしてからログインユーザーをデフォルトで参加者として追加
   addedParticipantsForCreate.value = [];
   shopUsersForCreate.value = [];
@@ -4086,6 +4130,10 @@ function handleUserDateSelect(selectInfo) {
   createScheduleForm.value.start_at = formatDateTimeLocal(startDate);
   createScheduleForm.value.end_at = formatDateTimeLocal(endDate);
   createScheduleForm.value.all_day = selectInfo.allDay;
+  
+  // セレクトボックスの値も更新
+  parseDateTimeToSelect(createScheduleForm.value.start_at, startDateTime);
+  parseDateTimeToSelect(createScheduleForm.value.end_at, endDateTime);
   
   // 参加者リストをクリアしてからログインユーザーをデフォルトで参加者として追加
   addedParticipantsForCreate.value = [];
@@ -4364,6 +4412,90 @@ const createScheduleForm = ref({
   participant_ids: [],
   expense_category: '',
   processing: false,
+});
+
+// 開始日時・終了日時のセレクトボックス用データ
+const getCurrentDateTime = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return {
+    date: `${year}-${month}-${day}`, // YYYY-MM-DD形式
+    hour: now.getHours(),
+    minute: Math.floor(now.getMinutes() / 15) * 15, // 15分単位に丸める
+  };
+};
+
+const currentDateTime = getCurrentDateTime();
+const startDateTime = ref(currentDateTime);
+const endDateTime = ref({
+  ...currentDateTime,
+  hour: currentDateTime.hour + 1, // 終了日時は開始日時の1時間後
+});
+
+// 日付オプション生成（現在の年から前後2年、全月、全日）
+const dateOptions = computed(() => {
+  const currentYear = new Date().getFullYear();
+  const options = [];
+  
+  // 現在の年から前後2年の範囲で日付を生成
+  for (let year = currentYear - 2; year <= currentYear + 7; year++) {
+    for (let month = 1; month <= 12; month++) {
+      const daysInMonth = new Date(year, month, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateValue = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateLabel = `${year}年${month}月${day}日`;
+        options.push({
+          value: dateValue,
+          label: dateLabel,
+        });
+      }
+    }
+  }
+  
+  return options;
+});
+
+const hourOptions = Array.from({ length: 24 }, (_, i) => i);
+
+const minuteOptions = [0, 15, 30, 45]; // 15分単位
+
+// 日時を組み合わせてstart_atとend_atを生成
+function updateStartDateTime() {
+  const { date, hour, minute } = startDateTime.value;
+  createScheduleForm.value.start_at = `${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function updateEndDateTime() {
+  const { date, hour, minute } = endDateTime.value;
+  createScheduleForm.value.end_at = `${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+// 日時文字列から日付・時・分を分解してセレクトボックスに設定
+function parseDateTimeToSelect(dateTimeString, targetDateTime) {
+  if (!dateTimeString) return;
+  
+  const date = new Date(dateTimeString);
+  if (isNaN(date.getTime())) return;
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  targetDateTime.value = {
+    date: `${year}-${month}-${day}`, // YYYY-MM-DD形式
+    hour: date.getHours(),
+    minute: Math.floor(date.getMinutes() / 15) * 15, // 15分単位に丸める
+  };
+}
+
+// モーダルが開かれた時にセレクトボックスの値を設定
+watch(showCreateModal, (newValue) => {
+  if (newValue && createScheduleForm.value.start_at && createScheduleForm.value.end_at) {
+    parseDateTimeToSelect(createScheduleForm.value.start_at, startDateTime);
+    parseDateTimeToSelect(createScheduleForm.value.end_at, endDateTime);
+  }
 });
 
 // 便利機能：費用科目の表示制御
@@ -4891,6 +5023,10 @@ function onUserDateChange() {
 
 // スケジュール作成
 function createScheduleFromDashboard() {
+  // セレクトボックスの値からstart_atとend_atを生成
+  updateStartDateTime();
+  updateEndDateTime();
+  
   // バリデーション: 参加者が登録されていない場合
   if (!createScheduleForm.value.participant_ids || createScheduleForm.value.participant_ids.length === 0) {
     alert('参加者を1名以上選択してください。');
@@ -4927,6 +5063,13 @@ function createScheduleFromDashboard() {
         participant_ids: [],
         expense_category: '',
         processing: false,
+      };
+      // セレクトボックスの値もリセット
+      const currentDateTime = getCurrentDateTime();
+      startDateTime.value = currentDateTime;
+      endDateTime.value = {
+        ...currentDateTime,
+        hour: currentDateTime.hour + 1,
       };
       addedParticipantsForCreate.value = [];
       selectedShopIdForCreate.value = '';
