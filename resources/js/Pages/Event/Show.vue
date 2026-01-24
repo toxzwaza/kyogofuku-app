@@ -8,7 +8,7 @@
         <div class="relative z-10">
         <!-- イベント画像とスライドショー（縦並び） -->
         <div v-if="!showSuccess" class="w-full md:flex md:justify-center">
-            <div class="w-full md:max-w-4xl">
+            <div class="w-full md:max-w-2xl">
                 <template v-for="(item, index) in displayItems" :key="`${item.type}-${item.id || index}`">
                     <!-- 画像 -->
                     <img
