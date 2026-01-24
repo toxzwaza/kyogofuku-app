@@ -1,15 +1,22 @@
 <template>
-    <form @submit.prevent="submit">
+    <form @submit.prevent="submit" class="space-y-8">
         <!-- イベント情報 -->
-        <div class="mb-6">
-            <h1 class="text-3xl font-bold mb-4">{{ event.title }}</h1>
-            <div v-if="event.description" class="text-gray-700 mb-6" v-html="event.description"></div>
+        <div class="mb-8">
+            <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-6 mb-6 border border-pink-100">
+                <h1 class="text-3xl font-bold mb-4 text-gray-800">{{ event.title }}</h1>
+                <div v-if="event.description" class="text-gray-700 leading-relaxed" v-html="event.description"></div>
+            </div>
 
             <!-- 開催会場 -->
-            <div v-if="eventVenues && eventVenues.length > 0" class="mb-6">
-                <h2 class="text-xl font-semibold mb-4">開催会場</h2>
+            <div v-if="eventVenues && eventVenues.length > 0" class="mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800">
+                    <svg class="w-5 h-5 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    開催会場
+                </h2>
                 <div class="space-y-6">
-                    <div v-for="venue in eventVenues" :key="venue.id" class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <div v-for="venue in eventVenues" :key="venue.id" class="bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
                         <!-- 画像とテキストのグリッドレイアウト -->
                         <div class="md:flex">
                             <!-- テキスト情報（左側または上側） -->
@@ -60,12 +67,18 @@
         </div>
 
         <!-- 会場選択 -->
-        <div v-if="eventVenues && eventVenues.length > 0" class="mb-6">
-            <h2 class="text-xl font-semibold mb-4">ご来店会場 <span class="text-red-500">*</span></h2>
+        <div v-if="eventVenues && eventVenues.length > 0" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800">
+                <svg class="w-5 h-5 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                ご来店会場 <span class="text-red-500 ml-1">*</span>
+            </h2>
             <select
                 v-model="form.venue_id"
                 required
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4 bg-white text-gray-700 font-medium"
             >
                 <option value="">選択してください</option>
                 <option v-for="venue in eventVenues" :key="venue.id" :value="venue.id">
@@ -75,25 +88,45 @@
         </div>
 
         <!-- 予約可能な日時 -->
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-4">予約可能な日時</h2>
-            <div v-if="!form.venue_id" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                <p class="text-yellow-800">会場を選択してください。</p>
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800">
+                <svg class="w-5 h-5 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                予約可能な日時
+            </h2>
+            <div v-if="!form.venue_id" class="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                <p class="text-yellow-800 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    会場を選択してください。
+                </p>
             </div>
-            <div v-else-if="filteredTimeslots && filteredTimeslots.length === 0" class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded">
+            <div v-else-if="filteredTimeslots && filteredTimeslots.length === 0" class="mb-4 p-4 bg-gray-50 border-l-4 border-gray-400 rounded-lg">
                 <p class="text-gray-600">選択された会場には予約可能な日時がありません。</p>
             </div>
             <div v-else-if="filteredTimeslots && filteredTimeslots.length > 0">
-                <div v-if="!internalSelectedTimeslot" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                    <p class="text-yellow-800">予約日時を選択してください。</p>
+                <div v-if="!internalSelectedTimeslot" class="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                    <p class="text-yellow-800 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        予約日時を選択してください。
+                    </p>
                 </div>
-                <div class="space-y-6">
+                <div class="space-y-8">
                     <div
                         v-for="(dateGroup, date) in groupedTimeslots"
                         :key="date"
-                        class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
+                        class="border-b border-gray-200 pb-8 last:border-b-0 last:pb-0"
                     >
-                        <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ formatDate(date) }}</h3>
+                        <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {{ formatDate(date) }}
+                        </h3>
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                 <button
                                     type="button"
@@ -101,14 +134,19 @@
                                     :key="timeslot.id"
                                     @click="selectTimeslot(timeslot)"
                                     :class="[
-                                        'p-3 rounded-lg border-2 transition text-left',
+                                        'p-4 rounded-xl border-2 transition-all duration-200 text-left transform hover:scale-105 hover:shadow-md',
                                         internalSelectedTimeslot?.id === timeslot.id
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200 hover:border-blue-300 bg-white'
+                                            ? 'border-pink-500 bg-gradient-to-br from-pink-50 to-rose-50 shadow-md ring-2 ring-pink-200'
+                                            : 'border-gray-200 hover:border-pink-300 bg-white hover:bg-pink-50'
                                     ]"
                                 >
-                                <p class="font-semibold text-sm mb-1">{{ formatTime(timeslot.start_at) }}</p>
-                                <p class="text-xs text-gray-600">残り{{ getRemainingCapacity(timeslot) }}枠</p>
+                                <p class="font-bold text-base mb-1 text-gray-800">{{ formatTime(timeslot.start_at) }}</p>
+                                <p class="text-xs text-gray-600 flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    残り{{ getRemainingCapacity(timeslot) }}枠
+                                </p>
                             </button>
                         </div>
                     </div>
@@ -116,237 +154,343 @@
             </div>
         </div>
 
-        <div class="space-y-4">
+        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-6">
+            <h3 class="text-xl font-semibold mb-6 text-gray-800 flex items-center border-b border-gray-200 pb-4">
+                <svg class="w-6 h-6 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                お客様情報
+            </h3>
+            
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">予約日時 <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    予約日時 <span class="text-red-500 ml-1">*</span>
+                </label>
                 <input
                     type="text"
                     :value="internalSelectedTimeslot ? formatDateTime(internalSelectedTimeslot.start_at) : ''"
                     readonly
-                    class="w-full rounded-md border-gray-300 shadow-sm bg-gray-100"
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm bg-gray-50 py-3 px-4 text-gray-700 font-medium"
                 />
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">お名前 <span class="text-red-500">*</span></label>
-                <input
-                    v-model="form.name"
-                    type="text"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        お名前 <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <input
+                        v-model="form.name"
+                        type="text"
+                        required
+                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                        placeholder="山田 太郎"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        フリガナ <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <input
+                        v-model="form.furigana"
+                        type="text"
+                        required
+                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                        placeholder="ヤマダ タロウ"
+                    />
+                </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ <span class="text-red-500">*</span></label>
-                <input
-                    v-model="form.furigana"
-                    type="text"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">メールアドレス <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    メールアドレス <span class="text-red-500 ml-1">*</span>
+                </label>
                 <input
                     v-model="form.email"
                     type="email"
                     required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                    placeholder="example@email.com"
                 />
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">電話番号 <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    電話番号 <span class="text-red-500 ml-1">*</span>
+                </label>
                 <input
                     v-model="form.phone"
                     type="tel"
                     required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                    placeholder="090-1234-5678"
                 />
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">過去当店のご来店はありますか</label>
-                <div class="flex space-x-4">
-                    <label class="flex items-center">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">過去当店のご来店はありますか</label>
+                <div class="flex space-x-6">
+                    <label class="flex items-center cursor-pointer group">
                         <input
                             v-model="form.has_visited_before"
                             type="radio"
                             :value="false"
-                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-5 h-5 rounded-full border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
                         />
-                        <span class="ml-2 text-sm text-gray-700">なし</span>
+                        <span class="ml-2 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">なし</span>
                     </label>
-                    <label class="flex items-center">
+                    <label class="flex items-center cursor-pointer group">
                         <input
                             v-model="form.has_visited_before"
                             type="radio"
                             :value="true"
-                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-5 h-5 rounded-full border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
                         />
-                        <span class="ml-2 text-sm text-gray-700">あり</span>
+                        <span class="ml-2 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">あり</span>
                     </label>
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">住所 <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    住所 <span class="text-red-500 ml-1">*</span>
+                </label>
                 <input
                     v-model="form.address"
                     type="text"
                     required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                    placeholder="東京都渋谷区..."
                 />
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">生年月日 <span class="text-red-500">*</span></label>
-                <input
-                    v-model="form.birth_date"
-                    type="date"
-                    required
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        生年月日 <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <input
+                        v-model="form.birth_date"
+                        type="date"
+                        required
+                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        成人式予定年月
+                    </label>
+                    <select
+                        v-model="form.seijin_year"
+                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4 bg-white"
+                    >
+                        <option value="">選択してください</option>
+                        <option v-for="year in seijinYears" :key="year" :value="year">
+                            {{ year }}年
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        学校名
+                    </label>
+                    <input
+                        v-model="form.school_name"
+                        type="text"
+                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                        placeholder="○○高等学校"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        担当者指名
+                    </label>
+                    <input
+                        v-model="form.staff_name"
+                        type="text"
+                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                        placeholder="担当者名"
+                    />
+                </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">成人式予定年月</label>
-                <select
-                    v-model="form.seijin_year"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                >
-                    <option value="">選択してください</option>
-                    <option v-for="year in seijinYears" :key="year" :value="year">
-                        {{ year }}年
-                    </option>
-                </select>
-            </div>
-
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">学校名</label>
-                <input
-                    v-model="form.school_name"
-                    type="text"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">担当者指名</label>
-                <input
-                    v-model="form.staff_name"
-                    type="text"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">来店動機</label>
-                <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    来店動機
+                </label>
+                <div class="space-y-3">
                     <label
                         v-for="reason in visitReasonOptions"
                         :key="reason.value"
-                        class="flex items-center"
+                        class="flex items-center p-3 rounded-lg border-2 border-gray-200 hover:border-pink-300 hover:bg-pink-50 transition-all duration-200 cursor-pointer group"
                     >
                         <input
                             type="checkbox"
                             :value="reason.value"
                             v-model="form.visit_reasons"
-                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-5 h-5 rounded border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
                         />
-                        <span class="ml-2 text-sm text-gray-700">{{ reason.label }}</span>
+                        <span class="ml-3 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">{{ reason.label }}</span>
                     </label>
-                    <div v-if="form.visit_reasons && form.visit_reasons.includes('その他')" class="ml-6 mt-2">
+                    <div v-if="form.visit_reasons && form.visit_reasons.includes('その他')" class="ml-8 mt-3">
                         <input
                             v-model="form.visit_reason_other"
                             type="text"
                             placeholder="その他の内容を入力してください"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
                         />
                     </div>
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">駐車場利用</label>
-                <div class="flex space-x-4">
-                    <label class="flex items-center">
+                <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    駐車場利用
+                </label>
+                <div class="flex space-x-6">
+                    <label class="flex items-center cursor-pointer group">
                         <input
                             v-model="form.parking_usage"
                             type="radio"
                             value="なし"
-                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-5 h-5 rounded-full border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
                         />
-                        <span class="ml-2 text-sm text-gray-700">なし</span>
+                        <span class="ml-2 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">なし</span>
                     </label>
-                    <label class="flex items-center">
+                    <label class="flex items-center cursor-pointer group">
                         <input
                             v-model="form.parking_usage"
                             type="radio"
                             value="あり"
-                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-5 h-5 rounded-full border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
                         />
-                        <span class="ml-2 text-sm text-gray-700">あり</span>
+                        <span class="ml-2 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">あり</span>
                     </label>
                 </div>
             </div>
 
             <div v-if="form.parking_usage === 'あり'">
-                <label class="block text-sm font-medium text-gray-700 mb-1">駐車台数</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    駐車台数
+                </label>
                 <input
                     v-model="form.parking_car_count"
                     type="number"
                     min="1"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                    placeholder="1"
                 />
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">検討中のプラン</label>
-                <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    検討中のプラン
+                </label>
+                <div class="space-y-3">
                     <label
                         v-for="plan in availablePlans"
                         :key="plan"
-                        class="flex items-center"
+                        class="flex items-center p-3 rounded-lg border-2 border-gray-200 hover:border-pink-300 hover:bg-pink-50 transition-all duration-200 cursor-pointer group"
                     >
                         <input
                             type="checkbox"
                             :value="plan"
                             v-model="form.considering_plans"
-                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-5 h-5 rounded border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
                         />
-                        <span class="ml-2 text-sm text-gray-700">{{ plan }}</span>
+                        <span class="ml-3 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">{{ plan }}</span>
                     </label>
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ご紹介者様お名前</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    ご紹介者様お名前
+                </label>
                 <input
                     v-model="form.referred_by_name"
                     type="text"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                    placeholder="紹介者様のお名前"
                 />
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">お問い合わせ内容</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    お問い合わせ内容
+                </label>
                 <textarea
                     v-model="form.inquiry_message"
                     rows="4"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4 resize-none"
+                    placeholder="お問い合わせ内容をご記入ください"
                 ></textarea>
             </div>
 
-            <div class="pt-4">
+            <div class="pt-6 border-t border-gray-200">
                 <button
                     type="submit"
                     :disabled="!internalSelectedTimeslot || processing"
-                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    class="w-full bg-gradient-to-r from-pink-600 to-rose-600 text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl hover:from-pink-700 hover:to-rose-700 transform hover:scale-[1.02] transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center"
                 >
+                    <svg v-if="!processing" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     {{ processing ? '確認中...' : '送信内容の確認へ' }}
                 </button>
             </div>
