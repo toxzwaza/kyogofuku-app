@@ -1,7 +1,11 @@
 <template>
     <Head :title="event.title" />
 
-    <div class="min-h-screen" style="background-color: rgb(233, 226, 220);">
+    <div class="min-h-screen relative" style="background-color: rgb(233, 226, 220);">
+        <!-- 背景画像 -->
+        <div class="fixed inset-0 z-0 opacity-30" style="background-image: url('/storage/background_img/1.png'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
+        <!-- コンテンツ -->
+        <div class="relative z-10">
         <!-- イベント画像とスライドショー（縦並び） -->
         <div v-if="!showSuccess" class="w-full md:flex md:justify-center">
             <div class="w-full md:max-w-4xl">
@@ -146,19 +150,27 @@
         </div>
 
         <!-- 固定ボタン（予約フォームの場合のみ、かつ終了していない場合、かつ成功ページ表示時ではない場合） -->
-        <div v-if="event.form_type === 'reservation' && !isEnded && !showSuccess" class="fixed bottom-0 left-0 right-0 z-50 p-4" style="background-color: rgba(0, 0, 0, 0.9);">
+        <div v-if="event.form_type === 'reservation' && !isEnded && !showSuccess" class="fixed bottom-0 left-0 right-0 z-50 p-4" style="background-color: rgb(137 13 13 / 90%);">
             <div class="max-w-4xl mx-auto flex gap-4">
                 <button
                     @click="showReservationForm = true"
-                    class="flex-1 bg-indigo-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition"
+                    class="flex-1 hover:opacity-80 transition-opacity"
                 >
-                    WEB予約
+                    <img
+                        src="/storage/button/web.png"
+                        alt="WEB予約"
+                        class="w-full h-auto"
+                    />
                 </button>
                 <a
                     :href="`tel:${shops && shops.length > 0 ? shops[0].phone : ''}`"
-                    class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-green-700 transition text-center"
+                    class="flex-1 hover:opacity-80 transition-opacity"
                 >
-                    電話予約 [受付]10:00 - 19:00
+                    <img
+                        src="/storage/button/tell.png"
+                        alt="電話予約"
+                        class="w-full h-auto"
+                    />
                 </a>
             </div>
         </div>
@@ -222,6 +234,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </template>
