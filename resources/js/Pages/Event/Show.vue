@@ -35,12 +35,18 @@
             <div class="w-full md:max-w-2xl">
                 <template v-for="(item, index) in displayItems" :key="`${item.type}-${item.id || index}`">
                     <!-- 画像 -->
-                    <img
+                    <div
                         v-if="item.type === 'image'"
-                        :src="item.data.path"
-                        :alt="item.data.alt || event.title"
-                        class="w-full object-cover md:mx-auto"
-                    />
+                        :ref="el => setImageRef(el, item.originalIndex !== undefined ? item.originalIndex : index)"
+                        class="scroll-reveal-image"
+                        :class="{ 'revealed': item.originalIndex !== undefined ? revealedImages.has(item.originalIndex) : revealedImages.has(index) }"
+                    >
+                        <img
+                            :src="item.data.path"
+                            :alt="item.data.alt || event.title"
+                            class="w-full object-cover md:mx-auto"
+                        />
+                    </div>
                     <!-- スライドショー -->
                     <div v-else-if="item.type === 'slideshow'" class="w-full">
                         <Slideshow :images="item.data.images" />
@@ -174,7 +180,7 @@
         </div>
 
         <!-- 固定ボタン（予約フォームの場合のみ、かつ終了していない場合、かつ成功ページ表示時ではない場合） -->
-        <div v-if="event.form_type === 'reservation' && !isEnded && !showSuccess" class="fixed bottom-0 left-0 right-0 z-50 p-4" style="background-color: rgb(137 13 13 / 90%);">
+        <div v-if="event.form_type === 'reservation' && !isEnded && !showSuccess && !isLoading" class="fixed bottom-0 left-0 right-0 z-50 p-4" style="background-color: rgb(137 13 13 / 90%);">
             <div class="max-w-4xl mx-auto flex gap-4">
                 <button
                     @click="showReservationForm = true"
@@ -265,7 +271,7 @@
 </template>
 
 <script setup>
-import { ref, computed, defineAsyncComponent, onMounted, nextTick } from 'vue';
+import { ref, computed, defineAsyncComponent, onMounted, nextTick, onUnmounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Slideshow from '@/Components/Slideshow.vue';
 
@@ -303,6 +309,11 @@ const currentStep = ref(props.showSuccess ? 'success' : 'form'); // 'form', 'con
 const confirmFormData = ref(props.successFormData || null);
 const isLoading = ref(true);
 
+// スクロールアニメーション用
+const imageRefs = ref(new Map());
+const revealedImages = ref(new Set());
+let observer = null;
+
 // 初回ローディング管理
 onMounted(() => {
     // 画像の読み込みを待つ
@@ -324,6 +335,10 @@ onMounted(() => {
                     setTimeout(async () => {
                         await nextTick();
                         isLoading.value = false;
+                        // ローディング終了後にスクロールアニメーションを設定
+                        setTimeout(() => {
+                            setupScrollAnimation();
+                        }, 500);
                     }, 300);
                 }
             } else {
@@ -333,6 +348,10 @@ onMounted(() => {
                         setTimeout(async () => {
                             await nextTick();
                             isLoading.value = false;
+                            // ローディング終了後にスクロールアニメーションを設定
+                            setTimeout(() => {
+                                setupScrollAnimation();
+                            }, 500);
                         }, 300);
                     }
                 });
@@ -342,6 +361,10 @@ onMounted(() => {
                         setTimeout(async () => {
                             await nextTick();
                             isLoading.value = false;
+                            // ローディング終了後にスクロールアニメーションを設定
+                            setTimeout(() => {
+                                setupScrollAnimation();
+                            }, 500);
                         }, 300);
                     }
                 });
@@ -353,7 +376,19 @@ onMounted(() => {
     setTimeout(async () => {
         await nextTick();
         isLoading.value = false;
+        // ローディング終了後にスクロールアニメーションを設定
+        setTimeout(() => {
+            setupScrollAnimation();
+        }, 500);
     }, 3000);
+});
+
+// クリーンアップ
+onUnmounted(() => {
+    if (observer) {
+        observer.disconnect();
+        observer = null;
+    }
 });
 
 // Inertia.jsのページ遷移時のローディング管理
@@ -366,6 +401,10 @@ router.on('finish', async () => {
     setTimeout(async () => {
         await nextTick();
         isLoading.value = false;
+        // ページ遷移後にもスクロールアニメーションを設定
+        setTimeout(() => {
+            setupScrollAnimation();
+        }, 500);
     }, 300);
 });
 
@@ -469,6 +508,76 @@ const closeForm = () => {
     confirmFormData.value = null;
 };
 
+// 画像要素のrefを設定
+const setImageRef = (el, index) => {
+    if (el && index !== undefined && index !== null) {
+        imageRefs.value.set(index, el);
+        // 既にobserverが設定されている場合は、すぐに監視を開始
+        if (observer && !revealedImages.value.has(index)) {
+            observer.observe(el);
+        }
+    }
+};
+
+// Intersection Observerの設定
+const setupScrollAnimation = () => {
+    if (typeof window === 'undefined' || !window.IntersectionObserver) {
+        return;
+    }
+
+    // 既存のobserverがあれば破棄
+    if (observer) {
+        observer.disconnect();
+    }
+
+    observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    // Mapからindexを取得
+                    let foundIndex = null;
+                    imageRefs.value.forEach((ref, index) => {
+                        if (ref === entry.target) {
+                            foundIndex = index;
+                        }
+                    });
+                    
+                    if (foundIndex !== null && !revealedImages.value.has(foundIndex)) {
+                        // 少し遅延させてアニメーションを開始
+                        setTimeout(() => {
+                            revealedImages.value.add(foundIndex);
+                        }, 50);
+                        // 一度表示されたら監視を停止
+                        observer.unobserve(entry.target);
+                    }
+                }
+            });
+        },
+        {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px', // ビューポートに入る少し前にトリガー
+        }
+    );
+
+    // 画像要素を監視
+    nextTick(() => {
+        let firstImageFound = false;
+        imageRefs.value.forEach((ref, index) => {
+            if (ref && observer && !revealedImages.value.has(index)) {
+                // 最初の画像（index 0）のみローディング終了後にすぐ表示
+                if (index === 0 && !firstImageFound) {
+                    firstImageFound = true;
+                    // 遅延を削除してすぐに表示
+                    revealedImages.value.add(index);
+                } else {
+                    // 2枚目以降の画像はスクロールでビューポートに入ったときに表示
+                    observer.observe(ref);
+                }
+            }
+        });
+    });
+};
+
 // 画像とスライドショーを順序付けして配列化
 const displayItems = computed(() => {
     const items = [];
@@ -492,6 +601,7 @@ const displayItems = computed(() => {
             type: 'image',
             id: `image-${image.id}`,
             data: image,
+            originalIndex: index,
         });
 
         // この画像の後にスライドショーがある場合
@@ -507,5 +617,29 @@ const displayItems = computed(() => {
 
     return items;
 });
+
+// displayItemsが変更されたときにスクロールアニメーションを再設定
+const imageItems = computed(() => {
+    return displayItems.value.filter(item => item.type === 'image');
+});
+
+// 画像のインデックスを取得するヘルパー関数
+const getImageIndex = (item, allItems) => {
+    return allItems.findIndex(i => i.id === item.id && i.type === 'image');
+};
 </script>
+
+<style scoped>
+.scroll-reveal-image {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    will-change: opacity, transform;
+}
+
+.scroll-reveal-image.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
 
