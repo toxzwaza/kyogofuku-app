@@ -217,14 +217,14 @@
         <!-- 予約フォームモーダル（終了していない場合、かつ成功ページ表示時ではない場合のみ） -->
         <div
             v-if="showReservationForm && event.form_type === 'reservation' && !isEnded && !showSuccess"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-3"
             style="background-color: rgba(0, 0, 0, 0.5);"
             @click.self="closeForm"
         >
-            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative" style="background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('/storage/background_img/2.png'); background-size: cover; background-position: right; background-repeat: no-repeat;">
-                <div class="sticky top-0 bg-gradient-to-r from-pink-50 to-rose-50 border-b-2 border-pink-200 px-6 py-5 flex justify-between items-center z-10 shadow-sm">
-                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[95vh] overflow-y-auto relative" style="background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('/storage/background_img/2.png'); background-size: cover; background-position: right; background-repeat: no-repeat;">
+                <div class="sticky top-0 bg-gradient-to-r from-pink-50 to-rose-50 border-b-2 border-pink-200 px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center z-10 shadow-sm">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         予約フォーム
@@ -233,12 +233,12 @@
                         @click="closeForm"
                         class="text-gray-500 hover:text-pink-600 hover:bg-pink-100 rounded-full p-2 transition-all duration-200"
                     >
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-                <div class="p-6 relative">
+                <div class="p-4 sm:p-5 lg:p-6 relative">
                     <!-- フォーム表示 -->
                     <div v-if="currentStep === 'form'">
                         <component

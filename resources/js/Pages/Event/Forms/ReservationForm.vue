@@ -1,8 +1,8 @@
 <template>
-    <form @submit.prevent="submit" class="space-y-8">
+    <form @submit.prevent="submit" class="space-y-6 sm:space-y-8">
         <!-- イベント情報 -->
-        <div class="mb-8">
-            <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-6 mb-6 border border-pink-100">
+        <div class="mb-6 sm:mb-8">
+            <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6 border border-pink-100">
                 <h1 class="text-3xl font-bold mb-4 text-gray-800">{{ event.title }}</h1>
                 <div v-if="event.description" class="text-gray-700 leading-relaxed" v-html="event.description"></div>
             </div>
@@ -154,8 +154,8 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-6">
-            <h3 class="text-xl font-semibold mb-6 text-gray-800 flex items-center border-b border-gray-200 pb-4">
+        <div ref="customerInfoSection" class="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 border border-gray-200 shadow-sm space-y-4 sm:space-y-6">
+            <h3 class="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-gray-800 flex items-center border-b border-gray-200 pb-3 sm:pb-4">
                 <svg class="w-6 h-6 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -499,7 +499,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -517,6 +517,7 @@ const props = defineProps({
 const emit = defineEmits(['submitted', 'timeslot-selected', 'confirm']);
 
 const internalSelectedTimeslot = ref(props.selectedTimeslot || null);
+const customerInfoSection = ref(null);
 
 // URLパラメータから予約枠を取得して自動選択（timeslot_idのみ）
 const urlParams = new URLSearchParams(window.location.search);
@@ -573,9 +574,18 @@ const groupedTimeslots = computed(() => {
     return groups;
 });
 
-const selectTimeslot = (timeslot) => {
+const selectTimeslot = async (timeslot) => {
     internalSelectedTimeslot.value = timeslot;
     emit('timeslot-selected', timeslot);
+    
+    // お客様情報セクションまでスクロール
+    await nextTick();
+    if (customerInfoSection.value) {
+        customerInfoSection.value.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+    }
 };
 
 const formatDate = (dateString) => {
