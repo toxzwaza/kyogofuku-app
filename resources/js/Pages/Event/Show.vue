@@ -38,8 +38,17 @@
                     <div
                         v-if="item.type === 'image'"
                         :ref="el => setImageRef(el, item.originalIndex !== undefined ? item.originalIndex : index)"
-                        class="scroll-reveal-image"
-                        :class="{ 'revealed': item.originalIndex !== undefined ? revealedImages.has(item.originalIndex) : revealedImages.has(index) }"
+                        :class="[
+                            // 一枚目（originalIndex 0）はアニメーションなし、二枚目以降はアニメーション
+                            (item.originalIndex !== undefined ? item.originalIndex : index) === 0 
+                                ? '' 
+                                : 'scroll-reveal-image',
+                            // 二枚目以降のみrevealedクラスを適用
+                            (item.originalIndex !== undefined ? item.originalIndex : index) !== 0 && 
+                            (item.originalIndex !== undefined ? revealedImages.has(item.originalIndex) : revealedImages.has(index))
+                                ? 'revealed' 
+                                : ''
+                        ]"
                     >
                         <img
                             :src="item.data.path"
@@ -561,16 +570,11 @@ const setupScrollAnimation = () => {
 
     // 画像要素を監視
     nextTick(() => {
-        let firstImageFound = false;
         imageRefs.value.forEach((ref, index) => {
             if (ref && observer && !revealedImages.value.has(index)) {
-                // 最初の画像（index 0）のみローディング終了後にすぐ表示
-                if (index === 0 && !firstImageFound) {
-                    firstImageFound = true;
-                    // 遅延を削除してすぐに表示
-                    revealedImages.value.add(index);
-                } else {
-                    // 2枚目以降の画像はスクロールでビューポートに入ったときに表示
+                // 一枚目（index 0）はアニメーションなしで表示済みなのでスキップ
+                // 2枚目以降の画像はスクロールでビューポートに入ったときにアニメーション
+                if (index !== 0) {
                     observer.observe(ref);
                 }
             }
