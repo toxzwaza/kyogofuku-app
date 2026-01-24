@@ -4,8 +4,32 @@
     <div class="min-h-screen relative" style="background-color: rgb(233, 226, 220);">
         <!-- 背景画像 -->
         <div class="fixed inset-0 z-0 opacity-30" style="background-image: url('/storage/background_img/1.png'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
+        
+        <!-- ローディング画面 -->
+        <div v-if="isLoading" class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgb(233, 226, 220);">
+            <div class="text-center">
+                <!-- ローディングスピナー -->
+                <div class="relative w-20 h-20 mx-auto mb-6">
+                    <div class="absolute inset-0 border-4 border-pink-200 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-pink-600 rounded-full border-t-transparent animate-spin"></div>
+                    <div class="absolute inset-2 border-4 border-rose-200 rounded-full"></div>
+                    <div class="absolute inset-2 border-4 border-rose-500 rounded-full border-t-transparent animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                </div>
+                <!-- ローディングテキスト -->
+                <p class="text-pink-600 text-lg font-medium animate-pulse">読み込み中...</p>
+            </div>
+        </div>
+        
         <!-- コンテンツ -->
-        <div class="relative z-10">
+        <Transition
+            enter-active-class="transition-all duration-1000 ease-out"
+            enter-from-class="opacity-0 translate-y-6 scale-98"
+            enter-to-class="opacity-100 translate-y-0 scale-100"
+        >
+            <div 
+                v-if="!isLoading" 
+                class="relative z-10"
+            >
         <!-- イベント画像とスライドショー（縦並び） -->
         <div v-if="!showSuccess" class="w-full md:flex md:justify-center">
             <div class="w-full md:max-w-2xl">
@@ -235,12 +259,13 @@
                 </div>
             </div>
         </div>
-        </div>
+            </div>
+        </Transition>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, defineAsyncComponent } from 'vue';
+import { ref, computed, defineAsyncComponent, onMounted, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Slideshow from '@/Components/Slideshow.vue';
 
@@ -276,6 +301,73 @@ const selectedTimeslot = ref(null);
 const showReservationForm = ref(false);
 const currentStep = ref(props.showSuccess ? 'success' : 'form'); // 'form', 'confirm', 'success'
 const confirmFormData = ref(props.successFormData || null);
+const isLoading = ref(true);
+
+// 初回ローディング管理
+onMounted(() => {
+    // 画像の読み込みを待つ
+    const images = document.querySelectorAll('img');
+    let loadedCount = 0;
+    const totalImages = images.length;
+    
+    if (totalImages === 0) {
+        // 画像がない場合は短い遅延後にローディングを終了
+        setTimeout(async () => {
+            await nextTick();
+            isLoading.value = false;
+        }, 500);
+    } else {
+        images.forEach((img) => {
+            if (img.complete) {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    setTimeout(async () => {
+                        await nextTick();
+                        isLoading.value = false;
+                    }, 300);
+                }
+            } else {
+                img.addEventListener('load', async () => {
+                    loadedCount++;
+                    if (loadedCount === totalImages) {
+                        setTimeout(async () => {
+                            await nextTick();
+                            isLoading.value = false;
+                        }, 300);
+                    }
+                });
+                img.addEventListener('error', async () => {
+                    loadedCount++;
+                    if (loadedCount === totalImages) {
+                        setTimeout(async () => {
+                            await nextTick();
+                            isLoading.value = false;
+                        }, 300);
+                    }
+                });
+            }
+        });
+    }
+    
+    // 最大3秒でローディングを終了（タイムアウト）
+    setTimeout(async () => {
+        await nextTick();
+        isLoading.value = false;
+    }, 3000);
+});
+
+// Inertia.jsのページ遷移時のローディング管理
+router.on('start', () => {
+    isLoading.value = true;
+});
+
+router.on('finish', async () => {
+    // 少し遅延させてスムーズに表示
+    setTimeout(async () => {
+        await nextTick();
+        isLoading.value = false;
+    }, 300);
+});
 
 // URLパラメータからfrom_adminとtimeslot_idを取得
 const urlParams = new URLSearchParams(window.location.search);
