@@ -221,7 +221,7 @@
             style="background-color: rgba(0, 0, 0, 0.5);"
             @click.self="closeForm"
         >
-            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative" style="background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('/storage/background_img/2.png'); background-size: cover; background-position: right; background-repeat: no-repeat;">
                 <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
                     <h2 class="text-2xl font-bold">予約フォーム</h2>
                     <button
@@ -233,7 +233,7 @@
                         </svg>
                     </button>
                 </div>
-                <div class="p-6">
+                <div class="p-6 relative">
                     <!-- フォーム表示 -->
                     <div v-if="currentStep === 'form'">
                         <component
