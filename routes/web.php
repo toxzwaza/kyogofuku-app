@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\TimeslotController as AdminTimeslotController;
+use App\Http\Controllers\Admin\TimeslotTemplateController as AdminTimeslotTemplateController;
 use App\Http\Controllers\Admin\ShopController as AdminShopController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -139,6 +140,14 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::put('/timeslots/{timeslot}', [AdminTimeslotController::class, 'update'])->name('timeslots.update');
     Route::post('/timeslots/{timeslot}/adjust-capacity', [AdminTimeslotController::class, 'adjustCapacity'])->name('timeslots.adjust-capacity');
     Route::delete('/timeslots/{timeslot}', [AdminTimeslotController::class, 'destroy'])->name('timeslots.destroy');
+    
+    // 予約枠テンプレート管理
+    Route::get('/timeslot-templates', [AdminTimeslotTemplateController::class, 'index'])->name('timeslot-templates.index');
+    Route::get('/timeslot-templates/create', [AdminTimeslotTemplateController::class, 'create'])->name('timeslot-templates.create');
+    Route::post('/timeslot-templates', [AdminTimeslotTemplateController::class, 'store'])->name('timeslot-templates.store');
+    Route::get('/timeslot-templates/{timeslotTemplate}/edit', [AdminTimeslotTemplateController::class, 'edit'])->name('timeslot-templates.edit');
+    Route::put('/timeslot-templates/{timeslotTemplate}', [AdminTimeslotTemplateController::class, 'update'])->name('timeslot-templates.update');
+    Route::delete('/timeslot-templates/{timeslotTemplate}', [AdminTimeslotTemplateController::class, 'destroy'])->name('timeslot-templates.destroy');
     
     // 店舗管理
     Route::get('/shops', [AdminShopController::class, 'index'])->name('shops.index');

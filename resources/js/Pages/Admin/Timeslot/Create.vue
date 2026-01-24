@@ -39,6 +39,23 @@
                             </div>
                         </div>
 
+                        <!-- テンプレートグループ作成へのリンク -->
+                        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="text-sm font-medium text-blue-900">テンプレートグループから一括作成</h3>
+                                    <p class="text-xs text-blue-700 mt-1">事前に作成したテンプレートを使用して予約枠を一括作成できます</p>
+                                </div>
+                                <Link
+                                    :href="route('admin.timeslot-templates.create')"
+                                    target="_blank"
+                                    class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                >
+                                    テンプレート作成
+                                </Link>
+                            </div>
+                        </div>
+
                         <form @submit.prevent="submit">
                             <div class="space-y-4">
                                 <div>
@@ -60,6 +77,61 @@
                                     <p v-if="venues.length === 0" class="mt-1 text-sm text-orange-500">
                                         このイベントには会場が登録されていません。
                                     </p>
+                                </div>
+
+                                <!-- テンプレートグループ選択セクション -->
+                                <div class="border-t pt-4">
+                                    <h3 class="text-sm font-medium text-gray-700 mb-3">テンプレートグループから一括作成</h3>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">テンプレートグループ</label>
+                                            <select
+                                                v-model="selectedTemplateId"
+                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            >
+                                                <option :value="null">選択してください</option>
+                                                <option
+                                                    v-for="template in templates"
+                                                    :key="template.id"
+                                                    :value="template.id"
+                                                >
+                                                    {{ template.name }}（{{ template.slots?.length || 0 }}件の時間枠）
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div v-if="selectedTemplateId">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">日付 <span class="text-red-500">*</span></label>
+                                            <input
+                                                v-model="templateDate"
+                                                type="date"
+                                                required
+                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                        <div v-if="selectedTemplateId">
+                                            <label class="flex items-center">
+                                                <input
+                                                    v-model="templateIsActive"
+                                                    type="checkbox"
+                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                />
+                                                <span class="ml-2 text-sm text-gray-700">有効</span>
+                                            </label>
+                                        </div>
+                                        <div v-if="selectedTemplateId && templateDate && form.venue_id">
+                                            <button
+                                                type="button"
+                                                @click="addFromTemplate"
+                                                class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                                            >
+                                                テンプレートから追加
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="border-t pt-4">
+                                    <h3 class="text-sm font-medium text-gray-700 mb-3">個別追加</h3>
                                 </div>
 
                                 <div>
@@ -269,6 +341,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    templates: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // 時（0-23）の選択肢を生成
@@ -342,6 +418,11 @@ const pendingTimeslots = ref([]);
 
 // 送信中の状態
 const isSubmitting = ref(false);
+
+// テンプレート関連
+const selectedTemplateId = ref(null);
+const templateDate = ref('');
+const templateIsActive = ref(true);
 
 // 既存の予約枠リスト（会場選択時に表示）
 const existingTimeslots = ref(props.existingTimeslots || []);
@@ -442,6 +523,45 @@ const addToPendingList = () => {
 // リストから削除
 const removeFromPendingList = (index) => {
     pendingTimeslots.value.splice(index, 1);
+};
+
+// テンプレートから一括追加
+const addFromTemplate = () => {
+    if (!selectedTemplateId.value) {
+        alert('テンプレートグループを選択してください。');
+        return;
+    }
+    if (!templateDate.value) {
+        alert('日付を選択してください。');
+        return;
+    }
+    if (!form.venue_id) {
+        alert('会場を選択してください。');
+        return;
+    }
+
+    const template = props.templates.find(t => t.id === selectedTemplateId.value);
+    if (!template || !template.slots || template.slots.length === 0) {
+        alert('選択したテンプレートに時間枠が登録されていません。');
+        return;
+    }
+
+    template.slots.forEach(slot => {
+        const hourStr = String(slot.hour).padStart(2, '0');
+        const minuteStr = String(slot.minute).padStart(2, '0');
+        const startAtISO = `${templateDate.value} ${hourStr}:${minuteStr}:00`;
+
+        pendingTimeslots.value.push({
+            venue_id: form.venue_id,
+            start_at: startAtISO,
+            capacity: parseInt(slot.capacity),
+            is_active: templateIsActive.value,
+        });
+    });
+
+    // テンプレート選択をリセット
+    selectedTemplateId.value = null;
+    templateDate.value = '';
 };
 
 // 一括登録

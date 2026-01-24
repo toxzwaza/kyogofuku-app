@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventTimeslot;
+use App\Models\TimeslotTemplate;
 use App\Models\Venue;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -73,11 +74,17 @@ class TimeslotController extends Controller
                 ->get();
         }
 
+        // テンプレートグループ一覧を取得
+        $templates = TimeslotTemplate::with('slots')
+            ->orderBy('name', 'asc')
+            ->get();
+
         return Inertia::render('Admin/Timeslot/Create', [
             'event' => $event,
             'venues' => $venues,
             'duplicateTimeslot' => $duplicateTimeslot,
             'existingTimeslots' => $existingTimeslots,
+            'templates' => $templates,
         ]);
     }
 
@@ -87,6 +94,33 @@ class TimeslotController extends Controller
     public function store(Request $request, Event $event)
     {
         $event->load('venues');
+        
+        // テンプレートからの一括作成
+        if ($request->has('template_id') && $request->has('date') && $request->has('venue_id')) {
+            $template = TimeslotTemplate::with('slots')->find($request->template_id);
+            
+            if (!$template) {
+                return redirect()->back()
+                    ->withErrors(['template_id' => 'テンプレートが見つかりません。']);
+            }
+
+            $date = $request->date;
+            $venueId = $request->venue_id ?: null;
+            $isActive = $request->has('is_active') ? $request->is_active : true;
+
+            $timeslots = [];
+            foreach ($template->slots as $slot) {
+                $startAt = $date . ' ' . str_pad($slot->hour, 2, '0', STR_PAD_LEFT) . ':' . str_pad($slot->minute, 2, '0', STR_PAD_LEFT) . ':00';
+                $timeslots[] = [
+                    'venue_id' => $venueId,
+                    'start_at' => $startAt,
+                    'capacity' => $slot->capacity,
+                    'is_active' => $isActive,
+                ];
+            }
+
+            $request->merge(['timeslots' => $timeslots]);
+        }
         
         // 配列形式（一括登録）か単一形式（後方互換性）かを判定
         if ($request->has('timeslots') && is_array($request->timeslots)) {
