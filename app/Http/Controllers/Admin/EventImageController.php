@@ -229,7 +229,7 @@ class EventImageController extends Controller
         }
 
         return redirect()->route('admin.events.images.index', $event->id)
-            ->with('success', 'ソート順を更新しました。');
+            ->with('success', 'ソート順を保存しました。');
     }
 
     /**
