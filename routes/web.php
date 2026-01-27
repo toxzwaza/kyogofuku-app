@@ -39,6 +39,13 @@ use App\Http\Controllers\TestController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::get('/debug-gd', function () {
+    return [
+        'php_version' => PHP_VERSION,
+        'gd_loaded' => extension_loaded('gd'),
+        'gd_info' => function_exists('gd_info') ? gd_info() : null,
+    ];
+});
 
 Route::get('/', function () {
     return redirect()->route('login');
