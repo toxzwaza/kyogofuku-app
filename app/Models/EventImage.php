@@ -12,6 +12,7 @@ class EventImage extends Model
     protected $fillable = [
         'event_id',
         'path',
+        'webp_path',
         'alt',
         'sort_order',
     ];
@@ -37,6 +38,20 @@ class EventImage extends Model
             return $this->path;
         }
         return asset('storage/' . $this->path);
+    }
+
+    /**
+     * WebP画像のURLを取得
+     */
+    public function getWebpUrlAttribute()
+    {
+        if (!$this->webp_path) {
+            return null;
+        }
+        if (str_starts_with($this->webp_path, 'http')) {
+            return $this->webp_path;
+        }
+        return asset('storage/' . $this->webp_path);
     }
 }
 

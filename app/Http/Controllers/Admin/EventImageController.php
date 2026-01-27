@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class EventImageController extends Controller
 {
@@ -58,13 +61,23 @@ class EventImageController extends Controller
         ]);
 
         $maxSortOrder = $event->images()->max('sort_order') ?? 0;
+        
+        // 利用可能なドライバーでImageManagerを初期化
+        $manager = $this->createImageManager();
 
         foreach ($request->file('images') as $index => $file) {
             $path = $file->store('events/' . $event->id, 'public');
             
+            // WebP版を生成（ドライバーが利用可能な場合のみ）
+            $webpPath = null;
+            if ($manager) {
+                $webpPath = $this->convertToWebp($path, $manager);
+            }
+            
             EventImage::create([
                 'event_id' => $event->id,
                 'path' => $path,
+                'webp_path' => $webpPath,
                 'alt' => $request->alt ?? null,
                 'sort_order' => $maxSortOrder + $index + 1,
             ]);
@@ -75,15 +88,77 @@ class EventImageController extends Controller
     }
 
     /**
+     * 利用可能なドライバーでImageManagerを作成
+     */
+    private function createImageManager()
+    {
+        // GD拡張機能が利用可能かチェック
+        if (extension_loaded('gd') && function_exists('imagecreatetruecolor')) {
+            try {
+                return new ImageManager(new GdDriver());
+            } catch (\Exception $e) {
+                \Log::warning("GDドライバーの初期化に失敗: " . $e->getMessage());
+            }
+        }
+        
+        // Imagick拡張機能が利用可能かチェック
+        if (extension_loaded('imagick')) {
+            try {
+                return new ImageManager(new ImagickDriver());
+            } catch (\Exception $e) {
+                \Log::warning("Imagickドライバーの初期化に失敗: " . $e->getMessage());
+            }
+        }
+        
+        // どちらのドライバーも利用できない場合
+        \Log::warning("画像処理ドライバー（GD/Imagick）が利用できません。WebP変換をスキップします。");
+        return null;
+    }
+
+    /**
+     * 画像をWebP形式に変換
+     */
+    private function convertToWebp($originalPath, $manager)
+    {
+        if (!$manager) {
+            return null;
+        }
+        
+        try {
+            $fullPath = Storage::disk('public')->path($originalPath);
+            $pathInfo = pathinfo($originalPath);
+            $webpPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.webp';
+            $webpFullPath = Storage::disk('public')->path($webpPath);
+            
+            // 画像を読み込んでWebPに変換
+            $image = $manager->read($fullPath);
+            
+            // WebPとして保存（品質80%）
+            $image->toWebp(80)->save($webpFullPath);
+            
+            return $webpPath;
+        } catch (\Exception $e) {
+            // エラーが発生した場合はnullを返す（既存画像と同様に扱う）
+            \Log::error("WebP変換エラー ({$originalPath}): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * イベント画像を削除
      */
     public function destroy(EventImage $image)
     {
         $eventId = $image->event_id;
         
-        // ストレージからファイルを削除
+        // ストレージから元のファイルを削除
         if (Storage::disk('public')->exists($image->path)) {
             Storage::disk('public')->delete($image->path);
+        }
+        
+        // WebPファイルも削除
+        if ($image->webp_path && Storage::disk('public')->exists($image->webp_path)) {
+            Storage::disk('public')->delete($image->webp_path);
         }
 
         $image->delete();

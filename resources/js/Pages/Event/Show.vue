@@ -50,10 +50,26 @@
                                 : ''
                         ]"
                     >
+                        <!-- WebPパスが存在する場合（新規アップロード画像）のみ<picture>要素を使用 -->
+                        <picture v-if="item.data.webp_path">
+                            <source 
+                                :srcset="item.data.webp_path" 
+                                type="image/webp"
+                            />
+                            <img
+                                :src="item.data.path"
+                                :alt="item.data.alt || event.title"
+                                class="w-full object-cover md:mx-auto"
+                                loading="lazy"
+                            />
+                        </picture>
+                        <!-- WebPパスが存在しない場合（既存画像）は通常の<img>要素 -->
                         <img
+                            v-else
                             :src="item.data.path"
                             :alt="item.data.alt || event.title"
                             class="w-full object-cover md:mx-auto"
+                            loading="lazy"
                         />
                     </div>
                     <!-- スライドショー -->

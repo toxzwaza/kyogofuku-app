@@ -57,6 +57,7 @@ class EventController extends Controller
             return [
                 'id' => $image->id,
                 'path' => $image->url,
+                'webp_path' => $image->webp_url,
                 'alt' => $image->alt,
                 'sort_order' => $image->sort_order,
             ];
