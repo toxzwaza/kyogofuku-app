@@ -11,6 +11,16 @@ class Slideshow extends Model
 
     protected $fillable = [
         'name',
+        'type',
+        'autoplay_interval',
+        'autoplay_enabled',
+        'fullscreen',
+    ];
+
+    protected $casts = [
+        'autoplay_interval' => 'integer',
+        'autoplay_enabled' => 'boolean',
+        'fullscreen' => 'boolean',
     ];
 
     /**

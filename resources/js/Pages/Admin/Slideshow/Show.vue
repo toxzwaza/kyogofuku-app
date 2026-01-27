@@ -44,6 +44,77 @@
                     </div>
                 </div>
 
+                <!-- スライドショー設定 -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-4">スライドショー設定</h3>
+                        <form @submit.prevent="updateSettings">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">表示タイプ</label>
+                                    <select
+                                        v-model="settingsForm.type"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="fade">フェード</option>
+                                        <option value="slide">スライド</option>
+                                        <option value="cube">キューブ</option>
+                                        <option value="coverflow">カバーフロー</option>
+                                    </select>
+                                    <p class="mt-1 text-sm text-gray-500">スライドショーの切り替えエフェクトを選択</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">自動再生</label>
+                                    <label class="flex items-center">
+                                        <input
+                                            v-model="settingsForm.autoplay_enabled"
+                                            type="checkbox"
+                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span class="ml-2 text-sm text-gray-700">自動でスライドを切り替える</span>
+                                    </label>
+                                </div>
+
+                                <div v-if="settingsForm.autoplay_enabled">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">自動遷移時間（ミリ秒）</label>
+                                    <input
+                                        v-model.number="settingsForm.autoplay_interval"
+                                        type="number"
+                                        min="1000"
+                                        max="60000"
+                                        step="1000"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                    <p class="mt-1 text-sm text-gray-500">1000〜60000ミリ秒（1秒〜60秒）の範囲で設定</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">全画面表示</label>
+                                    <label class="flex items-center">
+                                        <input
+                                            v-model="settingsForm.fullscreen"
+                                            type="checkbox"
+                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span class="ml-2 text-sm text-gray-700">全画面でスライドショーを表示する</span>
+                                    </label>
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <button
+                                        type="submit"
+                                        :disabled="settingsForm.processing"
+                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                    >
+                                        {{ settingsForm.processing ? '更新中...' : '設定を更新' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- 画像一覧 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
@@ -191,6 +262,14 @@ const nameForm = useForm({
     name: props.slideshow.name,
 });
 
+const settingsForm = useForm({
+    name: props.slideshow.name, // nameフィールドも含める必要がある（バリデーションで必須のため）
+    type: props.slideshow.type || 'fade',
+    autoplay_enabled: props.slideshow.autoplay_enabled !== undefined ? props.slideshow.autoplay_enabled : true,
+    autoplay_interval: props.slideshow.autoplay_interval || 5000,
+    fullscreen: props.slideshow.fullscreen !== undefined ? props.slideshow.fullscreen : true,
+});
+
 const imageForm = useForm({
     images: [],
     alt: '',
@@ -280,7 +359,21 @@ const removePreview = (index) => {
 };
 
 const updateName = () => {
-    nameForm.put(route('admin.slideshows.update', props.slideshow.id));
+    nameForm.put(route('admin.slideshows.update', props.slideshow.id), {
+        onSuccess: () => {
+            // nameFormの更新後、settingsFormのnameも同期
+            settingsForm.name = nameForm.name;
+        },
+    });
+};
+
+const updateSettings = () => {
+    settingsForm.put(route('admin.slideshows.update', props.slideshow.id), {
+        onSuccess: () => {
+            // settingsFormの更新後、nameFormのnameも同期
+            nameForm.name = settingsForm.name;
+        },
+    });
 };
 
 const submitImage = () => {

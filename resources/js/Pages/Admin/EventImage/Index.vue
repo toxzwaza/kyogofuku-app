@@ -40,24 +40,15 @@
                             </div>
                             
                             <!-- 最初の画像の前にスライドショーを設定 -->
-                            <div class="p-4 border-2 border-dashed border-indigo-300 rounded-lg bg-indigo-50">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    最初の画像の前にスライドショーを表示
-                                </label>
-                                <select
-                                    v-model="slideshowPositionsLocal[0]"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option :value="null">スライドショーなし</option>
-                                    <option
-                                        v-for="slideshow in slideshows"
-                                        :key="slideshow.id"
-                                        :value="slideshow.id"
-                                    >
-                                        {{ slideshow.name }}
-                                    </option>
-                                </select>
-                            </div>
+                            <SlideshowPositionManager
+                                :position="0"
+                                :slideshows="slideshows"
+                                :slideshow-list="getSlideshowListForPosition(0)"
+                                @add="addSlideshowToPosition(0, $event)"
+                                @remove="removeSlideshowFromPosition(0, $event)"
+                                @reorder="reorderSlideshowsAtPosition(0, $event)"
+                                label="最初の画像の前にスライドショーを表示"
+                            />
 
                             <div
                                 v-for="(image, index) in sortedImages"
@@ -99,24 +90,17 @@
                                 </div>
 
                                 <!-- この画像の後にスライドショーを設定 -->
-                                <div v-if="index < sortedImages.length - 1 || index === sortedImages.length - 1" class="p-4 border-2 border-dashed border-indigo-300 rounded-lg bg-indigo-50 mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        この画像の後にスライドショーを表示
-                                    </label>
-                                    <select
-                                        v-model="slideshowPositionsLocal[index + 1]"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    >
-                                        <option :value="null">スライドショーなし</option>
-                                        <option
-                                            v-for="slideshow in slideshows"
-                                            :key="slideshow.id"
-                                            :value="slideshow.id"
-                                        >
-                                            {{ slideshow.name }}
-                                        </option>
-                                    </select>
-                                </div>
+                                <SlideshowPositionManager
+                                    v-if="index < sortedImages.length - 1 || index === sortedImages.length - 1"
+                                    :position="index + 1"
+                                    :slideshows="slideshows"
+                                    :slideshow-list="getSlideshowListForPosition(index + 1)"
+                                    @add="addSlideshowToPosition(index + 1, $event)"
+                                    @remove="removeSlideshowFromPosition(index + 1, $event)"
+                                    @reorder="reorderSlideshowsAtPosition(index + 1, $event)"
+                                    label="この画像の後にスライドショーを表示"
+                                    class="mb-4"
+                                />
                             </div>
 
                             <div class="pt-4 flex space-x-4">
@@ -158,6 +142,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
+import SlideshowPositionManager from './Components/SlideshowPositionManager.vue';
 
 const props = defineProps({
     event: Object,
@@ -172,24 +157,72 @@ const isSaving = ref(false);
 const isSavingSlideshows = ref(false);
 const slideshowPositionsLocal = ref({});
 
-// propsからslideshowPositionsを初期化
+// propsからslideshowPositionsを初期化（複数スライドショー対応）
 if (props.slideshowPositions) {
     Object.keys(props.slideshowPositions).forEach(position => {
-        slideshowPositionsLocal.value[parseInt(position)] = props.slideshowPositions[position];
+        const pos = parseInt(position);
+        if (Array.isArray(props.slideshowPositions[position])) {
+            slideshowPositionsLocal.value[pos] = [...props.slideshowPositions[position]];
+        } else {
+            // 旧形式（単一スライドショー）の場合は配列に変換
+            slideshowPositionsLocal.value[pos] = props.slideshowPositions[position] 
+                ? [{ slideshow_id: props.slideshowPositions[position], sort_order: 0 }]
+                : [];
+        }
     });
 }
 
 // 最初の画像の前の位置を初期化（まだ設定されていない場合）
 if (!slideshowPositionsLocal.value.hasOwnProperty(0)) {
-    slideshowPositionsLocal.value[0] = null;
+    slideshowPositionsLocal.value[0] = [];
 }
 
 // 各画像の後にスライドショー位置を初期化
 sortedImages.value.forEach((image, index) => {
     if (!slideshowPositionsLocal.value.hasOwnProperty(index + 1)) {
-        slideshowPositionsLocal.value[index + 1] = null;
+        slideshowPositionsLocal.value[index + 1] = [];
     }
 });
+
+// 指定位置のスライドショーリストを取得
+const getSlideshowListForPosition = (position) => {
+    return slideshowPositionsLocal.value[position] || [];
+};
+
+// 位置にスライドショーを追加
+const addSlideshowToPosition = (position, slideshowId) => {
+    if (!slideshowPositionsLocal.value[position]) {
+        slideshowPositionsLocal.value[position] = [];
+    }
+    const maxSortOrder = slideshowPositionsLocal.value[position].length > 0
+        ? Math.max(...slideshowPositionsLocal.value[position].map(s => s.sort_order))
+        : -1;
+    slideshowPositionsLocal.value[position].push({
+        slideshow_id: slideshowId,
+        sort_order: maxSortOrder + 1,
+    });
+};
+
+// 位置からスライドショーを削除
+const removeSlideshowFromPosition = (position, index) => {
+    if (slideshowPositionsLocal.value[position]) {
+        slideshowPositionsLocal.value[position].splice(index, 1);
+        // sort_orderを再計算
+        slideshowPositionsLocal.value[position].forEach((item, idx) => {
+            item.sort_order = idx;
+        });
+    }
+};
+
+// 位置のスライドショーを並び替え
+const reorderSlideshowsAtPosition = (position, newOrder) => {
+    if (slideshowPositionsLocal.value[position]) {
+        slideshowPositionsLocal.value[position] = newOrder.map((item, idx) => ({
+            ...item,
+            sort_order: idx,
+        }));
+    }
+};
 
 const getImageUrl = (path) => {
     if (path.startsWith('http')) {
@@ -252,14 +285,14 @@ const deleteImage = (id) => {
 const saveSlideshowPositions = () => {
     isSavingSlideshows.value = true;
     
-    // positionとslideshow_idの配列を作成
+    // positionとslideshowsの配列を作成（複数スライドショー対応）
     const positions = [];
     Object.keys(slideshowPositionsLocal.value).forEach(position => {
-        const slideshowId = slideshowPositionsLocal.value[position];
-        if (slideshowId !== null) {
+        const slideshowList = slideshowPositionsLocal.value[position];
+        if (Array.isArray(slideshowList) && slideshowList.length > 0) {
             positions.push({
                 position: parseInt(position),
-                slideshow_id: slideshowId,
+                slideshows: slideshowList.filter(item => item.slideshow_id !== null),
             });
         }
     });

@@ -74,7 +74,13 @@
                     </div>
                     <!-- スライドショー -->
                     <div v-else-if="item.type === 'slideshow'" class="w-full">
-                        <Slideshow :images="item.data.images" />
+                        <Slideshow 
+                            :images="item.data.images" 
+                            :type="item.data.type"
+                            :autoplay="item.data.autoplay_enabled"
+                            :interval="item.data.autoplay_interval"
+                            :fullscreen="item.data.fullscreen"
+                        />
                     </div>
                 </template>
             </div>
@@ -610,13 +616,19 @@ const displayItems = computed(() => {
     const slideshows = props.slideshows || {};
     const images = props.images || [];
 
-    // 最初の画像の前にスライドショーがある場合
-    if (positions['0'] && slideshows[positions['0']]) {
-        items.push({
-            type: 'slideshow',
-            id: `slideshow-0`,
-            data: slideshows[positions['0']],
-        });
+    // 最初の画像の前にスライドショーがある場合（複数対応）
+    if (positions['0'] && Array.isArray(positions['0'])) {
+        positions['0']
+            .sort((a, b) => a.sort_order - b.sort_order)
+            .forEach((posData) => {
+                if (slideshows[posData.slideshow_id]) {
+                    items.push({
+                        type: 'slideshow',
+                        id: `slideshow-0-${posData.slideshow_id}`,
+                        data: slideshows[posData.slideshow_id],
+                    });
+                }
+            });
     }
 
     // 画像とスライドショーを交互に配置
@@ -629,14 +641,20 @@ const displayItems = computed(() => {
             originalIndex: index,
         });
 
-        // この画像の後にスライドショーがある場合
+        // この画像の後にスライドショーがある場合（複数対応）
         const position = index + 1;
-        if (positions[position.toString()] && slideshows[positions[position.toString()]]) {
-            items.push({
-                type: 'slideshow',
-                id: `slideshow-${position}`,
-                data: slideshows[positions[position.toString()]],
-            });
+        if (positions[position.toString()] && Array.isArray(positions[position.toString()])) {
+            positions[position.toString()]
+                .sort((a, b) => a.sort_order - b.sort_order)
+                .forEach((posData) => {
+                    if (slideshows[posData.slideshow_id]) {
+                        items.push({
+                            type: 'slideshow',
+                            id: `slideshow-${position}-${posData.slideshow_id}`,
+                            data: slideshows[posData.slideshow_id],
+                        });
+                    }
+                });
         }
     });
 

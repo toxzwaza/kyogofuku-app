@@ -23,11 +23,21 @@ class EventImageController extends Controller
     {
         $images = $event->images()->orderBy('sort_order')->get();
         $slideshows = Slideshow::orderBy('created_at', 'desc')->get();
+        
+        // 複数のスライドショーに対応した位置情報を取得
         $slideshowPositions = DB::table('event_slideshow_positions')
             ->where('event_id', $event->id)
+            ->orderBy('position')
+            ->orderBy('sort_order')
             ->get()
-            ->mapWithKeys(function ($item) {
-                return [$item->position => $item->slideshow_id];
+            ->groupBy('position')
+            ->map(function ($items) {
+                return $items->map(function ($item) {
+                    return [
+                        'slideshow_id' => $item->slideshow_id,
+                        'sort_order' => $item->sort_order,
+                    ];
+                })->toArray();
             })
             ->toArray();
 
@@ -195,7 +205,9 @@ class EventImageController extends Controller
         $validated = $request->validate([
             'positions' => 'required|array',
             'positions.*.position' => 'required|integer|min:0',
-            'positions.*.slideshow_id' => 'nullable|exists:slideshows,id',
+            'positions.*.slideshows' => 'required|array',
+            'positions.*.slideshows.*.slideshow_id' => 'nullable|exists:slideshows,id',
+            'positions.*.slideshows.*.sort_order' => 'required|integer|min:0',
         ]);
 
         // 既存の位置情報を削除
@@ -205,14 +217,17 @@ class EventImageController extends Controller
 
         // 新しい位置情報を追加
         foreach ($validated['positions'] as $positionData) {
-            if (!empty($positionData['slideshow_id'])) {
-                DB::table('event_slideshow_positions')->insert([
-                    'event_id' => $event->id,
-                    'slideshow_id' => $positionData['slideshow_id'],
-                    'position' => $positionData['position'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            foreach ($positionData['slideshows'] as $slideshowData) {
+                if (!empty($slideshowData['slideshow_id'])) {
+                    DB::table('event_slideshow_positions')->insert([
+                        'event_id' => $event->id,
+                        'slideshow_id' => $slideshowData['slideshow_id'],
+                        'position' => $positionData['position'],
+                        'sort_order' => $slideshowData['sort_order'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
 

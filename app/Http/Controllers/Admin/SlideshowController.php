@@ -50,6 +50,10 @@ class SlideshowController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'type' => 'nullable|string|in:fade,slide,cube,coverflow',
+            'autoplay_interval' => 'nullable|integer|min:1000|max:60000',
+            'autoplay_enabled' => 'nullable|boolean',
+            'fullscreen' => 'nullable|boolean',
         ]);
 
         $slideshow = Slideshow::create($validated);
@@ -65,6 +69,10 @@ class SlideshowController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'type' => 'nullable|string|in:fade,slide,cube,coverflow',
+            'autoplay_interval' => 'nullable|integer|min:1000|max:60000',
+            'autoplay_enabled' => 'nullable|boolean',
+            'fullscreen' => 'nullable|boolean',
         ]);
 
         $slideshow->update($validated);

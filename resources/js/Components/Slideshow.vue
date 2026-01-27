@@ -1,18 +1,24 @@
 <template>
-    <div class="w-full slideshow-container" :style="{ '--slide-interval': interval + 'ms' }">
+    <div 
+        class="w-full slideshow-container" 
+        :class="{ 'slideshow-fullscreen': fullscreen }"
+        :style="{ '--slide-interval': interval + 'ms' }"
+    >
         <swiper
             v-if="images && images.length > 0"
             ref="swiperRef"
             :modules="modules"
             :slides-per-view="1"
             :space-between="0"
-            :effect="'fade'"
+            :effect="type"
             :autoplay="autoplayConfig"
             :pagination="{ clickable: true }"
             :navigation="false"
             :loop="images.length > 1"
             :speed="animationDuration"
-            :fadeEffect="{ crossFade: true }"
+            :fadeEffect="type === 'fade' ? effectConfig : undefined"
+            :cubeEffect="type === 'cube' ? effectConfig : undefined"
+            :coverflowEffect="type === 'coverflow' ? effectConfig : undefined"
             class="slideshow-swiper"
             @slideChange="onSlideChange"
         >
@@ -25,7 +31,10 @@
                     <img
                         :src="image.path"
                         :alt="image.alt || 'スライドショー画像'"
-                        class="slideshow-image animation-zoom-out"
+                        :class="[
+                            'slideshow-image',
+                            type === 'fade' ? 'animation-zoom-out' : ''
+                        ]"
                         @animationend="onAnimationEnd"
                     />
                 </div>
@@ -37,17 +46,23 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Swiper, SwiperSlide } from 'swiper/vue';
-import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
+import { Autoplay, Pagination, EffectFade, EffectCube, EffectCoverflow } from 'swiper/modules';
 
 // Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
+import 'swiper/css/effect-cube';
+import 'swiper/css/effect-coverflow';
 
 const props = defineProps({
     images: {
         type: Array,
         required: true,
+    },
+    type: {
+        type: String,
+        default: 'fade', // 'fade', 'slide', 'cube', 'coverflow'
     },
     autoplay: {
         type: Boolean,
@@ -55,14 +70,39 @@ const props = defineProps({
     },
     interval: {
         type: Number,
-        default: 5000, // 5秒（ズームアウトアニメーション時間）
+        default: 5000,
+    },
+    fullscreen: {
+        type: Boolean,
+        default: true,
     },
 });
 
-const modules = [Autoplay, Pagination, EffectFade];
+const modules = computed(() => {
+    const baseModules = [Pagination];
+    
+    if (props.type === 'fade') {
+        baseModules.push(EffectFade);
+    } else if (props.type === 'cube') {
+        baseModules.push(EffectCube);
+    } else if (props.type === 'coverflow') {
+        baseModules.push(EffectCoverflow);
+    }
+    // 'slide'はデフォルトのエフェクトなので、特別なモジュールは不要
+    
+    if (props.autoplay) {
+        baseModules.push(Autoplay);
+    }
+    
+    return baseModules;
+});
 
-// Swiperのフェード切り替え時間（ゆっくりとしたフェード）
-const animationDuration = 1500;
+const animationDuration = computed(() => {
+    if (props.type === 'fade') {
+        return 1500;
+    }
+    return 600;
+});
 
 const swiperRef = ref(null);
 const currentSlideIndex = ref(0);
@@ -73,21 +113,47 @@ const onSlideChange = (swiper) => {
     currentSlideIndex.value = swiper.realIndex;
     isAnimating.value = true;
     
-    // アニメーションをリセットして再実行
-    setTimeout(() => {
-        const activeSlide = swiper.slides[swiper.activeIndex];
-        if (activeSlide) {
-            const image = activeSlide.querySelector('.slideshow-image');
-            if (image) {
-                // アニメーションをリセット
-                image.classList.remove('animation-zoom-out');
-                // 再フローをトリガーしてアニメーションを再適用
-                void image.offsetWidth;
-                image.classList.add('animation-zoom-out');
+    if (props.type === 'fade') {
+        // アニメーションをリセットして再実行
+        setTimeout(() => {
+            const activeSlide = swiper.slides[swiper.activeIndex];
+            if (activeSlide) {
+                const image = activeSlide.querySelector('.slideshow-image');
+                if (image) {
+                    // アニメーションをリセット
+                    image.classList.remove('animation-zoom-out');
+                    // 再フローをトリガーしてアニメーションを再適用
+                    void image.offsetWidth;
+                    image.classList.add('animation-zoom-out');
+                }
             }
-        }
-    }, 100);
+        }, 100);
+    }
 };
+
+const effectConfig = computed(() => {
+    if (props.type === 'cube') {
+        return {
+            shadow: true,
+            slideShadows: true,
+            shadowOffset: 20,
+            shadowScale: 0.94,
+        };
+    } else if (props.type === 'coverflow') {
+        return {
+            rotate: 50,
+            stretch: 0,
+            depth: 100,
+            modifier: 1,
+            slideShadows: true,
+        };
+    } else if (props.type === 'fade') {
+        return {
+            crossFade: true,
+        };
+    }
+    return {};
+});
 
 const onAnimationEnd = (event) => {
     // アニメーション完了時の処理（必要に応じて使用可能）
@@ -145,6 +211,11 @@ onMounted(() => {
     will-change: transform;
 }
 
+.slideshow-fullscreen .slideshow-image {
+    min-height: 100vh;
+    max-height: 100vh;
+}
+
 /* ズームアウトアニメーション（引く） */
 .slideshow-image.animation-zoom-out {
     animation: zoomOut 5s ease-out forwards;
@@ -194,6 +265,10 @@ onMounted(() => {
 @media (max-width: 640px) {
     .slideshow-image {
         min-height: 200px;
+    }
+    
+    .slideshow-fullscreen .slideshow-image {
+        min-height: 100vh;
     }
 }
 </style>

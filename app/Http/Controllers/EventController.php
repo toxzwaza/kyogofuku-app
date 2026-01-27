@@ -63,24 +63,45 @@ class EventController extends Controller
             ];
         });
 
-        // スライドショー位置情報を取得
+        // スライドショー位置情報を取得（複数のスライドショーに対応）
         $slideshowPositions = \Illuminate\Support\Facades\DB::table('event_slideshow_positions')
             ->where('event_id', $event->id)
+            ->orderBy('position')
+            ->orderBy('sort_order')
             ->get()
-            ->mapWithKeys(function ($item) {
-                return [$item->position => $item->slideshow_id];
+            ->groupBy('position')
+            ->map(function ($items) {
+                return $items->map(function ($item) {
+                    return [
+                        'slideshow_id' => $item->slideshow_id,
+                        'sort_order' => $item->sort_order,
+                    ];
+                })->toArray();
             })
             ->toArray();
 
         // スライドショー情報を取得
         $slideshows = [];
         if (!empty($slideshowPositions)) {
-            $slideshowIds = array_values($slideshowPositions);
-            $slideshowModels = \App\Models\Slideshow::with('images')->whereIn('id', $slideshowIds)->get();
+            $allSlideshowIds = [];
+            foreach ($slideshowPositions as $positionSlideshows) {
+                foreach ($positionSlideshows as $item) {
+                    $allSlideshowIds[] = $item['slideshow_id'];
+                }
+            }
+            
+            $slideshowModels = \App\Models\Slideshow::with('images')
+                ->whereIn('id', array_unique($allSlideshowIds))
+                ->get();
+            
             foreach ($slideshowModels as $slideshow) {
                 $slideshows[$slideshow->id] = [
                     'id' => $slideshow->id,
                     'name' => $slideshow->name,
+                    'type' => $slideshow->type ?? 'fade',
+                    'autoplay_interval' => $slideshow->autoplay_interval ?? 5000,
+                    'autoplay_enabled' => $slideshow->autoplay_enabled ?? true,
+                    'fullscreen' => $slideshow->fullscreen ?? true,
                     'images' => $slideshow->images->map(function ($image) {
                         return [
                             'id' => $image->id,
