@@ -190,7 +190,7 @@
 
         <!-- 固定ボタン（予約フォームの場合のみ、かつ終了していない場合、かつ成功ページ表示時ではない場合） -->
         <div v-if="event.form_type === 'reservation' && !isEnded && !showSuccess && !isLoading" class="fixed bottom-0 left-0 right-0 z-50 p-4" style="background-color: rgb(137 13 13 / 90%);">
-            <div class="max-w-4xl mx-auto flex gap-4">
+            <div class="max-w-4xl md:max-w-xl mx-auto flex gap-4">
                 <button
                     @click="showReservationForm = true"
                     class="flex-1 hover:opacity-80 transition-opacity"
