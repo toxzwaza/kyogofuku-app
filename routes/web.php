@@ -104,6 +104,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/events/{event}/images/create', [AdminEventImageController::class, 'create'])->name('events.images.create');
     Route::post('/events/{event}/images', [AdminEventImageController::class, 'store'])->name('events.images.store');
     Route::delete('/images/{image}', [AdminEventImageController::class, 'destroy'])->name('images.destroy');
+    Route::post('/events/{event}/images/{image}/convert-webp', [AdminEventImageController::class, 'convertToWebp'])->name('events.images.convert-webp');
     Route::post('/events/{event}/images/sort', [AdminEventImageController::class, 'updateSortOrder'])->name('events.images.sort');
     Route::post('/events/{event}/slideshow-positions', [AdminEventImageController::class, 'updateSlideshowPositions'])->name('events.slideshow-positions.update');
     

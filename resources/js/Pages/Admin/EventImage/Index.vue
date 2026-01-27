@@ -34,6 +34,12 @@
 
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
+                        <div v-if="$page.props.flash?.success" class="mb-4 rounded-md bg-green-50 p-4">
+                            <p class="text-sm font-medium text-green-800">{{ $page.props.flash.success }}</p>
+                        </div>
+                        <div v-if="$page.props.flash?.error" class="mb-4 rounded-md bg-red-50 p-4">
+                            <p class="text-sm font-medium text-red-800">{{ $page.props.flash.error }}</p>
+                        </div>
                         <div v-if="images && images.length > 0" class="space-y-4">
                             <div class="mb-4">
                                 <p class="text-sm text-gray-600">画像をドラッグ&ドロップで並び替えできます</p>
@@ -77,12 +83,23 @@
                                     </div>
                                     <div class="flex-1">
                                         <p class="text-sm text-gray-600">順序: {{ image.sort_order }}</p>
+                                        <p class="text-sm text-gray-600">ファイル形式: {{ image.file_format || '-' }}</p>
+                                        <p v-if="image.webp_path" class="text-sm text-green-600">WebP変換済み</p>
                                         <p v-if="image.alt" class="text-sm text-gray-600">Alt: {{ image.alt }}</p>
                                     </div>
-                                    <div class="flex-shrink-0">
+                                    <div class="flex-shrink-0 flex flex-col gap-2 items-end">
+                                        <button
+                                            v-if="!image.webp_path"
+                                            type="button"
+                                            @click="convertToWebp(image)"
+                                            :disabled="convertingImageId === image.id"
+                                            class="text-indigo-600 hover:text-indigo-800 disabled:opacity-50 text-sm"
+                                        >
+                                            {{ convertingImageId === image.id ? '変換中...' : 'WebPに変換' }}
+                                        </button>
                                         <button
                                             @click="deleteImage(image.id)"
-                                            class="text-red-600 hover:text-red-900"
+                                            class="text-red-600 hover:text-red-900 text-sm"
                                         >
                                             削除
                                         </button>
@@ -137,7 +154,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import ActionButton from '@/Components/ActionButton.vue';
@@ -151,11 +168,19 @@ const props = defineProps({
     slideshowPositions: Object,
 });
 
-const sortedImages = ref([...props.images]);
+const sortedImages = ref([...(props.images || [])]);
 const draggedIndex = ref(null);
 const isSaving = ref(false);
 const isSavingSlideshows = ref(false);
+const convertingImageId = ref(null);
 const slideshowPositionsLocal = ref({});
+
+// props.imagesが更新されたらsortedImagesを同期（WebP変換後のリダイレクトなど）
+watch(() => props.images, (newVal) => {
+    if (newVal && Array.isArray(newVal) && newVal.length > 0) {
+        sortedImages.value = [...newVal];
+    }
+}, { deep: true });
 
 // propsからslideshowPositionsを初期化（複数スライドショー対応）
 if (props.slideshowPositions) {
@@ -280,6 +305,20 @@ const deleteImage = (id) => {
             },
         });
     }
+};
+
+const convertToWebp = (image) => {
+    convertingImageId.value = image.id;
+    router.post(
+        route('admin.events.images.convert-webp', [props.event.id, image.id]),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                convertingImageId.value = null;
+            },
+        }
+    );
 };
 
 const saveSlideshowPositions = () => {

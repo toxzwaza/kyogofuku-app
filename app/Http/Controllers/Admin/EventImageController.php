@@ -21,7 +21,16 @@ class EventImageController extends Controller
      */
     public function index(Event $event)
     {
-        $images = $event->images()->orderBy('sort_order')->get();
+        $images = $event->images()->orderBy('sort_order')->get()->map(function ($image) {
+            return [
+                'id' => $image->id,
+                'path' => $image->path,
+                'webp_path' => $image->webp_path,
+                'alt' => $image->alt,
+                'sort_order' => $image->sort_order,
+                'file_format' => strtoupper(pathinfo($image->path, PATHINFO_EXTENSION) ?: '-'),
+            ];
+        })->values();
         $slideshows = Slideshow::orderBy('created_at', 'desc')->get();
         
         // 複数のスライドショーに対応した位置情報を取得
@@ -81,7 +90,7 @@ class EventImageController extends Controller
             // WebP版を生成（ドライバーが利用可能な場合のみ）
             $webpPath = null;
             if ($manager) {
-                $webpPath = $this->convertToWebp($path, $manager);
+                $webpPath = $this->convertPathToWebp($path, $manager);
             }
             
             EventImage::create([
@@ -126,9 +135,9 @@ class EventImageController extends Controller
     }
 
     /**
-     * 画像をWebP形式に変換
+     * 画像パスをWebP形式に変換
      */
-    private function convertToWebp($originalPath, $manager)
+    private function convertPathToWebp($originalPath, $manager)
     {
         if (!$manager) {
             return null;
@@ -152,6 +161,32 @@ class EventImageController extends Controller
             \Log::error("WebP変換エラー ({$originalPath}): " . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * 既存画像をWebP形式に変換（管理画面から実行）
+     */
+    public function convertToWebp(Event $event, EventImage $image)
+    {
+        if ($image->event_id !== $event->id) {
+            abort(404);
+        }
+
+        $manager = $this->createImageManager();
+        if (!$manager) {
+            return redirect()->route('admin.events.images.index', $event->id)
+                ->with('error', '画像処理ドライバー（GD/Imagick）が利用できません。');
+        }
+
+            $webpPath = $this->convertPathToWebp($image->path, $manager);
+        if ($webpPath) {
+            $image->update(['webp_path' => $webpPath]);
+            return redirect()->route('admin.events.images.index', $event->id)
+                ->with('success', 'WebPに変換しました。');
+        }
+
+        return redirect()->route('admin.events.images.index', $event->id)
+            ->with('error', 'WebP変換に失敗しました。');
     }
 
     /**
