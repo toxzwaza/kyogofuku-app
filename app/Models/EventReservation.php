@@ -37,6 +37,7 @@ class EventReservation extends Model
         'inquiry_message',
         'privacy_agreed',
         'cancel_flg',
+        'customer_id',
     ];
 
     protected $casts = [
@@ -49,6 +50,14 @@ class EventReservation extends Model
         'privacy_agreed' => 'boolean',
         'cancel_flg' => 'boolean',
     ];
+
+    /**
+     * 顧客とのリレーション
+     */
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
     /**
      * イベントとのリレーション

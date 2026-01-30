@@ -249,7 +249,7 @@ class ReservationController extends Controller
      */
     public function show(EventReservation $reservation)
     {
-        $reservation->load(['event', 'venue', 'notes.user', 'statusUpdatedBy', 'schedule', 'emailThreads.emails']);
+        $reservation->load(['event', 'venue', 'customer', 'notes.user', 'statusUpdatedBy', 'schedule', 'emailThreads.emails']);
         
         $currentUser = auth()->user();
         $userShops = $currentUser ? $currentUser->shops()
@@ -663,6 +663,20 @@ class ReservationController extends Controller
         $reservation->schedule->delete();
 
         return redirect()->back()->with('success', 'スケジュールから解除しました。');
+    }
+
+    /**
+     * 予約に顧客を紐づける
+     */
+    public function linkCustomer(Request $request, EventReservation $reservation)
+    {
+        $validated = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+        ]);
+
+        $reservation->update(['customer_id' => $validated['customer_id']]);
+
+        return redirect()->back()->with('success', '顧客を紐づけました。');
     }
 
     /**

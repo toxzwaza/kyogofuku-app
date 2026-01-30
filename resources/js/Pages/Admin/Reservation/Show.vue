@@ -39,6 +39,18 @@
         </h2>
         <div class="flex items-center space-x-3">
           <ActionButton
+            v-if="reservation.customer_id"
+            variant="detail"
+            label="顧客閲覧"
+            :href="route('admin.customers.show', reservation.customer_id)"
+          />
+          <ActionButton
+            v-else
+            variant="create"
+            label="顧客追加"
+            :href="route('admin.customers.index', { add_from_reservation: reservation.id })"
+          />
+          <ActionButton
             variant="edit"
             label="編集"
             :href="route('admin.reservations.edit', reservation.id)"
@@ -1014,6 +1026,106 @@
                   </form>
                 </div>
 
+                <!-- 顧客紐づけ -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                  <h3 class="text-lg font-semibold mb-4">顧客紐づけ</h3>
+
+                  <!-- 顧客が紐づいている場合 -->
+                  <div
+                    v-if="reservation.customer && !showCustomerLinkSearch"
+                    class="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-md"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm font-medium text-indigo-800">
+                          顧客ID: {{ reservation.customer.id }} / {{ reservation.customer.name }}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        @click="openCustomerLinkSearch"
+                        class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                      >
+                        変更
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 顧客未紐づけ、または変更時：検索UI -->
+                  <div v-else>
+                    <p v-if="!reservation.customer" class="text-sm text-gray-600 mb-3">
+                      顧客が紐づいていません。名前で検索して紐づけてください。
+                    </p>
+                    <p v-else class="text-sm text-gray-600 mb-3">
+                      別の顧客を紐づける場合は名前で検索してください。
+                    </p>
+                    <div class="mb-3">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">顧客名で検索</label>
+                      <input
+                        v-model="customerSearchName"
+                        type="text"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="顧客名を入力"
+                        @input="searchCustomers"
+                      />
+                    </div>
+                    <div v-if="isSearchingCustomers" class="text-sm text-gray-500 py-2">検索中...</div>
+                    <div
+                      v-else-if="customerSearchResults.length > 0"
+                      class="overflow-x-auto border border-gray-200 rounded-md"
+                    >
+                      <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                          <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">名前</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">電話番号</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                          <tr v-for="c in customerSearchResults" :key="c.id">
+                            <td class="px-4 py-2 text-sm text-gray-900">{{ c.id }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">{{ c.name }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">{{ c.phone_number || '-' }}</td>
+                            <td class="px-4 py-2 text-sm">
+                              <span
+                                v-if="reservation.customer_id && c.id === reservation.customer_id"
+                                class="text-gray-500"
+                              >
+                                紐づけ済
+                              </span>
+                              <button
+                                v-else
+                                type="button"
+                                :disabled="isLinkingCustomerId === c.id"
+                                @click="linkCustomer(c.id)"
+                                class="text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50"
+                              >
+                                {{ isLinkingCustomerId === c.id ? '紐づけ中...' : '紐づけ' }}
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p
+                      v-else-if="customerSearchName && !isSearchingCustomers"
+                      class="text-sm text-gray-500 py-2"
+                    >
+                      該当する顧客がいません
+                    </p>
+                    <button
+                      v-if="reservation.customer && showCustomerLinkSearch"
+                      type="button"
+                      @click="showCustomerLinkSearch = false"
+                      class="mt-2 text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                </div>
+
                 <!-- キャンセル済みの場合のみ：完全削除 -->
                 <div
                   v-if="reservation.cancel_flg"
@@ -1044,6 +1156,60 @@ import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 
 const isRestoring = ref(false);
+
+// 顧客紐づけ（デフォルト値: 未紐づけ時は予約者名、紐づけ済み時は変更で顧客名をセット）
+const showCustomerLinkSearch = ref(false);
+const customerSearchName = ref("");
+const customerSearchResults = ref([]);
+const isSearchingCustomers = ref(false);
+const isLinkingCustomerId = ref(null);
+let customerSearchTimeout = null;
+
+// 変更押下時: 検索欄に紐づき顧客名を入れて検索UIを表示
+const openCustomerLinkSearch = () => {
+  customerSearchName.value = props.reservation?.customer?.name ?? "";
+  showCustomerLinkSearch.value = true;
+  searchCustomers();
+};
+
+const searchCustomers = () => {
+  if (customerSearchTimeout) clearTimeout(customerSearchTimeout);
+  const name = customerSearchName.value.trim();
+  if (!name) {
+    customerSearchResults.value = [];
+    return;
+  }
+  customerSearchTimeout = setTimeout(() => {
+    isSearchingCustomers.value = true;
+    axios
+      .get(route("admin.customers.search"), { params: { name } })
+      .then((res) => {
+        customerSearchResults.value = res.data.customers || [];
+      })
+      .finally(() => {
+        isSearchingCustomers.value = false;
+      });
+  }, 300);
+};
+
+const linkCustomer = (customerId) => {
+  isLinkingCustomerId.value = customerId;
+  router.patch(
+    route("admin.reservations.customer.link", props.reservation.id),
+    { customer_id: customerId },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        showCustomerLinkSearch.value = false;
+        customerSearchName.value = "";
+        customerSearchResults.value = [];
+      },
+      onFinish: () => {
+        isLinkingCustomerId.value = null;
+      },
+    }
+  );
+};
 
 const props = defineProps({
   emailThreads: {
@@ -1497,6 +1663,12 @@ const sendReplyEmail = () => {
 
 // 初期化
 onMounted(() => {
+  // 顧客未紐づけ時: 顧客名検索のデフォルト値にお名前（予約者名）を格納し、検索実行して結果を表示
+  if (!props.reservation?.customer && props.reservation?.name) {
+    customerSearchName.value = props.reservation.name;
+    searchCustomers();
+  }
+
   // メールスレッドが1つだけの場合は自動選択（新しい順にソート済みの最初のスレッド）
   if (sortedEmailThreads.value && sortedEmailThreads.value.length === 1) {
     replyForm.email_thread_id = sortedEmailThreads.value[0].id;

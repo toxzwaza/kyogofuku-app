@@ -291,7 +291,7 @@
             <div
                 v-if="showAddCustomerModal"
                 class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
-                @click.self="showAddCustomerModal = false"
+                @click.self="closeAddCustomerModal"
             >
                 <div
                     class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
@@ -305,7 +305,8 @@
                             顧客情報追加
                         </h3>
                         <button
-                            @click="showAddCustomerModal = false"
+                            @click="closeAddCustomerModal"
+                            type="button"
                             class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -430,7 +431,7 @@
                         <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
                             <button
                                 type="button"
-                                @click="showAddCustomerModal = false"
+                                @click="closeAddCustomerModal"
                                 class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                             >
                                 キャンセル
@@ -452,7 +453,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
@@ -464,6 +465,7 @@ const props = defineProps({
     plans: Array,
     users: Array,
     filters: Object,
+    prefillFromReservation: Object,
 });
 
 // モーダル表示フラグ
@@ -498,6 +500,7 @@ const customerForm = useForm({
     postal_code: '',
     address: '',
     remarks: '',
+    event_reservation_id: null,
 });
 
 // 検索実行
@@ -536,6 +539,35 @@ const resetSearch = () => {
         preserveScroll: false,
     });
 };
+
+// 予約からプリフィルをフォームに反映
+const applyPrefillFromReservation = () => {
+    if (!props.prefillFromReservation) return;
+    const p = props.prefillFromReservation;
+    customerForm.name = p.name ?? '';
+    customerForm.kana = p.kana ?? '';
+    customerForm.phone_number = p.phone_number ?? '';
+    customerForm.postal_code = p.postal_code ?? '';
+    customerForm.address = p.address ?? '';
+    customerForm.birth_date = p.birth_date ?? '';
+    customerForm.coming_of_age_year = p.coming_of_age_year ?? null;
+    customerForm.remarks = p.remarks ?? '';
+    customerForm.event_reservation_id = p.id ?? null;
+};
+
+// モーダルを閉じてフォームをリセット
+const closeAddCustomerModal = () => {
+    showAddCustomerModal.value = false;
+    customerForm.reset();
+};
+
+// 予約詳細から遷移した場合はモーダルを開きプリフィルを反映
+onMounted(() => {
+    if (props.prefillFromReservation) {
+        applyPrefillFromReservation();
+        showAddCustomerModal.value = true;
+    }
+});
 
 // 顧客情報追加
 const storeCustomer = () => {

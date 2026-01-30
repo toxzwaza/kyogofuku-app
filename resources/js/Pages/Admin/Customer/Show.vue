@@ -236,6 +236,69 @@
                     </div>
                 </div>
 
+                <!-- 参加イベント -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">参加イベント</h3>
+                        </div>
+                        <div v-if="eventReservationsList.length > 0" class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">予約ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">イベント名</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">予約日時</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会場</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr
+                                        v-for="reservation in eventReservationsList"
+                                        :key="reservation.id"
+                                        :class="{ 'bg-amber-50': reservation.cancel_flg }"
+                                    >
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.event?.title || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.reservation_datetime ? formatDateTime(reservation.reservation_datetime) : '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.venue?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ getScheduleAssigneeNames(reservation) || '' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span
+                                                v-if="reservation.cancel_flg"
+                                                class="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-800"
+                                            >
+                                                キャンセル済み
+                                            </span>
+                                            <span
+                                                v-else-if="reservation.status"
+                                                class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800"
+                                            >
+                                                {{ reservation.status }}
+                                            </span>
+                                            <span v-else class="text-gray-500">-</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <Link
+                                                :href="route('admin.reservations.show', reservation.id)"
+                                                class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
+                                            >
+                                                詳細
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-else class="text-center py-8 text-gray-500">
+                            参加イベントはありません
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 成約情報 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
@@ -1204,6 +1267,21 @@ const props = defineProps({
 
 const page = usePage();
 const currentUser = computed(() => page.props.auth?.user || null);
+
+// 参加イベント（予約）一覧（snake_case / camelCase 両対応）
+const eventReservationsList = computed(() => {
+    const list = props.customer?.event_reservations ?? props.customer?.eventReservations;
+    return Array.isArray(list) ? list : [];
+});
+
+// スケジュールから担当者名を取得（スケジュール未紐づけの場合は空文字）
+const getScheduleAssigneeNames = (reservation) => {
+    const schedule = reservation?.schedule;
+    if (!schedule) return '';
+    const users = schedule.participant_users ?? schedule.participantUsers;
+    if (!Array.isArray(users) || users.length === 0) return '';
+    return users.map((u) => u?.name).filter(Boolean).join('、');
+};
 
 // モーダル表示フラグ
 const showEditCustomerModal = ref(false);

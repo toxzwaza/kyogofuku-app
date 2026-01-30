@@ -138,6 +138,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // 予約スケジュール管理
     Route::post('/reservations/{reservation}/schedule', [AdminReservationController::class, 'addToSchedule'])->name('reservations.schedule.add');
     Route::delete('/reservations/{reservation}/schedule', [AdminReservationController::class, 'removeFromSchedule'])->name('reservations.schedule.remove');
+    Route::patch('/reservations/{reservation}/customer', [AdminReservationController::class, 'linkCustomer'])->name('reservations.customer.link');
     
     // 予約メール返信
     Route::post('/reservations/{reservation}/reply-email', [AdminReservationController::class, 'sendReplyEmail'])->name('reservations.reply-email');
@@ -169,6 +170,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     
     // 顧客管理
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/search', [AdminCustomerController::class, 'search'])->name('customers.search');
     Route::post('/customers', [AdminCustomerController::class, 'store'])->name('customers.store');
     Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
     Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');

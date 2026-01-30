@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\EventReservation;
 use App\Models\Contract;
 use App\Models\PhotoSlot;
 use App\Models\CustomerPhoto;
@@ -97,6 +98,25 @@ class CustomerController extends Controller
         $plans = Plan::orderBy('name')->get();
         $users = User::orderBy('name')->get();
 
+        // 予約詳細から顧客追加の場合、予約者情報をプリフィル用に渡す
+        $prefillFromReservation = null;
+        if ($request->filled('add_from_reservation')) {
+            $reservation = EventReservation::find($request->add_from_reservation);
+            if ($reservation) {
+                $prefillFromReservation = [
+                    'id' => $reservation->id,
+                    'name' => $reservation->name,
+                    'kana' => $reservation->furigana,
+                    'phone_number' => $reservation->phone,
+                    'postal_code' => $reservation->postal_code,
+                    'address' => $reservation->address,
+                    'birth_date' => $reservation->birth_date?->format('Y-m-d'),
+                    'coming_of_age_year' => $reservation->seijin_year,
+                    'remarks' => $reservation->inquiry_message,
+                ];
+            }
+        }
+
         return Inertia::render('Admin/Customer/Index', [
             'customers' => $customers,
             'ceremonyAreas' => $ceremonyAreas,
@@ -108,7 +128,26 @@ class CustomerController extends Controller
                 'contract_date_from', 'contract_date_to', 'shop_id', 'plan_id',
                 'kimono_type', 'warranty_flag', 'user_id', 'preparation_venue', 'preparation_date'
             ]),
+            'prefillFromReservation' => $prefillFromReservation,
         ]);
+    }
+
+    /**
+     * 顧客を名前で検索（予約紐づけ用・JSON返却）
+     */
+    public function search(Request $request)
+    {
+        $name = $request->query('name', '');
+        $customers = [];
+        if (strlen($name) > 0) {
+            $customers = Customer::query()
+                ->where('name', 'LIKE', '%' . $name . '%')
+                ->select('id', 'name', 'phone_number')
+                ->orderBy('name')
+                ->limit(20)
+                ->get();
+        }
+        return response()->json(['customers' => $customers]);
     }
 
     /**
@@ -127,9 +166,22 @@ class CustomerController extends Controller
             'postal_code' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
+            'event_reservation_id' => 'nullable|exists:event_reservations,id',
         ]);
 
+        $eventReservationId = $validated['event_reservation_id'] ?? null;
+        unset($validated['event_reservation_id']);
+
         $customer = Customer::create($validated);
+
+        if ($eventReservationId) {
+            $eventReservation = EventReservation::find($eventReservationId);
+            if ($eventReservation) {
+                $eventReservation->update(['customer_id' => $customer->id]);
+            }
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('success', '顧客を登録し、予約に紐づけました。');
+        }
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '顧客情報を追加しました。');
@@ -145,6 +197,9 @@ class CustomerController extends Controller
             'contracts.shop',
             'contracts.plan',
             'contracts.user',
+            'eventReservations.event',
+            'eventReservations.venue',
+            'eventReservations.schedule.participantUsers',
             'photoSlots.studio',
             'photoSlots.shops',
             'photoSlots.user',
@@ -152,7 +207,12 @@ class CustomerController extends Controller
             'photos.type',
             'tags',
         ]);
-        
+
+        // 参加イベント（予約）を予約日時・作成日の降順でソート
+        $customer->setRelation('eventReservations', $customer->eventReservations->sortByDesc(function ($r) {
+            return $r->reservation_datetime ?? $r->created_at?->format('Y-m-d H:i:s') ?? $r->created_at;
+        })->values());
+
         // photoSlotsをソート
         $customer->photoSlots = $customer->photoSlots->sortBy([
             ['shoot_date', 'asc'],

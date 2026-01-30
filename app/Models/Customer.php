@@ -39,4 +39,12 @@ class Customer extends Model
     {
         return $this->hasMany(PhotoSlot::class);
     }
+
+    /**
+     * イベント予約とのリレーション（参加イベント）
+     */
+    public function eventReservations()
+    {
+        return $this->hasMany(EventReservation::class);
+    }
 }
