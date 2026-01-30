@@ -826,7 +826,7 @@
                       >
                         <span class="text-gray-500 mr-2">郵便番号:</span>
                         <span class="text-gray-700">{{
-                          reservation.postal_code
+                          formatPostalCode(reservation.postal_code)
                         }}</span>
                       </div>
                     </div>
@@ -1537,7 +1537,7 @@
                         <td
                           class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                         >
-                          {{ reservation.postal_code || "-" }}
+                          {{ formatPostalCode(reservation.postal_code) }}
                         </td>
                         <td
                           class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
@@ -2585,6 +2585,14 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("ja-JP");
 };
 
+// 郵便番号を XXX-XXXX 形式で表示
+const formatPostalCode = (val) => {
+  if (!val) return "-";
+  const digits = String(val).replace(/-/g, "").replace(/\D/g, "").slice(0, 7);
+  if (digits.length === 7) return digits.slice(0, 3) + "-" + digits.slice(3, 7);
+  return digits || "-";
+};
+
 // 日付選択肢用のフォーマット（YYYY-MM-DD形式から表示用に変換）
 const formatDateForOption = (dateString) => {
   if (!dateString) return "-";
@@ -3101,7 +3109,7 @@ const getColumnValue = (reservation, columnKey) => {
     case "request_method":
       return reservation.request_method || "-";
     case "postal_code":
-      return reservation.postal_code || "-";
+      return formatPostalCode(reservation.postal_code);
     case "privacy_agreed":
       return reservation.privacy_agreed ? "同意" : "-";
     case "heard_from":

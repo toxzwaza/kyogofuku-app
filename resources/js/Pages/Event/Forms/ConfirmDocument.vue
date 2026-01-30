@@ -121,7 +121,7 @@
                             </div>
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">郵便番号</label>
                         </div>
-                        <p class="text-gray-900 font-medium pl-10">{{ formData.postal_code || '-' }}</p>
+                        <p class="text-gray-900 font-medium pl-10">{{ formatPostalCode(formData.postal_code) }}</p>
                     </div>
 
                     <!-- 住所 -->
@@ -207,6 +207,14 @@ const formatDate = (dateString) => {
         month: 'long',
         day: 'numeric',
     });
+};
+
+// 郵便番号を XXX-XXXX 形式で表示
+const formatPostalCode = (val) => {
+    if (!val) return '-';
+    const digits = String(val).replace(/-/g, '').replace(/\D/g, '').slice(0, 7);
+    if (digits.length === 7) return digits.slice(0, 3) + '-' + digits.slice(3, 7);
+    return digits || '-';
 };
 
 const submit = () => {

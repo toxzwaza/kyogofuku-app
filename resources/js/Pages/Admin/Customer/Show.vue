@@ -176,7 +176,7 @@
                                         </svg>
                                         郵便番号
                                     </label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.postal_code || '-' }}</p>
+                                    <p class="text-base font-medium text-gray-900">{{ formatPostalCode(customer.postal_code) }}</p>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
                                     <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
@@ -1578,6 +1578,14 @@ const formatDate = (dateString) => {
         month: 'long',
         day: 'numeric',
     });
+};
+
+// 郵便番号を XXX-XXXX 形式で表示
+const formatPostalCode = (val) => {
+    if (!val) return '-';
+    const digits = String(val).replace(/-/g, '').replace(/\D/g, '').slice(0, 7);
+    if (digits.length === 7) return digits.slice(0, 3) + '-' + digits.slice(3, 7);
+    return digits || '-';
 };
 
 // 時刻をフォーマット（例: 14:30）
