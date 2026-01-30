@@ -315,7 +315,7 @@ class TimeslotController extends Controller
     /**
      * 予約枠を削除
      */
-    public function destroy(EventTimeslot $timeslot)
+    public function destroy(Request $request, EventTimeslot $timeslot)
     {
         $eventId = $timeslot->event_id;
         
@@ -336,12 +336,19 @@ class TimeslotController extends Controller
         $reservationCount = $reservationQuery->count();
 
         if ($reservationCount > 0) {
+            $message = "予約が存在するため削除できません。（予約数: {$reservationCount}件）";
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
             return redirect()->back()
-                ->withErrors(['error' => "予約が存在するため削除できません。（予約数: {$reservationCount}件）"]);
+                ->withErrors(['error' => $message]);
         }
 
         $timeslot->delete();
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => '予約枠を削除しました。']);
+        }
         return redirect()->route('admin.events.timeslots.index', $eventId)
             ->with('success', '予約枠を削除しました。');
     }

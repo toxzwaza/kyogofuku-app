@@ -2,6 +2,49 @@
     <Head title="予約枠一覧" />
 
     <AuthenticatedLayout>
+        <!-- フラッシュメッセージ（画面右上に固定・枠増減・削除の結果） -->
+        <div
+            class="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full sm:max-w-md pointer-events-none"
+            aria-live="polite"
+        >
+            <div
+                v-if="localSuccessMessage"
+                class="rounded-lg bg-green-50 p-4 border border-green-200 shadow-lg flex items-center justify-between gap-3 pointer-events-auto"
+            >
+                <p class="text-sm font-medium text-green-800 flex-1 min-w-0">
+                    {{ localSuccessMessage }}
+                </p>
+                <button
+                    type="button"
+                    @click="localSuccessMessage = ''"
+                    class="text-green-600 hover:text-green-800 flex-shrink-0 p-1 rounded hover:bg-green-100"
+                    aria-label="閉じる"
+                >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <div
+                v-if="localErrorMessage"
+                class="rounded-lg bg-red-50 p-4 border border-red-200 shadow-lg flex items-center justify-between gap-3 pointer-events-auto"
+            >
+                <p class="text-sm font-medium text-red-800 flex-1 min-w-0">
+                    {{ localErrorMessage }}
+                </p>
+                <button
+                    type="button"
+                    @click="localErrorMessage = ''"
+                    class="text-red-600 hover:text-red-800 flex-shrink-0 p-1 rounded hover:bg-red-100"
+                    aria-label="閉じる"
+                >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -156,7 +199,9 @@
                                                     </button>
                                                     <button
                                                         @click="deleteTimeslot(timeslot.id)"
-                                                        class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg shadow-sm hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
+                                                        :disabled="deletingTimeslotId === timeslot.id || (timeslot.capacity - timeslot.remaining_capacity) > 0"
+                                                        :title="(timeslot.capacity - timeslot.remaining_capacity) > 0 ? '予約が存在するため削除できません' : '削除'"
+                                                        class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg shadow-sm hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                                     >
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -216,9 +261,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
@@ -228,15 +273,24 @@ const props = defineProps({
     timeslots: Array,
 });
 
+const localTimeslots = ref(props.timeslots ? [...props.timeslots] : []);
+watch(() => props.timeslots, (next) => {
+    localTimeslots.value = next && next.length ? [...next] : [];
+}, { immediate: false });
+
 const adjustingTimeslotId = ref(null);
+const deletingTimeslotId = ref(null);
+const localSuccessMessage = ref('');
+const localErrorMessage = ref('');
 
 // 予約枠を会場ごと、その中で日付ごとにグループ化
 const groupedByVenue = computed(() => {
-    if (!props.timeslots || props.timeslots.length === 0) return {};
+    const list = localTimeslots.value;
+    if (!list || list.length === 0) return {};
     
     // まず会場ごとにグループ化
     const venueGroups = {};
-    props.timeslots.forEach(timeslot => {
+    list.forEach(timeslot => {
         // venue_idがnullの場合は「会場未設定」として扱う
         const venueKey = timeslot.venue_id || 'no_venue';
         if (!venueGroups[venueKey]) {
@@ -269,8 +323,7 @@ const getVenueName = (venueKey) => {
     if (venueKey === 'no_venue') {
         return '会場未設定';
     }
-    // venueKeyはvenue_idなので、timeslotsから該当するvenueを探す
-    const timeslot = props.timeslots.find(t => t.venue_id == venueKey);
+    const timeslot = localTimeslots.value.find(t => t.venue_id == venueKey);
     return timeslot?.venue?.name || `会場ID: ${venueKey}`;
 };
 
@@ -298,37 +351,54 @@ const formatTime = (datetime) => {
     });
 };
 
-const deleteTimeslot = (id) => {
-    if (confirm('本当に削除しますか？')) {
-        router.delete(route('admin.timeslots.destroy', id));
+const deleteTimeslot = async (id) => {
+    if (!confirm('本当に削除しますか？')) return;
+    deletingTimeslotId.value = id;
+    localErrorMessage.value = '';
+    localSuccessMessage.value = '';
+    try {
+        const response = await axios.delete(route('admin.timeslots.destroy', id), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (response.data && response.data.success) {
+            localTimeslots.value = localTimeslots.value.filter(t => t.id !== id);
+            localSuccessMessage.value = response.data.message || '予約枠を削除しました。';
+        } else {
+            localErrorMessage.value = (response.data && response.data.message) || '削除に失敗しました。';
+        }
+    } catch (error) {
+        const msg = error.response?.data?.message || '削除に失敗しました。';
+        localErrorMessage.value = msg;
+    } finally {
+        deletingTimeslotId.value = null;
     }
 };
 
 const adjustCapacity = async (timeslotId, amount) => {
     if (adjustingTimeslotId.value === timeslotId) return;
-    
     adjustingTimeslotId.value = timeslotId;
-    
+    localErrorMessage.value = '';
+    localSuccessMessage.value = '';
     try {
         const response = await axios.post(route('admin.timeslots.adjust-capacity', timeslotId), {
             amount: amount,
+        }, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         });
-        
-        if (response.data.success) {
-            // ページをリロードして最新の状態を取得
-            router.reload({
-                preserveScroll: true,
-            });
+        if (response.data && response.data.success) {
+            localTimeslots.value = localTimeslots.value.map(s =>
+                s.id === timeslotId
+                    ? { ...s, capacity: response.data.capacity, remaining_capacity: response.data.remaining }
+                    : s
+            );
+            localSuccessMessage.value = amount > 0 ? '枠を追加しました。' : '枠を削除しました。';
         } else {
-            alert(response.data.message || '枠数の変更に失敗しました。');
-            adjustingTimeslotId.value = null;
+            localErrorMessage.value = (response.data && response.data.message) || '枠数の変更に失敗しました。';
         }
     } catch (error) {
-        if (error.response && error.response.data && error.response.data.message) {
-            alert(error.response.data.message);
-        } else {
-            alert('枠数の変更に失敗しました。');
-        }
+        const msg = error.response?.data?.message || '枠数の変更に失敗しました。';
+        localErrorMessage.value = msg;
+    } finally {
         adjustingTimeslotId.value = null;
     }
 };
