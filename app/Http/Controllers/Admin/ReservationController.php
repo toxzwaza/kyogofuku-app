@@ -680,6 +680,16 @@ class ReservationController extends Controller
     }
 
     /**
+     * 予約から顧客紐づけを解除する
+     */
+    public function unlinkCustomer(EventReservation $reservation)
+    {
+        $reservation->update(['customer_id' => null]);
+
+        return redirect()->back()->with('success', '顧客の紐づけを解除しました。');
+    }
+
+    /**
      * 返信メールを送信（新規メール作成にも対応）
      */
     public function sendReplyEmail(Request $request, EventReservation $reservation)

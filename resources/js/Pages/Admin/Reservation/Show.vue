@@ -39,18 +39,6 @@
         </h2>
         <div class="flex items-center space-x-3">
           <ActionButton
-            v-if="reservation.customer_id"
-            variant="detail"
-            label="顧客閲覧"
-            :href="route('admin.customers.show', reservation.customer_id)"
-          />
-          <ActionButton
-            v-else
-            variant="create"
-            label="顧客追加"
-            :href="route('admin.customers.index', { add_from_reservation: reservation.id })"
-          />
-          <ActionButton
             variant="edit"
             label="編集"
             :href="route('admin.reservations.edit', reservation.id)"
@@ -1028,111 +1016,168 @@
 
                 <!-- 顧客紐づけ -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
-                  <h3 class="text-lg font-semibold mb-4">顧客紐づけ</h3>
+                  <h3 class="text-lg font-semibold text-gray-800 mb-1">顧客紐づけ</h3>
+                  <p class="text-xs text-gray-500 mb-4">
+                    この予約と顧客マスタを紐づけると、顧客詳細から参加イベントとして表示されます。
+                  </p>
 
                   <!-- 顧客が紐づいている場合 -->
                   <div
                     v-if="reservation.customer && !showCustomerLinkSearch"
-                    class="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-md"
+                    class="rounded-lg border-2 border-indigo-200 bg-indigo-50/50 p-4"
                   >
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm font-medium text-indigo-800">
-                          顧客ID: {{ reservation.customer.id }} / {{ reservation.customer.name }}
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium uppercase tracking-wide text-indigo-600 mb-1">紐づき顧客</p>
+                        <p class="text-base font-semibold text-gray-900">
+                          {{ reservation.customer.name }}
+                        </p>
+                        <p class="text-sm text-gray-600 mt-0.5">
+                          顧客ID: {{ reservation.customer.id }}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        @click="openCustomerLinkSearch"
-                        class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                      >
-                        変更
-                      </button>
+                      <div class="flex shrink-0 items-center gap-2">
+                        <button
+                          type="button"
+                          :disabled="isUnlinkingCustomer"
+                          @click="unlinkCustomer"
+                          class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          {{ isUnlinkingCustomer ? '解除中...' : '解除' }}
+                        </button>
+                        <button
+                          type="button"
+                          @click="openCustomerLinkSearch"
+                          class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+                        >
+                          変更
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   <!-- 顧客未紐づけ、または変更時：検索UI -->
-                  <div v-else>
-                    <p v-if="!reservation.customer" class="text-sm text-gray-600 mb-3">
-                      顧客が紐づいていません。名前で検索して紐づけてください。
+                  <div v-else class="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+                    <p v-if="!reservation.customer" class="text-sm text-gray-700 mb-4">
+                      <span class="font-medium text-gray-800">顧客が紐づいていません。</span><br />
+                      下の検索で既存顧客を選ぶか、下の「顧客追加」から新規登録してください。
                     </p>
-                    <p v-else class="text-sm text-gray-600 mb-3">
-                      別の顧客を紐づける場合は名前で検索してください。
+                    <p v-else class="text-sm text-gray-700 mb-4">
+                      別の顧客に変更する場合は、名前で検索して紐づけ直してください。
                     </p>
                     <div class="mb-3">
-                      <label class="block text-sm font-medium text-gray-700 mb-1">顧客名で検索</label>
+                      <label class="mb-1.5 block text-sm font-medium text-gray-700">顧客名で検索</label>
                       <input
                         v-model="customerSearchName"
                         type="text"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="顧客名を入力"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        placeholder="例: 山田 太郎"
                         @input="searchCustomers"
                       />
+                      <p class="mt-1 text-xs text-gray-500">スペースは無視して検索されます</p>
                     </div>
-                    <div v-if="isSearchingCustomers" class="text-sm text-gray-500 py-2">検索中...</div>
+                    <div v-if="isSearchingCustomers" class="flex items-center gap-2 py-3 text-sm text-gray-500">
+                      <svg class="h-4 w-4 animate-spin text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      検索中...
+                    </div>
                     <div
                       v-else-if="customerSearchResults.length > 0"
-                      class="overflow-x-auto border border-gray-200 rounded-md"
+                      class="overflow-x-auto rounded-md border border-gray-200 bg-white shadow-sm"
                     >
                       <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                           <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">名前</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">電話番号</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">成人エリア</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名前</th>
+                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">電話番号</th>
+                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成人エリア</th>
                           </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                          <tr v-for="c in customerSearchResults" :key="c.id">
-                            <td class="px-4 py-2 text-sm text-gray-900">{{ c.id }}</td>
-                            <td class="px-4 py-2 text-sm text-gray-900">{{ c.name }}</td>
-                            <td class="px-4 py-2 text-sm text-gray-900">{{ c.phone_number || '-' }}</td>
-                            <td class="px-4 py-2 text-sm text-gray-900">{{ c.ceremony_area?.name || '-' }}</td>
-                            <td class="px-4 py-2 text-sm">
-                              <span class="inline-flex items-center gap-2">
-                                <Link
-                                  :href="route('admin.customers.show', c.id)"
-                                  class="text-indigo-600 hover:text-indigo-800 font-medium"
-                                >
-                                  詳細
-                                </Link>
-                                <span
-                                  v-if="reservation.customer_id && c.id === reservation.customer_id"
-                                  class="text-gray-500"
-                                >
-                                  紐づけ済
-                                </span>
-                                <button
-                                  v-else
-                                  type="button"
-                                  :disabled="isLinkingCustomerId === c.id"
-                                  @click="linkCustomer(c.id)"
-                                  class="text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50"
-                                >
-                                  {{ isLinkingCustomerId === c.id ? '紐づけ中...' : '紐づけ' }}
-                                </button>
-                              </span>
-                            </td>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                          <tr
+                            v-for="c in customerSearchResults"
+                            :key="c.id"
+                            :class="[
+                              'cursor-pointer transition-colors',
+                              selectedSearchCustomer?.id === c.id
+                                ? 'bg-indigo-100 hover:bg-indigo-100'
+                                : 'hover:bg-gray-50',
+                            ]"
+                            @click="selectedSearchCustomer = c"
+                          >
+                            <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-900">{{ c.id }}</td>
+                            <td class="whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-900">{{ c.name }}</td>
+                            <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-600">{{ c.phone_number || '-' }}</td>
+                            <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-600">{{ c.ceremony_area?.name || '-' }}</td>
                           </tr>
                         </tbody>
                       </table>
+                      <!-- 選択した顧客の操作ボタン（テーブル下部に横並び） -->
+                      <div
+                        v-if="selectedSearchCustomer"
+                        class="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-gray-50 px-3 py-3"
+                      >
+                        <span class="mr-2 text-sm text-gray-600">
+                          {{ selectedSearchCustomer.name }} を選択中
+                        </span>
+                        <Link
+                          :href="route('admin.customers.show', selectedSearchCustomer.id)"
+                          class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                        >
+                          詳細
+                        </Link>
+                        <span
+                          v-if="reservation.customer_id && selectedSearchCustomer.id === reservation.customer_id"
+                          class="inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-600"
+                        >
+                          紐づけ済
+                        </span>
+                        <button
+                          v-else
+                          type="button"
+                          :disabled="isLinkingCustomerId === selectedSearchCustomer.id"
+                          @click="linkCustomer(selectedSearchCustomer.id)"
+                          class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {{ isLinkingCustomerId === selectedSearchCustomer.id ? '紐づけ中...' : '紐づけ' }}
+                        </button>
+                      </div>
                     </div>
                     <p
                       v-else-if="customerSearchName && !isSearchingCustomers"
-                      class="text-sm text-gray-500 py-2"
+                      class="py-3 text-sm text-gray-500"
                     >
-                      該当する顧客がいません
+                      該当する顧客がいません。別のキーワードで検索するか、顧客を新規追加してください。
                     </p>
                     <button
                       v-if="reservation.customer && showCustomerLinkSearch"
                       type="button"
                       @click="showCustomerLinkSearch = false"
-                      class="mt-2 text-sm text-gray-600 hover:text-gray-800"
+                      class="mt-3 text-sm font-medium text-gray-600 hover:text-gray-800"
                     >
-                      キャンセル
+                      ← キャンセル（紐づき表示に戻る）
                     </button>
+                  </div>
+                </div>
+
+                <!-- 顧客閲覧 / 顧客追加 -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                  <div class="flex flex-wrap gap-2">
+                    <ActionButton
+                      v-if="reservation.customer_id"
+                      variant="detail"
+                      label="顧客閲覧"
+                      :href="route('admin.customers.show', reservation.customer_id)"
+                    />
+                    <ActionButton
+                      v-else
+                      variant="create"
+                      label="顧客追加"
+                      :href="route('admin.customers.index', { add_from_reservation: reservation.id })"
+                    />
                   </div>
                 </div>
 
@@ -1171,8 +1216,10 @@ const isRestoring = ref(false);
 const showCustomerLinkSearch = ref(false);
 const customerSearchName = ref("");
 const customerSearchResults = ref([]);
+const selectedSearchCustomer = ref(null);
 const isSearchingCustomers = ref(false);
 const isLinkingCustomerId = ref(null);
+const isUnlinkingCustomer = ref(false);
 let customerSearchTimeout = null;
 
 // 変更押下時: 検索欄に予約情報のお名前をデフォルトにして検索UIを表示
@@ -1197,6 +1244,7 @@ const searchCustomers = () => {
       .get(route("admin.customers.search"), { params: { name: nameForSearch } })
       .then((res) => {
         customerSearchResults.value = res.data.customers || [];
+        selectedSearchCustomer.value = null;
       })
       .finally(() => {
         isSearchingCustomers.value = false;
@@ -1215,12 +1263,24 @@ const linkCustomer = (customerId) => {
         showCustomerLinkSearch.value = false;
         customerSearchName.value = "";
         customerSearchResults.value = [];
+        selectedSearchCustomer.value = null;
       },
       onFinish: () => {
         isLinkingCustomerId.value = null;
       },
     }
   );
+};
+
+const unlinkCustomer = () => {
+  if (!confirm("この予約から顧客の紐づけを解除しますか？")) return;
+  isUnlinkingCustomer.value = true;
+  router.delete(route("admin.reservations.customer.unlink", props.reservation.id), {
+    preserveScroll: true,
+    onFinish: () => {
+      isUnlinkingCustomer.value = false;
+    },
+  });
 };
 
 const props = defineProps({

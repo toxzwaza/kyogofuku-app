@@ -139,6 +139,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/reservations/{reservation}/schedule', [AdminReservationController::class, 'addToSchedule'])->name('reservations.schedule.add');
     Route::delete('/reservations/{reservation}/schedule', [AdminReservationController::class, 'removeFromSchedule'])->name('reservations.schedule.remove');
     Route::patch('/reservations/{reservation}/customer', [AdminReservationController::class, 'linkCustomer'])->name('reservations.customer.link');
+    Route::delete('/reservations/{reservation}/customer', [AdminReservationController::class, 'unlinkCustomer'])->name('reservations.customer.unlink');
     
     // 予約メール返信
     Route::post('/reservations/{reservation}/reply-email', [AdminReservationController::class, 'sendReplyEmail'])->name('reservations.reply-email');
