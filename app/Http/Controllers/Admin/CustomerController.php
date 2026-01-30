@@ -138,14 +138,25 @@ class CustomerController extends Controller
     public function search(Request $request)
     {
         $name = $request->query('name', '');
+        // スペースを排除して検索（スペースの有無で紐づかないことを防ぐ）
+        $nameNormalized = preg_replace('/\s+/', '', $name);
         $customers = [];
-        if (strlen($name) > 0) {
+        if (strlen($nameNormalized) > 0) {
             $customers = Customer::query()
-                ->where('name', 'LIKE', '%' . $name . '%')
-                ->select('id', 'name', 'phone_number')
+                ->with('ceremonyArea')
+                ->whereRaw("REPLACE(REPLACE(name, ' ', ''), '\t', '') LIKE ?", ['%' . $nameNormalized . '%'])
+                ->select('id', 'name', 'phone_number', 'ceremony_area_id')
                 ->orderBy('name')
                 ->limit(20)
-                ->get();
+                ->get()
+                ->map(function ($customer) {
+                    return [
+                        'id' => $customer->id,
+                        'name' => $customer->name,
+                        'phone_number' => $customer->phone_number,
+                        'ceremony_area' => $customer->ceremonyArea ? ['id' => $customer->ceremonyArea->id, 'name' => $customer->ceremonyArea->name] : null,
+                    ];
+                });
         }
         return response()->json(['customers' => $customers]);
     }

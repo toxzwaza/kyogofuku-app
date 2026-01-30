@@ -1080,6 +1080,7 @@
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">名前</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">電話番号</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">成人エリア</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
                           </tr>
                         </thead>
@@ -1088,22 +1089,31 @@
                             <td class="px-4 py-2 text-sm text-gray-900">{{ c.id }}</td>
                             <td class="px-4 py-2 text-sm text-gray-900">{{ c.name }}</td>
                             <td class="px-4 py-2 text-sm text-gray-900">{{ c.phone_number || '-' }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">{{ c.ceremony_area?.name || '-' }}</td>
                             <td class="px-4 py-2 text-sm">
-                              <span
-                                v-if="reservation.customer_id && c.id === reservation.customer_id"
-                                class="text-gray-500"
-                              >
-                                紐づけ済
+                              <span class="inline-flex items-center gap-2">
+                                <Link
+                                  :href="route('admin.customers.show', c.id)"
+                                  class="text-indigo-600 hover:text-indigo-800 font-medium"
+                                >
+                                  詳細
+                                </Link>
+                                <span
+                                  v-if="reservation.customer_id && c.id === reservation.customer_id"
+                                  class="text-gray-500"
+                                >
+                                  紐づけ済
+                                </span>
+                                <button
+                                  v-else
+                                  type="button"
+                                  :disabled="isLinkingCustomerId === c.id"
+                                  @click="linkCustomer(c.id)"
+                                  class="text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50"
+                                >
+                                  {{ isLinkingCustomerId === c.id ? '紐づけ中...' : '紐づけ' }}
+                                </button>
                               </span>
-                              <button
-                                v-else
-                                type="button"
-                                :disabled="isLinkingCustomerId === c.id"
-                                @click="linkCustomer(c.id)"
-                                class="text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50"
-                              >
-                                {{ isLinkingCustomerId === c.id ? '紐づけ中...' : '紐づけ' }}
-                              </button>
                             </td>
                           </tr>
                         </tbody>
@@ -1165,24 +1175,26 @@ const isSearchingCustomers = ref(false);
 const isLinkingCustomerId = ref(null);
 let customerSearchTimeout = null;
 
-// 変更押下時: 検索欄に紐づき顧客名を入れて検索UIを表示
+// 変更押下時: 検索欄に予約情報のお名前をデフォルトにして検索UIを表示
 const openCustomerLinkSearch = () => {
-  customerSearchName.value = props.reservation?.customer?.name ?? "";
+  customerSearchName.value = props.reservation?.name ?? "";
   showCustomerLinkSearch.value = true;
   searchCustomers();
 };
 
 const searchCustomers = () => {
   if (customerSearchTimeout) clearTimeout(customerSearchTimeout);
-  const name = customerSearchName.value.trim();
-  if (!name) {
+  const raw = customerSearchName.value.trim();
+  if (!raw) {
     customerSearchResults.value = [];
     return;
   }
+  // スペースを排除して検索（スペースの有無で紐づかないことを防ぐ）
+  const nameForSearch = raw.replace(/\s/g, "");
   customerSearchTimeout = setTimeout(() => {
     isSearchingCustomers.value = true;
     axios
-      .get(route("admin.customers.search"), { params: { name } })
+      .get(route("admin.customers.search"), { params: { name: nameForSearch } })
       .then((res) => {
         customerSearchResults.value = res.data.customers || [];
       })
