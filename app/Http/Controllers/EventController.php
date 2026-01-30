@@ -41,6 +41,7 @@ class EventController extends Controller
                 ->get()
                 ->map(function ($timeslot) use ($event) {
                     $reservationCount = $event->reservations()
+                        ->where('cancel_flg', false)
                         ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
                         ->count();
                     $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);

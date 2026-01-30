@@ -102,8 +102,9 @@ class EventReservationController extends Controller
                 $venueId = $timeslot->venue_id ?? $request->venue_id;
                 $reservationDatetime = $timeslot->start_at->format('Y-m-d H:i:s');
                 
-                // 残枠チェック（予約枠IDに基づいて、同じ会場・同じ時間の予約のみカウント）
+                // 残枠チェック（予約枠IDに基づいて、同じ会場・同じ時間の予約のみカウント。キャンセル済みは除外）
                 $reservationCountQuery = EventReservation::where('event_id', $event->id)
+                    ->where('cancel_flg', false)
                     ->where('reservation_datetime', $reservationDatetime);
                 
                 // 予約枠に会場IDが設定されている場合、同じ会場の予約のみカウント
@@ -136,8 +137,9 @@ class EventReservationController extends Controller
                     ]);
                 }
 
-                // 残枠チェック
+                // 残枠チェック（キャンセル済みは除外）
                 $reservationCount = EventReservation::where('event_id', $event->id)
+                    ->where('cancel_flg', false)
                     ->where('reservation_datetime', $reservationDatetime->format('Y-m-d H:i:s'))
                     ->count();
 

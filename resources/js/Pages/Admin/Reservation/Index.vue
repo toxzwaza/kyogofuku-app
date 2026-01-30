@@ -465,7 +465,10 @@
                           <div
                             v-for="reservation in timeslot.reservations"
                             :key="reservation.id"
-                            class="p-4 hover:bg-gray-50 transition-colors duration-150"
+                            :class="[
+                              'p-4 transition-colors duration-150',
+                              reservation.cancel_flg ? 'bg-gray-200' : 'hover:bg-gray-50',
+                            ]"
                           >
                             <div class="flex justify-between items-start">
                               <div class="flex-1">
@@ -659,7 +662,12 @@
                 <div
                   v-for="reservation in sortedReservations"
                   :key="reservation.id"
-                  class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
+                  :class="[
+                    'border rounded-lg shadow-sm overflow-hidden',
+                    reservation.cancel_flg
+                      ? 'bg-gray-200 border-gray-300'
+                      : 'bg-white border-gray-200 hover:shadow-md transition-shadow duration-200',
+                  ]"
                 >
                   <div class="p-5">
                     <!-- ヘッダー -->
@@ -1238,6 +1246,7 @@
                         <tr
                           v-for="reservation in group.reservations"
                           :key="reservation.id"
+                          :class="{ 'bg-gray-200': reservation.cancel_flg }"
                         >
                           <td
                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
@@ -1404,6 +1413,7 @@
                       <tr
                         v-for="reservation in sortedReservations"
                         :key="reservation.id"
+                        :class="{ 'bg-gray-200': reservation.cancel_flg }"
                       >
                         <td
                           class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"

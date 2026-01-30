@@ -90,6 +90,7 @@ class ReservationController extends Controller
                         ];
                     })->toArray(),
                 ] : null,
+                'cancel_flg' => $reservation->cancel_flg,
             ];
         });
         
@@ -143,7 +144,7 @@ class ReservationController extends Controller
             
             // 各予約枠に予約情報を紐付け
             $timeslotsWithReservations = $timeslots->map(function ($timeslot) use ($event, &$totalReserved) {
-                // 予約を取得（会場IDと時間が一致するもののみ）
+                // 予約を取得（会場IDと時間が一致するもののみ、表示用は全件）
                 $timeslotReservationsQuery = $event->reservations()
                     ->with(['venue', 'statusUpdatedBy', 'schedule.participantUsers'])
                     ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
@@ -156,11 +157,12 @@ class ReservationController extends Controller
                     $timeslotReservationsQuery->whereNull('venue_id');
                 }
                 
-                $timeslotReservations = $timeslotReservationsQuery
+                $timeslotReservations = (clone $timeslotReservationsQuery)
                     ->orderBy('created_at', 'asc')
                     ->get();
                 
-                $reservedCount = $timeslotReservations->count();
+                // 枠数計算はキャンセルされていない予約のみ
+                $reservedCount = (clone $timeslotReservationsQuery)->where('cancel_flg', false)->count();
                 $totalReserved += $reservedCount;
                 
                 return [
@@ -209,6 +211,7 @@ class ReservationController extends Controller
                                     ];
                                 })->toArray(),
                             ] : null,
+                            'cancel_flg' => $reservation->cancel_flg,
                         ];
                     })->values(),
                 ];
@@ -314,6 +317,7 @@ class ReservationController extends Controller
                 ->get()
                 ->map(function ($timeslot) use ($event, $reservation) {
                     $reservationCount = $event->reservations()
+                        ->where('cancel_flg', false)
                         ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
                         ->where('id', '!=', $reservation->id) // 現在編集中の予約を除外
                         ->count();
@@ -399,15 +403,15 @@ class ReservationController extends Controller
     }
 
     /**
-     * 予約を削除
+     * 予約をキャンセル（論理削除）
      */
     public function destroy(EventReservation $reservation)
     {
         $eventId = $reservation->event_id;
-        $reservation->delete();
+        $reservation->update(['cancel_flg' => true]);
 
         return redirect()->route('admin.events.reservations.index', $eventId)
-            ->with('success', '予約を削除しました。');
+            ->with('success', '予約をキャンセルしました。');
     }
 
     /**

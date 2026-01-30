@@ -35,15 +35,15 @@ class DashboardController extends Controller
             'customers_today' => Customer::whereDate('created_at', $today)->count(),
         ];
 
-        // フォームタイプ別の予約数
+        // フォームタイプ別の予約数（キャンセル済みは除外）
         $formTypeStats = [
-            'reservation' => EventReservation::whereHas('event', function($query) {
+            'reservation' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                 $query->where('form_type', 'reservation');
             })->count(),
-            'document' => EventReservation::whereHas('event', function($query) {
+            'document' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                 $query->where('form_type', 'document');
             })->count(),
-            'contact' => EventReservation::whereHas('event', function($query) {
+            'contact' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                 $query->where('form_type', 'contact');
             })->count(),
         ];
@@ -54,7 +54,8 @@ class DashboardController extends Controller
         $totalReserved = 0;
         
         foreach ($timeslots as $timeslot) {
-            $reserved = EventReservation::where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
+            $reserved = EventReservation::where('cancel_flg', false)
+                ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
                 ->count();
             $totalReserved += $reserved;
         }
@@ -68,13 +69,13 @@ class DashboardController extends Controller
             $trend7Days[] = [
                 'date' => $date->format('Y-m-d'),
                 'label' => $date->format('m/d'),
-                'reservation' => EventReservation::whereHas('event', function($query) {
+                'reservation' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                     $query->where('form_type', 'reservation');
                 })->whereDate('created_at', $date)->count(),
-                'document' => EventReservation::whereHas('event', function($query) {
+                'document' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                     $query->where('form_type', 'document');
                 })->whereDate('created_at', $date)->count(),
-                'contact' => EventReservation::whereHas('event', function($query) {
+                'contact' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                     $query->where('form_type', 'contact');
                 })->whereDate('created_at', $date)->count(),
             ];
@@ -88,12 +89,13 @@ class DashboardController extends Controller
             $trend30Days[] = [
                 'date' => $date->format('Y-m-d'),
                 'label' => $date->format('m/d'),
-                'count' => EventReservation::whereDate('created_at', $date)->count(),
+                'count' => EventReservation::where('cancel_flg', false)->whereDate('created_at', $date)->count(),
             ];
         }
 
-        // 最近の予約
-        $recentReservations = EventReservation::with('event')
+        // 最近の予約（キャンセル済みは除外）
+        $recentReservations = EventReservation::where('cancel_flg', false)
+            ->with('event')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -121,6 +123,7 @@ class DashboardController extends Controller
                 
                 foreach ($timeslots as $timeslot) {
                     $reserved = EventReservation::where('event_id', $event->id)
+                        ->where('cancel_flg', false)
                         ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
                         ->count();
                     $totalReserved += $reserved;
@@ -151,8 +154,9 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // 未対応の予約（メモが0件）
-        $unhandledReservations = EventReservation::whereDoesntHave('notes')
+        // 未対応の予約（メモが0件、キャンセル済みは除外）
+        $unhandledReservations = EventReservation::where('cancel_flg', false)
+            ->whereDoesntHave('notes')
             ->with('event')
             ->orderBy('created_at', 'desc')
             ->limit(10)
@@ -162,7 +166,7 @@ class DashboardController extends Controller
         $formTypeDetails = [
             'reservation' => [
                 'total' => $formTypeStats['reservation'],
-                'by_venue' => EventReservation::whereHas('event', function($query) {
+                'by_venue' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                     $query->where('form_type', 'reservation');
                 })
                 ->whereNotNull('venue_id')
@@ -179,7 +183,7 @@ class DashboardController extends Controller
             ],
             'document' => [
                 'total' => $formTypeStats['document'],
-                'by_method' => EventReservation::whereHas('event', function($query) {
+                'by_method' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                     $query->where('form_type', 'document');
                 })
                 ->whereNotNull('request_method')
@@ -195,7 +199,7 @@ class DashboardController extends Controller
             ],
             'contact' => [
                 'total' => $formTypeStats['contact'],
-                'by_response_method' => EventReservation::whereHas('event', function($query) {
+                'by_response_method' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
                     $query->where('form_type', 'contact');
                 })
                 ->whereNotNull('heard_from')
@@ -216,7 +220,7 @@ class DashboardController extends Controller
             ->get()
             ->map(function($shop) {
                 $eventIds = $shop->events()->pluck('events.id');
-                $reservationCount = EventReservation::whereIn('event_id', $eventIds)->count();
+                $reservationCount = EventReservation::where('cancel_flg', false)->whereIn('event_id', $eventIds)->count();
                 
                 return [
                     'shop' => $shop,
@@ -242,8 +246,8 @@ class DashboardController extends Controller
                 ];
             });
 
-        // 今週の予約（予約日時が今週）
-        $thisWeekReservations = EventReservation::whereHas('event', function($query) {
+        // 今週の予約（予約日時が今週、キャンセル済みは除外）
+        $thisWeekReservations = EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
             $query->where('form_type', 'reservation');
         })
         ->whereNotNull('reservation_datetime')
@@ -260,8 +264,8 @@ class DashboardController extends Controller
         ->sortBy('reservation_datetime')
         ->values();
 
-        // 来週の予約（予約日時が来週）
-        $nextWeekReservations = EventReservation::whereHas('event', function($query) {
+        // 来週の予約（予約日時が来週、キャンセル済みは除外）
+        $nextWeekReservations = EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
             $query->where('form_type', 'reservation');
         })
         ->whereNotNull('reservation_datetime')

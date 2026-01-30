@@ -316,7 +316,7 @@ class LogActivity
             'admin.reservations.show' => '予約詳細を閲覧',
             'admin.reservations.edit' => '予約編集画面を表示',
             'admin.reservations.update' => '予約を更新',
-            'admin.reservations.destroy' => '予約を削除',
+            'admin.reservations.destroy' => '予約をキャンセル',
             'admin.reservations.notes.store' => '予約メモを追加',
             'admin.reservations.notes.destroy' => '予約メモを削除',
             'admin.shops.index' => '店舗一覧を閲覧',

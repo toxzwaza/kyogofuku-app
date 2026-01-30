@@ -44,8 +44,9 @@ class EventTimeslot extends Model
      */
     public function getRemainingCapacityAttribute()
     {
-        // 予約を取得（会場IDと時間が一致するもののみ）
+        // 予約を取得（会場IDと時間が一致するもののみ。キャンセル済みは除外）
         $reservationQuery = $this->event->reservations()
+            ->where('cancel_flg', false)
             ->where('reservation_datetime', $this->start_at->format('Y-m-d H:i:s'));
         
         // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得

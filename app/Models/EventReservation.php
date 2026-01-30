@@ -36,6 +36,7 @@ class EventReservation extends Model
         'heard_from',
         'inquiry_message',
         'privacy_agreed',
+        'cancel_flg',
     ];
 
     protected $casts = [
@@ -46,6 +47,7 @@ class EventReservation extends Model
         'considering_plans' => 'array',
         'visit_reasons' => 'array',
         'privacy_agreed' => 'boolean',
+        'cancel_flg' => 'boolean',
     ];
 
     /**

@@ -22,8 +22,9 @@ class TimeslotController extends Controller
             ->orderBy('start_at', 'asc')
             ->get()
             ->map(function ($timeslot) use ($event) {
-                // 予約を取得（会場IDと時間が一致するもののみ）
+                // 予約を取得（会場IDと時間が一致するもののみ。キャンセル済みは除外）
                 $reservationQuery = $event->reservations()
+                    ->where('cancel_flg', false)
                     ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
                 
                 // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
@@ -234,8 +235,9 @@ class TimeslotController extends Controller
         $timeslot->event->load('venues');
         $venues = $timeslot->event->venues;
         
-        // 予約を取得（会場IDと時間が一致するもののみ）
+        // 予約を取得（会場IDと時間が一致するもののみ。キャンセル済みは除外）
         $reservationQuery = $timeslot->event->reservations()
+            ->where('cancel_flg', false)
             ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
         
         // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
@@ -282,8 +284,9 @@ class TimeslotController extends Controller
         }
 
         // 既存の予約数を超えないようにcapacityをチェック
-        // 予約を取得（会場IDと時間が一致するもののみ）
+        // 予約を取得（会場IDと時間が一致するもののみ。キャンセル済みは除外）
         $reservationQuery = $timeslot->event->reservations()
+            ->where('cancel_flg', false)
             ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
         
         // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
@@ -316,9 +319,10 @@ class TimeslotController extends Controller
     {
         $eventId = $timeslot->event_id;
         
-        // 既存の予約がある場合は削除不可
-        // 予約を取得（会場IDと時間が一致するもののみ）
+        // 既存の予約がある場合は削除不可（キャンセルされていない予約のみカウント）
+        // 予約を取得（会場IDと時間が一致するもののみ。キャンセル済みは除外）
         $reservationQuery = $timeslot->event->reservations()
+            ->where('cancel_flg', false)
             ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
         
         // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
@@ -363,8 +367,9 @@ class TimeslotController extends Controller
 
         // 既存の予約数を超えないようにチェック（減少の場合）
         if ($validated['amount'] < 0) {
-            // 予約を取得（会場IDと時間が一致するもののみ）
+            // 予約を取得（会場IDと時間が一致するもののみ。キャンセル済みは除外）
             $reservationQuery = $timeslot->event->reservations()
+                ->where('cancel_flg', false)
                 ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
             
             // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
@@ -388,8 +393,9 @@ class TimeslotController extends Controller
         $timeslot->update(['capacity' => $newCapacity]);
 
         // 更新後の情報を返す
-        // 予約を取得（会場IDと時間が一致するもののみ）
+        // 予約を取得（会場IDと時間が一致するもののみ。キャンセル済みは除外）
         $reservationQuery = $timeslot->event->reservations()
+            ->where('cancel_flg', false)
             ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
         
         // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
