@@ -25,8 +25,17 @@ class ReservationController extends Controller
      */
     public function index(Request $request, Event $event)
     {
-        // 会場リストを取得
-        $venues = $event->venues()->where('is_active', true)->orderBy('name')->get();
+        // 会場リストを取得（各会場の予約枠の最終日が直近のものから昇順）
+        $venues = $event->venues()->where('venues.is_active', true)->get();
+        $lastSlotDatesByVenue = $event->timeslots()
+            ->where('is_active', true)
+            ->get()
+            ->groupBy('venue_id')
+            ->map(fn ($slots) => $slots->max('start_at'));
+        $venues = $venues->sortBy(function ($venue) use ($lastSlotDatesByVenue) {
+            $last = $lastSlotDatesByVenue->get($venue->id);
+            return $last ?? Carbon::createFromDate(9999, 12, 31);
+        })->values();
         
         // 予約クエリを作成
         $reservationsQuery = EventReservation::with(['venue', 'statusUpdatedBy', 'schedule.participantUsers'])

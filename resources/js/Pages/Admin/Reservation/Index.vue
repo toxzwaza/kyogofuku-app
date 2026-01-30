@@ -378,7 +378,7 @@
                 v-if="groupedByVenue && Object.keys(groupedByVenue).length > 0"
               >
                 <div
-                  v-for="(venueGroup, venueKey) in groupedByVenue"
+                  v-for="venueKey in orderedVenueKeys"
                   :key="venueKey"
                   class="border-b border-gray-300 pb-8 last:border-b-0 last:pb-0"
                 >
@@ -386,7 +386,7 @@
                     {{ getVenueName(venueKey) }}
                   </h2>
                   <div
-                    v-for="(dateGroup, date) in venueGroup"
+                    v-for="(dateGroup, date) in groupedByVenue[venueKey]"
                     :key="date"
                     class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0 mb-6"
                   >
@@ -2522,6 +2522,24 @@ const groupedByVenue = computed(() => {
   });
 
   return venueGroups;
+});
+
+// 日付表示の会場順：コントローラーでソート済みの venues（予約枠の最終日が直近の昇順）に合わせる
+const orderedVenueKeys = computed(() => {
+  const groups = groupedByVenue.value;
+  if (!groups || Object.keys(groups).length === 0) return [];
+  const ordered = [];
+  if (props.venues && props.venues.length > 0) {
+    for (const venue of props.venues) {
+      if (groups[venue.id]) ordered.push(String(venue.id));
+    }
+  }
+  if (groups["no_venue"]) ordered.push("no_venue");
+  // 会場未設定や venues に含まれない会場が groups にだけある場合も表示する
+  for (const key of Object.keys(groups)) {
+    if (key !== "no_venue" && !ordered.includes(String(key))) ordered.push(key);
+  }
+  return ordered;
 });
 
 // 会場名を取得

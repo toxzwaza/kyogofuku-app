@@ -123,6 +123,31 @@
                                             {{ venue.phone }}
                                         </a>
                                     </div>
+
+                                    <!-- 開催日時（目立つ表示） -->
+                                    <div v-if="venue.dates && venue.dates.length > 0" class="mt-4 pt-4 border-t border-rose-100">
+                                        <div class="flex items-start gap-3 rounded-lg bg-rose-50/80 px-4 py-3">
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-xs font-bold text-rose-600 uppercase tracking-wider mb-2">開催日</p>
+                                                <div class="space-y-2">
+                                                    <div
+                                                        v-for="(block, blockIdx) in formatVenueDates(venue.dates)"
+                                                        :key="blockIdx"
+                                                        class="flex flex-wrap items-baseline gap-x-1.5"
+                                                    >
+                                                        <span class="text-2xl font-bold tabular-nums text-rose-700 tracking-tight">{{ block.monthLabel }}</span>
+                                                        <span class="text-rose-400 font-medium select-none text-lg">/</span>
+                                                        <span class="text-base font-semibold tabular-nums text-gray-800">{{ block.dayParts.join(', ') }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -344,6 +369,50 @@ const showReservationForm = ref(false);
 const currentStep = ref(props.showSuccess ? 'success' : 'form'); // 'form', 'confirm', 'success'
 const confirmFormData = ref(props.successFormData || null);
 const isLoading = ref(true);
+
+/**
+ * 会場の開催日リストを表示用にフォーマット
+ * ルール: 月を大きく表示し「/」で区切り、2日連続は「〇, 〇」、3日以上連続は「〇 ~ 〇」、月をまたぐ場合は改行して月ごとに表示
+ * @param {string[]} dateStrings - 'Y-m-d' 形式の日付配列
+ * @returns {{ monthLabel: string, dayParts: string[] }[]}
+ */
+function formatVenueDates(dateStrings) {
+  if (!dateStrings || dateStrings.length === 0) return [];
+  const sorted = [...dateStrings].sort();
+  const byMonth = {};
+  for (const d of sorted) {
+    const [y, m] = d.split('-');
+    const key = `${y}-${m}`;
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(parseInt(d.split('-')[2], 10));
+  }
+  const monthOrder = Object.keys(byMonth).sort();
+  return monthOrder.map((key) => {
+    const [y, m] = key.split('-');
+    const monthNum = parseInt(m, 10);
+    const monthLabel = `${monthNum}月`;
+    const days = byMonth[key].sort((a, b) => a - b);
+    const ranges = [];
+    let start = days[0];
+    let end = days[0];
+    for (let i = 1; i < days.length; i++) {
+      if (days[i] === end + 1) {
+        end = days[i];
+      } else {
+        ranges.push({ start, end });
+        start = days[i];
+        end = days[i];
+      }
+    }
+    ranges.push({ start, end });
+    const dayParts = ranges.map(({ start: s, end: e }) => {
+      if (s === e) return String(s);
+      if (e === s + 1) return `${s}, ${e}`;
+      return `${s} ~ ${e}`;
+    });
+    return { monthLabel, dayParts };
+  });
+}
 
 // スクロールアニメーション用
 const imageRefs = ref(new Map());

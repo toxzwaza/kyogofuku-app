@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventUtmTracking;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -145,19 +146,40 @@ class EventController extends Controller
             ];
         });
 
-        // 会場情報（予約フォームの場合のみ）
+        // 会場情報（予約フォームの場合のみ・各会場の予約枠の最終日が直近のものから昇順）
         $venues = [];
         if ($event->form_type === 'reservation') {
-            $venues = $event->venues->where('is_active', true)->map(function ($venue) {
-                return [
-                    'id' => $venue->id,
-                    'name' => $venue->name,
-                    'description' => $venue->description,
-                    'address' => $venue->address,
-                    'phone' => $venue->phone,
-                    'image_url' => $venue->image_url,
-                ];
-            })->values();
+            $lastSlotDatesByVenue = $event->timeslots
+                ->where('is_active', true)
+                ->groupBy('venue_id')
+                ->map(fn ($slots) => $slots->max('start_at'));
+            $venues = $event->venues
+                ->where('is_active', true)
+                ->sortBy(function ($venue) use ($lastSlotDatesByVenue) {
+                    $last = $lastSlotDatesByVenue->get($venue->id);
+                    return $last ?? Carbon::createFromDate(9999, 12, 31);
+                })
+                ->values()
+                ->map(function ($venue) use ($event) {
+                    $dates = $event->timeslots
+                        ->where('is_active', true)
+                        ->where('venue_id', $venue->id)
+                        ->map(fn ($t) => Carbon::parse($t->start_at)->format('Y-m-d'))
+                        ->unique()
+                        ->sort()
+                        ->values()
+                        ->toArray();
+                    return [
+                        'id' => $venue->id,
+                        'name' => $venue->name,
+                        'description' => $venue->description,
+                        'address' => $venue->address,
+                        'phone' => $venue->phone,
+                        'image_url' => $venue->image_url,
+                        'dates' => array_values($dates),
+                    ];
+                })
+                ->values();
         }
 
         // 資料情報（資料請求フォームの場合のみ）
