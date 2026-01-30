@@ -435,20 +435,32 @@ class ReservationController extends Controller
     /**
      * 予約をキャンセル（論理削除）
      */
-    public function destroy(EventReservation $reservation)
+    public function destroy(Request $request, EventReservation $reservation)
     {
-        $eventId = $reservation->event_id;
         $reservation->update([
             'cancel_flg' => true,
             'status' => 'キャンセル済み',
         ]);
 
-        return redirect()->route('admin.events.reservations.index', $eventId)
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => '予約をキャンセルしました。',
+                'reservation' => [
+                    'id' => $reservation->id,
+                    'cancel_flg' => $reservation->cancel_flg,
+                    'status' => $reservation->status,
+                ],
+            ]);
+        }
+
+        return redirect()->route('admin.events.reservations.index', $reservation->event_id)
             ->with('success', '予約をキャンセルしました。');
     }
 
     /**
      * キャンセル済み予約を完全削除（物理削除）
+     * 予約一覧から呼ぶ場合は axios で JSON を期待するが、削除後は一覧を再取得するためリダイレクトのままとする
      */
     public function forceDestroy(EventReservation $reservation)
     {
@@ -467,7 +479,7 @@ class ReservationController extends Controller
     /**
      * 予約のキャンセルを解除（枠に空きがある場合のみ）
      */
-    public function restore(EventReservation $reservation)
+    public function restore(Request $request, EventReservation $reservation)
     {
         $reservation->load('event');
         $event = $reservation->event;
@@ -497,6 +509,12 @@ class ReservationController extends Controller
                 $reservedCount = $reservedCount->count();
 
                 if ($reservedCount >= $timeslot->capacity) {
+                    if ($request->wantsJson() || $request->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => '枠がいっぱいです。先に枠を増やしてください。',
+                        ], 422);
+                    }
                     return redirect()->back()
                         ->with('error', '枠がいっぱいです。先に枠を増やしてください。');
                 }
@@ -507,6 +525,18 @@ class ReservationController extends Controller
             'cancel_flg' => false,
             'status' => '未対応',
         ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'キャンセルを解除しました。',
+                'reservation' => [
+                    'id' => $reservation->id,
+                    'cancel_flg' => $reservation->cancel_flg,
+                    'status' => $reservation->status,
+                ],
+            ]);
+        }
 
         return redirect()->back()
             ->with('success', 'キャンセルを解除しました。');

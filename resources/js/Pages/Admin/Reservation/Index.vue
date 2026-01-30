@@ -2,6 +2,49 @@
   <Head title="予約一覧" />
 
   <AuthenticatedLayout>
+    <!-- フラッシュメッセージ（画面右上に固定・枠増減・キャンセル・キャンセル解除の結果） -->
+    <div
+      class="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full sm:max-w-md pointer-events-none"
+      aria-live="polite"
+    >
+      <div
+        v-if="localSuccessMessage"
+        class="rounded-lg bg-green-50 p-4 border border-green-200 shadow-lg flex items-center justify-between gap-3 pointer-events-auto"
+      >
+        <p class="text-sm font-medium text-green-800 flex-1 min-w-0">
+          {{ localSuccessMessage }}
+        </p>
+        <button
+          type="button"
+          @click="localSuccessMessage = ''"
+          class="text-green-600 hover:text-green-800 flex-shrink-0 p-1 rounded hover:bg-green-100"
+          aria-label="閉じる"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      <div
+        v-if="localErrorMessage"
+        class="rounded-lg bg-red-50 p-4 border border-red-200 shadow-lg flex items-center justify-between gap-3 pointer-events-auto"
+      >
+        <p class="text-sm font-medium text-red-800 flex-1 min-w-0">
+          {{ localErrorMessage }}
+        </p>
+        <button
+          type="button"
+          @click="localErrorMessage = ''"
+          class="text-red-600 hover:text-red-800 flex-shrink-0 p-1 rounded hover:bg-red-100"
+          aria-label="閉じる"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <template #header>
       <div class="flex justify-between items-center">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -51,16 +94,6 @@
           </p>
         </div>
 
-        <!-- 枠増減の成功メッセージ -->
-        <div
-          v-if="adjustCapacitySuccessMessage"
-          class="rounded-md bg-green-50 p-4 border border-green-200"
-        >
-          <p class="text-sm font-medium text-green-800">
-            {{ adjustCapacitySuccessMessage }}
-          </p>
-        </div>
-
         <!-- 操作ナビゲーション -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
@@ -70,7 +103,7 @@
 
         <!-- 予約枠統計情報（予約フォームの場合のみ） -->
         <div
-          v-if="event.form_type === 'reservation' && timeslotStats"
+          v-if="event.form_type === 'reservation' && displayTimeslotStats"
           class="mb-6"
         >
           <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -86,7 +119,7 @@
                     総枠数
                   </div>
                   <div class="text-2xl font-bold text-blue-900">
-                    {{ timeslotStats.total_capacity }}
+                    {{ displayTimeslotStats.total_capacity }}
                   </div>
                   <div class="text-xs text-blue-600 mt-1">枠</div>
                 </div>
@@ -97,7 +130,7 @@
                     予約済み
                   </div>
                   <div class="text-2xl font-bold text-orange-900">
-                    {{ timeslotStats.total_reserved }}
+                    {{ displayTimeslotStats.total_reserved }}
                   </div>
                   <div class="text-xs text-orange-600 mt-1">枠</div>
                 </div>
@@ -108,7 +141,7 @@
                     残り枠数
                   </div>
                   <div class="text-2xl font-bold text-green-900">
-                    {{ timeslotStats.remaining }}
+                    {{ displayTimeslotStats.remaining }}
                   </div>
                   <div class="text-xs text-green-600 mt-1">枠</div>
                 </div>
@@ -119,12 +152,12 @@
                     埋まり率
                   </div>
                   <div class="text-2xl font-bold text-purple-900">
-                    {{ timeslotStats.occupancy_rate }}%
+                    {{ displayTimeslotStats.occupancy_rate }}%
                   </div>
                   <div class="w-full bg-purple-200 rounded-full h-2 mt-2">
                     <div
                       class="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                      :style="{ width: timeslotStats.occupancy_rate + '%' }"
+                      :style="{ width: displayTimeslotStats.occupancy_rate + '%' }"
                     ></div>
                   </div>
                 </div>
@@ -422,7 +455,7 @@
                                 @click="adjustCapacity(timeslot.id, -1)"
                                 :disabled="
                                   timeslot.remaining_capacity <= 0 ||
-                                  adjustingTimeslotId === timeslot.id
+                                  adjustingTimeslotId !== null
                                 "
                                 class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-orange-600 to-orange-700 rounded-lg shadow-sm hover:from-orange-700 hover:to-orange-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                 title="枠を1つ減らす"
@@ -443,8 +476,8 @@
                               </button>
                               <button
                                 @click="adjustCapacity(timeslot.id, 1)"
-                                :disabled="adjustingTimeslotId === timeslot.id"
-                                class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-sm hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
+                                :disabled="adjustingTimeslotId !== null"
+                                class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-sm hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                 title="枠を1つ増やす"
                               >
                                 <svg
@@ -463,8 +496,8 @@
                               </button>
                               <button
                                 @click="adjustCapacity(timeslot.id, 5)"
-                                :disabled="adjustingTimeslotId === timeslot.id"
-                                class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                :disabled="adjustingTimeslotId !== null"
+                                class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                 title="枠を5つ増やす"
                               >
                                 +5
@@ -1919,7 +1952,43 @@ const activeTab = ref(
   props.event.form_type === "reservation" ? "schedule" : "cards"
 );
 const adjustingTimeslotId = ref(null);
-const adjustCapacitySuccessMessage = ref("");
+const localSuccessMessage = ref("");
+const localErrorMessage = ref("");
+
+// 枠増減・キャンセル・キャンセル解除でリロードせず表示を更新するためのローカル状態
+const localReservations = ref(
+  JSON.parse(JSON.stringify(props.reservations || []))
+);
+const localTimeslotsWithReservations = ref(
+  JSON.parse(JSON.stringify(props.timeslotsWithReservations || []))
+);
+const localTimeslotStats = ref(
+  props.timeslotStats ? { ...props.timeslotStats } : null
+);
+
+// props が変わったとき（フィルター適用など）ローカル状態を同期
+watch(
+  () => [
+    props.reservations,
+    props.timeslotsWithReservations,
+    props.timeslotStats,
+  ],
+  () => {
+    localReservations.value = JSON.parse(
+      JSON.stringify(props.reservations || [])
+    );
+    localTimeslotsWithReservations.value = JSON.parse(
+      JSON.stringify(props.timeslotsWithReservations || [])
+    );
+    localTimeslotStats.value = props.timeslotStats
+      ? { ...props.timeslotStats }
+      : null;
+  },
+  { deep: true }
+);
+
+// テンプレート用（ローカル状態を優先）
+const displayTimeslotStats = computed(() => localTimeslotStats.value);
 
 // アコーディオンの開閉状態
 const isSortOpen = ref(false);
@@ -2049,15 +2118,16 @@ const availableTimes = computed(() => {
   return Array.from(times).sort();
 });
 
-// 並べ替えられた予約データ
+// 並べ替えられた予約データ（ローカル状態を使用）
 const sortedReservations = computed(() => {
-  if (!props.reservations || !Array.isArray(props.reservations) || props.reservations.length === 0) {
+  const reservations = localReservations.value;
+  if (!reservations || !Array.isArray(reservations) || reservations.length === 0) {
     return [];
   }
 
   // 予約フォームの場合のみ並べ替えを適用
   if (props.event.form_type === "reservation") {
-    const data = [...props.reservations];
+    const data = [...reservations];
 
     return data.sort((a, b) => {
       // 予約日時がない場合は最後に配置
@@ -2117,7 +2187,7 @@ const sortedReservations = computed(() => {
   }
 
   // 予約フォーム以外の場合は元のデータをそのまま返す
-  return props.reservations;
+  return reservations;
 });
 
 // 予約データを日付ごとにグループ化（予約フォームの場合のみ）
@@ -2417,17 +2487,14 @@ const resetFilters = () => {
   );
 };
 
-// 予約枠を会場ごと、その中で日付ごとにグループ化
+// 予約枠を会場ごと、その中で日付ごとにグループ化（ローカル状態を使用）
 const groupedByVenue = computed(() => {
-  if (
-    !props.timeslotsWithReservations ||
-    props.timeslotsWithReservations.length === 0
-  )
-    return {};
+  const timeslots = localTimeslotsWithReservations.value;
+  if (!timeslots || timeslots.length === 0) return {};
 
   // まず会場ごとにグループ化
   const venueGroups = {};
-  props.timeslotsWithReservations.forEach((timeslot) => {
+  timeslots.forEach((timeslot) => {
     // venue_idがnullの場合は「会場未設定」として扱う
     const venueKey = timeslot.venue_id || "no_venue";
     if (!venueGroups[venueKey]) {
@@ -2462,10 +2529,8 @@ const getVenueName = (venueKey) => {
   if (venueKey === "no_venue") {
     return "会場未設定";
   }
-  // venueKeyはvenue_idなので、timeslotsWithReservationsから該当するvenueを探す
-  const timeslot = props.timeslotsWithReservations.find(
-    (t) => t.venue_id == venueKey
-  );
+  const timeslots = localTimeslotsWithReservations.value;
+  const timeslot = timeslots?.find((t) => t.venue_id == venueKey);
   return timeslot?.venue?.name || `会場ID: ${venueKey}`;
 };
 
@@ -2596,18 +2661,120 @@ const getTimeslotHeaderClass = (timeslot) =>
 const getTimeslotBorderClass = (timeslot) =>
   getTimeslotAllDone(timeslot) ? "border-green-400" : "border-gray-300";
 
-const deleteReservation = (id) => {
-  if (confirm("本当にキャンセルしますか？")) {
-    router.delete(route("admin.reservations.destroy", id));
+const axiosHeaders = {
+  Accept: "application/json",
+  "X-Requested-With": "XMLHttpRequest",
+};
+
+// 予約リスト内の該当予約を更新（cancel_flg, status）
+const updateReservationInLocalState = (id, updates) => {
+  const r = localReservations.value;
+  if (Array.isArray(r)) {
+    const idx = r.findIndex((x) => x.id === id);
+    if (idx !== -1) {
+      r[idx] = { ...r[idx], ...updates };
+    }
+  }
+  const timeslots = localTimeslotsWithReservations.value;
+  if (Array.isArray(timeslots)) {
+    timeslots.forEach((ts) => {
+      if (ts.reservations && Array.isArray(ts.reservations)) {
+        const idx = ts.reservations.findIndex((x) => x.id === id);
+        if (idx !== -1) {
+          ts.reservations[idx] = { ...ts.reservations[idx], ...updates };
+          // その枠の残り枠数を再計算（キャンセルされていない予約のみカウント）
+          const activeCount = ts.reservations.filter(
+            (r) => !r.cancel_flg
+          ).length;
+          ts.remaining_capacity = Math.max(
+            0,
+            (ts.capacity ?? 0) - activeCount
+          );
+        }
+      }
+    });
+  }
+  // 枠統計を再計算（キャンセル時: total_reserved-1, remaining+1 / 解除時: 逆）
+  if (localTimeslotStats.value) {
+    const delta = updates.cancel_flg ? -1 : 1;
+    const totalReserved = localTimeslotStats.value.total_reserved + delta;
+    const remaining = localTimeslotStats.value.remaining - delta;
+    const totalCapacity = localTimeslotStats.value.total_capacity;
+    localTimeslotStats.value = {
+      ...localTimeslotStats.value,
+      total_reserved: totalReserved,
+      remaining: remaining,
+      occupancy_rate:
+        totalCapacity > 0
+          ? Math.round((totalReserved / totalCapacity) * 100 * 10) / 10
+          : 0,
+    };
   }
 };
 
-// キャンセル解除（詳細画面と同じ restore 処理）
-const restoreReservation = (id) => {
+const deleteReservation = async (id) => {
+  if (!confirm("本当にキャンセルしますか？")) return;
+  try {
+    const response = await axios.delete(
+      route("admin.reservations.destroy", id),
+      { headers: axiosHeaders }
+    );
+    if (response.data.success && response.data.reservation) {
+      updateReservationInLocalState(id, {
+        cancel_flg: true,
+        status: "キャンセル済み",
+      });
+      localSuccessMessage.value = response.data.message || "予約をキャンセルしました。";
+      localErrorMessage.value = "";
+      setTimeout(() => {
+        localSuccessMessage.value = "";
+      }, 5000);
+    }
+  } catch (error) {
+    if (error.response?.status === 302 || error.response?.data?.redirect) {
+      router.delete(route("admin.reservations.destroy", id));
+    } else {
+      alert(error.response?.data?.message || "キャンセルに失敗しました。");
+    }
+  }
+};
+
+// キャンセル解除（axios でリロードなし）
+const restoreReservation = async (id) => {
   if (!confirm("キャンセルを解除しますか？")) return;
-  router.patch(route("admin.reservations.restore", id), {}, {
-    preserveScroll: true,
-  });
+  localErrorMessage.value = "";
+  try {
+    const response = await axios.patch(
+      route("admin.reservations.restore", id),
+      {},
+      { headers: axiosHeaders }
+    );
+    if (response.data.success && response.data.reservation) {
+      updateReservationInLocalState(id, {
+        cancel_flg: false,
+        status: "未対応",
+      });
+      localSuccessMessage.value =
+        response.data.message || "キャンセルを解除しました。";
+      setTimeout(() => {
+        localSuccessMessage.value = "";
+      }, 5000);
+    }
+  } catch (error) {
+    const msg =
+      error.response?.data?.message ||
+      "キャンセル解除に失敗しました。";
+    if (error.response?.status === 422 || error.response?.status === 400) {
+      localErrorMessage.value = msg;
+      setTimeout(() => {
+        localErrorMessage.value = "";
+      }, 8000);
+    } else if (error.response?.status === 302) {
+      router.patch(route("admin.reservations.restore", id), {}, { preserveScroll: true });
+    } else {
+      alert(msg);
+    }
+  }
 };
 
 const adjustCapacity = async (timeslotId, amount) => {
@@ -2618,32 +2785,50 @@ const adjustCapacity = async (timeslotId, amount) => {
   try {
     const response = await axios.post(
       route("admin.timeslots.adjust-capacity", timeslotId),
-      {
-        amount: amount,
-      }
+      { amount: amount }
     );
 
     if (response.data.success) {
-      adjustCapacitySuccessMessage.value =
+      localSuccessMessage.value =
         amount > 0 ? "枠を追加しました" : "枠を削除しました";
-      // ページをリロードして最新の状態を取得
-      router.visit(route("admin.events.reservations.index", props.event.id), {
-        preserveScroll: true,
-        only: ["timeslotsWithReservations", "timeslotStats"],
-      });
+      localErrorMessage.value = "";
+      const timeslots = localTimeslotsWithReservations.value;
+      const ts = Array.isArray(timeslots)
+        ? timeslots.find((t) => t.id === timeslotId)
+        : null;
+      if (ts) {
+        ts.capacity = response.data.capacity;
+        ts.remaining_capacity = response.data.remaining;
+      }
+      if (localTimeslotStats.value) {
+        localTimeslotStats.value = {
+          ...localTimeslotStats.value,
+          total_capacity: localTimeslotStats.value.total_capacity + amount,
+          remaining: localTimeslotStats.value.remaining + amount,
+          occupancy_rate:
+            localTimeslotStats.value.total_capacity + amount > 0
+              ? Math.round(
+                  ((localTimeslotStats.value.total_reserved /
+                    (localTimeslotStats.value.total_capacity + amount)) *
+                    100 *
+                    10)
+                ) / 10
+              : 0,
+        };
+      }
       setTimeout(() => {
-        adjustCapacitySuccessMessage.value = "";
+        localSuccessMessage.value = "";
       }, 5000);
     } else {
       alert(response.data.message || "枠数の変更に失敗しました。");
-      adjustingTimeslotId.value = null;
     }
   } catch (error) {
-    if (error.response && error.response.data && error.response.data.message) {
+    if (error.response?.data?.message) {
       alert(error.response.data.message);
     } else {
       alert("枠数の変更に失敗しました。");
     }
+  } finally {
     adjustingTimeslotId.value = null;
   }
 };
