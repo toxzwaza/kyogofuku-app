@@ -160,6 +160,17 @@
                                     </div>
 
                                     <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">郵便番号</label>
+                                        <input
+                                            v-model="form.postal_code"
+                                            type="text"
+                                            placeholder="例: 700-0012"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                        <div v-if="form.errors.postal_code" class="mt-1 text-sm text-red-600">{{ form.errors.postal_code }}</div>
+                                    </div>
+
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">住所</label>
                                         <input
                                             v-model="form.address"

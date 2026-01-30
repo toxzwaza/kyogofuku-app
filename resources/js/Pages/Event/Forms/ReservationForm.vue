@@ -273,6 +273,25 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
+                    郵便番号 <span class="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                    v-model="form.postal_code"
+                    type="text"
+                    required
+                    placeholder="例: 700-0012"
+                    @blur="searchAddress"
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                />
+                <p class="mt-1 text-xs text-gray-500">郵便番号を入力すると住所が自動で入力されます</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     住所 <span class="text-red-500 ml-1">*</span>
                 </label>
                 <input
@@ -282,6 +301,12 @@
                     class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
                     placeholder="東京都渋谷区..."
                 />
+                <p class="mt-1.5 flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-sm font-medium text-amber-800 border border-amber-300">
+                    <svg class="w-4 h-4 flex-shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    番地・建物名までご入力ください
+                </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -501,6 +526,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import axios from 'axios';
 
 const props = defineProps({
     event: Object,
@@ -679,6 +705,7 @@ const form = useForm({
     reservation_datetime: '',
     venue_id: null,
     has_visited_before: urlParams.has('has_visited_before') ? urlParams.get('has_visited_before') === 'true' : false,
+    postal_code: getUrlParam('postal_code', ''),
     address: getUrlParam('address', ''),
     birth_date: urlBirthDate,
     seijin_year: initialSeijinYear,
@@ -776,6 +803,26 @@ watch(() => form.venue_id, (newVenueId, oldVenueId) => {
 });
 
 const processing = ref(false);
+
+const searchAddress = async () => {
+    if (!form.postal_code) return;
+    const postalCode = form.postal_code.replace(/-/g, '');
+    if (!/^\d{7}$/.test(postalCode)) return;
+    try {
+        const response = await axios.get(route('api.postal-code.search'), {
+            params: { postal_code: postalCode },
+        });
+        if (response.data.address) {
+            form.address = response.data.address;
+        }
+    } catch (error) {
+        if (error.response?.data?.error) {
+            console.warn('住所の取得に失敗しました:', error.response.data.error);
+        } else if (error.message) {
+            console.error('住所の取得に失敗しました:', error.message);
+        }
+    }
+};
 
 const formatDateTime = (datetime) => {
     const date = new Date(datetime);

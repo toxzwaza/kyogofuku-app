@@ -388,6 +388,7 @@ class ReservationController extends Controller
         
         // 予約フォームの場合
         if ($event->form_type === 'reservation') {
+            $rules['postal_code'] = 'nullable|string|max:10';
             $rules['reservation_datetime'] = 'nullable|string';
             $rules['venue_id'] = 'nullable|exists:venues,id';
             $rules['has_visited_before'] = 'boolean';

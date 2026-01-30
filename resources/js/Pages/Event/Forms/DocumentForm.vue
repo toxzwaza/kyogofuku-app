@@ -127,6 +127,7 @@
                             @blur="searchAddress"
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         />
+                        <p class="mt-1 text-xs text-gray-500">郵便番号を入力すると住所が自動で入力されます</p>
                         <div v-if="form.errors.postal_code" class="mt-1 text-sm text-red-600">{{ form.errors.postal_code }}</div>
                     </div>
                     <div>
@@ -136,6 +137,12 @@
                             type="text"
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         />
+                        <p class="mt-1 flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1.5 text-xs font-medium text-amber-800 border border-amber-300">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            番地・建物名までご入力ください
+                        </p>
                         <div v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</div>
                     </div>
                 </div>
