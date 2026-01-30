@@ -11,6 +11,7 @@ class Event extends Model
 
     protected $fillable = [
         'slug',
+        'slug_aliases',
         'title',
         'description',
         'form_type',
@@ -25,6 +26,7 @@ class Event extends Model
         'start_at' => 'date',
         'end_at' => 'date',
         'is_public' => 'boolean',
+        'slug_aliases' => 'array',
     ];
 
     /**

@@ -106,6 +106,26 @@ class EventController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|regex:/^[a-zA-Z0-9_-]+$/|unique:events,slug',
+            'slug_aliases' => 'nullable|array',
+            'slug_aliases.*' => [
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z0-9_-]+$/',
+                function (string $attribute, $value, \Closure $fail) use ($request) {
+                    if (strtolower($value) === strtolower($request->input('slug'))) {
+                        $fail('エイリアスはメインのスラッグと同じにできません。');
+                        return;
+                    }
+                    if (Event::where('slug', $value)->exists()) {
+                        $fail('このエイリアスは既に他のイベントのスラッグとして使用されています。');
+                        return;
+                    }
+                    if (Event::whereJsonContains('slug_aliases', $value)->exists()) {
+                        $fail('このエイリアスは既に他のイベントで使用されています。');
+                        return;
+                    }
+                },
+            ],
             'description' => 'nullable|string',
             'form_type' => 'required|in:reservation,document,contact',
             'start_at' => 'nullable|date',
@@ -143,6 +163,16 @@ class EventController extends Controller
         $validated['slug'] = $slug;
 
         $validated['is_public'] = $request->has('is_public') ? $request->is_public : true;
+
+        // slug_aliases: 空文字を除き重複を除去して正規化
+        if (isset($validated['slug_aliases'])) {
+            $validated['slug_aliases'] = array_values(array_unique(array_filter(
+                array_map('trim', $validated['slug_aliases']),
+                fn ($v) => $v !== ''
+            )));
+        } else {
+            $validated['slug_aliases'] = null;
+        }
 
         $event = Event::create($validated);
 
@@ -243,6 +273,26 @@ class EventController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|regex:/^[a-zA-Z0-9_-]+$/|unique:events,slug,' . $event->id,
+            'slug_aliases' => 'nullable|array',
+            'slug_aliases.*' => [
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z0-9_-]+$/',
+                function (string $attribute, $value, \Closure $fail) use ($request, $event) {
+                    if (strtolower($value) === strtolower($request->input('slug'))) {
+                        $fail('エイリアスはメインのスラッグと同じにできません。');
+                        return;
+                    }
+                    if (Event::where('slug', $value)->where('id', '!=', $event->id)->exists()) {
+                        $fail('このエイリアスは既に他のイベントのスラッグとして使用されています。');
+                        return;
+                    }
+                    if (Event::where('id', '!=', $event->id)->whereJsonContains('slug_aliases', $value)->exists()) {
+                        $fail('このエイリアスは既に他のイベントで使用されています。');
+                        return;
+                    }
+                },
+            ],
             'description' => 'nullable|string',
             'form_type' => 'required|in:reservation,document,contact',
             'start_at' => 'nullable|date',
@@ -265,6 +315,17 @@ class EventController extends Controller
         }
 
         $validated['is_public'] = $request->has('is_public') ? $request->is_public : true;
+
+        // slug_aliases: 空文字を除き重複を除去して正規化
+        if (array_key_exists('slug_aliases', $validated)) {
+            $validated['slug_aliases'] = array_values(array_unique(array_filter(
+                array_map('trim', $validated['slug_aliases'] ?? []),
+                fn ($v) => $v !== ''
+            )));
+            if (empty($validated['slug_aliases'])) {
+                $validated['slug_aliases'] = null;
+            }
+        }
 
         $event->update($validated);
 

@@ -70,6 +70,13 @@
                                             <dd class="mt-1 text-sm text-gray-900">{{ event.slug }}</dd>
                                         </div>
                                         <div>
+                                            <dt class="text-sm font-medium text-gray-500">URLエイリアス</dt>
+                                            <dd class="mt-1 text-sm text-gray-900">
+                                                <span v-if="event.slug_aliases && event.slug_aliases.length">{{ event.slug_aliases.join(', ') }}</span>
+                                                <span v-else class="text-gray-400">なし</span>
+                                            </dd>
+                                        </div>
+                                        <div>
                                             <dt class="text-sm font-medium text-gray-500">フォーム種別</dt>
                                             <dd class="mt-1">
                                                 <span class="px-2 py-1 text-xs rounded-full" :class="{
@@ -143,6 +150,40 @@
                                                     <p class="mt-1 text-xs text-gray-500">URLに使用される文字列です。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
                                                     <div v-if="slugError" class="mt-1 text-sm text-red-600">{{ slugError }}</div>
                                                     <div v-if="editForm.errors.slug" class="mt-1 text-sm text-red-600">{{ editForm.errors.slug }}</div>
+                                                </div>
+
+                                                <div class="sm:col-span-2">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">URLエイリアス</label>
+                                                    <p class="mt-1 text-xs text-gray-500 mb-2">同じイベントに複数のURLでアクセスさせたい場合に登録します。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
+                                                    <div
+                                                        v-for="(alias, index) in editForm.slug_aliases"
+                                                        :key="index"
+                                                        class="flex gap-2 items-center mb-2"
+                                                    >
+                                                        <input
+                                                            v-model="editForm.slug_aliases[index]"
+                                                            type="text"
+                                                            class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            placeholder="例: old-event-name"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            @click="editForm.slug_aliases.splice(index, 1)"
+                                                            class="px-3 py-1.5 text-sm text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                                                        >
+                                                            削除
+                                                        </button>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        @click="editForm.slug_aliases.push('')"
+                                                        class="text-sm text-indigo-600 hover:text-indigo-800"
+                                                    >
+                                                        + エイリアスを追加
+                                                    </button>
+                                                    <template v-for="(_, index) in editForm.slug_aliases" :key="'err-' + index">
+                                                        <div v-if="editForm.errors['slug_aliases.' + index]" class="mt-1 text-sm text-red-600">{{ editForm.errors['slug_aliases.' + index] }}</div>
+                                                    </template>
                                                 </div>
 
                                                 <div>
@@ -1094,6 +1135,7 @@ const newDocument = ref({
 const editForm = useForm({
     title: props.event.title,
     slug: props.event.slug || '',
+    slug_aliases: Array.isArray(props.event.slug_aliases) ? [...props.event.slug_aliases] : [],
     description: props.event.description || '',
     form_type: props.event.form_type,
     start_at: props.event.start_at ? new Date(props.event.start_at).toISOString().split('T')[0] : '',
@@ -1181,6 +1223,7 @@ const startEdit = () => {
     isEditing.value = true;
     editForm.title = props.event.title;
     editForm.slug = props.event.slug || '';
+    editForm.slug_aliases = Array.isArray(props.event.slug_aliases) ? [...props.event.slug_aliases] : [];
     editForm.description = props.event.description || '';
     editForm.form_type = props.event.form_type;
     editForm.start_at = props.event.start_at ? new Date(props.event.start_at).toISOString().split('T')[0] : '';
@@ -1256,6 +1299,12 @@ const updateEvent = () => {
     if (successTextError.value) {
         return;
     }
+
+    // slug_aliases: 空文字を除き重複を除去して送信
+    const aliases = Array.isArray(editForm.slug_aliases)
+        ? editForm.slug_aliases.map((a) => String(a).trim()).filter((a) => a !== '')
+        : [];
+    editForm.slug_aliases = [...new Set(aliases)];
     
     editForm.transform((data) => ({
         ...data,

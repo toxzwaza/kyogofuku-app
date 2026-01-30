@@ -17,7 +17,25 @@ class EventController extends Controller
         $event = Event::with(['images', 'timeslots', 'shops', 'venues', 'documents'])
             ->where('slug', $slug)
             ->where('is_public', true)
-            ->firstOrFail();
+            ->first();
+
+        // メイン slug で見つからない場合、エイリアスで検索してリダイレクト
+        if (!$event) {
+            $eventByAlias = Event::where('is_public', true)
+                ->whereJsonContains('slug_aliases', $slug)
+                ->first();
+
+            if ($eventByAlias) {
+                $url = route('event.show', ['slug' => (string) $eventByAlias->slug]);
+                $query = request()->query();
+                if (!empty($query)) {
+                    $url .= '?' . http_build_query($query);
+                }
+                return redirect($url);
+            }
+
+            abort(404);
+        }
 
         // 公開期間チェック
         $now = now();
@@ -160,7 +178,7 @@ class EventController extends Controller
         EventUtmTracking::create([
             'session_id' => $request->session()->getId(),
             'event_id' => $event->id,
-            'utm_source' => $request->input('utm_source') ?: 'HP',
+            'utm_source' => $request->input('utm_source') ?: 'NONE',
             'utm_medium' => $request->input('utm_medium'),
             'utm_campaign' => $request->input('utm_campaign'),
             'utm_id' => $request->input('utm_id'),

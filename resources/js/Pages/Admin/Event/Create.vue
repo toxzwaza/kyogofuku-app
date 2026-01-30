@@ -78,6 +78,41 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URLエイリアス</label>
+                                    <p class="mt-1 text-xs text-gray-500 mb-2">同じイベントに複数のURLでアクセスさせたい場合に登録します。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
+                                    <div
+                                        v-for="(alias, index) in form.slug_aliases"
+                                        :key="index"
+                                        class="flex gap-2 items-center mb-2"
+                                    >
+                                        <input
+                                            v-model="form.slug_aliases[index]"
+                                            type="text"
+                                            class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            placeholder="例: old-event-name"
+                                        />
+                                        <button
+                                            type="button"
+                                            @click="form.slug_aliases.splice(index, 1)"
+                                            class="px-3 py-1.5 text-sm text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50"
+                                        >
+                                            削除
+                                        </button>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="form.slug_aliases.push('')"
+                                        class="text-sm text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        + エイリアスを追加
+                                    </button>
+                                    <div v-if="form.errors['slug_aliases.0']" class="mt-1 text-sm text-red-600">{{ form.errors['slug_aliases.0'] }}</div>
+                                    <template v-for="(_, index) in form.slug_aliases" :key="'err-' + index">
+                                        <div v-if="form.errors['slug_aliases.' + index]" class="mt-1 text-sm text-red-600">{{ form.errors['slug_aliases.' + index] }}</div>
+                                    </template>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">受付開始日</label>
                                     <input
                                         v-model="form.start_at"
@@ -397,6 +432,7 @@ const props = defineProps({
 const form = useForm({
     title: '',
     slug: '',
+    slug_aliases: [],
     description: '',
     form_type: 'reservation',
     start_at: '',
@@ -608,6 +644,12 @@ const submit = () => {
     if (successTextError.value) {
         return;
     }
+
+    // slug_aliases: 空文字を除き重複を除去して送信
+    const aliases = Array.isArray(form.slug_aliases)
+        ? form.slug_aliases.map((a) => String(a).trim()).filter((a) => a !== '')
+        : [];
+    form.slug_aliases = [...new Set(aliases)];
     
     // datalistから選択された既存会場かチェック
     if (form.new_venue_name) {
