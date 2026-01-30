@@ -605,7 +605,24 @@ const getVisitReasonsWithoutOther = (visitReasons) => {
     return reasons;
 };
 
+// 生年月日を HTML5 date 入力用に YYYY-MM-DD に正規化
+const normalizeBirthDate = (value) => {
+    if (value == null || value === '') return '';
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    try {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    } catch {
+        return '';
+    }
+};
+
 // 既存データを処理
+const initialBirthDate = normalizeBirthDate(props.reservation.birth_date);
 const initialStaffName = props.reservation.staff_name || '';
 const initialVisitReasons = getVisitReasonsWithoutOther(props.reservation.visit_reasons);
 const initialVisitReasonOther = extractVisitReasonOther(props.reservation.visit_reasons);
@@ -631,7 +648,7 @@ const form = useForm({
     has_visited_before: props.reservation.has_visited_before || false,
     furigana: props.reservation.furigana || '',
     address: props.reservation.address || '',
-    birth_date: props.reservation.birth_date || '',
+    birth_date: initialBirthDate,
     seijin_year: props.reservation.seijin_year || null,
     school_name: props.reservation.school_name || '',
     staff_name: initialStaffName,
