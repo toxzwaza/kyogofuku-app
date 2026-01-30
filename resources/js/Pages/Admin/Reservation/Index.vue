@@ -41,6 +41,26 @@
           </div>
         </div>
 
+        <!-- エラーメッセージ（キャンセル解除失敗時など） -->
+        <div
+          v-if="$page.props.flash?.error"
+          class="rounded-md bg-red-50 p-4 border border-red-200"
+        >
+          <p class="text-sm font-medium text-red-800">
+            {{ $page.props.flash.error }}
+          </p>
+        </div>
+
+        <!-- 枠増減の成功メッセージ -->
+        <div
+          v-if="adjustCapacitySuccessMessage"
+          class="rounded-md bg-green-50 p-4 border border-green-200"
+        >
+          <p class="text-sm font-medium text-green-800">
+            {{ adjustCapacitySuccessMessage }}
+          </p>
+        </div>
+
         <!-- 操作ナビゲーション -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
@@ -401,8 +421,7 @@
                               <button
                                 @click="adjustCapacity(timeslot.id, -1)"
                                 :disabled="
-                                  timeslot.capacity <=
-                                    timeslot.reservations.length ||
+                                  timeslot.remaining_capacity <= 0 ||
                                   adjustingTimeslotId === timeslot.id
                                 "
                                 class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-orange-600 to-orange-700 rounded-lg shadow-sm hover:from-orange-700 hover:to-orange-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
@@ -625,10 +644,18 @@
                                   詳細
                                 </Link>
                                 <button
+                                  v-if="reservation.cancel_flg"
+                                  @click="restoreReservation(reservation.id)"
+                                  class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-orange-600 to-orange-700 rounded-lg shadow-sm hover:from-orange-700 hover:to-orange-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-200"
+                                >
+                                  キャンセル解除
+                                </button>
+                                <button
+                                  v-else
                                   @click="deleteReservation(reservation.id)"
                                   class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg shadow-sm hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
                                 >
-                                  削除
+                                  キャンセル
                                 </button>
                               </div>
                             </div>
@@ -819,8 +846,16 @@
                         詳細
                       </Link>
                       <button
+                        v-if="reservation.cancel_flg"
+                        @click="restoreReservation(reservation.id)"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-orange-600 to-orange-700 rounded-lg shadow-sm hover:from-orange-700 hover:to-orange-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-200"
+                      >
+                        キャンセル解除
+                      </button>
+                      <button
+                        v-else
                         @click="deleteReservation(reservation.id)"
-                        class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg shadow-sm hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg shadow-sm hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
                       >
                         <svg
                           class="w-4 h-4"
@@ -832,9 +867,10 @@
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            d="M6 18L18 6M6 6l12 12"
                           />
                         </svg>
+                        キャンセル
                       </button>
                     </div>
                   </div>
@@ -1398,10 +1434,18 @@
                               詳細
                             </Link>
                             <button
+                              v-if="reservation.cancel_flg"
+                              @click="restoreReservation(reservation.id)"
+                              class="text-orange-600 hover:text-orange-900 mr-4"
+                            >
+                              キャンセル解除
+                            </button>
+                            <button
+                              v-else
                               @click="deleteReservation(reservation.id)"
                               class="text-red-600 hover:text-red-900"
                             >
-                              削除
+                              キャンセル
                             </button>
                           </td>
                         </tr>
@@ -1580,10 +1624,18 @@
                           詳細
                         </Link>
                         <button
+                          v-if="reservation.cancel_flg"
+                          @click="restoreReservation(reservation.id)"
+                          class="text-orange-600 hover:text-orange-900 mr-4"
+                        >
+                          キャンセル解除
+                        </button>
+                        <button
+                          v-else
                           @click="deleteReservation(reservation.id)"
                           class="text-red-600 hover:text-red-900"
                         >
-                          削除
+                          キャンセル
                         </button>
                       </td>
                     </tr>
@@ -1867,6 +1919,7 @@ const activeTab = ref(
   props.event.form_type === "reservation" ? "schedule" : "cards"
 );
 const adjustingTimeslotId = ref(null);
+const adjustCapacitySuccessMessage = ref("");
 
 // アコーディオンの開閉状態
 const isSortOpen = ref(false);
@@ -2544,9 +2597,17 @@ const getTimeslotBorderClass = (timeslot) =>
   getTimeslotAllDone(timeslot) ? "border-green-400" : "border-gray-300";
 
 const deleteReservation = (id) => {
-  if (confirm("本当に削除しますか？")) {
+  if (confirm("本当にキャンセルしますか？")) {
     router.delete(route("admin.reservations.destroy", id));
   }
+};
+
+// キャンセル解除（詳細画面と同じ restore 処理）
+const restoreReservation = (id) => {
+  if (!confirm("キャンセルを解除しますか？")) return;
+  router.patch(route("admin.reservations.restore", id), {}, {
+    preserveScroll: true,
+  });
 };
 
 const adjustCapacity = async (timeslotId, amount) => {
@@ -2563,11 +2624,16 @@ const adjustCapacity = async (timeslotId, amount) => {
     );
 
     if (response.data.success) {
+      adjustCapacitySuccessMessage.value =
+        amount > 0 ? "枠を追加しました" : "枠を削除しました";
       // ページをリロードして最新の状態を取得
       router.visit(route("admin.events.reservations.index", props.event.id), {
         preserveScroll: true,
         only: ["timeslotsWithReservations", "timeslotStats"],
       });
+      setTimeout(() => {
+        adjustCapacitySuccessMessage.value = "";
+      }, 5000);
     } else {
       alert(response.data.message || "枠数の変更に失敗しました。");
       adjustingTimeslotId.value = null;

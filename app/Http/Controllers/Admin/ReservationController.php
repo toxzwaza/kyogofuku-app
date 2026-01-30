@@ -274,6 +274,35 @@ class ReservationController extends Controller
             ->orderBy('shops.name')
             ->get();
 
+        // キャンセル解除可能か（枠に空きがあるか）
+        $canRestore = true;
+        if ($reservation->cancel_flg && $event->form_type === 'reservation' && $reservation->reservation_datetime) {
+            $datetimeStr = Carbon::parse($reservation->reservation_datetime)->format('Y-m-d H:i:s');
+            $timeslot = $event->timeslots()
+                ->where('start_at', $datetimeStr)
+                ->where('is_active', true);
+            if ($reservation->venue_id) {
+                $timeslot->where('venue_id', $reservation->venue_id);
+            } else {
+                $timeslot->whereNull('venue_id');
+            }
+            $timeslot = $timeslot->first();
+            if ($timeslot) {
+                // この予約を除いたキャンセルされていない予約数
+                $reservedCount = $event->reservations()
+                    ->where('id', '!=', $reservation->id)
+                    ->where('cancel_flg', false)
+                    ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+                if ($timeslot->venue_id) {
+                    $reservedCount->where('venue_id', $timeslot->venue_id);
+                } else {
+                    $reservedCount->whereNull('venue_id');
+                }
+                $reservedCount = $reservedCount->count();
+                $canRestore = $reservedCount < $timeslot->capacity;
+            }
+        }
+
         return Inertia::render('Admin/Reservation/Show', [
             'reservation' => $reservation,
             'event' => $reservation->event,
@@ -281,6 +310,7 @@ class ReservationController extends Controller
             'notes' => $reservation->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'schedule' => $reservation->schedule,
             'emailThreads' => $emailThreads,
+            'canRestore' => $canRestore,
             'currentUser' => $currentUser ? [
                 'id' => $currentUser->id,
                 'name' => $currentUser->name,
@@ -408,10 +438,78 @@ class ReservationController extends Controller
     public function destroy(EventReservation $reservation)
     {
         $eventId = $reservation->event_id;
-        $reservation->update(['cancel_flg' => true]);
+        $reservation->update([
+            'cancel_flg' => true,
+            'status' => 'キャンセル済み',
+        ]);
 
         return redirect()->route('admin.events.reservations.index', $eventId)
             ->with('success', '予約をキャンセルしました。');
+    }
+
+    /**
+     * キャンセル済み予約を完全削除（物理削除）
+     */
+    public function forceDestroy(EventReservation $reservation)
+    {
+        if (!$reservation->cancel_flg) {
+            return redirect()->back()
+                ->with('error', 'キャンセル済みの予約のみ削除できます。');
+        }
+
+        $eventId = $reservation->event_id;
+        $reservation->delete();
+
+        return redirect()->route('admin.events.reservations.index', $eventId)
+            ->with('success', '予約を削除しました。');
+    }
+
+    /**
+     * 予約のキャンセルを解除（枠に空きがある場合のみ）
+     */
+    public function restore(EventReservation $reservation)
+    {
+        $reservation->load('event');
+        $event = $reservation->event;
+
+        // 予約フォームで予約日時がある場合、枠の空きをチェック
+        if ($event->form_type === 'reservation' && $reservation->reservation_datetime) {
+            $datetimeStr = Carbon::parse($reservation->reservation_datetime)->format('Y-m-d H:i:s');
+            $timeslot = $event->timeslots()
+                ->where('start_at', $datetimeStr)
+                ->where('is_active', true);
+            if ($reservation->venue_id) {
+                $timeslot->where('venue_id', $reservation->venue_id);
+            } else {
+                $timeslot->whereNull('venue_id');
+            }
+            $timeslot = $timeslot->first();
+
+            if ($timeslot) {
+                $reservedCount = $event->reservations()
+                    ->where('cancel_flg', false)
+                    ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+                if ($timeslot->venue_id) {
+                    $reservedCount->where('venue_id', $timeslot->venue_id);
+                } else {
+                    $reservedCount->whereNull('venue_id');
+                }
+                $reservedCount = $reservedCount->count();
+
+                if ($reservedCount >= $timeslot->capacity) {
+                    return redirect()->back()
+                        ->with('error', '枠がいっぱいです。先に枠を増やしてください。');
+                }
+            }
+        }
+
+        $reservation->update([
+            'cancel_flg' => false,
+            'status' => '未対応',
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'キャンセルを解除しました。');
     }
 
     /**
@@ -450,7 +548,7 @@ class ReservationController extends Controller
     public function updateStatus(Request $request, EventReservation $reservation)
     {
         $validated = $request->validate([
-            'status' => 'required|in:未対応,確認中,返信待ち,対応完了済み',
+            'status' => 'required|in:未対応,確認中,返信待ち,対応完了済み,キャンセル済み',
         ]);
 
         $oldStatus = $reservation->status;

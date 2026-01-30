@@ -59,12 +59,48 @@
       {{ $page.props.success }}
     </div>
 
+    <div
+      v-if="$page.props.flash?.error"
+      class="mb-4 p-3 rounded bg-red-100 text-red-800 border border-red-200"
+    >
+      {{ $page.props.flash.error }}
+    </div>
+
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- 左側: 予約情報 -->
-          <div class="lg:col-span-2">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="lg:col-span-2 space-y-4">
+            <!-- キャンセル登録済みの表示（横いっぱい） -->
+            <div
+              v-if="reservation.cancel_flg"
+              class="w-full rounded-lg border-2 border-amber-300 bg-amber-50 p-4 shadow-sm"
+            >
+              <p class="text-base font-semibold text-amber-900 mb-4">
+                この予約はキャンセル登録済みです
+              </p>
+              <div v-if="canRestore" class="flex items-center">
+                <button
+                  type="button"
+                  @click="restoreReservation"
+                  :disabled="isRestoring"
+                  class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {{ isRestoring ? '処理中...' : 'キャンセルを解除する' }}
+                </button>
+              </div>
+              <p v-else class="text-sm text-amber-800">
+                枠がいっぱいです。先に枠を増やしてください。
+              </p>
+            </div>
+
+            <!-- 予約情報ブロック（キャンセル時は薄いグレー背景） -->
+            <div
+              :class="[
+                'overflow-hidden shadow-sm sm:rounded-lg',
+                reservation.cancel_flg ? 'bg-gray-100' : 'bg-white',
+              ]"
+            >
               <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                   <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -681,6 +717,7 @@
                         <option value="確認中">確認中</option>
                         <option value="返信待ち">返信待ち</option>
                         <option value="対応完了済み">対応完了済み</option>
+                        <option value="キャンセル済み">キャンセル済み</option>
                       </select>
                       <div
                         v-if="statusForm.errors.status"
@@ -967,6 +1004,20 @@
                     </button>
                   </form>
                 </div>
+
+                <!-- キャンセル済みの場合のみ：完全削除 -->
+                <div
+                  v-if="reservation.cancel_flg"
+                  class="mt-6 pt-6 border-t border-gray-200"
+                >
+                  <button
+                    type="button"
+                    @click="forceDeleteReservation"
+                    class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    削除
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -983,6 +1034,8 @@ import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 
+const isRestoring = ref(false);
+
 const props = defineProps({
   emailThreads: {
     type: Array,
@@ -993,6 +1046,10 @@ const props = defineProps({
   venues: Array,
   notes: Array,
   schedule: Object,
+  canRestore: {
+    type: Boolean,
+    default: false,
+  },
   currentUser: Object,
   userShops: Array,
   eventShops: Array,
@@ -1008,6 +1065,24 @@ const formatDate = (dateString) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
   return date.toLocaleDateString("ja-JP");
+};
+
+// キャンセルを解除する
+const restoreReservation = () => {
+  if (!confirm("キャンセルを解除しますか？")) return;
+  isRestoring.value = true;
+  router.patch(route("admin.reservations.restore", props.reservation.id), {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      isRestoring.value = false;
+    },
+  });
+};
+
+// キャンセル済み予約を完全削除する
+const forceDeleteReservation = () => {
+  if (!confirm("この操作は取り消しできません。本当に削除しますか？")) return;
+  router.delete(route("admin.reservations.force-destroy", props.reservation.id));
 };
 
 // メールスレッドを新しい順（降順）でソート
@@ -1083,6 +1158,7 @@ const getStatusBadgeClass = (status) => {
     確認中: "bg-yellow-100 text-yellow-800",
     返信待ち: "bg-blue-100 text-blue-800",
     対応完了済み: "bg-green-100 text-green-800",
+    キャンセル済み: "bg-red-100 text-red-800",
   };
   return classes[status] || "bg-gray-100 text-gray-800";
 };

@@ -125,6 +125,8 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/reservations/{reservation}/edit', [AdminReservationController::class, 'edit'])->name('reservations.edit');
     Route::put('/reservations/{reservation}', [AdminReservationController::class, 'update'])->name('reservations.update');
     Route::delete('/reservations/{reservation}', [AdminReservationController::class, 'destroy'])->name('reservations.destroy');
+    Route::delete('/reservations/{reservation}/force', [AdminReservationController::class, 'forceDestroy'])->name('reservations.force-destroy');
+    Route::patch('/reservations/{reservation}/restore', [AdminReservationController::class, 'restore'])->name('reservations.restore');
     
     // 予約メモ管理
     Route::post('/reservations/{reservation}/notes', [AdminReservationController::class, 'storeNote'])->name('reservations.notes.store');
