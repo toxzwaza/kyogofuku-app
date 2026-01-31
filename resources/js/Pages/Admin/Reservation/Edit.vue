@@ -56,47 +56,99 @@
 
                                 <!-- 予約フォーム (reservation) -->
                                 <template v-if="event.form_type === 'reservation'">
-                                    <!-- 予約可能な日時 -->
+                                    <!-- ご来店会場（会場を先に選択） -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">ご来店会場 <span class="text-red-500">*</span></label>
+                                        <select
+                                            v-model="form.venue_id"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        >
+                                            <option value="">選択してください</option>
+                                            <option v-for="venue in venues" :key="venue.id" :value="venue.id">
+                                                {{ venue.name }}
+                                            </option>
+                                        </select>
+                                        <div v-if="form.errors.venue_id" class="mt-1 text-sm text-red-600">{{ form.errors.venue_id }}</div>
+                                    </div>
+
+                                    <!-- 予約可能な日時（選択会場の枠のみ・日付昇順・満枠グレー・バッジ） -->
                                     <div v-if="timeslots && timeslots.length > 0" class="mb-4">
                                         <label class="block text-sm font-medium text-gray-700 mb-2">予約日時 <span class="text-red-500">*</span></label>
-                                        <div v-if="!selectedTimeslot" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                                            <p class="text-yellow-800 text-sm">予約日時を選択してください。</p>
+                                        <div v-if="!form.venue_id" class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
+                                            <p class="text-gray-600 text-sm">会場を選択してください。</p>
                                         </div>
-                                        <div class="space-y-6">
-                                            <div
-                                                v-for="(dateGroup, date) in groupedTimeslots"
-                                                :key="date"
-                                                class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
-                                            >
-                                                <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ formatDate(date) }}</h3>
-                                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                                    <button
-                                                        type="button"
-                                                        v-for="timeslot in dateGroup"
-                                                        :key="timeslot.id"
-                                                        @click="selectTimeslot(timeslot)"
-                                                        :class="[
-                                                            'p-3 rounded-lg border-2 transition text-left',
-                                                            selectedTimeslot?.id === timeslot.id
-                                                                ? 'border-blue-500 bg-blue-50'
-                                                                : 'border-gray-200 hover:border-blue-300 bg-white'
-                                                        ]"
-                                                    >
-                                                        <p class="font-semibold text-sm mb-1">{{ formatTime(timeslot.start_at) }}</p>
-                                                        <p class="text-xs text-gray-600">残り{{ getRemainingCapacity(timeslot) }}枠</p>
-                                                    </button>
+                                        <div v-else-if="filteredTimeslots.length === 0" class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
+                                            <p class="text-gray-600 text-sm">選択された会場には開催日時がありません。</p>
+                                        </div>
+                                        <template v-else>
+                                            <div v-if="!selectedTimeslot" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                                                <p class="text-yellow-800 text-sm">予約日時を選択してください。</p>
+                                            </div>
+                                            <div class="space-y-6">
+                                                <div
+                                                    v-for="date in sortedGroupedTimeslotDates"
+                                                    :key="date"
+                                                    class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
+                                                >
+                                                    <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ formatDate(date) }}</h3>
+                                                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                        <button
+                                                            type="button"
+                                                            v-for="timeslot in groupedTimeslots[date]"
+                                                            :key="timeslot.id"
+                                                            :disabled="getRemainingCapacity(timeslot) === 0"
+                                                            @click="getRemainingCapacity(timeslot) > 0 && selectTimeslot(timeslot)"
+                                                            :class="[
+                                                                'p-3 rounded-lg border-2 transition text-left',
+                                                                getRemainingCapacity(timeslot) === 0
+                                                                    ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-75'
+                                                                    : [
+                                                                        selectedTimeslot?.id === timeslot.id
+                                                                            ? 'border-indigo-500 bg-indigo-50'
+                                                                            : 'border-gray-200 hover:border-indigo-300 bg-white'
+                                                                    ]
+                                                            ]"
+                                                        >
+                                                            <!-- バッジ（受付終了 / 残りわずか / ねらい目） -->
+                                                            <div v-if="getRemainingCapacity(timeslot) === 0 || getTimeslotBadge(timeslot)" class="mb-2 flex flex-wrap gap-1">
+                                                                <span
+                                                                    v-if="getRemainingCapacity(timeslot) === 0"
+                                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm bg-gradient-to-r from-gray-400 to-gray-500 text-white ring-1 ring-gray-400/50"
+                                                                >
+                                                                    <span class="mr-1">🔒</span>受付終了
+                                                                </span>
+                                                                <span
+                                                                    v-else-if="getTimeslotBadge(timeslot) === 'nokori_wazuka'"
+                                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm bg-gradient-to-r from-rose-400 to-pink-500 text-white ring-1 ring-rose-300/50"
+                                                                >
+                                                                    <span class="mr-1">✨</span>残りわずか
+                                                                </span>
+                                                                <span
+                                                                    v-else-if="getTimeslotBadge(timeslot) === 'nerai_me'"
+                                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm bg-gradient-to-r from-amber-300 to-yellow-400 text-amber-900 ring-1 ring-amber-400/50"
+                                                                >
+                                                                    <span class="mr-1">★</span>ねらい目
+                                                                </span>
+                                                            </div>
+                                                            <p class="font-semibold text-sm mb-1" :class="getRemainingCapacity(timeslot) === 0 ? 'text-gray-500' : 'text-gray-800'">{{ formatTime(timeslot.start_at) }}</p>
+                                                            <p class="text-xs" :class="getRemainingCapacity(timeslot) === 0 ? 'text-gray-400' : 'text-gray-600'">
+                                                                <template v-if="getRemainingCapacity(timeslot) === 0">満枠</template>
+                                                                <template v-else>残り{{ getRemainingCapacity(timeslot) }}枠</template>
+                                                            </p>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="mt-4">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">選択中の予約日時</label>
-                                            <input
-                                                type="text"
-                                                :value="selectedTimeslot ? formatDateTime(selectedTimeslot.start_at) : (reservation.reservation_datetime ? formatDateTime(reservation.reservation_datetime) : '')"
-                                                readonly
-                                                class="w-full rounded-md border-gray-300 shadow-sm bg-gray-100"
-                                            />
-                                        </div>
+                                            <div class="mt-4">
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">選択中の予約日時</label>
+                                                <input
+                                                    type="text"
+                                                    :value="selectedTimeslot ? formatDateTime(selectedTimeslot.start_at) : (reservation.reservation_datetime ? formatDateTime(reservation.reservation_datetime) : '')"
+                                                    readonly
+                                                    class="w-full rounded-md border-gray-300 shadow-sm bg-gray-100"
+                                                />
+                                            </div>
+                                        </template>
                                         <div v-if="form.errors.reservation_datetime" class="mt-1 text-sm text-red-600">{{ form.errors.reservation_datetime }}</div>
                                     </div>
                                     <div v-else class="mb-4">
@@ -118,20 +170,6 @@
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         />
                                         <div v-if="form.errors.furigana" class="mt-1 text-sm text-red-600">{{ form.errors.furigana }}</div>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">ご来店会場</label>
-                                        <select
-                                            v-model="form.venue_id"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        >
-                                            <option value="">選択してください</option>
-                                            <option v-for="venue in venues" :key="venue.id" :value="venue.id">
-                                                {{ venue.name }}
-                                            </option>
-                                        </select>
-                                        <div v-if="form.errors.venue_id" class="mt-1 text-sm text-red-600">{{ form.errors.venue_id }}</div>
                                     </div>
 
                                     <div>
@@ -455,26 +493,34 @@ const props = defineProps({
 // 選択された予約枠
 const selectedTimeslot = ref(null);
 
-// 予約枠を日付ごとにグループ化
+// 選択会場でフィルタした予約枠（公開フォームと同様）
+const filteredTimeslots = computed(() => {
+    if (!props.timeslots || props.timeslots.length === 0) return [];
+    if (!form.venue_id) return [];
+    return props.timeslots.filter(t => !t.venue_id || t.venue_id == form.venue_id);
+});
+
+// 予約枠を日付ごとにグループ化（日付昇順）
 const groupedTimeslots = computed(() => {
-    if (!props.timeslots || props.timeslots.length === 0) return {};
+    if (!filteredTimeslots.value || filteredTimeslots.value.length === 0) return {};
+    const sorted = [...filteredTimeslots.value].sort(
+        (a, b) => new Date(a.start_at) - new Date(b.start_at)
+    );
     const groups = {};
-    props.timeslots.forEach(timeslot => {
+    sorted.forEach(timeslot => {
         const date = new Date(timeslot.start_at);
         const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        if (!groups[dateKey]) {
-            groups[dateKey] = [];
-        }
+        if (!groups[dateKey]) groups[dateKey] = [];
         groups[dateKey].push(timeslot);
     });
-    // 各日付の枠を時間順にソート
     Object.keys(groups).forEach(dateKey => {
-        groups[dateKey].sort((a, b) => {
-            return new Date(a.start_at) - new Date(b.start_at);
-        });
+        groups[dateKey].sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
     });
     return groups;
 });
+
+// 日付キーを昇順で並べた配列
+const sortedGroupedTimeslotDates = computed(() => Object.keys(groupedTimeslots.value).sort());
 
 // 既存の予約日時に対応する予約枠を探す
 if (props.reservation.reservation_datetime && props.timeslots && props.timeslots.length > 0) {
@@ -531,8 +577,28 @@ const formatDateTime = (datetime) => {
     });
 };
 
-const getRemainingCapacity = (timeslot) => {
-    return timeslot.remaining_capacity || 0;
+const getRemainingCapacity = (timeslot) => timeslot.remaining_capacity ?? 0;
+
+/** 残りわずか: 残り1〜2枠 */
+const isNokoriWazuka = (timeslot) => {
+    const remaining = getRemainingCapacity(timeslot);
+    return remaining >= 1 && remaining <= 2;
+};
+
+/** ねらい目: 残り3枠以上 かつ 予約率40%以上70%未満 */
+const isNeraiMe = (timeslot) => {
+    const remaining = getRemainingCapacity(timeslot);
+    const capacity = timeslot.capacity ?? 0;
+    if (remaining < 3 || capacity <= 0) return false;
+    const rate = (capacity - remaining) / capacity;
+    return rate >= 0.4 && rate < 0.7;
+};
+
+/** 表示するバッジ種別（残りわずか優先） */
+const getTimeslotBadge = (timeslot) => {
+    if (isNokoriWazuka(timeslot)) return 'nokori_wazuka';
+    if (isNeraiMe(timeslot)) return 'nerai_me';
+    return null;
 };
 
 // 来店動機の選択肢
@@ -679,6 +745,16 @@ const availablePlans = [
 // 成人式予定年の選択肢（現在年から10年後まで）
 const currentYear = new Date().getFullYear();
 const seijinYears = Array.from({ length: 11 }, (_, i) => currentYear + i);
+
+// 会場変更時: 選択枠がその会場のものでなければクリア
+watch(() => form.venue_id, (newVenueId) => {
+    if (!selectedTimeslot.value) return;
+    const slotVenueId = selectedTimeslot.value.venue_id;
+    if (slotVenueId != null && String(slotVenueId) !== String(newVenueId)) {
+        selectedTimeslot.value = null;
+        form.reservation_datetime = '';
+    }
+});
 
 const submit = () => {
     // 来店動機を処理

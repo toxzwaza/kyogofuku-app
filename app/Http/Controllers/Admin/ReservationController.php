@@ -347,11 +347,13 @@ class ReservationController extends Controller
         $reservation->load(['event', 'venue']);
         $event = $reservation->event;
 
-        // 予約フォームの場合、利用可能な予約枠を取得
+        // 予約フォームの場合、利用可能な予約枠を取得（本日以降のみ・公開ページと同様）
         $timeslots = [];
+        $venues = $event->venues()->where('venues.is_active', true)->get();
         if ($event->form_type === 'reservation') {
             $timeslots = $event->timeslots()
                 ->where('is_active', true)
+                ->whereDate('start_at', '>=', Carbon::today())
                 ->orderBy('start_at', 'asc')
                 ->get()
                 ->map(function ($timeslot) use ($event, $reservation) {
@@ -363,12 +365,22 @@ class ReservationController extends Controller
                     $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
                     return $timeslot;
                 });
+            // 会場を予約枠の最終日が直近の順でソート（公開ページと同様）
+            $lastSlotDatesByVenue = $event->timeslots()
+                ->where('is_active', true)
+                ->get()
+                ->groupBy('venue_id')
+                ->map(fn ($slots) => $slots->max('start_at'));
+            $venues = $venues->sortBy(function ($venue) use ($lastSlotDatesByVenue) {
+                $last = $lastSlotDatesByVenue->get($venue->id);
+                return $last ?? Carbon::createFromDate(9999, 12, 31);
+            })->values();
         }
 
         return Inertia::render('Admin/Reservation/Edit', [
             'reservation' => $reservation,
             'event' => $event,
-            'venues' => $event->venues()->where('is_active', true)->get(),
+            'venues' => $venues->map(fn ($v) => ['id' => $v->id, 'name' => $v->name]),
             'timeslots' => $timeslots,
         ]);
     }
