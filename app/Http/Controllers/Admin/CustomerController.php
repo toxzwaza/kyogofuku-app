@@ -645,6 +645,25 @@ class CustomerController extends Controller
     }
 
     /**
+     * 顧客写真を削除
+     */
+    public function destroyCustomerPhoto(Customer $customer, CustomerPhoto $photo)
+    {
+        if ($photo->customer_id !== $customer->id) {
+            abort(404);
+        }
+
+        if ($photo->file_path) {
+            Storage::disk('public')->delete($photo->file_path);
+        }
+
+        $photo->delete();
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '写真を削除しました。');
+    }
+
+    /**
      * 顧客を削除
      */
     public function destroy(Customer $customer)

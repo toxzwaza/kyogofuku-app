@@ -525,12 +525,22 @@
                         <!-- 写真一覧 -->
                         <div v-if="customer.photos && customer.photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             <div v-for="photo in customer.photos" :key="photo.id" class="relative group cursor-pointer" @click="openPhotoPreview(photo)">
-                                <div class="aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-indigo-500 transition-colors">
+                                <div class="aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-indigo-500 transition-colors relative">
                                     <img
                                         :src="getPhotoUrl(photo.file_path)"
                                         :alt="photo.type?.name || '写真'"
                                         class="w-full h-full object-cover"
                                     />
+                                    <button
+                                        type="button"
+                                        class="absolute top-1 right-1 w-7 h-7 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 shadow-md z-10"
+                                        title="写真を削除"
+                                        @click.stop="deleteCustomerPhoto(photo)"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
                                 </div>
                                 <div class="mt-2 text-sm">
                                     <div class="font-medium text-gray-900">{{ photo.type?.name || '-' }}</div>
@@ -2042,6 +2052,14 @@ const openPhotoPreview = (photo) => {
 // 写真URLを取得
 const getPhotoUrl = (filePath) => {
     return `/storage/${filePath}`;
+};
+
+// 顧客写真を削除
+const deleteCustomerPhoto = (photo) => {
+    if (!confirm('この写真を削除しますか？')) return;
+    router.delete(route('admin.customers.photos.destroy', { customer: props.customer.id, photo: photo.id }), {
+        preserveScroll: true,
+    });
 };
 
 // 顧客写真追加

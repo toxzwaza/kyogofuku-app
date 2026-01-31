@@ -182,6 +182,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/customers/{customer}/photo-slots', [AdminCustomerController::class, 'storePhotoSlot'])->name('customers.photo-slots.store');
     Route::put('/customers/{customer}/photo-slots/{photoSlot}', [AdminCustomerController::class, 'updatePhotoSlot'])->name('customers.photo-slots.update');
     Route::post('/customers/{customer}/photos', [AdminCustomerController::class, 'storeCustomerPhoto'])->name('customers.photos.store');
+    Route::delete('/customers/{customer}/photos/{photo}', [AdminCustomerController::class, 'destroyCustomerPhoto'])->name('customers.photos.destroy');
     Route::post('/customers/{customer}/tags', [AdminCustomerController::class, 'attachTag'])->name('customers.attach-tag');
     Route::delete('/customers/{customer}/tags/{customerTag}', [AdminCustomerController::class, 'detachTag'])->name('customers.detach-tag');
     Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])->name('customers.destroy');
