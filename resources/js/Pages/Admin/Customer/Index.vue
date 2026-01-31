@@ -453,6 +453,16 @@
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        メールアドレス
+                                    </label>
+                                    <input
+                                        v-model="customerForm.email"
+                                        type="email"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         郵便番号
                                     </label>
                                     <input
@@ -470,6 +480,120 @@
                                         type="text"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                     />
+                                </div>
+                                <!-- イベント予約由来の項目 -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 flex items-center">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            v-model="customerForm.has_visited_before"
+                                            type="checkbox"
+                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">過去来店あり</span>
+                                    </label>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        紹介者名
+                                    </label>
+                                    <input
+                                        v-model="customerForm.referred_by_name"
+                                        type="text"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        学校名
+                                    </label>
+                                    <input
+                                        v-model="customerForm.school_name"
+                                        type="text"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        担当者名
+                                    </label>
+                                    <input
+                                        v-model="customerForm.staff_name"
+                                        type="text"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        来店動機
+                                    </label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label v-for="opt in visitReasonOptions" :key="opt.value" class="flex items-center gap-1 text-sm">
+                                            <input
+                                                v-model="customerForm.visit_reasons"
+                                                type="checkbox"
+                                                :value="opt.value"
+                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <span>{{ opt.label }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        検討中プラン
+                                    </label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label v-for="plan in availablePlans" :key="plan" class="flex items-center gap-1 text-sm">
+                                            <input
+                                                v-model="customerForm.considering_plans"
+                                                type="checkbox"
+                                                :value="plan"
+                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <span>{{ plan }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        認知経路
+                                    </label>
+                                    <input
+                                        v-model="customerForm.heard_from"
+                                        type="text"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        駐車場利用
+                                    </label>
+                                    <input
+                                        v-model="customerForm.parking_usage"
+                                        type="text"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        駐車台数
+                                    </label>
+                                    <input
+                                        v-model.number="customerForm.parking_car_count"
+                                        type="number"
+                                        min="0"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        お問い合わせ内容
+                                    </label>
+                                    <textarea
+                                        v-model="customerForm.inquiry_message"
+                                        rows="3"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    ></textarea>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -556,6 +680,21 @@ const searchForm = reactive({
     })(),
 });
 
+// 来店動機・検討中プランの選択肢（予約フォームと共通）
+const visitReasonOptions = [
+    { value: '紹介', label: '紹介' },
+    { value: 'DM・カタログ', label: 'DM・カタログ' },
+    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
+    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'その他', label: 'その他(テキスト入力)' },
+];
+const availablePlans = [
+    '振袖レンタルプラン',
+    '振袖購入プラン',
+    'ママ振りフォトプラン',
+    'フォトレンタルプラン',
+];
+
 // 顧客追加フォーム
 const customerForm = useForm({
     name: '',
@@ -568,6 +707,17 @@ const customerForm = useForm({
     postal_code: '',
     address: '',
     remarks: '',
+    email: '',
+    has_visited_before: false,
+    referred_by_name: '',
+    school_name: '',
+    staff_name: '',
+    visit_reasons: [],
+    parking_usage: '',
+    parking_car_count: null,
+    considering_plans: [],
+    heard_from: '',
+    inquiry_message: '',
     event_reservation_id: null,
 });
 
@@ -626,6 +776,17 @@ const applyPrefillFromReservation = () => {
     customerForm.coming_of_age_year = p.coming_of_age_year ?? null;
     customerForm.remarks = p.remarks ?? '';
     customerForm.event_reservation_id = p.id ?? null;
+    customerForm.email = p.email ?? '';
+    customerForm.has_visited_before = p.has_visited_before ?? false;
+    customerForm.referred_by_name = p.referred_by_name ?? '';
+    customerForm.school_name = p.school_name ?? '';
+    customerForm.staff_name = p.staff_name ?? '';
+    customerForm.visit_reasons = Array.isArray(p.visit_reasons) ? [...p.visit_reasons] : [];
+    customerForm.parking_usage = p.parking_usage ?? '';
+    customerForm.parking_car_count = p.parking_car_count ?? null;
+    customerForm.considering_plans = Array.isArray(p.considering_plans) ? [...p.considering_plans] : [];
+    customerForm.heard_from = p.heard_from ?? '';
+    customerForm.inquiry_message = p.inquiry_message ?? '';
 };
 
 // モーダルを閉じてフォームをリセット

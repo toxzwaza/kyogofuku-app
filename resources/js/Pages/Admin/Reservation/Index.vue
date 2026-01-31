@@ -436,6 +436,14 @@
                               >
                                 テキストから予約登録
                               </button>
+                              <button
+                                v-if="timeslot.remaining_capacity > 0"
+                                @click="openCustomerReservationModal(timeslot)"
+                                class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-sm hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
+                                title="顧客情報から予約登録"
+                              >
+                                顧客情報から予約登録
+                              </button>
                               <Link
                                 v-if="timeslot.remaining_capacity > 0"
                                 :href="getReservationUrl(timeslot)"
@@ -1746,6 +1754,125 @@
       </div>
     </div>
 
+    <!-- 顧客情報から予約登録モーダル -->
+    <div
+      v-if="showCustomerReservationModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style="background-color: rgba(0, 0, 0, 0.5)"
+      @click.self="closeCustomerReservationModal"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div
+          class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10"
+        >
+          <h2 class="text-2xl font-bold">顧客情報から予約登録</h2>
+          <button
+            @click="closeCustomerReservationModal"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              顧客名で検索
+            </label>
+            <input
+              v-model="customerSearchName"
+              type="text"
+              placeholder="名前の一部を入力"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              @input="searchCustomers"
+            />
+          </div>
+          <div v-if="isSearchingCustomers" class="py-4 text-sm text-gray-500">
+            検索中...
+          </div>
+          <div
+            v-else-if="customerSearchResults.length > 0"
+            class="border border-gray-200 rounded-lg overflow-hidden mb-4"
+          >
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">名前</th>
+                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">電話番号</th>
+                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">式場</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr
+                  v-for="c in customerSearchResults"
+                  :key="c.id"
+                  :class="[
+                    'cursor-pointer transition-colors',
+                    selectedSearchCustomer?.id === c.id
+                      ? 'bg-green-100 hover:bg-green-100'
+                      : 'hover:bg-gray-50',
+                  ]"
+                  @click="selectedSearchCustomer = c"
+                >
+                  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-900">{{ c.id }}</td>
+                  <td class="whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-900">{{ c.name }}</td>
+                  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-600">{{ c.phone_number || '-' }}</td>
+                  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-600">{{ c.ceremony_area?.name || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p
+            v-else-if="customerSearchName && !isSearchingCustomers"
+            class="py-3 text-sm text-gray-500 mb-4"
+          >
+            該当する顧客がいません。別のキーワードで検索してください。
+          </p>
+          <div v-if="selectedSearchCustomer" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              メールアドレス <span class="text-red-500">*</span>
+            </label>
+            <input
+              v-model="customerReservationEmail"
+              type="email"
+              required
+              placeholder="example@email.com"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button
+              @click="closeCustomerReservationModal"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              キャンセル
+            </button>
+            <button
+              :disabled="!selectedSearchCustomer || !customerReservationEmail?.trim() || isSubmittingFromCustomer"
+              @click="confirmCustomerAndReserve"
+              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-sm hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {{ isSubmittingFromCustomer ? '登録中...' : '確定' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 印刷プレビューモーダル -->
     <div
       v-if="showPrintModal"
@@ -1998,6 +2125,17 @@ const isFilterOpen = ref(false);
 const showTextReservationModal = ref(false);
 const textReservationInput = ref("");
 const selectedTimeslotForTextReservation = ref(null);
+
+// 顧客情報から予約登録モーダルの状態
+const showCustomerReservationModal = ref(false);
+const selectedTimeslotForCustomerReservation = ref(null);
+const customerSearchName = ref("");
+const customerSearchResults = ref([]);
+const selectedSearchCustomer = ref(null);
+const isSearchingCustomers = ref(false);
+const customerReservationEmail = ref("");
+const isSubmittingFromCustomer = ref(false);
+let customerSearchTimeout = null;
 
 // 印刷設定の読み込み
 const loadPrintSettings = () => {
@@ -2871,6 +3009,89 @@ const closeTextReservationModal = () => {
   showTextReservationModal.value = false;
   textReservationInput.value = "";
   selectedTimeslotForTextReservation.value = null;
+};
+
+// 顧客情報から予約登録モーダルを開く
+const openCustomerReservationModal = (timeslot) => {
+  selectedTimeslotForCustomerReservation.value = timeslot;
+  customerSearchName.value = "";
+  customerSearchResults.value = [];
+  selectedSearchCustomer.value = null;
+  customerReservationEmail.value = "";
+  showCustomerReservationModal.value = true;
+};
+
+// 顧客情報から予約登録モーダルを閉じる
+const closeCustomerReservationModal = () => {
+  showCustomerReservationModal.value = false;
+  customerSearchName.value = "";
+  customerSearchResults.value = [];
+  selectedSearchCustomer.value = null;
+  customerReservationEmail.value = "";
+  selectedTimeslotForCustomerReservation.value = null;
+};
+
+// 顧客検索（debounce）
+const searchCustomers = () => {
+  if (customerSearchTimeout) clearTimeout(customerSearchTimeout);
+  const raw = customerSearchName.value.trim();
+  if (!raw) {
+    customerSearchResults.value = [];
+    return;
+  }
+  const nameForSearch = raw.replace(/\s/g, "");
+  customerSearchTimeout = setTimeout(() => {
+    isSearchingCustomers.value = true;
+    axios
+      .get(route("admin.customers.search"), { params: { name: nameForSearch } })
+      .then((res) => {
+        customerSearchResults.value = res.data.customers || [];
+        selectedSearchCustomer.value = null;
+        customerReservationEmail.value = "";
+      })
+      .finally(() => {
+        isSearchingCustomers.value = false;
+      });
+  }, 300);
+};
+
+// 顧客選択時にメールをプリフィル
+watch(selectedSearchCustomer, (customer) => {
+  if (customer?.email) {
+    customerReservationEmail.value = customer.email;
+  } else {
+    customerReservationEmail.value = "";
+  }
+}, { immediate: false });
+
+// 顧客情報から直接予約を登録
+const confirmCustomerAndReserve = () => {
+  const timeslot = selectedTimeslotForCustomerReservation.value;
+  const customer = selectedSearchCustomer.value;
+  const email = customerReservationEmail.value?.trim();
+  if (!timeslot || !customer || !email) return;
+
+  isSubmittingFromCustomer.value = true;
+  router.post(
+    route("admin.events.reservations.store-from-customer", { event: props.event.id }),
+    {
+      timeslot_id: timeslot.id,
+      customer_id: customer.id,
+      email,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeCustomerReservationModal();
+      },
+      onError: () => {
+        isSubmittingFromCustomer.value = false;
+      },
+      onFinish: () => {
+        isSubmittingFromCustomer.value = false;
+      },
+    }
+  );
 };
 
 // テキストから情報を抽出する関数

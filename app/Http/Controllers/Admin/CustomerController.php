@@ -151,6 +151,17 @@ class CustomerController extends Controller
                     'birth_date' => $reservation->birth_date?->format('Y-m-d'),
                     'coming_of_age_year' => $reservation->seijin_year,
                     'remarks' => $reservation->inquiry_message,
+                    'email' => $reservation->email,
+                    'has_visited_before' => $reservation->has_visited_before ?? false,
+                    'referred_by_name' => $reservation->referred_by_name,
+                    'school_name' => $reservation->school_name,
+                    'staff_name' => $reservation->staff_name,
+                    'visit_reasons' => $reservation->visit_reasons ?? [],
+                    'parking_usage' => $reservation->parking_usage,
+                    'parking_car_count' => $reservation->parking_car_count,
+                    'considering_plans' => $reservation->considering_plans ?? [],
+                    'heard_from' => $reservation->heard_from,
+                    'inquiry_message' => $reservation->inquiry_message,
                 ];
             }
         }
@@ -185,7 +196,7 @@ class CustomerController extends Controller
             $customers = Customer::query()
                 ->with('ceremonyArea')
                 ->whereRaw("REPLACE(REPLACE(name, ' ', ''), '\t', '') LIKE ?", ['%' . $nameNormalized . '%'])
-                ->select('id', 'name', 'phone_number', 'ceremony_area_id')
+                ->select('id', 'name', 'phone_number', 'email', 'ceremony_area_id')
                 ->orderBy('name')
                 ->limit(20)
                 ->get()
@@ -194,6 +205,7 @@ class CustomerController extends Controller
                         'id' => $customer->id,
                         'name' => $customer->name,
                         'phone_number' => $customer->phone_number,
+                        'email' => $customer->email,
                         'ceremony_area' => $customer->ceremonyArea ? ['id' => $customer->ceremonyArea->id, 'name' => $customer->ceremonyArea->name] : null,
                     ];
                 });
@@ -217,6 +229,19 @@ class CustomerController extends Controller
             'postal_code' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
+            'email' => 'nullable|email|max:255',
+            'has_visited_before' => 'nullable|boolean',
+            'referred_by_name' => 'nullable|string|max:255',
+            'school_name' => 'nullable|string|max:255',
+            'staff_name' => 'nullable|string|max:255',
+            'visit_reasons' => 'nullable|array',
+            'visit_reasons.*' => 'nullable|string|max:255',
+            'parking_usage' => 'nullable|string|max:255',
+            'parking_car_count' => 'nullable|integer|min:0',
+            'considering_plans' => 'nullable|array',
+            'considering_plans.*' => 'nullable|string|max:255',
+            'heard_from' => 'nullable|string|max:255',
+            'inquiry_message' => 'nullable|string',
             'event_reservation_id' => 'nullable|exists:event_reservations,id',
         ]);
 

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ReservationReplyMail;
+use App\Models\Customer;
 use App\Models\Email;
 use App\Models\EmailThread;
 use App\Models\Event;
 use App\Models\EventReservation;
+use App\Models\EventTimeslot;
 use App\Models\ReservationNote;
 use App\Models\StaffSchedule;
 use App\Models\User;
@@ -251,6 +253,81 @@ class ReservationController extends Controller
                 'reservation_datetime' => $request->reservation_datetime ?? null,
             ],
         ]);
+    }
+
+    /**
+     * 顧客から直接予約を作成（管理画面専用）
+     */
+    public function storeFromCustomer(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'timeslot_id' => 'required|exists:event_timeslots,id',
+            'customer_id' => 'required|exists:customers,id',
+            'email' => 'required|email|max:255',
+        ]);
+
+        $customer = Customer::findOrFail($validated['customer_id']);
+        $timeslot = EventTimeslot::where('event_id', $event->id)
+            ->where('id', $validated['timeslot_id'])
+            ->where('is_active', true)
+            ->first();
+
+        if (!$timeslot) {
+            return redirect()
+                ->route('admin.events.reservations.index', $event->id)
+                ->with('error', '選択された予約枠が見つかりません。');
+        }
+
+        // 残枠チェック
+        $reservationCountQuery = EventReservation::where('event_id', $event->id)
+            ->where('cancel_flg', false)
+            ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
+
+        if ($timeslot->venue_id) {
+            $reservationCountQuery->where('venue_id', $timeslot->venue_id);
+        } else {
+            $reservationCountQuery->whereNull('venue_id');
+        }
+
+        $reservationCount = $reservationCountQuery->count();
+        if ($reservationCount >= $timeslot->capacity) {
+            return redirect()
+                ->route('admin.events.reservations.index', $event->id)
+                ->with('error', 'この予約枠は満席です。');
+        }
+
+        // 顧客情報から予約を作成
+        EventReservation::create([
+            'event_id' => $event->id,
+            'document_id' => null,
+            'name' => $customer->name,
+            'email' => $validated['email'],
+            'phone' => $customer->phone_number ?? '',
+            'request_method' => null,
+            'postal_code' => $customer->postal_code ?? null,
+            'reservation_datetime' => $timeslot->start_at->format('Y-m-d H:i:s'),
+            'venue_id' => $timeslot->venue_id,
+            'has_visited_before' => $customer->has_visited_before ?? false,
+            'address' => $customer->address ?? null,
+            'birth_date' => $customer->birth_date,
+            'seijin_year' => $customer->coming_of_age_year ?? null,
+            'referred_by_name' => $customer->referred_by_name ?? null,
+            'furigana' => $customer->kana ?? null,
+            'school_name' => $customer->school_name ?? null,
+            'staff_name' => $customer->staff_name ?? null,
+            'visit_reasons' => $customer->visit_reasons ?? null,
+            'parking_usage' => $customer->parking_usage ?? null,
+            'parking_car_count' => $customer->parking_car_count ?? null,
+            'considering_plans' => $customer->considering_plans ?? null,
+            'heard_from' => $customer->heard_from ?? null,
+            'inquiry_message' => $customer->inquiry_message ?? null,
+            'privacy_agreed' => false,
+            'customer_id' => $customer->id,
+        ]);
+
+        return redirect()
+            ->route('admin.events.reservations.index', $event->id)
+            ->with('success', '予約を登録しました。');
     }
 
     /**

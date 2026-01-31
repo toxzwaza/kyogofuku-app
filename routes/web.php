@@ -121,6 +121,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     
     // 予約管理
     Route::get('/events/{event}/reservations', [AdminReservationController::class, 'index'])->name('events.reservations.index');
+    Route::post('/events/{event}/reservations/store-from-customer', [AdminReservationController::class, 'storeFromCustomer'])->name('events.reservations.store-from-customer');
     Route::get('/reservations/{reservation}', [AdminReservationController::class, 'show'])->name('reservations.show');
     Route::get('/reservations/{reservation}/edit', [AdminReservationController::class, 'edit'])->name('reservations.edit');
     Route::put('/reservations/{reservation}', [AdminReservationController::class, 'update'])->name('reservations.update');
