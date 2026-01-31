@@ -159,6 +159,9 @@ class LogActivity
         } elseif (isset($parameters['venue'])) {
             $resourceType = 'Venue';
             $resourceId = is_object($parameters['venue']) ? $parameters['venue']->id : $parameters['venue'];
+        } elseif (isset($parameters['customer'])) {
+            $resourceType = 'Customer';
+            $resourceId = is_object($parameters['customer']) ? $parameters['customer']->id : $parameters['customer'];
         } elseif (isset($parameters['image'])) {
             $resourceType = 'EventImage';
             $resourceId = is_object($parameters['image']) ? $parameters['image']->id : $parameters['image'];
@@ -166,7 +169,9 @@ class LogActivity
             $resourceType = 'EventTimeslot';
             $resourceId = is_object($parameters['timeslot']) ? $parameters['timeslot']->id : $parameters['timeslot'];
         } elseif (isset($parameters['note'])) {
-            $resourceType = 'ReservationNote';
+            $resourceType = str_starts_with($routeName ?? '', 'admin.customers.notes.')
+                ? 'CustomerNote'
+                : 'ReservationNote';
             $resourceId = is_object($parameters['note']) ? $parameters['note']->id : $parameters['note'];
         }
 
@@ -214,6 +219,9 @@ class LogActivity
                 case 'Venue':
                     $name = $model->name ?? null;
                     break;
+                case 'Customer':
+                    $name = $model->name ?? null;
+                    break;
                 case 'EventImage':
                     $name = $model->file_path ?? null;
                     break;
@@ -221,6 +229,9 @@ class LogActivity
                     $name = $model->start_at ? $model->start_at->format('Y-m-d H:i') : null;
                     break;
                 case 'ReservationNote':
+                    $name = mb_substr($model->content ?? '', 0, 50);
+                    break;
+                case 'CustomerNote':
                     $name = mb_substr($model->content ?? '', 0, 50);
                     break;
             }
@@ -256,7 +267,9 @@ class LogActivity
                 'Shop' => '店舗',
                 'User' => 'スタッフ',
                 'Venue' => '会場',
+                'Customer' => '顧客',
                 'ReservationNote' => '予約メモ',
+                'CustomerNote' => '顧客メモ',
             ];
             $resourceLabel = $labels[$resourceInfo['type']] ?? $resourceInfo['type'];
         }
@@ -319,6 +332,8 @@ class LogActivity
             'admin.reservations.destroy' => '予約をキャンセル',
             'admin.reservations.notes.store' => '予約メモを追加',
             'admin.reservations.notes.destroy' => '予約メモを削除',
+            'admin.customers.notes.store' => '顧客メモを追加',
+            'admin.customers.notes.destroy' => '顧客メモを削除',
             'admin.shops.index' => '店舗一覧を閲覧',
             'admin.shops.create' => '店舗新規作成画面を表示',
             'admin.shops.store' => '店舗を作成',

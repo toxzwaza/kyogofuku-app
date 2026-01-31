@@ -173,6 +173,8 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/search', [AdminCustomerController::class, 'search'])->name('customers.search');
     Route::post('/customers', [AdminCustomerController::class, 'store'])->name('customers.store');
+    Route::post('/customers/{customer}/notes', [AdminCustomerController::class, 'storeNote'])->name('customers.notes.store');
+    Route::delete('/customers/notes/{note}', [AdminCustomerController::class, 'destroyNote'])->name('customers.notes.destroy');
     Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
     Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
     Route::post('/customers/{customer}/contracts', [AdminCustomerController::class, 'storeContract'])->name('customers.contracts.store');

@@ -14,6 +14,15 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div
+                    v-if="$page.props.success"
+                    class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200"
+                >
+                    {{ $page.props.success }}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 左側: 既存コンテンツ -->
+                    <div class="lg:col-span-2 space-y-6">
                 <!-- 顧客タグ -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
@@ -531,6 +540,74 @@
                         </div>
                         <div v-else class="text-center py-8 text-gray-500">
                             写真がありません
+                        </div>
+                    </div>
+                </div>
+                    </div>
+
+                    <!-- 右側: メモ -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                            <div class="p-6">
+                                <h3 class="text-lg font-semibold mb-4">メモ</h3>
+
+                                <!-- メモ登録フォーム -->
+                                <form @submit.prevent="submitNote" class="mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">新しいメモ</label>
+                                        <textarea
+                                            v-model="noteForm.content"
+                                            rows="4"
+                                            required
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            placeholder="メモを入力してください"
+                                        ></textarea>
+                                        <div v-if="noteForm.errors.content" class="mt-1 text-sm text-red-600">
+                                            {{ noteForm.errors.content }}
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        :disabled="noteForm.processing"
+                                        class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                    >
+                                        {{ noteForm.processing ? "登録中..." : "メモを追加" }}
+                                    </button>
+                                </form>
+
+                                <!-- メモ一覧 -->
+                                <div class="space-y-4">
+                                    <div
+                                        v-for="note in notes"
+                                        :key="note.id"
+                                        class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
+                                    >
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-900">
+                                                    {{ note.user ? note.user.name : "不明" }}
+                                                </p>
+                                                <p class="text-xs text-gray-500">
+                                                    {{ formatDateTime(note.created_at) }}
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                @click="deleteNote(note.id)"
+                                                class="text-red-600 hover:text-red-900 text-sm"
+                                            >
+                                                削除
+                                            </button>
+                                        </div>
+                                        <p class="text-sm text-gray-700 whitespace-pre-wrap">
+                                            {{ note.content }}
+                                        </p>
+                                    </div>
+                                    <p v-if="notes.length === 0" class="text-sm text-gray-500 text-center py-4">
+                                        メモがありません
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1516,6 +1593,10 @@ import axios from 'axios';
 
 const props = defineProps({
     customer: Object,
+    notes: {
+        type: Array,
+        default: () => [],
+    },
     ceremonyAreas: Array,
     shops: Array,
     plans: Array,
@@ -2145,6 +2226,25 @@ const formatTime = (timeString) => {
         return timeString.substring(0, 5);
     }
     return timeString;
+};
+
+// メモフォーム
+const noteForm = useForm({
+    content: '',
+});
+
+const submitNote = () => {
+    noteForm.post(route('admin.customers.notes.store', props.customer.id), {
+        onSuccess: () => {
+            noteForm.reset();
+        },
+    });
+};
+
+const deleteNote = (noteId) => {
+    if (confirm('このメモを削除しますか？')) {
+        router.delete(route('admin.customers.notes.destroy', noteId));
+    }
 };
 
 // 削除フォーム

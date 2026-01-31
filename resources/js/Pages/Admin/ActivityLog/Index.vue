@@ -361,7 +361,9 @@ const getResourceTypeLabel = (resourceType) => {
         'Shop': '店舗',
         'User': 'スタッフ',
         'Venue': '会場',
+        'Customer': '顧客',
         'ReservationNote': '予約メモ',
+        'CustomerNote': '顧客メモ',
     };
     return labels[resourceType] || resourceType || '-';
 };

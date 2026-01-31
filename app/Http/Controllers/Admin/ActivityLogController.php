@@ -66,7 +66,9 @@ class ActivityLogController extends Controller
                 ['value' => 'Shop', 'label' => '店舗'],
                 ['value' => 'User', 'label' => 'スタッフ'],
                 ['value' => 'Venue', 'label' => '会場'],
+                ['value' => 'Customer', 'label' => '顧客'],
                 ['value' => 'ReservationNote', 'label' => '予約メモ'],
+                ['value' => 'CustomerNote', 'label' => '顧客メモ'],
             ],
         ];
 

@@ -77,7 +77,9 @@ class ActivityLog extends Model
             'Shop' => '店舗',
             'User' => 'スタッフ',
             'Venue' => '会場',
+            'Customer' => '顧客',
             'ReservationNote' => '予約メモ',
+            'CustomerNote' => '顧客メモ',
             default => $this->resource_type ?? '-',
         };
     }

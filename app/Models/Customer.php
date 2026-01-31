@@ -47,4 +47,12 @@ class Customer extends Model
     {
         return $this->hasMany(EventReservation::class);
     }
+
+    /**
+     * 顧客メモとのリレーション
+     */
+    public function notes()
+    {
+        return $this->hasMany(CustomerNote::class);
+    }
 }

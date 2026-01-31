@@ -62,6 +62,14 @@ class User extends Authenticatable
     }
 
     /**
+     * 顧客メモとのリレーション
+     */
+    public function customerNotes()
+    {
+        return $this->hasMany(CustomerNote::class);
+    }
+
+    /**
      * アクティビティログとのリレーション
      */
     public function activityLogs()

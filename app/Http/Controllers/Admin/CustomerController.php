@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\CustomerNote;
 use App\Models\EventReservation;
 use App\Models\Contract;
 use App\Models\PhotoSlot;
@@ -301,6 +302,7 @@ class CustomerController extends Controller
 
         return Inertia::render('Admin/Customer/Show', [
             'customer' => $customer,
+            'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'ceremonyAreas' => $ceremonyAreas,
             'shops' => $shops,
             'plans' => $plans,
@@ -316,6 +318,34 @@ class CustomerController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * 顧客メモを追加
+     */
+    public function storeNote(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string|max:10000',
+        ]);
+
+        CustomerNote::create([
+            'user_id' => auth()->id(),
+            'customer_id' => $customer->id,
+            'content' => $validated['content'],
+        ]);
+
+        return redirect()->back()->with('success', 'メモを追加しました。');
+    }
+
+    /**
+     * 顧客メモを削除
+     */
+    public function destroyNote(CustomerNote $note)
+    {
+        $note->delete();
+
+        return redirect()->back()->with('success', 'メモを削除しました。');
     }
 
     /**
