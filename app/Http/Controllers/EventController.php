@@ -55,8 +55,11 @@ class EventController extends Controller
         $availableTimeslots = collect();
         
         if ($canReserve && !$isEnded) {
+            // 全枠を表示（満枠も含む）。本日より前の枠は受付終了のため表示しない
             $availableTimeslots = $event->timeslots()
                 ->where('is_active', true)
+                ->whereDate('start_at', '>=', Carbon::today())
+                ->orderBy('start_at', 'asc')
                 ->get()
                 ->map(function ($timeslot) use ($event) {
                     $reservationCount = $event->reservations()
@@ -65,9 +68,6 @@ class EventController extends Controller
                         ->count();
                     $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
                     return $timeslot;
-                })
-                ->filter(function ($timeslot) {
-                    return $timeslot->remaining_capacity > 0;
                 })
                 ->values();
         }

@@ -129,7 +129,7 @@
                 </p>
             </div>
             <div v-else-if="filteredTimeslots && filteredTimeslots.length === 0" class="mb-4 p-4 bg-gray-50 border-l-4 border-gray-400 rounded-lg">
-                <p class="text-gray-600">選択された会場には予約可能な日時がありません。</p>
+                <p class="text-gray-600">選択された会場には開催日時がありません。</p>
             </div>
             <div v-else-if="filteredTimeslots && filteredTimeslots.length > 0">
                 <div v-if="!internalSelectedTimeslot" class="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
@@ -142,7 +142,7 @@
                 </div>
                 <div class="space-y-8">
                     <div
-                        v-for="(dateGroup, date) in groupedTimeslots"
+                        v-for="date in sortedGroupedTimeslotDates"
                         :key="date"
                         class="border-b border-gray-200 pb-8 last:border-b-0 last:pb-0"
                     >
@@ -155,22 +155,50 @@
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                 <button
                                     type="button"
-                                    v-for="timeslot in dateGroup"
+                                    v-for="timeslot in groupedTimeslots[date]"
                                     :key="timeslot.id"
-                                    @click="selectTimeslot(timeslot)"
+                                    :disabled="getRemainingCapacity(timeslot) === 0"
+                                    @click="getRemainingCapacity(timeslot) > 0 && selectTimeslot(timeslot)"
                                     :class="[
-                                        'p-4 rounded-xl border-2 transition-all duration-200 text-left transform hover:scale-105 hover:shadow-md',
-                                        internalSelectedTimeslot?.id === timeslot.id
-                                            ? 'border-pink-500 bg-gradient-to-br from-pink-50 to-rose-50 shadow-md ring-2 ring-pink-200'
-                                            : 'border-gray-200 hover:border-pink-300 bg-white hover:bg-pink-50'
+                                        'p-4 rounded-xl border-2 transition-all duration-200 text-left',
+                                        getRemainingCapacity(timeslot) === 0
+                                            ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-75'
+                                            : [
+                                                'transform hover:scale-105 hover:shadow-md',
+                                                internalSelectedTimeslot?.id === timeslot.id
+                                                    ? 'border-pink-500 bg-gradient-to-br from-pink-50 to-rose-50 shadow-md ring-2 ring-pink-200'
+                                                    : 'border-gray-200 hover:border-pink-300 bg-white hover:bg-pink-50'
+                                            ]
                                     ]"
                                 >
-                                <p class="font-bold text-base mb-1 text-gray-800">{{ formatTime(timeslot.start_at) }}</p>
-                                <p class="text-xs text-gray-600 flex items-center">
+                                <!-- バッジ（受付終了 / 残りわずか / ねらい目） -->
+                                <div v-if="getRemainingCapacity(timeslot) === 0 || getTimeslotBadge(timeslot)" class="mb-2 flex flex-wrap gap-1">
+                                    <span
+                                        v-if="getRemainingCapacity(timeslot) === 0"
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm bg-gradient-to-r from-gray-400 to-gray-500 text-white ring-1 ring-gray-400/50"
+                                    >
+                                        <span class="mr-1">🔒</span>受付終了
+                                    </span>
+                                    <span
+                                        v-else-if="getTimeslotBadge(timeslot) === 'nokori_wazuka'"
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm bg-gradient-to-r from-rose-400 to-pink-500 text-white ring-1 ring-rose-300/50"
+                                    >
+                                        <span class="mr-1">✨</span>残りわずか
+                                    </span>
+                                    <span
+                                        v-else-if="getTimeslotBadge(timeslot) === 'nerai_me'"
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm bg-gradient-to-r from-amber-300 to-yellow-400 text-amber-900 ring-1 ring-amber-400/50"
+                                    >
+                                        <span class="mr-1">★</span>ねらい目
+                                    </span>
+                                </div>
+                                <p class="font-bold text-base mb-1" :class="getRemainingCapacity(timeslot) === 0 ? 'text-gray-500' : 'text-gray-800'">{{ formatTime(timeslot.start_at) }}</p>
+                                <p class="text-xs flex items-center" :class="getRemainingCapacity(timeslot) === 0 ? 'text-gray-400' : 'text-gray-600'">
                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                     </svg>
-                                    残り{{ getRemainingCapacity(timeslot) }}枠
+                                    <template v-if="getRemainingCapacity(timeslot) === 0">満枠</template>
+                                    <template v-else>残り{{ getRemainingCapacity(timeslot) }}枠</template>
                                 </p>
                             </button>
                         </div>
@@ -649,11 +677,14 @@ const filteredTimeslots = computed(() => {
     });
 });
 
-// 予約枠を日付ごとにグループ化
+// 予約枠を日付ごとにグループ化（日付昇順）
 const groupedTimeslots = computed(() => {
     if (!filteredTimeslots.value || filteredTimeslots.value.length === 0) return {};
+    const sorted = [...filteredTimeslots.value].sort(
+        (a, b) => new Date(a.start_at) - new Date(b.start_at)
+    );
     const groups = {};
-    filteredTimeslots.value.forEach(timeslot => {
+    sorted.forEach(timeslot => {
         const date = new Date(timeslot.start_at);
         const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         if (!groups[dateKey]) {
@@ -663,11 +694,14 @@ const groupedTimeslots = computed(() => {
     });
     // 各日付の枠を時間順にソート
     Object.keys(groups).forEach(dateKey => {
-        groups[dateKey].sort((a, b) => {
-            return new Date(a.start_at) - new Date(b.start_at);
-        });
+        groups[dateKey].sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
     });
     return groups;
+});
+
+// 日付キーを昇順で並べた配列（表示順のため）
+const sortedGroupedTimeslotDates = computed(() => {
+    return Object.keys(groupedTimeslots.value).sort();
 });
 
 const selectTimeslot = async (timeslot) => {
@@ -703,7 +737,30 @@ const formatTime = (datetime) => {
 };
 
 const getRemainingCapacity = (timeslot) => {
-    return timeslot.remaining_capacity || 0;
+    return timeslot.remaining_capacity ?? 0;
+};
+
+/** 残りわずか: 残り1〜2枠 */
+const isNokoriWazuka = (timeslot) => {
+    const remaining = getRemainingCapacity(timeslot);
+    return remaining >= 1 && remaining <= 2;
+};
+
+/** ねらい目: 残り3枠以上 かつ 予約率40%以上70%未満 */
+const isNeraiMe = (timeslot) => {
+    const remaining = getRemainingCapacity(timeslot);
+    const capacity = timeslot.capacity ?? 0;
+    if (remaining < 3 || capacity <= 0) return false;
+    const reserved = capacity - remaining;
+    const rate = reserved / capacity;
+    return rate >= 0.4 && rate < 0.7;
+};
+
+/** 表示するバッジ種別（残りわずか優先） */
+const getTimeslotBadge = (timeslot) => {
+    if (isNokoriWazuka(timeslot)) return 'nokori_wazuka';
+    if (isNeraiMe(timeslot)) return 'nerai_me';
+    return null;
 };
 
 // URLパラメータからフォームの初期値を取得
