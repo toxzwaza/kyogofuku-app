@@ -1436,6 +1436,87 @@
             </div>
         </transition>
 
+        <!-- 手書きメモ用モーダル -->
+        <transition name="modal">
+            <div
+                v-if="showPhotoMemoModal"
+                class="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="closePhotoMemoModal"
+            >
+                <div class="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-gray-900">手書きメモを追加</h3>
+                        <button
+                            type="button"
+                            @click="closePhotoMemoModal"
+                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex-1 overflow-auto p-6 flex flex-col items-center">
+                        <!-- ペン設定 -->
+                        <div class="flex flex-wrap items-center gap-4 mb-4 w-full max-w-2xl">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-gray-700">色</span>
+                                <div class="flex gap-1">
+                                    <button
+                                        v-for="c in photoMemoPenColors"
+                                        :key="c.value"
+                                        type="button"
+                                        :title="c.name"
+                                        class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110"
+                                        :class="photoMemoPenColor === c.value ? 'border-gray-900 scale-110 ring-2 ring-offset-1 ring-gray-400' : 'border-gray-300'"
+                                        :style="{ backgroundColor: c.value }"
+                                        @click="photoMemoPenColor = c.value; applyPhotoMemoBrushStyle()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-gray-700">太さ</span>
+                                <select
+                                    v-model.number="photoMemoPenWidth"
+                                    class="rounded-md border-gray-300 text-sm"
+                                    @change="applyPhotoMemoBrushStyle()"
+                                >
+                                    <option :value="2">細い</option>
+                                    <option :value="4">普通</option>
+                                    <option :value="8">太い</option>
+                                    <option :value="12">とても太い</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- キャンバスラッパー: 明示的なサイズでイベントが確実に届くようにする -->
+                        <div
+                            ref="photoMemoCanvasWrap"
+                            class="w-full bg-gray-100 rounded-lg overflow-hidden"
+                            style="width: 100%; height: 60vh; min-height: 320px; max-height: 70vh;"
+                        >
+                            <canvas ref="photoMemoCanvas" />
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+                        <button
+                            type="button"
+                            @click="skipPhotoMemo"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        >
+                            スキップ
+                        </button>
+                        <button
+                            type="button"
+                            @click="confirmPhotoMemo"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                        >
+                            確定
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
         <!-- 削除確認モーダル -->
         <transition name="modal">
             <div
@@ -1585,11 +1666,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, nextTick, watch, onBeforeUnmount } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
+import { Canvas, FabricImage, PencilBrush } from 'fabric';
 
 const props = defineProps({
     customer: Object,
@@ -1633,8 +1715,35 @@ const showEditContractModal = ref(false);
 const showAddPhotoSlotModal = ref(false);
 const showEditPhotoSlotModal = ref(false);
 const showPhotoPreviewModal = ref(false);
+const showPhotoMemoModal = ref(false);
 const showDeleteConfirmModal = ref(false);
 const showTagModal = ref(false);
+
+// 手書きメモ用 Fabric
+const photoMemoCanvasWrap = ref(null);
+const photoMemoCanvas = ref(null);
+const fabricCanvasRef = ref(null);
+
+// ペン設定（色・太さ）
+const photoMemoPenColors = [
+    { name: '黒', value: '#000000' },
+    { name: '赤', value: '#dc2626' },
+    { name: '青', value: '#2563eb' },
+    { name: '緑', value: '#16a34a' },
+    { name: '黄', value: '#ca8a04' },
+    { name: '白', value: '#ffffff' },
+];
+const photoMemoPenColor = ref('#000000');
+const photoMemoPenWidth = ref(4);
+
+// ペン設定を Fabric のブラシに反映
+const applyPhotoMemoBrushStyle = () => {
+    const canvas = fabricCanvasRef.value;
+    if (canvas?.freeDrawingBrush) {
+        canvas.freeDrawingBrush.color = photoMemoPenColor.value;
+        canvas.freeDrawingBrush.width = photoMemoPenWidth.value;
+    }
+};
 
 // 選択中の写真（プレビュー用）
 const selectedPhoto = ref(null);
@@ -1912,10 +2021,11 @@ const onPhotoFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
         photoForm.photo = file;
-        // プレビュー用URLを生成
+        // プレビュー用URLを生成後に手書きメモ用モーダルを開く
         const reader = new FileReader();
         reader.onload = (e) => {
             photoPreview.value = e.target.result;
+            showPhotoMemoModal.value = true;
         };
         reader.readAsDataURL(file);
     } else {
@@ -1953,6 +2063,112 @@ const storeCustomerPhoto = () => {
         },
     });
 };
+
+// 手書きメモ用 Fabric Canvas の破棄
+const disposePhotoMemoCanvas = () => {
+    if (fabricCanvasRef.value) {
+        fabricCanvasRef.value.dispose();
+        fabricCanvasRef.value = null;
+    }
+};
+
+// 手書きメモ用モーダルを閉じる
+const closePhotoMemoModal = () => {
+    disposePhotoMemoCanvas();
+    showPhotoMemoModal.value = false;
+};
+
+// 手書きメモ用 Fabric Canvas の初期化
+const initPhotoMemoCanvas = async () => {
+    const wrap = photoMemoCanvasWrap.value;
+    const canvasEl = photoMemoCanvas.value;
+    const dataUrl = photoPreview.value;
+    if (!wrap || !canvasEl || !dataUrl) return;
+
+    disposePhotoMemoCanvas();
+
+    // ラッパーの実サイズを取得（明示的 style で 60vh 等が効いた後の値）
+    const w = Math.max(wrap.clientWidth || 600, 100);
+    const h = Math.max(wrap.clientHeight || 400, 100);
+
+    const canvas = new Canvas(canvasEl, {
+        width: w,
+        height: h,
+        enableRetinaScaling: false,
+    });
+    fabricCanvasRef.value = canvas;
+
+    try {
+        const img = await FabricImage.fromURL(dataUrl);
+        img.set({ selectable: false, evented: false });
+        const scale = Math.min(w / (img.width || 1), h / (img.height || 1));
+        img.scale(scale);
+        img.set({ left: w / 2, top: h / 2, originX: 'center', originY: 'center' });
+        canvas.add(img);
+        canvas.sendObjectToBack(img);
+        canvas.isDrawingMode = true;
+        // Fabric 6 では freeDrawingBrush は自前で設定する必要がある
+        const brush = new PencilBrush(canvas);
+        canvas.freeDrawingBrush = brush;
+        applyPhotoMemoBrushStyle();
+        canvas.requestRenderAll();
+    } catch (err) {
+        console.error('画像の読み込みに失敗しました:', err);
+        disposePhotoMemoCanvas();
+    }
+};
+
+// 手書きメモを確定して写真を更新
+const confirmPhotoMemo = () => {
+    const canvas = fabricCanvasRef.value;
+    if (!canvas) {
+        closePhotoMemoModal();
+        return;
+    }
+    // 描画モードを解除し、手書きパスをすべてキャンバスオブジェクトとして確定させる
+    canvas.isDrawingMode = false;
+    canvas.requestRenderAll();
+    // 1フレーム待ってからエクスポート（Fabric の内部レンダー完了を待つ）
+    requestAnimationFrame(() => {
+        const dataUrl = canvas.toDataURL({ format: 'image/png' });
+        try {
+            fetch(dataUrl)
+                .then((res) => res.blob())
+                .then((blob) => {
+                    const file = new File([blob], 'photo-with-memo.png', { type: 'image/png' });
+                    photoForm.photo = file;
+                    photoPreview.value = dataUrl;
+                })
+                .catch((err) => console.error('画像の出力に失敗しました:', err))
+                .finally(() => closePhotoMemoModal());
+        } catch (err) {
+            console.error('画像の出力に失敗しました:', err);
+            closePhotoMemoModal();
+        }
+    });
+};
+
+// 手書きメモをスキップ
+const skipPhotoMemo = () => {
+    closePhotoMemoModal();
+};
+
+// 手書きメモモーダル表示時に Fabric を初期化（レイアウト完了後に実行）
+watch(showPhotoMemoModal, (visible) => {
+    if (visible) {
+        nextTick(() => {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => initPhotoMemoCanvas());
+            });
+        });
+    } else {
+        disposePhotoMemoCanvas();
+    }
+});
+
+onBeforeUnmount(() => {
+    disposePhotoMemoCanvas();
+});
 
 // 顧客編集モーダルを開く
 const openEditCustomerModal = () => {
