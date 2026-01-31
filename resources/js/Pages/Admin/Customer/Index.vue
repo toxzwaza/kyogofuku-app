@@ -65,6 +65,22 @@
                                         placeholder="電話番号で検索"
                                     />
                                 </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">登録日（開始）</label>
+                                    <input
+                                        v-model="searchForm.created_at_from"
+                                        type="date"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">登録日（終了）</label>
+                                    <input
+                                        v-model="searchForm.created_at_to"
+                                        type="date"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    />
+                                </div>
                             </div>
 
                             <!-- 成約情報での検索 -->
@@ -123,6 +139,17 @@
                                         </select>
                                     </div>
                                     <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">成約ステータス</label>
+                                        <select
+                                            v-model="searchForm.contract_status"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        >
+                                            <option :value="null">全て</option>
+                                            <option value="確定">確定</option>
+                                            <option value="保留">保留</option>
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label class="block text-xs font-medium text-gray-700 mb-1">安心保証</label>
                                         <select
                                             v-model="searchForm.warranty_flag"
@@ -161,6 +188,36 @@
                                             type="date"
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                         />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 前撮り情報での検索 -->
+                            <div class="border-t pt-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-3">前撮り情報での検索</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">担当店舗</label>
+                                        <select
+                                            v-model="searchForm.photo_slot_shop_id"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        >
+                                            <option :value="null">全て</option>
+                                            <option v-for="shop in shops" :key="shop.id" :value="shop.id">
+                                                {{ shop.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">前撮り詳細未決定</label>
+                                        <select
+                                            v-model="searchForm.photo_slot_details_undecided"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        >
+                                            <option :value="null">全て</option>
+                                            <option :value="true">あり（詳細未決定あり）</option>
+                                            <option :value="false">なし（詳細未決定なし）</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -477,15 +534,26 @@ const searchForm = reactive({
     kana: props.filters?.kana || '',
     ceremony_area_id: props.filters?.ceremony_area_id || null,
     phone_number: props.filters?.phone_number || '',
+    created_at_from: props.filters?.created_at_from || '',
+    created_at_to: props.filters?.created_at_to || '',
     contract_date_from: props.filters?.contract_date_from || '',
     contract_date_to: props.filters?.contract_date_to || '',
     shop_id: props.filters?.shop_id || null,
     plan_id: props.filters?.plan_id || null,
     kimono_type: props.filters?.kimono_type || null,
+    contract_status: props.filters?.contract_status || null,
+    photo_slot_shop_id: props.filters?.photo_slot_shop_id || null,
     warranty_flag: props.filters?.warranty_flag !== undefined ? props.filters.warranty_flag : null,
     user_id: props.filters?.user_id || null,
     preparation_venue: props.filters?.preparation_venue || '',
     preparation_date: props.filters?.preparation_date || '',
+    photo_slot_details_undecided: (() => {
+        const v = props.filters?.photo_slot_details_undecided;
+        if (v === undefined || v === null || v === '') return null;
+        if (v === true || v === 'true' || v === 1 || v === '1') return true;
+        if (v === false || v === 'false' || v === 0 || v === '0') return false;
+        return null;
+    })(),
 });
 
 // 顧客追加フォーム
@@ -525,15 +593,20 @@ const resetSearch = () => {
     searchForm.kana = '';
     searchForm.ceremony_area_id = null;
     searchForm.phone_number = '';
+    searchForm.created_at_from = '';
+    searchForm.created_at_to = '';
     searchForm.contract_date_from = '';
     searchForm.contract_date_to = '';
     searchForm.shop_id = null;
     searchForm.plan_id = null;
     searchForm.kimono_type = null;
+    searchForm.contract_status = null;
+    searchForm.photo_slot_shop_id = null;
     searchForm.warranty_flag = null;
     searchForm.user_id = null;
     searchForm.preparation_venue = '';
     searchForm.preparation_date = '';
+    searchForm.photo_slot_details_undecided = null;
     router.get(route('admin.customers.index'), {}, {
         preserveState: false,
         preserveScroll: false,

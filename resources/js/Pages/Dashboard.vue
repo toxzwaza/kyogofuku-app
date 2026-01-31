@@ -2066,6 +2066,8 @@ import axios from "axios";
 
 const props = defineProps({
     stats: Object,
+    pendingContractsCount: Number,
+    undecidedPhotoSlotsCount: Number,
     formTypeStats: Object,
     occupancyRate: Number,
     trend7Days: Array,
@@ -2088,16 +2090,55 @@ const props = defineProps({
   currentUser: Object,
 });
 
-const statCards = computed(() => [
-    {
-        key: "customers_today",
-        title: "本日登録された顧客数",
-        value: props.stats.customers_today || 0,
-        icon: "users",
-        color: "blue",
-        link: route("admin.customers.index"),
-    },
-]);
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+// ログインユーザーのデフォルト店舗（main=1 を優先、なければ先頭）
+const defaultShopId = computed(() => {
+    const shops = props.userShops || [];
+    if (shops.length === 0) return null;
+    const main = shops.find((s) => s.main);
+    return (main || shops[0])?.id ?? null;
+});
+
+const statCards = computed(() => {
+    const shopId = defaultShopId.value;
+    return [
+        {
+            key: "pending_contracts",
+            title: "成約ステータス（保留）",
+            value: props.pendingContractsCount ?? 0,
+            icon: "clock",
+            color: "yellow",
+            link: route("admin.customers.index", {
+                ...(shopId ? { shop_id: shopId } : {}),
+                contract_status: "保留",
+            }),
+        },
+        {
+            key: "undecided_photo_slots",
+            title: "前撮り詳細未決定",
+            value: props.undecidedPhotoSlotsCount ?? 0,
+            icon: "clipboard",
+            color: "orange",
+            link: route("admin.customers.index", {
+                ...(shopId ? { photo_slot_shop_id: shopId } : {}),
+                photo_slot_details_undecided: "1",
+            }),
+        },
+        {
+            key: "customers_today",
+            title: "本日登録された顧客数",
+            value: props.stats?.customers_today || 0,
+            icon: "users",
+            color: "blue",
+            link: route("admin.customers.index", {
+                ...(shopId ? { shop_id: shopId } : {}),
+                created_at_from: todayStr(),
+                created_at_to: todayStr(),
+            }),
+        },
+    ];
+});
 
 const chartType = ref("bar");
 const utmActiveTab = ref("source");

@@ -10,6 +10,8 @@ use App\Models\ReservationNote;
 use App\Models\Shop;
 use App\Models\User;
 use App\Models\Customer;
+use App\Models\Contract;
+use App\Models\PhotoSlot;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -378,8 +380,21 @@ class DashboardController extends Controller
             ->get() : collect();
         $users = User::orderBy('name')->get(['id', 'name']);
 
+        // ログインユーザー所属店舗の成約「保留」数・前撮り「詳細未決定」数
+        $userShopIds = $userShops->pluck('id')->toArray();
+        $pendingContractsCount = !empty($userShopIds)
+            ? Contract::where('status', '保留')->whereIn('shop_id', $userShopIds)->count()
+            : 0;
+        $undecidedPhotoSlotsCount = !empty($userShopIds)
+            ? PhotoSlot::where('details_undecided', true)
+                ->whereHas('shops', fn($q) => $q->whereIn('shops.id', $userShopIds))
+                ->count()
+            : 0;
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
+            'pendingContractsCount' => $pendingContractsCount,
+            'undecidedPhotoSlotsCount' => $undecidedPhotoSlotsCount,
             'formTypeStats' => $formTypeStats,
             'occupancyRate' => $occupancyRate,
             'trend7Days' => $trend7Days,

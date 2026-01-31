@@ -35,6 +35,19 @@ class CustomerController extends Controller
             $query->where('name', 'LIKE', '%' . $request->name . '%');
         }
 
+        if ($request->filled('created_at_from')) {
+            $query->whereDate('created_at', '>=', $request->created_at_from);
+        }
+
+        if ($request->filled('created_at_to')) {
+            $query->whereDate('created_at', '<=', $request->created_at_to);
+        }
+
+        // 登録日＋成約情報の店舗で絞り込み（本日登録など）
+        if (($request->filled('created_at_from') || $request->filled('created_at_to')) && $request->filled('shop_id')) {
+            $query->whereHas('contracts', fn($q) => $q->where('shop_id', $request->shop_id));
+        }
+
         if ($request->filled('kana')) {
             $query->where('kana', 'LIKE', '%' . $request->kana . '%');
         }
@@ -47,22 +60,22 @@ class CustomerController extends Controller
             $query->where('phone_number', 'LIKE', '%' . $request->phone_number . '%');
         }
 
-        // 成約情報での検索
+        // 成約情報での検索（成約情報の店舗で絞り込み）
         if ($request->filled('contract_date_from') || $request->filled('contract_date_to') 
             || $request->filled('shop_id') || $request->filled('plan_id') 
             || $request->filled('kimono_type') || $request->has('warranty_flag') 
             || $request->filled('user_id') || $request->filled('preparation_venue')
-            || $request->filled('preparation_date')) {
+            || $request->filled('preparation_date') || $request->filled('contract_status')) {
             
             $query->whereHas('contracts', function ($q) use ($request) {
+                if ($request->filled('shop_id')) {
+                    $q->where('shop_id', $request->shop_id);
+                }
                 if ($request->filled('contract_date_from')) {
                     $q->where('contract_date', '>=', $request->contract_date_from);
                 }
                 if ($request->filled('contract_date_to')) {
                     $q->where('contract_date', '<=', $request->contract_date_to);
-                }
-                if ($request->filled('shop_id')) {
-                    $q->where('shop_id', $request->shop_id);
                 }
                 if ($request->filled('plan_id')) {
                     $q->where('plan_id', $request->plan_id);
@@ -82,7 +95,31 @@ class CustomerController extends Controller
                 if ($request->filled('preparation_date')) {
                     $q->where('preparation_date', $request->preparation_date);
                 }
+                if ($request->filled('contract_status')) {
+                    $q->where('status', $request->contract_status);
+                }
             });
+        }
+
+        // 前撮り詳細未決定での検索（前撮り情報の担当店舗で絞り込み）
+        if ($request->filled('photo_slot_details_undecided') || $request->filled('photo_slot_shop_id')) {
+            if ($request->filled('photo_slot_details_undecided')) {
+                if ($request->boolean('photo_slot_details_undecided')) {
+                    // 詳細未決定の前撮りを持つ顧客（担当店舗で絞る場合は該当店舗の前撮りのみ）
+                    $query->whereHas('photoSlots', function ($q) use ($request) {
+                        $q->where('details_undecided', true);
+                        if ($request->filled('photo_slot_shop_id')) {
+                            $q->whereHas('shops', fn($sq) => $sq->where('shops.id', $request->photo_slot_shop_id));
+                        }
+                    });
+                } else {
+                    // 詳細未決定の前撮りを持たない顧客（詳細確定のみ、または前撮りなし）
+                    $query->whereDoesntHave('photoSlots', fn($q) => $q->where('details_undecided', true));
+                }
+            } elseif ($request->filled('photo_slot_shop_id')) {
+                // 前撮り担当店舗のみで絞り込み
+                $query->whereHas('photoSlots', fn($q) => $q->whereHas('shops', fn($sq) => $sq->where('shops.id', $request->photo_slot_shop_id)));
+            }
         }
 
         $customers = $query->with([
@@ -125,8 +162,10 @@ class CustomerController extends Controller
             'users' => $users,
             'filters' => $request->only([
                 'name', 'kana', 'ceremony_area_id', 'phone_number',
+                'created_at_from', 'created_at_to',
                 'contract_date_from', 'contract_date_to', 'shop_id', 'plan_id',
-                'kimono_type', 'warranty_flag', 'user_id', 'preparation_venue', 'preparation_date'
+                'kimono_type', 'warranty_flag', 'user_id', 'preparation_venue', 'preparation_date',
+                'contract_status', 'photo_slot_details_undecided', 'photo_slot_shop_id'
             ]),
             'prefillFromReservation' => $prefillFromReservation,
         ]);
