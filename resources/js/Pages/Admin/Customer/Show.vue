@@ -23,8 +23,8 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- 左側: 既存コンテンツ -->
                     <div class="lg:col-span-2 space-y-6">
-                <!-- 顧客タグ -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <!-- 顧客タグ（overflow-visible でツールチップが途切れないようにする） -->
+                <div class="bg-white overflow-visible shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">顧客タグ</h3>
@@ -39,17 +39,47 @@
                             <div
                                 v-for="tag in customer.tags"
                                 :key="tag.id"
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                                role="button"
+                                tabindex="0"
+                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-indigo-400/50 transition-shadow"
+                                :class="{ 'relative group cursor-help': tag.pivot?.note }"
                                 :style="{
                                     backgroundColor: tag.color ? tag.color + '20' : '#f3f4f620',
                                     color: tag.color || '#6b7280',
                                     border: `1px solid ${tag.color || '#e5e7eb'}`
                                 }"
+                                @click="openEditTagModal(tag)"
+                                @keydown.enter.prevent="openEditTagModal(tag)"
                             >
                                 <span>{{ tag.name }}</span>
+                                <!-- タグ付け理由・補足がある場合にコメントアイコンを表示（ホバーはタグ全体でツールチップ表示） -->
+                                <span v-if="tag.pivot?.note" class="inline-flex ml-1 shrink-0" aria-hidden="true">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                </span>
+                                <!-- タグ全体ホバーで表示するツールチップ -->
+                                <div
+                                    v-if="tag.pivot?.note"
+                                    class="tag-note-tooltip absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] pointer-events-none"
+                                >
+                                    <div class="tag-note-tooltip__inner">
+                                        <div class="tag-note-tooltip__header">
+                                            <svg class="w-4 h-4 shrink-0 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                            </svg>
+                                            <span>タグ付け理由・補足</span>
+                                        </div>
+                                        <div class="tag-note-tooltip__body">
+                                            <p class="tag-note-tooltip__text">{{ tag.pivot.note }}</p>
+                                        </div>
+                                        <div class="tag-note-tooltip__arrow" aria-hidden="true"></div>
+                                    </div>
+                                </div>
                                 <button
-                                    @click="removeTag(tag.id)"
-                                    class="ml-2 text-gray-500 hover:text-red-600"
+                                    type="button"
+                                    @click.stop="removeTag(tag.id)"
+                                    class="ml-2 text-gray-500 hover:text-red-600 shrink-0"
                                     title="タグを削除"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1580,12 +1610,12 @@
             </div>
         </transition>
 
-        <!-- タグ追加モーダル -->
+        <!-- タグ追加・編集モーダル -->
         <transition name="modal">
             <div
                 v-if="showTagModal"
                 class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
-                @click.self="showTagModal = false"
+                @click.self="closeTagModal"
             >
                 <div
                     class="relative bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
@@ -1596,10 +1626,11 @@
                             <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
-                            タグを追加
+                            {{ editingTag ? 'タグを編集' : 'タグを追加' }}
                         </h3>
                         <button
-                            @click="showTagModal = false"
+                            type="button"
+                            @click="closeTagModal"
                             class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1611,7 +1642,8 @@
                     <!-- コンテンツ（スクロール可能） -->
                     <form @submit.prevent="attachTag" class="overflow-y-auto flex-1 px-6 py-5">
                         <div class="space-y-4">
-                            <div>
+                            <!-- 追加時: タグ選択 -->
+                            <div v-if="!editingTag">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     タグを選択 <span class="text-red-500">*</span>
                                 </label>
@@ -1632,6 +1664,20 @@
                                 <div v-if="tagForm.errors.customer_tag_id" class="mt-1 text-sm text-red-600">
                                     {{ tagForm.errors.customer_tag_id }}
                                 </div>
+                            </div>
+                            <!-- 編集時: 対象タグを表示 -->
+                            <div v-else class="flex items-center gap-2">
+                                <label class="text-sm font-medium text-gray-700 shrink-0">編集対象タグ</label>
+                                <span
+                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                                    :style="{
+                                        backgroundColor: editingTag.color ? editingTag.color + '20' : '#f3f4f620',
+                                        color: editingTag.color || '#6b7280',
+                                        border: `1px solid ${editingTag.color || '#e5e7eb'}`
+                                    }"
+                                >
+                                    {{ editingTag.name }}
+                                </span>
                             </div>
 
                             <div>
@@ -1654,7 +1700,7 @@
                         <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
                             <button
                                 type="button"
-                                @click="showTagModal = false"
+                                @click="closeTagModal"
                                 class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                             >
                                 キャンセル
@@ -1664,8 +1710,8 @@
                                 :disabled="tagForm.processing"
                                 class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <span v-if="tagForm.processing">追加中...</span>
-                                <span v-else>追加</span>
+                                <span v-if="tagForm.processing">{{ editingTag ? '更新中...' : '追加中...' }}</span>
+                                <span v-else>{{ editingTag ? '更新' : '追加' }}</span>
                             </button>
                         </div>
                     </form>
@@ -1728,6 +1774,7 @@ const showPhotoPreviewModal = ref(false);
 const showPhotoMemoModal = ref(false);
 const showDeleteConfirmModal = ref(false);
 const showTagModal = ref(false);
+const editingTag = ref(null);
 
 // 手書きメモ用 Fabric
 const photoMemoCanvasWrap = ref(null);
@@ -2497,19 +2544,35 @@ const availableTags = computed(() => {
     return props.customerTags.filter(tag => !assignedTagIds.includes(tag.id));
 });
 
+// タグ追加・編集モーダルを閉じる
+const closeTagModal = () => {
+    showTagModal.value = false;
+    editingTag.value = null;
+    tagForm.reset();
+};
+
 // タグ追加モーダルを開く
 const openTagModal = () => {
+    editingTag.value = null;
     tagForm.reset();
     showTagModal.value = true;
 };
 
-// タグを追加
+// タグ編集モーダルを開く（タグクリック時）
+const openEditTagModal = (tag) => {
+    editingTag.value = tag;
+    tagForm.customer_tag_id = tag.id;
+    tagForm.note = tag.pivot?.note ?? '';
+    tagForm.clearErrors();
+    showTagModal.value = true;
+};
+
+// タグを追加または更新
 const attachTag = () => {
     tagForm.post(route('admin.customers.attach-tag', props.customer.id), {
         preserveScroll: true,
         onSuccess: () => {
-            showTagModal.value = false;
-            tagForm.reset();
+            closeTagModal();
         },
     });
 };
@@ -2545,6 +2608,60 @@ const deleteCustomer = () => {
 
 .modal-enter-from, .modal-leave-to {
     opacity: 0;
+}
+
+/* タグ付け理由・補足ツールチップ（おしゃれ表示・改行反映・overflow の外でも表示） */
+.tag-note-tooltip__inner {
+    position: relative;
+    width: 100%;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.99) 100%);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        0 0 0 1px rgba(99, 102, 241, 0.2);
+    overflow: hidden;
+}
+
+.tag-note-tooltip__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.2) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    color: rgba(203, 213, 225, 0.95);
+}
+
+.tag-note-tooltip__body {
+    padding: 1rem 1.25rem;
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+.tag-note-tooltip__text {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: rgba(226, 232, 240, 0.95);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.tag-note-tooltip__arrow {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+    border-top-color: rgba(15, 23, 42, 0.99);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 </style>
 
