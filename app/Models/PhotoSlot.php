@@ -8,8 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class PhotoSlot extends Model
 {
     protected $fillable = [
-        'photo_studio_id','shoot_date','shoot_time','customer_id','remarks',
+        'photo_studio_id','shoot_date','shoot_time','customer_id','details_undecided','remarks',
         'assignment_label','user_id','plan_id'
+    ];
+
+    protected $casts = [
+        'details_undecided' => 'boolean',
     ];
 
     public function studio()

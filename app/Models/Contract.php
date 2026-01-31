@@ -10,7 +10,7 @@ class Contract extends Model
     protected $fillable = [
         'customer_id','shop_id','plan_id','contract_date',
         'kimono_type','warranty_flag','total_amount',
-        'preparation_venue','preparation_date','user_id','remarks'
+        'preparation_venue','preparation_date','user_id','remarks','status'
     ];
 
     public function customer()

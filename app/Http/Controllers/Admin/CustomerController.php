@@ -313,6 +313,7 @@ class CustomerController extends Controller
             'plan_id' => 'required|exists:plans,id',
             'contract_date' => 'required|date',
             'kimono_type' => 'required|in:振袖,袴',
+            'status' => 'required|in:保留,確定',
             'warranty_flag' => 'boolean',
             'total_amount' => 'nullable|integer|min:0',
             'preparation_venue' => 'nullable|string|max:255',
@@ -331,45 +332,186 @@ class CustomerController extends Controller
     }
 
     /**
+     * 成約情報を更新
+     */
+    public function updateContract(Request $request, Customer $customer, Contract $contract)
+    {
+        if ($contract->customer_id !== $customer->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'shop_id' => 'required|exists:shops,id',
+            'plan_id' => 'required|exists:plans,id',
+            'contract_date' => 'required|date',
+            'kimono_type' => 'required|in:振袖,袴',
+            'status' => 'required|in:保留,確定',
+            'warranty_flag' => 'boolean',
+            'total_amount' => 'nullable|integer|min:0',
+            'preparation_venue' => 'nullable|string|max:255',
+            'preparation_date' => 'nullable|date',
+            'user_id' => 'nullable|exists:users,id',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $validated['warranty_flag'] = $request->has('warranty_flag') ? (bool)$request->warranty_flag : false;
+
+        $contract->update($validated);
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '成約情報を更新しました。');
+    }
+
+    /**
      * 前撮り情報を追加
      */
     public function storePhotoSlot(Request $request, Customer $customer)
     {
-        $validated = $request->validate([
-            'photo_slot_id' => 'required|exists:photo_slots,id',
-            'shop_id' => 'nullable|exists:shops,id',
+        $detailsUndecided = $request->boolean('details_undecided');
+
+        $rules = [
+            'details_undecided' => 'boolean',
             'assignment_label' => 'nullable|string|max:255',
             'user_id' => 'nullable|exists:users,id',
             'plan_id' => 'nullable|exists:plans,id',
             'remarks' => 'nullable|string',
-        ]);
+        ];
 
-        $photoSlot = PhotoSlot::findOrFail($validated['photo_slot_id']);
-        
-        // 既に顧客が割り当てられている場合はエラー
-        if ($photoSlot->customer_id !== null) {
-            return back()->withErrors([
-                'photo_slot_id' => 'この前撮り枠は既に他の顧客に割り当てられています。',
-            ]);
+        if ($detailsUndecided) {
+            $rules['shop_id'] = 'required|exists:shops,id';
+        } else {
+            $rules['photo_slot_id'] = 'required|exists:photo_slots,id';
+            $rules['shop_id'] = 'nullable|exists:shops,id';
         }
 
-        $photoSlot->update([
-            'customer_id' => $customer->id,
-            'assignment_label' => $validated['assignment_label'] ?? null,
-            'user_id' => $validated['user_id'] ?? null,
-            'plan_id' => $validated['plan_id'] ?? null,
-            'remarks' => $validated['remarks'] ?? null,
-        ]);
+        $validated = $request->validate($rules);
 
-        // 担当店舗を中間テーブルに保存
-        if (!empty($validated['shop_id'])) {
+        if ($detailsUndecided) {
+            // 詳細未決定: 新規PhotoSlotを作成（会場・日時はnull）
+            $photoSlot = PhotoSlot::create([
+                'customer_id' => $customer->id,
+                'details_undecided' => true,
+                'photo_studio_id' => null,
+                'shoot_date' => null,
+                'shoot_time' => null,
+                'assignment_label' => $validated['assignment_label'] ?? null,
+                'user_id' => $validated['user_id'] ?? null,
+                'plan_id' => $validated['plan_id'] ?? null,
+                'remarks' => $validated['remarks'] ?? null,
+            ]);
             $photoSlot->shops()->sync([$validated['shop_id']]);
         } else {
-            $photoSlot->shops()->detach();
+            // 通常: 既存枠に顧客を割り当て
+            $photoSlot = PhotoSlot::findOrFail($validated['photo_slot_id']);
+
+            if ($photoSlot->customer_id !== null) {
+                return back()->withErrors([
+                    'photo_slot_id' => 'この前撮り枠は既に他の顧客に割り当てられています。',
+                ]);
+            }
+
+            $photoSlot->update([
+                'customer_id' => $customer->id,
+                'assignment_label' => $validated['assignment_label'] ?? null,
+                'user_id' => $validated['user_id'] ?? null,
+                'plan_id' => $validated['plan_id'] ?? null,
+                'remarks' => $validated['remarks'] ?? null,
+            ]);
+
+            if (!empty($validated['shop_id'])) {
+                $photoSlot->shops()->sync([$validated['shop_id']]);
+            } else {
+                $photoSlot->shops()->detach();
+            }
         }
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '前撮り情報を追加しました。');
+    }
+
+    /**
+     * 前撮り情報を更新
+     */
+    public function updatePhotoSlot(Request $request, Customer $customer, PhotoSlot $photoSlot)
+    {
+        if ($photoSlot->customer_id !== $customer->id) {
+            abort(403);
+        }
+
+        $detailsUndecided = $request->boolean('details_undecided');
+
+        $rules = [
+            'details_undecided' => 'boolean',
+            'shop_id' => $detailsUndecided ? 'required|exists:shops,id' : 'nullable|exists:shops,id',
+            'assignment_label' => 'nullable|string|max:255',
+            'user_id' => 'nullable|exists:users,id',
+            'plan_id' => 'nullable|exists:plans,id',
+            'remarks' => 'nullable|string',
+        ];
+
+        if (!$detailsUndecided) {
+            $rules['photo_slot_id'] = 'required|exists:photo_slots,id';
+        }
+
+        $validated = $request->validate($rules);
+
+        $updateData = [
+            'assignment_label' => $validated['assignment_label'] ?? null,
+            'user_id' => $validated['user_id'] ?? null,
+            'plan_id' => $validated['plan_id'] ?? null,
+            'remarks' => $validated['remarks'] ?? null,
+        ];
+
+        if ($detailsUndecided) {
+            // 詳細未決定に変更: 会場・日時をnullにして仮枠に
+            $updateData['details_undecided'] = true;
+            $updateData['photo_studio_id'] = null;
+            $updateData['shoot_date'] = null;
+            $updateData['shoot_time'] = null;
+            $photoSlot->update($updateData);
+            if (isset($validated['shop_id']) && $validated['shop_id']) {
+                $photoSlot->shops()->sync([$validated['shop_id']]);
+            } else {
+                $photoSlot->shops()->detach();
+            }
+        } else {
+            $targetSlotId = (int) ($validated['photo_slot_id'] ?? 0);
+            $targetSlot = PhotoSlot::findOrFail($targetSlotId);
+
+            // 選択枠が自分自身の場合はそのまま更新
+            if ($targetSlot->id === $photoSlot->id) {
+                $photoSlot->update($updateData);
+                if (isset($validated['shop_id']) && $validated['shop_id']) {
+                    $photoSlot->shops()->sync([$validated['shop_id']]);
+                } else {
+                    $photoSlot->shops()->detach();
+                }
+            } else {
+                // 別枠を選択: 既に他顧客がいる場合はエラー
+                if ($targetSlot->customer_id !== null) {
+                    return back()->withErrors([
+                        'photo_slot_id' => 'この前撮り枠は既に他の顧客に割り当てられています。',
+                    ]);
+                }
+
+                // 対象枠に顧客を移行
+                $targetSlot->update(array_merge($updateData, [
+                    'customer_id' => $customer->id,
+                    'details_undecided' => false,
+                ]));
+                if (isset($validated['shop_id']) && $validated['shop_id']) {
+                    $targetSlot->shops()->sync([$validated['shop_id']]);
+                } else {
+                    $targetSlot->shops()->detach();
+                }
+
+                // 元の枠（詳細未決定など）を削除
+                $photoSlot->delete();
+            }
+        }
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '前撮り情報を更新しました。');
     }
 
     /**

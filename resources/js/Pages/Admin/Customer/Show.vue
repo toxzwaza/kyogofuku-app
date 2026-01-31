@@ -320,11 +320,13 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">店舗</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">着物種別</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成約金額</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">安心保証</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当スタッフ</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">お仕度会場</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">お仕度日程</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
@@ -334,6 +336,11 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.shop?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.plan?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.kimono_type }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span class="px-2 py-1 text-xs rounded-full" :class="(contract.status || '確定') === '確定' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'">
+                                                {{ contract.status || '確定' }}
+                                            </span>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.total_amount ? `¥${contract.total_amount.toLocaleString()}` : '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span class="px-2 py-1 text-xs rounded-full" :class="contract.warranty_flag ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
@@ -343,6 +350,15 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.user?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.preparation_venue || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.preparation_date || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button
+                                                type="button"
+                                                @click="openEditContractModal(contract)"
+                                                class="text-indigo-600 hover:text-indigo-800 font-medium"
+                                            >
+                                                編集
+                                            </button>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -371,6 +387,7 @@
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">前撮り枠ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">詳細</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">前撮り会場</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">撮影日</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">撮影開始時刻</th>
@@ -379,14 +396,19 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者用メモラベル</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">備考</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     <tr v-for="photoSlot in customer.photoSlots" :key="photoSlot.id">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.studio?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatDate(photoSlot.shoot_date) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ formatTime(photoSlot.shoot_time) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <span v-if="photoSlot.details_undecided" class="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-800">詳細未決定</span>
+                                            <span v-else class="text-gray-500">-</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : (photoSlot.studio?.name || '-') }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : formatDate(photoSlot.shoot_date) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : formatTime(photoSlot.shoot_time) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <span v-if="photoSlot.shops && photoSlot.shops.length > 0">
                                                 <span v-for="(shop, index) in photoSlot.shops" :key="shop.id">
@@ -399,6 +421,15 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.plan?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.assignment_label || '-' }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ photoSlot.remarks || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button
+                                                type="button"
+                                                @click="openEditPhotoSlotModal(photoSlot)"
+                                                class="text-indigo-600 hover:text-indigo-800 font-medium"
+                                            >
+                                                編集
+                                            </button>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -440,6 +471,7 @@
                                         type="file"
                                         @change="onPhotoFileChange"
                                         accept="image/*"
+                                        capture="environment"
                                         required
                                         class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                     />
@@ -757,6 +789,19 @@
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        ステータス <span class="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        v-model="contractForm.status"
+                                        required
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    >
+                                        <option value="保留">保留</option>
+                                        <option value="確定">確定</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         成約金額（税込）
                                     </label>
                                     <input
@@ -847,6 +892,106 @@
             </div>
         </transition>
 
+        <!-- 成約情報編集モーダル -->
+        <transition name="modal">
+            <div
+                v-if="showEditContractModal"
+                class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="showEditContractModal = false"
+            >
+                <div
+                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                >
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-gray-900">成約情報編集</h3>
+                        <button
+                            @click="showEditContractModal = false"
+                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="updateContract" class="overflow-y-auto flex-1 px-6 py-5">
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">店舗 <span class="text-red-500">*</span></label>
+                                    <select v-model="editContractForm.shop_id" required @change="onEditContractShopChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        <option value="">選択してください</option>
+                                        <option v-for="shop in shops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">担当スタッフ</label>
+                                    <select v-model="editContractForm.user_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        <option :value="null">選択してください</option>
+                                        <option v-for="user in shopUsers" :key="user.id" :value="user.id">{{ user.name }}</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">成約日 <span class="text-red-500">*</span></label>
+                                    <input v-model="editContractForm.contract_date" type="date" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">着物種別 <span class="text-red-500">*</span></label>
+                                    <select v-model="editContractForm.kimono_type" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        <option value="">選択してください</option>
+                                        <option value="振袖">振袖</option>
+                                        <option value="袴">袴</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">ステータス <span class="text-red-500">*</span></label>
+                                    <select v-model="editContractForm.status" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        <option value="保留">保留</option>
+                                        <option value="確定">確定</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">成約金額（税込）</label>
+                                    <input v-model.number="editContractForm.total_amount" type="number" min="0" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">プラン <span class="text-red-500">*</span></label>
+                                    <select v-model="editContractForm.plan_id" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        <option value="">選択してください</option>
+                                        <option v-for="plan in plans" :key="plan.id" :value="plan.id">{{ plan.name }}</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">お仕度会場</label>
+                                    <input v-model="editContractForm.preparation_venue" type="text" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">お仕度日程</label>
+                                    <input v-model="editContractForm.preparation_date" type="date" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input v-model="editContractForm.warranty_flag" type="checkbox" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                        <span class="ml-2 text-sm text-gray-700">安心保証</span>
+                                    </label>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">備考</label>
+                                    <textarea v-model="editContractForm.remarks" rows="4" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" @click="showEditContractModal = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">キャンセル</button>
+                            <button type="submit" :disabled="editContractForm.processing" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span v-if="editContractForm.processing">更新中...</span>
+                                <span v-else>更新</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </transition>
+
         <!-- 前撮り情報追加モーダル -->
         <transition name="modal">
             <div
@@ -878,14 +1023,25 @@
                     <!-- コンテンツ（スクロール可能） -->
                     <form @submit.prevent="storePhotoSlot" class="overflow-y-auto flex-1 px-6 py-5">
                         <div class="space-y-4">
+                            <div class="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                                <label class="flex items-center cursor-pointer">
+                                    <input
+                                        v-model="photoSlotForm.details_undecided"
+                                        type="checkbox"
+                                        class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <span class="ml-2 text-sm font-medium text-gray-700">詳細未決定（担当店舗のみで仮登録）</span>
+                                </label>
+                            </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        担当店舗
+                                        担当店舗 <span v-if="photoSlotForm.details_undecided" class="text-red-500">*</span>
                                     </label>
                                     <select
                                         v-model="photoSlotForm.shop_id"
                                         @change="onPhotoSlotShopChange"
+                                        :required="photoSlotForm.details_undecided"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                     >
                                         <option value="">選択してください</option>
@@ -895,7 +1051,7 @@
                                     </select>
                                     <div v-if="photoSlotForm.errors.shop_id" class="mt-1 text-sm text-red-600">{{ photoSlotForm.errors.shop_id }}</div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div v-if="!photoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         会場 <span class="text-red-500">*</span>
                                     </label>
@@ -918,7 +1074,7 @@
                                     <p v-if="!photoSlotForm.shop_id" class="mt-1 text-xs text-gray-500">まず担当店舗を選択してください</p>
                                     <div v-if="photoSlotForm.errors.selected_studio_id" class="mt-1 text-sm text-red-600">{{ photoSlotForm.errors.selected_studio_id }}</div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div v-if="!photoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         撮影日 <span class="text-red-500">*</span>
                                     </label>
@@ -940,7 +1096,7 @@
                                     </select>
                                     <p v-if="!photoSlotForm.selected_studio_id" class="mt-1 text-xs text-gray-500">まず担当店舗と会場を選択してください</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div v-if="!photoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         撮影時間 <span class="text-red-500">*</span>
                                     </label>
@@ -1049,6 +1205,112 @@
                             >
                                 <span v-if="photoSlotForm.processing">追加中...</span>
                                 <span v-else>追加</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 前撮り情報編集モーダル -->
+        <transition name="modal">
+            <div
+                v-if="showEditPhotoSlotModal"
+                class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="showEditPhotoSlotModal = false"
+            >
+                <div
+                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                >
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-gray-900">前撮り情報編集</h3>
+                        <button
+                            @click="showEditPhotoSlotModal = false"
+                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <form @submit.prevent="updatePhotoSlot" class="overflow-y-auto flex-1 px-6 py-5">
+                        <div class="space-y-4">
+                            <div class="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                                <label class="flex items-center cursor-pointer">
+                                    <input
+                                        v-model="editPhotoSlotForm.details_undecided"
+                                        type="checkbox"
+                                        @change="onEditPhotoSlotDetailsUndecidedChange"
+                                        class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <span class="ml-2 text-sm font-medium text-gray-700">詳細未決定（担当店舗のみで仮登録）</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">担当店舗 <span class="text-red-500">*</span></label>
+                                    <select v-model="editPhotoSlotForm.shop_id" required @change="onEditPhotoSlotShopChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        <option value="">選択してください</option>
+                                        <option v-for="shop in shops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
+                                    </select>
+                                </div>
+                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">会場 <span class="text-red-500">*</span></label>
+                                    <select v-model="editPhotoSlotForm.selected_studio_id" required :disabled="!editPhotoSlotForm.shop_id" @change="onEditPhotoSlotStudioChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                        <option value="">選択してください</option>
+                                        <option v-for="studio in editAvailableStudios" :key="studio.id" :value="studio.id">{{ studio.name }}</option>
+                                    </select>
+                                </div>
+                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">撮影日 <span class="text-red-500">*</span></label>
+                                    <select v-model="editPhotoSlotForm.selected_date" required :disabled="!editPhotoSlotForm.selected_studio_id" @change="onEditPhotoSlotDateChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                        <option value="">選択してください</option>
+                                        <option v-for="date in editAvailableDates" :key="date" :value="date">{{ formatDate(date) }}</option>
+                                    </select>
+                                </div>
+                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">撮影時間 <span class="text-red-500">*</span></label>
+                                    <select v-model="editPhotoSlotForm.photo_slot_id" required :disabled="!editPhotoSlotForm.selected_date" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                        <option value="">選択してください</option>
+                                        <option v-for="slot in editAvailableTimeSlots" :key="slot.id" :value="slot.id">{{ formatTime(slot.shoot_time) }}<span v-if="slot.plan"> - {{ slot.plan.name }}</span></option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">担当者用メモラベル</label>
+                                    <select v-model="editPhotoSlotForm.assignment_label" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        <option :value="null">選択してください</option>
+                                        <option value="動員">動員</option>
+                                        <option value="岡山店 / F">岡山店 / F</option>
+                                        <option value="城東店 / F">城東店 / F</option>
+                                        <option value="引継ぎ / F">引継ぎ / F</option>
+                                        <option value="EXPO / F">EXPO / F</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">担当者</label>
+                                    <select v-model="editPhotoSlotForm.user_id" :disabled="!editPhotoSlotForm.shop_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                        <option :value="null">選択してください</option>
+                                        <option v-for="user in photoSlotShopUsers" :key="user.id" :value="user.id">{{ user.name }}</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">プラン</label>
+                                    <select v-model="editPhotoSlotForm.plan_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        <option :value="null">選択してください</option>
+                                        <option v-for="plan in plans" :key="plan.id" :value="plan.id">{{ plan.name }}</option>
+                                    </select>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">備考</label>
+                                    <textarea v-model="editPhotoSlotForm.remarks" rows="4" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" @click="showEditPhotoSlotModal = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">キャンセル</button>
+                            <button type="submit" :disabled="editPhotoSlotForm.processing" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span v-if="editPhotoSlotForm.processing">更新中...</span>
+                                <span v-else>更新</span>
                             </button>
                         </div>
                     </form>
@@ -1286,7 +1548,9 @@ const getScheduleAssigneeNames = (reservation) => {
 // モーダル表示フラグ
 const showEditCustomerModal = ref(false);
 const showAddContractModal = ref(false);
+const showEditContractModal = ref(false);
 const showAddPhotoSlotModal = ref(false);
+const showEditPhotoSlotModal = ref(false);
 const showPhotoPreviewModal = ref(false);
 const showDeleteConfirmModal = ref(false);
 const showTagModal = ref(false);
@@ -1323,6 +1587,7 @@ const contractForm = useForm({
     plan_id: '',
     contract_date: '',
     kimono_type: '',
+    status: '確定',
     warranty_flag: false,
     total_amount: null,
     preparation_venue: '',
@@ -1359,9 +1624,23 @@ const loadShopUsers = async (shopId) => {
 const onShopChange = async () => {
     await loadShopUsers(contractForm.shop_id);
 };
+const onEditContractShopChange = async () => {
+    const shopId = editContractForm.shop_id;
+    if (!shopId) {
+        shopUsers.value = [];
+        editContractForm.user_id = null;
+        return;
+    }
+    await loadShopUsers(shopId);
+    if (editContractForm.user_id && !shopUsers.value.some(u => u.id === editContractForm.user_id)) {
+        editContractForm.user_id = null;
+    }
+};
 
 // 成約追加モーダルを開く
 const openAddContractModal = async () => {
+    contractForm.reset();
+    contractForm.status = '確定';
     // ログインユーザーの所属店舗をデフォルトで設定
     if (props.userShops && props.userShops.length > 0) {
         contractForm.shop_id = props.userShops[0].id;
@@ -1377,8 +1656,42 @@ const openAddContractModal = async () => {
     showAddContractModal.value = true;
 };
 
+// 成約編集モーダルを開く
+const editingContract = ref(null);
+const editContractForm = useForm({
+    shop_id: '',
+    plan_id: '',
+    contract_date: '',
+    kimono_type: '',
+    status: '確定',
+    warranty_flag: false,
+    total_amount: null,
+    preparation_venue: '',
+    preparation_date: '',
+    user_id: null,
+    remarks: '',
+});
+const openEditContractModal = async (contract) => {
+    editingContract.value = contract;
+    editContractForm.reset();
+    editContractForm.shop_id = contract.shop_id || '';
+    editContractForm.plan_id = contract.plan_id || '';
+    editContractForm.contract_date = contract.contract_date || '';
+    editContractForm.kimono_type = contract.kimono_type || '';
+    editContractForm.status = contract.status || '確定';
+    editContractForm.warranty_flag = contract.warranty_flag || false;
+    editContractForm.total_amount = contract.total_amount ?? null;
+    editContractForm.preparation_venue = contract.preparation_venue || '';
+    editContractForm.preparation_date = contract.preparation_date || '';
+    editContractForm.user_id = contract.user_id ?? null;
+    editContractForm.remarks = contract.remarks || '';
+    await loadShopUsers(contract.shop_id);
+    showEditContractModal.value = true;
+};
+
 // 前撮り追加フォーム
 const photoSlotForm = useForm({
+    details_undecided: false,
     shop_id: '',
     selected_studio_id: '',
     selected_date: '',
@@ -1449,6 +1762,20 @@ const onPhotoSlotShopChange = async () => {
     } else {
         photoSlotShopUsers.value = [];
         photoSlotForm.user_id = null;
+    }
+};
+const onEditPhotoSlotShopChange = async () => {
+    editPhotoSlotForm.selected_studio_id = '';
+    editPhotoSlotForm.selected_date = '';
+    editPhotoSlotForm.photo_slot_id = '';
+    if (editPhotoSlotForm.shop_id) {
+        await loadPhotoSlotShopUsers(editPhotoSlotForm.shop_id);
+        if (editPhotoSlotForm.user_id && !photoSlotShopUsers.value.some(u => u.id === editPhotoSlotForm.user_id)) {
+            editPhotoSlotForm.user_id = null;
+        }
+    } else {
+        photoSlotShopUsers.value = [];
+        editPhotoSlotForm.user_id = null;
     }
 };
 
@@ -1583,8 +1910,118 @@ const storeContract = () => {
     });
 };
 
+// 成約情報更新
+const updateContract = () => {
+    if (!editingContract.value) return;
+    editContractForm.transform((data) => {
+        const t = { ...data };
+        t.warranty_flag = !!t.warranty_flag;
+        t._method = 'PUT';
+        return t;
+    }).post(route('admin.customers.contracts.update', { customer: props.customer.id, contract: editingContract.value.id }), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showEditContractModal.value = false;
+            editingContract.value = null;
+        },
+    });
+};
+
+// 前撮り編集モーダルを開く
+const editingPhotoSlot = ref(null);
+const editPhotoSlotForm = useForm({
+    details_undecided: false,
+    shop_id: '',
+    selected_studio_id: '',
+    selected_date: '',
+    photo_slot_id: '',
+    assignment_label: null,
+    user_id: null,
+    plan_id: null,
+    remarks: '',
+});
+// 編集用：利用可能な枠（空き枠 + 現在の枠を保持する選択肢）
+const editAvailablePhotoSlots = computed(() => {
+    const available = props.availablePhotoSlots || [];
+    const current = editingPhotoSlot.value;
+    if (!current || current.details_undecided || !current.photo_studio_id) return available;
+    const exists = available.some(s => s.id === current.id);
+    return exists ? available : [...available, current];
+});
+const editAvailableStudios = computed(() => {
+    if (!editAvailablePhotoSlots.value.length || !editPhotoSlotForm.shop_id) return [];
+    const studios = new Map();
+    const shopId = Number(editPhotoSlotForm.shop_id);
+    editAvailablePhotoSlots.value.forEach(slot => {
+        if (slot.studio && slot.shops && slot.shops.some(s => s.id === shopId) && !studios.has(slot.studio.id)) {
+            studios.set(slot.studio.id, slot.studio);
+        }
+    });
+    return Array.from(studios.values()).sort((a, b) => a.name.localeCompare(b.name));
+});
+const editAvailableDates = computed(() => {
+    if (!editPhotoSlotForm.selected_studio_id || !editPhotoSlotForm.shop_id || !editAvailablePhotoSlots.value.length) return [];
+    const dates = new Set();
+    const shopId = Number(editPhotoSlotForm.shop_id);
+    editAvailablePhotoSlots.value.forEach(slot => {
+        if (slot.studio?.id == editPhotoSlotForm.selected_studio_id && slot.shops?.some(s => s.id === shopId)) {
+            dates.add(slot.shoot_date);
+        }
+    });
+    return Array.from(dates).sort();
+});
+const editAvailableTimeSlots = computed(() => {
+    if (!editPhotoSlotForm.selected_studio_id || !editPhotoSlotForm.selected_date || !editPhotoSlotForm.shop_id || !editAvailablePhotoSlots.value.length) return [];
+    const shopId = Number(editPhotoSlotForm.shop_id);
+    return editAvailablePhotoSlots.value.filter(slot =>
+        slot.studio?.id == editPhotoSlotForm.selected_studio_id &&
+        slot.shoot_date === editPhotoSlotForm.selected_date &&
+        slot.shops?.some(s => s.id === shopId)
+    ).sort((a, b) => (a.shoot_time || '').localeCompare(b.shoot_time || ''));
+});
+const openEditPhotoSlotModal = async (photoSlot) => {
+    editingPhotoSlot.value = photoSlot;
+    editPhotoSlotForm.reset();
+    editPhotoSlotForm.details_undecided = !!photoSlot.details_undecided;
+    editPhotoSlotForm.shop_id = (photoSlot.shops && photoSlot.shops[0]) ? photoSlot.shops[0].id : '';
+    editPhotoSlotForm.assignment_label = photoSlot.assignment_label ?? null;
+    editPhotoSlotForm.user_id = photoSlot.user_id ?? null;
+    editPhotoSlotForm.plan_id = photoSlot.plan_id ?? null;
+    editPhotoSlotForm.remarks = photoSlot.remarks || '';
+    if (!photoSlot.details_undecided && photoSlot.studio && photoSlot.shoot_date && photoSlot.shoot_time) {
+        editPhotoSlotForm.selected_studio_id = photoSlot.photo_studio_id || photoSlot.studio.id || '';
+        editPhotoSlotForm.selected_date = photoSlot.shoot_date || '';
+        editPhotoSlotForm.photo_slot_id = photoSlot.id || '';
+    } else {
+        editPhotoSlotForm.selected_studio_id = '';
+        editPhotoSlotForm.selected_date = '';
+        editPhotoSlotForm.photo_slot_id = '';
+    }
+    if (editPhotoSlotForm.shop_id) {
+        await loadPhotoSlotShopUsers(editPhotoSlotForm.shop_id);
+    } else {
+        photoSlotShopUsers.value = [];
+    }
+    showEditPhotoSlotModal.value = true;
+};
+const onEditPhotoSlotDetailsUndecidedChange = () => {
+    if (editPhotoSlotForm.details_undecided) {
+        editPhotoSlotForm.selected_studio_id = '';
+        editPhotoSlotForm.selected_date = '';
+        editPhotoSlotForm.photo_slot_id = '';
+    }
+};
+const onEditPhotoSlotStudioChange = () => {
+    editPhotoSlotForm.selected_date = '';
+    editPhotoSlotForm.photo_slot_id = '';
+};
+const onEditPhotoSlotDateChange = () => {
+    editPhotoSlotForm.photo_slot_id = '';
+};
+
 // 前撮り追加モーダルを開く
 const openAddPhotoSlotModal = async () => {
+    photoSlotForm.details_undecided = false;
     // ログインユーザーの所属店舗をデフォルトで設定
     if (props.userShops && props.userShops.length > 0) {
         photoSlotForm.shop_id = props.userShops[0].id;
@@ -1605,11 +2042,42 @@ const openAddPhotoSlotModal = async () => {
     showAddPhotoSlotModal.value = true;
 };
 
+// 前撮り情報更新
+const updatePhotoSlot = () => {
+    if (!editingPhotoSlot.value) return;
+    editPhotoSlotForm.transform((data) => {
+        const t = { ...data };
+        t.details_undecided = !!t.details_undecided;
+        t.shop_id = t.shop_id || null;
+        t.assignment_label = t.assignment_label || null;
+        t.user_id = t.user_id || null;
+        t.plan_id = t.plan_id || null;
+        if (t.details_undecided) {
+            delete t.photo_slot_id;
+            delete t.selected_studio_id;
+            delete t.selected_date;
+        } else {
+            t.photo_slot_id = t.photo_slot_id || null;
+            delete t.selected_studio_id;
+            delete t.selected_date;
+        }
+        t._method = 'PUT';
+        return t;
+    }).post(route('admin.customers.photo-slots.update', { customer: props.customer.id, photoSlot: editingPhotoSlot.value.id }), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showEditPhotoSlotModal.value = false;
+            editingPhotoSlot.value = null;
+        },
+    });
+};
+
 // 前撮り情報追加
 const storePhotoSlot = () => {
     // フォームデータを変換（空文字列をnullに変換、不要なフィールドを削除）
     photoSlotForm.transform((data) => {
         const transformed = { ...data };
+        transformed.details_undecided = !!transformed.details_undecided;
         transformed.shop_id = transformed.shop_id || null;
         transformed.assignment_label = transformed.assignment_label || null;
         transformed.user_id = transformed.user_id || null;
@@ -1617,6 +2085,9 @@ const storePhotoSlot = () => {
         // selected_studio_idとselected_dateは送信しない（photo_slot_idだけで十分）
         delete transformed.selected_studio_id;
         delete transformed.selected_date;
+        if (transformed.details_undecided) {
+            delete transformed.photo_slot_id;
+        }
         return transformed;
     }).post(route('admin.customers.photo-slots.store', props.customer.id), {
         preserveScroll: true,

@@ -176,7 +176,9 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
     Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
     Route::post('/customers/{customer}/contracts', [AdminCustomerController::class, 'storeContract'])->name('customers.contracts.store');
+    Route::put('/customers/{customer}/contracts/{contract}', [AdminCustomerController::class, 'updateContract'])->name('customers.contracts.update');
     Route::post('/customers/{customer}/photo-slots', [AdminCustomerController::class, 'storePhotoSlot'])->name('customers.photo-slots.store');
+    Route::put('/customers/{customer}/photo-slots/{photoSlot}', [AdminCustomerController::class, 'updatePhotoSlot'])->name('customers.photo-slots.update');
     Route::post('/customers/{customer}/photos', [AdminCustomerController::class, 'storeCustomerPhoto'])->name('customers.photos.store');
     Route::post('/customers/{customer}/tags', [AdminCustomerController::class, 'attachTag'])->name('customers.attach-tag');
     Route::delete('/customers/{customer}/tags/{customerTag}', [AdminCustomerController::class, 'detachTag'])->name('customers.detach-tag');
