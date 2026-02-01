@@ -17,6 +17,8 @@ use App\Models\PhotoStudio;
 use App\Models\PhotoType;
 use App\Models\StaffSchedule;
 use App\Models\CustomerTag;
+use App\Models\ConstraintTemplate;
+use App\Models\CustomerConstraint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -263,6 +265,8 @@ class CustomerController extends Controller
             'contracts.shop',
             'contracts.plan',
             'contracts.user',
+            'constraints.constraintTemplate.shops',
+            'constraints.explainerUser',
             'eventReservations.event',
             'eventReservations.venue',
             'eventReservations.schedule.participantUsers',
@@ -315,6 +319,25 @@ class CustomerController extends Controller
         // 顧客タグ一覧を取得（有効なもののみ）
         $customerTags = CustomerTag::where('is_active', true)->orderBy('name')->get();
 
+        // 制約テンプレート一覧（有効、店舗・スタッフ付き）
+        $constraintTemplates = ConstraintTemplate::where('is_active', true)
+            ->with(['shops' => fn($q) => $q->where('is_active', true)->orderBy('name')])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($t) {
+                $shopIds = $t->shops->pluck('id')->toArray();
+                $staff = User::whereHas('shops', fn($q) => $q->whereIn('shops.id', $shopIds))
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
+                return [
+                    'id' => $t->id,
+                    'name' => $t->name,
+                    'body' => $t->body,
+                    'shops' => $t->shops->map(fn($s) => ['id' => $s->id, 'name' => $s->name]),
+                    'staff' => $staff->map(fn($u) => ['id' => $u->id, 'name' => $u->name]),
+                ];
+            });
+
         return Inertia::render('Admin/Customer/Show', [
             'customer' => $customer,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
@@ -332,6 +355,7 @@ class CustomerController extends Controller
                     'name' => $shop->name,
                 ];
             }),
+            'constraintTemplates' => $constraintTemplates,
         ]);
     }
 
@@ -904,6 +928,104 @@ class CustomerController extends Controller
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '写真を削除しました。');
+    }
+
+    /**
+     * 制約署名フォームを表示
+     */
+    public function constraintSignForm(Request $request, Customer $customer)
+    {
+        $templateId = $request->query('template_id');
+        $template = ConstraintTemplate::with(['shops' => fn($q) => $q->where('is_active', true)])
+            ->findOrFail($templateId);
+
+        // テンプレートに紐づく店舗のスタッフを取得
+        $shopIds = $template->shops->pluck('id')->toArray();
+        $staff = User::whereHas('shops', fn($q) => $q->whereIn('shops.id', $shopIds))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // 選択された説明者
+        $explainerId = $request->query('explainer_user_id');
+        $explainer = $explainerId ? User::find($explainerId) : null;
+
+        // check_values をJSONデコード
+        $checkValues = [];
+        if ($request->query('check_values')) {
+            $checkValues = json_decode($request->query('check_values'), true) ?? [];
+        }
+
+        // 編集モードの場合、既存の制約情報を取得
+        $editId = $request->query('edit_id');
+        $existingConstraint = null;
+        $existingSignature = null;
+        if ($editId) {
+            $existingConstraint = CustomerConstraint::where('customer_id', $customer->id)
+                ->where('id', $editId)
+                ->first();
+            if ($existingConstraint) {
+                $existingSignature = $existingConstraint->signature_image;
+            }
+        }
+
+        return Inertia::render('Admin/Customer/ConstraintSign', [
+            'customer' => $customer->only('id', 'name', 'kana'),
+            'template' => [
+                'id' => $template->id,
+                'name' => $template->name,
+                'body' => $template->body,
+            ],
+            'staff' => $staff->map(fn($u) => ['id' => $u->id, 'name' => $u->name]),
+            'signedAt' => $request->query('signed_at', date('Y-m-d')),
+            'explainerUserId' => $explainerId,
+            'explainerName' => $explainer?->name,
+            'checkValues' => $checkValues,
+            'editId' => $editId,
+            'existingSignature' => $existingSignature,
+        ]);
+    }
+
+    /**
+     * 顧客制約を追加
+     */
+    public function storeCustomerConstraint(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'constraint_template_id' => 'required|exists:constraint_templates,id',
+            'signed_at' => 'nullable|date',
+            'signature_image' => 'nullable|string',
+            'explainer_user_id' => 'nullable|exists:users,id',
+            'check_values' => 'nullable|array',
+        ]);
+
+        $validated['customer_id'] = $customer->id;
+
+        CustomerConstraint::create($validated);
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '制約情報を追加しました。');
+    }
+
+    /**
+     * 顧客制約を更新
+     */
+    public function updateCustomerConstraint(Request $request, Customer $customer, CustomerConstraint $customerConstraint)
+    {
+        if ($customerConstraint->customer_id !== $customer->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'signed_at' => 'nullable|date',
+            'signature_image' => 'nullable|string',
+            'explainer_user_id' => 'nullable|exists:users,id',
+            'check_values' => 'nullable|array',
+        ]);
+
+        $customerConstraint->update($validated);
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '制約情報を更新しました。');
     }
 
     /**

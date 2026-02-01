@@ -588,6 +588,57 @@
                     </div>
                 </div>
 
+                <!-- 制約情報 -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">制約情報</h3>
+                            <button
+                                @click="openAddConstraintModal"
+                                :disabled="!constraintTemplatesList.length"
+                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                            >
+                                制約追加
+                            </button>
+                        </div>
+                        <div v-if="customerConstraintsList.length > 0" class="space-y-4">
+                            <div
+                                v-for="cc in customerConstraintsList"
+                                :key="cc.id"
+                                class="border border-gray-200 rounded-lg p-4 bg-gray-50/50"
+                            >
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ (cc.constraint_template || cc.constraintTemplate)?.name || '制約' }}</p>
+                                        <p class="text-sm text-gray-500 mt-1">
+                                            署名日: {{ cc.signed_at ? formatDate(cc.signed_at) : '-' }}
+                                            <span v-if="cc.explainer_user || cc.explainerUser" class="ml-3">規約説明者: {{ (cc.explainer_user || cc.explainerUser)?.name }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <img
+                                            v-if="cc.signature_image"
+                                            :src="cc.signature_image"
+                                            alt="署名"
+                                            class="h-10 w-24 object-contain border border-gray-200 rounded"
+                                        />
+                                        <button
+                                            type="button"
+                                            @click="openEditConstraintModal(cc)"
+                                            class="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
+                                        >
+                                            編集
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="text-center py-8 text-gray-500">
+                            制約情報がありません
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 前撮り情報 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
@@ -1289,6 +1340,89 @@
             </div>
         </transition>
 
+        <!-- 制約情報追加・編集モーダル -->
+        <transition name="modal">
+            <div
+                v-if="showConstraintModal"
+                class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="closeConstraintModal"
+            >
+                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-gray-900">{{ editingConstraint ? '制約情報編集' : '制約追加 - 準備' }}</h3>
+                        <button
+                            @click="closeConstraintModal"
+                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="overflow-y-auto flex-1 px-6 py-5">
+                        <div class="space-y-6">
+                            <!-- テンプレート選択（追加時のみ） -->
+                            <div v-if="!editingConstraint" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">制約テンプレート <span class="text-red-500">*</span></label>
+                                <select v-model="constraintForm.constraint_template_id" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                    <option value="">選択してください</option>
+                                    <option v-for="t in constraintTemplatesList" :key="t.id" :value="t.id">{{ t.name }}</option>
+                                </select>
+                            </div>
+
+                            <!-- 制約本文（マークダウン＋チェックボックス） -->
+                            <div v-if="selectedConstraintTemplate" class="border border-gray-200 rounded-lg p-4 max-h-80 overflow-y-auto">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-3">{{ selectedConstraintTemplate.name }}</h4>
+                                <div class="constraint-body prose prose-sm max-w-none text-gray-800">
+                                    <ConstraintBodyWithChecks
+                                        :body="selectedConstraintTemplate.body"
+                                        :check-values="constraintForm.check_values"
+                                        @update:check-values="(v) => constraintForm.check_values = v"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- 署名準備情報 -->
+                            <div class="border-t pt-6 space-y-4">
+                                <h4 class="text-sm font-semibold text-gray-700">署名準備情報</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">日付</label>
+                                        <input
+                                            v-model="constraintForm.signed_at"
+                                            type="date"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者</label>
+                                        <select v-model="constraintForm.explainer_user_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                            <option :value="null">選択してください</option>
+                                            <option v-for="u in constraintModalStaff" :key="u.id" :value="u.id">{{ u.name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500">※「準備完了」をクリックすると、署名用ページに移動します。署名はそちらで行います。</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" @click="closeConstraintModal" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                キャンセル
+                            </button>
+                            <button
+                                type="button"
+                                @click="goToConstraintSignPage"
+                                :disabled="!selectedConstraintTemplate"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                準備完了
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
         <!-- 前撮り情報追加モーダル -->
         <transition name="modal">
             <div
@@ -1908,6 +2042,7 @@ import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Canvas, FabricImage, PencilBrush } from 'fabric';
+import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue';
 
 const props = defineProps({
     customer: Object,
@@ -1924,6 +2059,7 @@ const props = defineProps({
     availablePhotoSlots: Array,
     userShops: Array,
     customerTags: Array,
+    constraintTemplates: Array,
 });
 
 const page = usePage();
@@ -1955,6 +2091,8 @@ const showPhotoMemoModal = ref(false);
 const showDeleteConfirmModal = ref(false);
 const showTagModal = ref(false);
 const editingTag = ref(null);
+const showConstraintModal = ref(false);
+const editingConstraint = ref(null);
 
 // 手書きメモ用 Fabric
 const photoMemoCanvasWrap = ref(null);
@@ -2006,6 +2144,30 @@ const customerForm = useForm({
     postal_code: props.customer.postal_code || '',
     address: props.customer.address || '',
     remarks: props.customer.remarks || '',
+});
+
+// 制約テンプレート・顧客制約
+const constraintTemplatesList = computed(() => props.constraintTemplates || []);
+const customerConstraintsList = computed(() => {
+    const list = props.customer?.constraints ?? [];
+    return Array.isArray(list) ? list : [];
+});
+const selectedConstraintTemplate = computed(() => {
+    const id = constraintForm.constraint_template_id;
+    if (!id) return null;
+    return constraintTemplatesList.value.find((t) => t.id == id) || null;
+});
+const constraintModalStaff = computed(() => {
+    const t = selectedConstraintTemplate.value;
+    return t?.staff ?? [];
+});
+
+const constraintForm = useForm({
+    constraint_template_id: '',
+    signed_at: '',
+    signature_image: null,
+    explainer_user_id: null,
+    check_values: {},
 });
 
 // 成約追加フォーム
@@ -2450,6 +2612,59 @@ const storeContract = () => {
             shopUsers.value = [];
         },
     });
+};
+
+// 制約モーダル
+const getTodayDateString = () => {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+
+const openAddConstraintModal = () => {
+    editingConstraint.value = null;
+    constraintForm.reset();
+    constraintForm.constraint_template_id = constraintTemplatesList.value[0]?.id ?? '';
+    constraintForm.signed_at = getTodayDateString();
+    constraintForm.check_values = {};
+    constraintForm.signature_image = null;
+    showConstraintModal.value = true;
+};
+
+const openEditConstraintModal = (cc) => {
+    // 編集時は署名ページへ直接遷移
+    const tplId = cc.constraint_template_id ?? cc.constraintTemplateId;
+    const checkValues = cc.check_values || cc.checkValues || {};
+    const signedAt = cc.signed_at ? (typeof cc.signed_at === 'string' ? cc.signed_at.split('T')[0] : cc.signed_at) : getTodayDateString();
+    const explainerId = cc.explainer_user_id ?? cc.explainerUserId ?? '';
+
+    // 署名ページへ遷移（編集の場合も同じページで既存情報を表示）
+    const params = new URLSearchParams({
+        template_id: tplId,
+        signed_at: signedAt,
+        explainer_user_id: explainerId || '',
+        check_values: JSON.stringify(checkValues),
+        edit_id: cc.id,
+    });
+    router.visit(route('admin.customers.constraints.sign', props.customer.id) + '?' + params.toString());
+};
+
+const closeConstraintModal = () => {
+    showConstraintModal.value = false;
+    editingConstraint.value = null;
+};
+
+const goToConstraintSignPage = () => {
+    if (!constraintForm.constraint_template_id) return;
+
+    const params = new URLSearchParams({
+        template_id: constraintForm.constraint_template_id,
+        signed_at: constraintForm.signed_at || getTodayDateString(),
+        explainer_user_id: constraintForm.explainer_user_id || '',
+        check_values: JSON.stringify(constraintForm.check_values || {}),
+    });
+
+    closeConstraintModal();
+    router.visit(route('admin.customers.constraints.sign', props.customer.id) + '?' + params.toString());
 };
 
 // 成約情報更新

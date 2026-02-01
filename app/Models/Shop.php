@@ -80,5 +80,13 @@ class Shop extends Model
     {
         return $this->belongsToMany(PhotoSlot::class, 'photo_slot_shop');
     }
+
+    /**
+     * 制約テンプレートとの多対多リレーション
+     */
+    public function constraintTemplates()
+    {
+        return $this->belongsToMany(ConstraintTemplate::class, 'constraint_template_shop');
+    }
 }
 

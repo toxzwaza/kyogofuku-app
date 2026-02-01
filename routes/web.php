@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\PhotoSlotController as AdminPhotoSlotController;
 use App\Http\Controllers\Admin\PhotoStudioController as AdminPhotoStudioController;
 use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagController;
+use App\Http\Controllers\Admin\ConstraintTemplateController as AdminConstraintTemplateController;
 use App\Http\Controllers\Admin\SlideshowController as AdminSlideshowController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineTestController;
@@ -189,7 +190,18 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::delete('/customers/{customer}/photos/{photo}', [AdminCustomerController::class, 'destroyCustomerPhoto'])->name('customers.photos.destroy');
     Route::post('/customers/{customer}/tags', [AdminCustomerController::class, 'attachTag'])->name('customers.attach-tag');
     Route::delete('/customers/{customer}/tags/{customerTag}', [AdminCustomerController::class, 'detachTag'])->name('customers.detach-tag');
+    Route::get('/customers/{customer}/constraints/sign', [AdminCustomerController::class, 'constraintSignForm'])->name('customers.constraints.sign');
+    Route::post('/customers/{customer}/constraints', [AdminCustomerController::class, 'storeCustomerConstraint'])->name('customers.constraints.store');
+    Route::put('/customers/{customer}/constraints/{customerConstraint}', [AdminCustomerController::class, 'updateCustomerConstraint'])->name('customers.constraints.update');
     Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])->name('customers.destroy');
+    
+    // 制約テンプレート管理
+    Route::get('/constraint-templates', [AdminConstraintTemplateController::class, 'index'])->name('constraint-templates.index');
+    Route::get('/constraint-templates/create', [AdminConstraintTemplateController::class, 'create'])->name('constraint-templates.create');
+    Route::post('/constraint-templates', [AdminConstraintTemplateController::class, 'store'])->name('constraint-templates.store');
+    Route::get('/constraint-templates/{constraintTemplate}/edit', [AdminConstraintTemplateController::class, 'edit'])->name('constraint-templates.edit');
+    Route::put('/constraint-templates/{constraintTemplate}', [AdminConstraintTemplateController::class, 'update'])->name('constraint-templates.update');
+    Route::delete('/constraint-templates/{constraintTemplate}', [AdminConstraintTemplateController::class, 'destroy'])->name('constraint-templates.destroy');
     
     // 顧客タグ管理
     Route::get('/customer-tags', [AdminCustomerTagController::class, 'index'])->name('customer-tags.index');

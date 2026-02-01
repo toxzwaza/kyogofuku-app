@@ -64,4 +64,12 @@ class Customer extends Model
     {
         return $this->hasMany(CustomerNote::class);
     }
+
+    /**
+     * 顧客制約とのリレーション
+     */
+    public function constraints()
+    {
+        return $this->hasMany(CustomerConstraint::class);
+    }
 }
