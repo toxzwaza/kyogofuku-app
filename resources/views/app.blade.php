@@ -4,6 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1f2937">
+    <link rel="manifest" href="/build/manifest.webmanifest">
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
