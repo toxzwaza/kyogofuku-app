@@ -674,12 +674,7 @@
                               </div>
                               <div class="flex space-x-2 ml-4">
                                 <Link
-                                  :href="
-                                    route(
-                                      'admin.reservations.show',
-                                      reservation.id
-                                    )
-                                  "
+                                  :href="getReservationShowUrl(reservation.id)"
                                   class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
                                 >
                                   詳細
@@ -862,7 +857,7 @@
                     <!-- 操作ボタン -->
                     <div class="flex space-x-2">
                       <Link
-                        :href="route('admin.reservations.show', reservation.id)"
+                        :href="getReservationShowUrl(reservation.id)"
                         class="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
                       >
                         <svg
@@ -1467,9 +1462,7 @@
                             class="px-6 py-4 whitespace-nowrap text-sm font-medium"
                           >
                             <Link
-                              :href="
-                                route('admin.reservations.show', reservation.id)
-                              "
+                              :href="getReservationShowUrl(reservation.id)"
                               class="text-indigo-600 hover:text-indigo-900 mr-4"
                             >
                               詳細
@@ -1657,9 +1650,7 @@
                         class="px-6 py-4 whitespace-nowrap text-sm font-medium"
                       >
                         <Link
-                          :href="
-                            route('admin.reservations.show', reservation.id)
-                          "
+                          :href="getReservationShowUrl(reservation.id)"
                           class="text-indigo-600 hover:text-indigo-900 mr-4"
                         >
                           詳細
@@ -2215,6 +2206,20 @@ const filterReservationTime = ref(initialTime);
 // 並べ替え用のstate（デフォルトは新しい順）
 const sortDateOrder = ref("asc");
 const sortTimeOrder = ref("asc");
+
+// 予約詳細へのURL（絞り込み状態をクエリで渡す）
+const getReservationShowUrl = (reservationId) => {
+  const params = {};
+  if (filterVenueId.value) params.venue_id = filterVenueId.value;
+  if (filterReservationDate.value && filterReservationTime.value) {
+    params.reservation_datetime = `${filterReservationDate.value} ${filterReservationTime.value}:00`;
+  } else if (filterReservationDate.value) {
+    params.reservation_datetime = filterReservationDate.value;
+  }
+  const query = new URLSearchParams(params).toString();
+  const base = route("admin.reservations.show", reservationId);
+  return query ? `${base}?${query}` : base;
+};
 
 // 選択可能な時間リスト（会場が選択されている場合、その会場の時間のみ表示）
 const availableTimeslots = computed(() => {

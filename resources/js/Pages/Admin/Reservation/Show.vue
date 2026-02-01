@@ -46,7 +46,7 @@
           <ActionButton
             variant="back"
             label="予約一覧に戻る"
-            :href="route('admin.events.reservations.index', reservation.event_id)"
+            :href="indexBackUrl"
           />
         </div>
       </div>
@@ -1473,6 +1473,18 @@ const props = defineProps({
   currentUser: Object,
   userShops: Array,
   eventShops: Array,
+  indexFilters: {
+    type: Object,
+    default: () => ({}),
+  },
+});
+
+// 予約一覧への戻りURL（URLのクエリから絞り込みを取得し維持）
+const indexQueryFromUrl = ref("");
+const indexBackUrl = computed(() => {
+  const base = route("admin.events.reservations.index", props.reservation?.event_id);
+  const search = indexQueryFromUrl.value;
+  return search ? `${base}?${search}` : base;
 });
 
 const formatDateTime = (datetime) => {
@@ -1983,6 +1995,12 @@ const sendReplyEmail = () => {
 
 // 初期化
 onMounted(() => {
+  const params = new URLSearchParams(window.location.search);
+  const relevant = {};
+  if (params.has("venue_id")) relevant.venue_id = params.get("venue_id");
+  if (params.has("reservation_datetime")) relevant.reservation_datetime = params.get("reservation_datetime");
+  indexQueryFromUrl.value = new URLSearchParams(relevant).toString();
+
   // 顧客未紐づけ時: 顧客名検索のデフォルト値にお名前（予約者名）を格納し、検索実行して結果を表示
   if (!props.reservation?.customer && props.reservation?.name) {
     customerSearchName.value = props.reservation.name;

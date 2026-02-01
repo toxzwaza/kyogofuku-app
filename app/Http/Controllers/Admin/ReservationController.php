@@ -60,7 +60,11 @@ class ReservationController extends Controller
             }
         }
         
-        $reservations = $reservationsQuery->orderBy('created_at', 'desc')->get()->map(function ($reservation) {
+        $reservations = $reservationsQuery
+            ->orderBy('cancel_flg', 'asc')
+            ->orderBy('reservation_datetime', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()->map(function ($reservation) {
             return [
                 'id' => $reservation->id,
                 'name' => $reservation->name,
@@ -169,6 +173,7 @@ class ReservationController extends Controller
                 }
                 
                 $timeslotReservations = (clone $timeslotReservationsQuery)
+                    ->orderBy('cancel_flg', 'asc')
                     ->orderBy('created_at', 'asc')
                     ->get();
                 
@@ -333,9 +338,14 @@ class ReservationController extends Controller
     /**
      * 予約詳細を表示
      */
-    public function show(EventReservation $reservation)
+    public function show(Request $request, EventReservation $reservation)
     {
         $reservation->load(['event', 'venue', 'customer', 'notes.user', 'statusUpdatedBy', 'schedule.user', 'schedule.participantUsers', 'emailThreads.emails']);
+
+        $indexFilters = array_filter([
+            'venue_id' => $request->query('venue_id'),
+            'reservation_datetime' => $request->query('reservation_datetime'),
+        ]);
         
         $currentUser = auth()->user();
         $userShops = $currentUser ? $currentUser->shops()
@@ -392,6 +402,7 @@ class ReservationController extends Controller
         return Inertia::render('Admin/Reservation/Show', [
             'reservation' => $reservation,
             'event' => $reservation->event,
+            'indexFilters' => $indexFilters,
             'venues' => $reservation->event->venues()->where('is_active', true)->get(),
             'notes' => $reservation->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'schedule' => $reservation->schedule ? [
@@ -550,9 +561,16 @@ class ReservationController extends Controller
 
     /**
      * 予約をキャンセル（論理削除）
+     * スケジュール登録済みの場合は先に削除（Googleカレンダーからも解除）
      */
     public function destroy(Request $request, EventReservation $reservation)
     {
+        $reservation->load('schedule');
+
+        if ($reservation->schedule) {
+            $reservation->schedule->delete();
+        }
+
         $reservation->update([
             'cancel_flg' => true,
             'status' => 'キャンセル済み',
@@ -690,6 +708,7 @@ class ReservationController extends Controller
 
     /**
      * 予約ステータスを更新
+     * キャンセル済みに変更する場合、スケジュールがあれば削除（Googleカレンダーからも解除）
      */
     public function updateStatus(Request $request, EventReservation $reservation)
     {
@@ -698,10 +717,23 @@ class ReservationController extends Controller
         ]);
 
         $oldStatus = $reservation->status;
-        $reservation->update([
-            'status' => $validated['status'],
-            'status_updated_by_user_id' => auth()->id(),
-        ]);
+
+        if ($validated['status'] === 'キャンセル済み') {
+            $reservation->load('schedule');
+            if ($reservation->schedule) {
+                $reservation->schedule->delete();
+            }
+            $reservation->update([
+                'status' => $validated['status'],
+                'status_updated_by_user_id' => auth()->id(),
+                'cancel_flg' => true,
+            ]);
+        } else {
+            $reservation->update([
+                'status' => $validated['status'],
+                'status_updated_by_user_id' => auth()->id(),
+            ]);
+        }
 
         // ステータス変更をactivity_logsに記録
         ActivityLog::create([
