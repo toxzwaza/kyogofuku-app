@@ -974,6 +974,7 @@ class CustomerController extends Controller
                 'id' => $template->id,
                 'name' => $template->name,
                 'body' => $template->body,
+                'display_settings' => $template->getDisplaySettings(),
             ],
             'staff' => $staff->map(fn($u) => ['id' => $u->id, 'name' => $u->name]),
             'signedAt' => $request->query('signed_at', date('Y-m-d')),

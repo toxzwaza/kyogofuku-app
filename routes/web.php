@@ -199,6 +199,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/constraint-templates', [AdminConstraintTemplateController::class, 'index'])->name('constraint-templates.index');
     Route::get('/constraint-templates/create', [AdminConstraintTemplateController::class, 'create'])->name('constraint-templates.create');
     Route::post('/constraint-templates', [AdminConstraintTemplateController::class, 'store'])->name('constraint-templates.store');
+    Route::match(['get', 'post'], '/constraint-templates/preview', [AdminConstraintTemplateController::class, 'preview'])->name('constraint-templates.preview');
     Route::get('/constraint-templates/{constraintTemplate}/edit', [AdminConstraintTemplateController::class, 'edit'])->name('constraint-templates.edit');
     Route::put('/constraint-templates/{constraintTemplate}', [AdminConstraintTemplateController::class, 'update'])->name('constraint-templates.update');
     Route::delete('/constraint-templates/{constraintTemplate}', [AdminConstraintTemplateController::class, 'destroy'])->name('constraint-templates.destroy');

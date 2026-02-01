@@ -6,53 +6,54 @@
         <nav class="bg-white border-b border-gray-200 print:hidden">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16 items-center">
-                    <h1 class="text-xl font-semibold text-gray-800">{{ isEditMode ? '制約署名（編集）' : '制約署名' }}</h1>
+                    <h1 class="text-xl font-semibold text-gray-800">{{ isPreviewMode ? '印刷プレビュー' : (isEditMode ? '制約署名（編集）' : '制約署名') }}</h1>
                     <Link
-                        :href="route('admin.customers.show', customer.id)"
+                        :href="isPreviewMode ? backUrl : route('admin.customers.show', customer.id)"
                         class="text-gray-600 hover:text-gray-800 text-sm"
                     >
-                        顧客詳細に戻る
+                        {{ isPreviewMode ? '編集に戻る' : '顧客詳細に戻る' }}
                     </Link>
                 </div>
             </div>
         </nav>
 
-        <div class="py-6 print:py-0">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 print:max-w-none print:px-8">
+        <div class="py-6 print:py-0 print:min-h-0">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 print:max-w-none print:px-0 print:mx-0">
                 <!-- 印刷用コンテンツ -->
-                <div ref="printArea" class="bg-white shadow-lg rounded-lg print:shadow-none print:rounded-none">
+                <div ref="printArea" class="bg-white shadow-lg rounded-lg print:shadow-none print:rounded-none print-a4-container">
                     <!-- A4用紙スタイル -->
-                    <div class="p-8 print:p-6 a4-page">
+                    <div class="a4-page" :style="pageContainerStyle">
                         <!-- 顧客情報 -->
-                        <div class="mb-4 pb-4 border-b border-gray-200 print:mb-3 print:pb-2">
-                            <p class="text-sm text-gray-600">顧客名: <span class="font-semibold text-gray-900">{{ customer.name }}</span>
+                        <div class="mb-4 pb-4 border-b border-gray-200 print:mb-1 print:pb-1">
+                            <p class="text-sm text-gray-600" :style="dsFontStyle">顧客名: <span class="font-semibold text-gray-900">{{ customer.name }}</span>
                                 <span v-if="customer.kana" class="ml-2 text-gray-500">({{ customer.kana }})</span>
                             </p>
                         </div>
 
                         <!-- 制約タイトル -->
-                        <h2 class="text-xl font-bold text-center text-gray-900 mb-6 print:text-lg print:mb-4">{{ template.name }}</h2>
+                        <h2 class="text-xl font-bold text-center text-gray-900 mb-6 print:mb-2" :style="dsTitleStyle">{{ template.name }}</h2>
 
                         <!-- 制約本文（チェックボックス付き） -->
-                        <div class="constraint-body prose prose-sm max-w-none text-gray-800 mb-6 print:text-xs print:mb-4">
+                        <div class="constraint-body prose prose-sm max-w-none text-gray-800 mb-6 print:mb-2" :style="dsFontStyle">
                             <ConstraintBodyWithChecks
                                 :body="template.body"
                                 :check-values="form.check_values"
                                 @update:check-values="(v) => form.check_values = v"
                                 :readonly="isPrinting"
+                                :display-settings="displaySettings"
                             />
                         </div>
 
                         <!-- 同意・署名セクション -->
-                        <div class="border-t border-gray-200 pt-6 print:pt-4">
-                            <div class="grid grid-cols-2 gap-6 mb-6 print:gap-4 print:mb-4">
+                        <div class="border-t border-gray-200 pt-6 print:pt-2">
+                            <div class="grid grid-cols-2 gap-6 mb-6 print:gap-2 print:mb-2">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1 print:text-xs">日付</label>
-                                    <p class="text-gray-900 font-semibold print:text-sm">{{ formatDate(form.signed_at) }}</p>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1" :style="dsFontStyle">日付</label>
+                                    <p class="text-gray-900 font-semibold" :style="dsFontStyle">{{ formatDate(form.signed_at) }}</p>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1 print:text-xs">規約説明者</label>
-                                    <p class="text-gray-900 font-semibold print:text-sm">{{ explainerDisplayName || '-' }}</p>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1" :style="dsFontStyle">規約説明者</label>
+                                    <p class="text-gray-900 font-semibold" :style="dsFontStyle">{{ explainerDisplayName || '-' }}</p>
                                 </div>
                             </div>
 
@@ -64,12 +65,12 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                         </svg>
                                     </div>
-                                    <label class="text-sm font-semibold text-gray-700 print:text-xs">ご署名</label>
+                                    <label class="text-sm font-semibold text-gray-700" :style="dsFontStyle">ご署名</label>
                                 </div>
                                 <div
                                     ref="signatureWrap"
-                                    class="signature-pad relative overflow-hidden rounded-xl print:rounded-lg"
-                                    style="height: 120px;"
+                                    class="signature-pad relative overflow-hidden rounded-xl print:rounded"
+                                    :style="signaturePadStyle"
                                 >
                                     <!-- 背景パターン（署名エリアの視覚的ガイド） -->
                                     <div
@@ -110,7 +111,7 @@
                             </div>
 
                             <!-- 顧客名表示（様付き） -->
-                            <div class="text-right text-gray-700 print:text-sm">
+                            <div class="text-right text-gray-700" :style="dsFontStyle">
                                 <span class="font-semibold">{{ customer.name }}</span> 様
                             </div>
                         </div>
@@ -130,6 +131,7 @@
                         印刷
                     </button>
                     <button
+                        v-if="!isPreviewMode"
                         type="button"
                         @click="saveConstraint"
                         :disabled="form.processing"
@@ -163,7 +165,43 @@ const props = defineProps({
     checkValues: Object,
     editId: [String, Number],
     existingSignature: String,
+    isPreviewMode: { type: Boolean, default: false },
+    backUrl: String,
 });
+
+const DEFAULT_DISPLAY_SETTINGS = {
+    padding_mm: 6,
+    line_height: 1.25,
+    font_size_px: 8,
+    signature_height_px: 80,
+    checkbox_size_px: 10,
+};
+
+const displaySettings = computed(() => ({
+    ...DEFAULT_DISPLAY_SETTINGS,
+    ...(props.template?.display_settings || {}),
+}));
+
+const pageContainerStyle = computed(() => {
+    const p = displaySettings.value.padding_mm;
+    return {
+        padding: `${p}mm`,
+    };
+});
+
+const dsFontStyle = computed(() => ({
+    fontSize: `${displaySettings.value.font_size_px}px`,
+    lineHeight: displaySettings.value.line_height,
+}));
+
+const dsTitleStyle = computed(() => ({
+    fontSize: `${Math.min(displaySettings.value.font_size_px + 2, 14)}px`,
+    lineHeight: displaySettings.value.line_height,
+}));
+
+const signaturePadStyle = computed(() => ({
+    height: `${displaySettings.value.signature_height_px}px`,
+}));
 
 const isEditMode = computed(() => !!props.editId);
 
@@ -203,7 +241,7 @@ const initSignatureCanvas = () => {
     if (!wrap || !canvasEl) return;
 
     const w = wrap.clientWidth || 400;
-    const h = 100;
+    const h = displaySettings.value.signature_height_px || 100;
 
     const canvas = new Canvas(canvasEl, {
         width: w,
@@ -343,30 +381,38 @@ onBeforeUnmount(() => {
     }
 }
 
-/* A4サイズ用印刷スタイル */
+/* A4サイズ用印刷スタイル - display_settingsの値がインラインで適用されるため、上書きしない */
 @media print {
     @page {
-        size: A4;
-        margin: 10mm;
+        size: A4 portrait;
+        margin: 6mm;
     }
 
-    body {
+    html, body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100%;
+    }
+
+    .print-a4-container {
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        page-break-inside: avoid;
     }
 
     .a4-page {
         width: 100%;
-        min-height: auto;
         page-break-inside: avoid;
     }
 
-    /* チェックボックスを印刷で表示 */
+    /* チェックボックスを印刷可能に（サイズはdisplay_settingsのインラインスタイルに任せる） */
     input[type="checkbox"] {
         -webkit-appearance: checkbox !important;
         appearance: checkbox !important;
-        width: 12px;
-        height: 12px;
     }
 
     input[type="checkbox"]:checked {
@@ -388,11 +434,11 @@ onBeforeUnmount(() => {
 }
 
 .constraint-body :deep(h1) {
-    font-size: 1.25rem;
+    font-size: 1.15em;
 }
 
 .constraint-body :deep(h2) {
-    font-size: 1.1rem;
+    font-size: 1.08em;
 }
 
 .constraint-body :deep(ul) {
@@ -415,7 +461,7 @@ onBeforeUnmount(() => {
 .constraint-body :deep(td) {
     border: 1px solid #d1d5db;
     padding: 0.25em 0.5em;
-    font-size: 0.875rem;
+    font-size: inherit;
 }
 
 .constraint-body :deep(th) {
@@ -428,34 +474,5 @@ onBeforeUnmount(() => {
     margin: 1em 0;
 }
 
-@media print {
-    .constraint-body :deep(p) {
-        margin: 0.2em 0;
-        font-size: 10px;
-    }
-
-    .constraint-body :deep(h1),
-    .constraint-body :deep(h2),
-    .constraint-body :deep(h3) {
-        margin-top: 0.5em;
-        margin-bottom: 0.25em;
-    }
-
-    .constraint-body :deep(h1) {
-        font-size: 14px;
-    }
-
-    .constraint-body :deep(h2) {
-        font-size: 12px;
-    }
-
-    .constraint-body :deep(table) {
-        font-size: 9px;
-    }
-
-    .constraint-body :deep(th),
-    .constraint-body :deep(td) {
-        padding: 2px 4px;
-    }
-}
+/* 印刷時もdisplay_settings（インラインスタイル）を尊重するため、フォントサイズ等の上書きを削除 */
 </style>

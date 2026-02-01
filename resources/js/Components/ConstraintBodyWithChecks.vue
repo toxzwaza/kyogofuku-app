@@ -1,9 +1,13 @@
 <template>
-    <div class="constraint-body-with-checks">
+    <div
+        class="constraint-body-with-checks"
+        :style="wrapperStyle"
+    >
         <template v-for="(seg, i) in segments" :key="i">
             <div v-if="seg.type === 'markdown'" class="markdown-segment" v-html="seg.html"></div>
             <label v-else-if="seg.type === 'checkbox'" class="flex items-center gap-2 py-1 checkbox-segment" :class="{ 'cursor-pointer': !readonly }">
                 <input
+                    :style="checkboxStyle"
                     type="checkbox"
                     :checked="!!(checkValues && checkValues[seg.label])"
                     @change="!readonly && onCheckChange(seg.label, $event.target.checked)"
@@ -24,9 +28,27 @@ const props = defineProps({
     body: { type: String, default: '' },
     checkValues: { type: Object, default: () => ({}) },
     readonly: { type: Boolean, default: false },
+    /** 表示設定 { font_size_px, line_height, checkbox_size_px } */
+    displaySettings: { type: Object, default: null },
 });
 
 const emit = defineEmits(['update:checkValues']);
+
+const wrapperStyle = computed(() => {
+    const s = props.displaySettings;
+    if (!s) return {};
+    const style = {};
+    if (s.font_size_px) style.fontSize = `${s.font_size_px}px`;
+    if (s.line_height) style.lineHeight = String(s.line_height);
+    return style;
+});
+
+const checkboxStyle = computed(() => {
+    const s = props.displaySettings;
+    if (!s?.checkbox_size_px) return {};
+    const px = s.checkbox_size_px;
+    return { width: `${px}px`, height: `${px}px`, minWidth: `${px}px` };
+});
 
 const onCheckChange = (label, checked) => {
     emit('update:checkValues', { ...(props.checkValues || {}), [label]: checked });
