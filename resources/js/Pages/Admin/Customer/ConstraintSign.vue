@@ -58,28 +58,54 @@
 
                             <!-- 署名欄 -->
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2 print:text-xs print:mb-1">ご署名</label>
+                                <div class="flex items-center gap-2 mb-2 print:mb-1">
+                                    <div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 print:bg-transparent print:text-black">
+                                        <svg class="w-4 h-4 print:w-3 print:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                    </div>
+                                    <label class="text-sm font-semibold text-gray-700 print:text-xs">ご署名</label>
+                                </div>
                                 <div
                                     ref="signatureWrap"
-                                    class="border-2 border-gray-300 rounded-lg bg-white print:border print:border-gray-400"
-                                    :class="{ 'border-dashed': !form.signature_image }"
-                                    style="height: 100px;"
+                                    class="signature-pad relative overflow-hidden rounded-xl print:rounded-lg"
+                                    style="height: 120px;"
                                 >
+                                    <!-- 背景パターン（署名エリアの視覚的ガイド） -->
+                                    <div
+                                        v-if="!isPrinting"
+                                        class="absolute inset-0 pointer-events-none signature-guide"
+                                        aria-hidden="true"
+                                    />
                                     <!-- 印刷時: 署名画像を表示 -->
                                     <img
                                         v-if="isPrinting && form.signature_image"
                                         :src="form.signature_image"
                                         alt="署名"
-                                        class="h-full w-auto mx-auto object-contain"
+                                        class="h-full w-auto mx-auto object-contain relative z-10"
                                     />
                                     <!-- 通常時: キャンバス -->
-                                    <canvas v-show="!isPrinting" ref="signatureCanvas" />
+                                    <canvas v-show="!isPrinting" ref="signatureCanvas" class="relative z-10" />
+                                    <!-- 未署名時のプレースホルダー -->
+                                    <div
+                                        v-if="!isPrinting && !hasSignature"
+                                        class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+                                    >
+                                        <span class="text-gray-400 text-sm font-medium tracking-wider">ここに署名してください</span>
+                                    </div>
                                 </div>
-                                <div class="flex justify-between items-center mt-2 print:hidden">
-                                    <button type="button" @click="clearSignature" class="text-sm text-indigo-600 hover:text-indigo-800">
+                                <div class="flex justify-between items-center mt-3 print:hidden">
+                                    <button
+                                        type="button"
+                                        @click="clearSignature"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
                                         署名をクリア
                                     </button>
-                                    <span class="text-xs text-gray-500">上記の枠内に手書きで署名してください</span>
+                                    <span class="text-xs text-gray-500 font-medium">※マウスまたはタッチで枠内に描いてください</span>
                                 </div>
                             </div>
 
@@ -141,6 +167,9 @@ const props = defineProps({
 
 const isEditMode = computed(() => !!props.editId);
 
+const hasDrawnSignature = ref(false);
+const hasSignature = computed(() => form.signature_image || hasDrawnSignature.value);
+
 const form = useForm({
     constraint_template_id: props.template.id,
     signed_at: props.signedAt || new Date().toISOString().split('T')[0],
@@ -185,13 +214,16 @@ const initSignatureCanvas = () => {
     fabricCanvas.value = canvas;
 
     const brush = new PencilBrush(canvas);
-    brush.color = '#000000';
+    brush.color = '#1e3a5f';
     brush.width = 2;
     canvas.freeDrawingBrush = brush;
     canvas.isDrawingMode = true;
 
+    canvas.on('path:created', () => { hasDrawnSignature.value = true; });
+
     // 既存署名がある場合は読み込む
     if (props.existingSignature) {
+        hasDrawnSignature.value = true;
         import('fabric').then(({ FabricImage }) => {
             FabricImage.fromURL(props.existingSignature).then((img) => {
                 img.set({ selectable: false, evented: false });
@@ -221,6 +253,7 @@ const clearSignature = () => {
         canvas.clear();
         canvas.backgroundColor = '#ffffff';
         canvas.requestRenderAll();
+        hasDrawnSignature.value = false;
     }
 };
 
@@ -279,6 +312,37 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 署名欄スタイル */
+.signature-pad {
+    background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%);
+    border: 2px solid #e5e7eb;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.signature-pad:focus-within {
+    border-color: #6366f1;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04), 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.signature-guide {
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 39px,
+        rgba(99, 102, 241, 0.04) 39px,
+        rgba(99, 102, 241, 0.04) 40px
+    );
+}
+
+@media print {
+    .signature-pad {
+        border: 1px solid #9ca3af;
+        background: #fff;
+        box-shadow: none;
+    }
+}
+
 /* A4サイズ用印刷スタイル */
 @media print {
     @page {

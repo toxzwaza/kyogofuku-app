@@ -1394,12 +1394,29 @@
                                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                         />
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者</label>
-                                        <select v-model="constraintForm.explainer_user_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                                            <option :value="null">選択してください</option>
-                                            <option v-for="u in constraintModalStaff" :key="u.id" :value="u.id">{{ u.name }}</option>
-                                        </select>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者（店舗）</label>
+                                            <select
+                                                v-model="constraintExplainerShopId"
+                                                @change="onConstraintExplainerShopChange"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            >
+                                                <option value="">店舗を選択</option>
+                                                <option v-for="s in constraintModalShops" :key="s.id" :value="s.id">{{ s.name }}</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者（スタッフ）</label>
+                                            <select
+                                                v-model="constraintForm.explainer_user_id"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                :disabled="!constraintExplainerShopId"
+                                            >
+                                                <option :value="null">{{ constraintExplainerShopId ? 'スタッフを選択' : 'まず店舗を選択してください' }}</option>
+                                                <option v-for="u in constraintModalStaff" :key="u.id" :value="u.id">{{ u.name }}</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                                 <p class="text-xs text-gray-500">※「準備完了」をクリックすると、署名用ページに移動します。署名はそちらで行います。</p>
@@ -2147,6 +2164,14 @@ const customerForm = useForm({
 });
 
 // 制約テンプレート・顧客制約
+const constraintForm = useForm({
+    constraint_template_id: '',
+    signed_at: '',
+    signature_image: null,
+    explainer_user_id: null,
+    check_values: {},
+});
+
 const constraintTemplatesList = computed(() => props.constraintTemplates || []);
 const customerConstraintsList = computed(() => {
     const list = props.customer?.constraints ?? [];
@@ -2157,18 +2182,43 @@ const selectedConstraintTemplate = computed(() => {
     if (!id) return null;
     return constraintTemplatesList.value.find((t) => t.id == id) || null;
 });
-const constraintModalStaff = computed(() => {
+const constraintModalShops = computed(() => {
     const t = selectedConstraintTemplate.value;
-    return t?.staff ?? [];
+    return t?.shops ?? [];
 });
 
-const constraintForm = useForm({
-    constraint_template_id: '',
-    signed_at: '',
-    signature_image: null,
-    explainer_user_id: null,
-    check_values: {},
-});
+const constraintExplainerShopId = ref('');
+const constraintModalStaff = ref([]);
+
+const loadConstraintExplainerStaff = async (shopId) => {
+    if (!shopId) {
+        constraintModalStaff.value = [];
+        constraintForm.explainer_user_id = null;
+        return;
+    }
+    try {
+        const response = await axios.get(route('admin.schedules.shop-users'), {
+            params: { shop_id: shopId },
+        });
+        constraintModalStaff.value = response.data || [];
+        if (constraintForm.explainer_user_id && !constraintModalStaff.value.some((u) => u.id === constraintForm.explainer_user_id)) {
+            constraintForm.explainer_user_id = null;
+        }
+    } catch {
+        constraintModalStaff.value = [];
+        constraintForm.explainer_user_id = null;
+    }
+};
+
+const onConstraintExplainerShopChange = () => {
+    loadConstraintExplainerStaff(constraintExplainerShopId.value);
+};
+
+watch(selectedConstraintTemplate, () => {
+    constraintExplainerShopId.value = '';
+    constraintModalStaff.value = [];
+    constraintForm.explainer_user_id = null;
+}, { immediate: false });
 
 // 成約追加フォーム
 const contractForm = useForm({
@@ -2627,6 +2677,8 @@ const openAddConstraintModal = () => {
     constraintForm.signed_at = getTodayDateString();
     constraintForm.check_values = {};
     constraintForm.signature_image = null;
+    constraintExplainerShopId.value = '';
+    constraintModalStaff.value = [];
     showConstraintModal.value = true;
 };
 
