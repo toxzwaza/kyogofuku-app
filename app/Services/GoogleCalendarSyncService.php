@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\GoogleCalendarEventSync;
 use App\Models\Shop;
 use App\Models\StaffSchedule;
-use App\Models\User;
 use Google\Client as GoogleClient;
 use Google\Service\Calendar;
 use Google\Service\Calendar\Event;
@@ -36,29 +35,23 @@ class GoogleCalendarSyncService
         Log::info('[GoogleCalendar] 同期対象店舗数', [
             'schedule_id' => $schedule->id,
             'shops_count' => count($shopsToSync),
-            'shop_ids' => collect($shopsToSync)->pluck('shop.id')->toArray(),
+            'shop_ids' => collect($shopsToSync)->pluck('id')->toArray(),
         ]);
 
         if (empty($shopsToSync)) {
-            Log::warning('[GoogleCalendar] 同期対象店舗なし（参加者がGoogle連携済みかつ店舗所属でない可能性）', [
+            Log::warning('[GoogleCalendar] 同期対象店舗なし（担当者の所属店舗がない、またはGOOGLE_CALENDAR_REFRESH_TOKEN未設定の可能性）', [
                 'schedule_id' => $schedule->id,
             ]);
         }
 
-        foreach ($shopsToSync as $shopData) {
-            $shop = $shopData['shop'];
-            $tokenUser = $shopData['token_user'];
-            if (!$tokenUser) {
-                continue;
-            }
-
+        foreach ($shopsToSync as $shop) {
             try {
                 Log::info('[GoogleCalendar] 店舗カレンダーへ同期実行', [
                     'schedule_id' => $schedule->id,
                     'shop_id' => $shop->id,
                     'shop_name' => $shop->name,
                 ]);
-                $this->syncToShopCalendar($schedule, $shop, $tokenUser);
+                $this->syncToShopCalendar($schedule, $shop);
                 Log::info('[GoogleCalendar] 同期成功', ['schedule_id' => $schedule->id, 'shop_id' => $shop->id]);
             } catch (\Throwable $e) {
                 Log::error('[GoogleCalendar] 同期失敗', [
@@ -87,13 +80,12 @@ class GoogleCalendarSyncService
             return;
         }
 
-        // 担当者（participantUsers）のキャッシュをクリアしてDBから再取得
-        // （Controllerで participantUsers()->sync() 後に update() が呼ばれるが、
-        //  Observer 発火時点で $schedule のリレーションは古いままのため）
-        $schedule->unsetRelation('participantUsers');
+        // DBから最新のスケジュールを再取得（participantUsers()->sync() 後に update() が呼ばれるが、
+        //  Observer 発火時点で $schedule の participantUsers は古いキャッシュの可能性があるため）
+        $schedule = StaffSchedule::with('participantUsers.shops')->findOrFail($schedule->id);
 
         $shopsToSync = $this->getShopsForSchedule($schedule);
-        $targetShopIds = collect($shopsToSync)->pluck('shop.id')->toArray();
+        $targetShopIds = collect($shopsToSync)->pluck('id')->toArray();
         $existingSyncs = GoogleCalendarEventSync::where('staff_schedule_id', $schedule->id)->get();
 
         foreach ($existingSyncs as $sync) {
@@ -101,38 +93,29 @@ class GoogleCalendarSyncService
                 $this->deleteFromShopCalendar($sync);
                 $sync->delete();
             } else {
-                $shopData = collect($shopsToSync)->first(fn ($item) => $item['shop']->id === $sync->shop_id);
-                $tokenUser = $shopData['token_user'] ?? null;
-                if ($tokenUser) {
+                try {
+                    $sync->load('shop');
+                    $this->syncToShopCalendar($schedule, $sync->shop);
+                } catch (\Throwable $e) {
+                    Log::error('Google Calendar update failed', [
+                        'schedule_id' => $schedule->id,
+                        'shop_id' => $sync->shop_id,
+                        'error' => $e->getMessage(),
+                    ]);
                     try {
-                        $this->syncToShopCalendar($schedule, $sync->shop, $tokenUser);
-                    } catch (\Throwable $e) {
-                        Log::error('Google Calendar update failed', [
-                            'schedule_id' => $schedule->id,
-                            'shop_id' => $sync->shop_id,
-                            'error' => $e->getMessage(),
-                        ]);
-                        try {
-                            \App\Jobs\SyncToGoogleCalendarJob::dispatch($schedule, 'sync');
-                        } catch (\Throwable $jobEx) {
-                            Log::warning('[GoogleCalendar] リトライジョブの投入に失敗', ['error' => $jobEx->getMessage()]);
-                        }
+                        \App\Jobs\SyncToGoogleCalendarJob::dispatch($schedule, 'sync');
+                    } catch (\Throwable $jobEx) {
+                        Log::warning('[GoogleCalendar] リトライジョブの投入に失敗', ['error' => $jobEx->getMessage()]);
                     }
                 }
             }
         }
 
-        foreach ($shopsToSync as $shopData) {
-            $shop = $shopData['shop'];
-            $tokenUser = $shopData['token_user'];
-            if (!$tokenUser) {
-                continue;
-            }
-
+        foreach ($shopsToSync as $shop) {
             $hasSync = $existingSyncs->contains('shop_id', $shop->id);
             if (!$hasSync) {
                 try {
-                    $this->syncToShopCalendar($schedule, $shop, $tokenUser);
+                    $this->syncToShopCalendar($schedule, $shop);
                 } catch (\Throwable $e) {
                     Log::error('Google Calendar insert failed', [
                         'schedule_id' => $schedule->id,
@@ -191,50 +174,36 @@ class GoogleCalendarSyncService
     }
 
     /**
-     * 参加者の所属店舗を取得（Google連携済みの参加者がいる店舗のみ）
-     * 戻り値: [['shop' => Shop, 'token_user' => User|null], ...]
+     * 担当者の所属店舗を取得（.env の GOOGLE_CALENDAR_REFRESH_TOKEN を使用して同期）
+     * 戻り値: Shop[]
      */
     protected function getShopsForSchedule(StaffSchedule $schedule): array
     {
+        $refreshToken = config('services.google.calendar_refresh_token');
+        if (empty($refreshToken)) {
+            Log::warning('[GoogleCalendar] GOOGLE_CALENDAR_REFRESH_TOKEN が未設定です', ['schedule_id' => $schedule->id]);
+            return [];
+        }
+
         $schedule->load(['participantUsers.shops']);
         $participants = $schedule->participantUsers;
-        $participantsWithGoogle = $participants->filter(
-            fn (User $user) => !empty($user->google_calendar_refresh_token)
-        );
 
-        Log::info('[GoogleCalendar] getShopsForSchedule 参加者情報', [
+        Log::info('[GoogleCalendar] getShopsForSchedule 担当者情報', [
             'schedule_id' => $schedule->id,
             'participants_count' => $participants->count(),
-            'participants_with_google_count' => $participantsWithGoogle->count(),
             'participant_ids' => $participants->pluck('id')->toArray(),
-            'participants_with_google_ids' => $participantsWithGoogle->pluck('id')->toArray(),
             'participant_names' => $participants->pluck('name')->toArray(),
         ]);
 
         if ($participants->isEmpty()) {
-            Log::warning('[GoogleCalendar] 参加者が0人（参加者を追加すると同期されます）', ['schedule_id' => $schedule->id]);
-        }
-
-        foreach ($participants as $p) {
-            $shopIds = $p->shops->pluck('id')->toArray();
-            if (empty($shopIds)) {
-                Log::info('[GoogleCalendar] 参加者が店舗に未所属', [
-                    'participant_id' => $p->id,
-                    'participant_name' => $p->name,
-                    'has_google_token' => !empty($p->google_calendar_refresh_token),
-                ]);
-            }
+            Log::warning('[GoogleCalendar] 担当者が0人（担当者を追加すると同期されます）', ['schedule_id' => $schedule->id]);
+            return [];
         }
 
         $shopsMap = [];
-        foreach ($participantsWithGoogle as $user) {
+        foreach ($participants as $user) {
             foreach ($user->shops as $shop) {
-                if (!isset($shopsMap[$shop->id])) {
-                    $shopsMap[$shop->id] = [
-                        'shop' => $shop,
-                        'token_user' => $user,
-                    ];
-                }
+                $shopsMap[$shop->id] = $shop;
             }
         }
 
@@ -244,9 +213,9 @@ class GoogleCalendarSyncService
     /**
      * 特定店舗のカレンダーにスケジュールを同期
      */
-    protected function syncToShopCalendar(StaffSchedule $schedule, Shop $shop, User $tokenUser): void
+    protected function syncToShopCalendar(StaffSchedule $schedule, Shop $shop): void
     {
-        $client = $this->createAuthenticatedClient($tokenUser);
+        $client = $this->createAuthenticatedClient();
         $service = new Calendar($client);
 
         $calendarId = $shop->google_calendar_id ?: 'primary';
@@ -279,22 +248,11 @@ class GoogleCalendarSyncService
      */
     protected function deleteFromShopCalendar(GoogleCalendarEventSync $sync): void
     {
-        $sync->load('shop');
-        $shop = $sync->shop;
-        if (!$shop) {
+        if (empty(config('services.google.calendar_refresh_token'))) {
             return;
         }
 
-        $tokenUser = $shop->users()
-            ->whereNotNull('google_calendar_refresh_token')
-            ->where('google_calendar_refresh_token', '!=', '')
-            ->first();
-
-        if (!$tokenUser) {
-            return;
-        }
-
-        $client = $this->createAuthenticatedClient($tokenUser);
+        $client = $this->createAuthenticatedClient();
         $service = new Calendar($client);
 
         $service->events->delete(
@@ -304,10 +262,15 @@ class GoogleCalendarSyncService
     }
 
     /**
-     * Google API クライアントを生成（認証済み）
+     * Google API クライアントを生成（.env の GOOGLE_CALENDAR_REFRESH_TOKEN を使用）
      */
-    protected function createAuthenticatedClient(User $user): GoogleClient
+    protected function createAuthenticatedClient(): GoogleClient
     {
+        $refreshToken = config('services.google.calendar_refresh_token');
+        if (empty($refreshToken)) {
+            throw new \RuntimeException('GOOGLE_CALENDAR_REFRESH_TOKEN が設定されていません。');
+        }
+
         $client = new GoogleClient();
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
@@ -322,7 +285,7 @@ class GoogleCalendarSyncService
             $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
         }
 
-        $client->refreshToken($user->google_calendar_refresh_token);
+        $client->refreshToken($refreshToken);
 
         return $client;
     }
