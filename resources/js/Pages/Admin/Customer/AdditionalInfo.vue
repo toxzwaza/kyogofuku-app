@@ -39,19 +39,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">お名前（お嬢様）</label>
-                                <input v-model="form.name_daughter" type="text" class="w-full rounded-lg border-gray-300 text-sm" placeholder="例：村上 飛羽" />
+                                <input v-model="form.name_daughter" type="text" class="w-full rounded-lg border-gray-300 text-sm" placeholder="" />
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">ふりがな（お嬢様）</label>
-                                <input v-model="form.furigana_daughter" type="text" class="w-full rounded-lg border-gray-300 text-sm" placeholder="例：むらかみ とわ" />
+                                <input v-model="form.furigana_daughter" type="text" class="w-full rounded-lg border-gray-300 text-sm" placeholder="" />
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">お名前（お母様）</label>
-                                <input v-model="form.name_mother" type="text" class="w-full rounded-lg border-gray-300 text-sm" placeholder="例：村上 美憂" />
+                                <input v-model="form.name_mother" type="text" class="w-full rounded-lg border-gray-300 text-sm" placeholder="" />
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">ふりがな（お母様）</label>
-                                <input v-model="form.furigana_mother" type="text" class="w-full rounded-lg border-gray-300 text-sm" placeholder="例：むらかみ みゆ" />
+                                <input v-model="form.furigana_mother" type="text" class="w-full rounded-lg border-gray-300 text-sm" placeholder="" />
                             </div>
                         </div>
 
