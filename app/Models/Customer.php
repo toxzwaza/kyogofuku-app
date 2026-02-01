@@ -12,12 +12,13 @@ class Customer extends Model
         'ceremony_area_id', 'phone_number', 'postal_code', 'address',
         'email', 'referred_by_name', 'school_name', 'staff_name',
         'visit_reasons', 'considering_plans',
-        'remarks',
+        'remarks', 'additional_info',
     ];
 
     protected $casts = [
         'visit_reasons' => 'array',
         'considering_plans' => 'array',
+        'additional_info' => 'array',
     ];
 
     public function ceremonyArea()

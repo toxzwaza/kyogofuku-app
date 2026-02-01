@@ -336,6 +336,234 @@ class CustomerController extends Controller
     }
 
     /**
+     * 追加情報（振袖アンケート）入力フォームを表示
+     */
+    public function additionalInfoForm(Customer $customer)
+    {
+        $initial = $this->buildAdditionalInfoInitial($customer);
+        $initial['staff_name'] = auth()->user()?->name ?? '';
+        return Inertia::render('Admin/Customer/AdditionalInfo', [
+            'customer' => $customer->only('id', 'name', 'kana'),
+            'initial' => $initial,
+        ]);
+    }
+
+    /**
+     * 追加情報の初期値（顧客マスタ＋既存 additional_info）を組み立て
+     */
+    private function buildAdditionalInfoInitial(Customer $customer): array
+    {
+        $saved = is_array($customer->additional_info) ? $customer->additional_info : [];
+        $fromCustomer = [];
+
+        $fromCustomer['name_daughter'] = $customer->name ?? '';
+        $fromCustomer['furigana_daughter'] = $customer->kana ?? '';
+        $fromCustomer['name_mother'] = $customer->guardian_name ?? '';
+        $fromCustomer['furigana_mother'] = $customer->guardian_name_kana ?? '';
+
+        $today = now();
+        if (! isset($saved['entry_date_year']) && ! isset($saved['entry_date_month']) && ! isset($saved['entry_date_day'])) {
+            $fromCustomer['entry_date_year'] = (string) $today->year;
+            $fromCustomer['entry_date_month'] = (string) $today->month;
+            $fromCustomer['entry_date_day'] = (string) $today->day;
+        }
+
+        if ($customer->birth_date) {
+            $d = \Carbon\Carbon::parse($customer->birth_date);
+            $fromCustomer['birth_year'] = (string) $d->year;
+            $fromCustomer['birth_month'] = (string) $d->month;
+            $fromCustomer['birth_day'] = (string) $d->day;
+        }
+
+        $fromCustomer['address'] = $customer->address ?? '';
+        $fromCustomer['postal_code'] = $customer->postal_code ?? '';
+        if ($customer->phone_number) {
+            $digits = preg_replace('/\D/', '', $customer->phone_number);
+            $fromCustomer['phone_home_1'] = substr($digits, 0, 3);
+            $fromCustomer['phone_home_2'] = substr($digits, 3, 4);
+            $fromCustomer['phone_home_3'] = substr($digits, 7, 4);
+        }
+        $fromCustomer['visit_reasons'] = $this->getVisitReasonsWithoutOther($customer->visit_reasons ?? []);
+        $fromCustomer['visit_reason_other'] = $this->extractVisitReasonOther($customer->visit_reasons ?? []);
+
+        $initial = array_merge($this->defaultAdditionalInfoKeys(), $fromCustomer, $saved);
+
+        if (isset($initial['sisters']) && is_array($initial['sisters'])) {
+            // already array
+        } elseif (
+            ! empty($initial['sister1_name']) || ! empty($initial['sister2_name']) || ! empty($initial['sister3_name'])
+        ) {
+            $sisters = [];
+            foreach ([1, 2, 3] as $i) {
+                $sisters[] = [
+                    'name' => $initial["sister{$i}_name"] ?? '',
+                    'year' => $initial["sister{$i}_year"] ?? '',
+                    'month' => $initial["sister{$i}_month"] ?? '',
+                    'day' => $initial["sister{$i}_day"] ?? '',
+                ];
+            }
+            $initial['sisters'] = $sisters;
+        }
+
+        return $initial;
+    }
+
+    /**
+     * 追加情報フォームの全キーとデフォルト値
+     */
+    private function defaultAdditionalInfoKeys(): array
+    {
+        return [
+            'entry_date_year' => '', 'entry_date_month' => '', 'entry_date_day' => '',
+            'name_daughter' => '', 'furigana_daughter' => '',
+            'name_mother' => '', 'furigana_mother' => '',
+            'birth_year' => '', 'birth_month' => '', 'birth_day' => '',
+            'height' => '', 'foot_size' => '',
+            'postal_code' => '', 'address' => '',
+            'phone_home_1' => '', 'phone_home_2' => '', 'phone_home_3' => '',
+            'phone_daughter_1' => '', 'phone_daughter_2' => '', 'phone_daughter_3' => '',
+            'phone_mother_1' => '', 'phone_mother_2' => '', 'phone_mother_3' => '',
+            'color' => [], 'color_other' => '', 'hobby' => [], 'hobby_other' => '', 'sports_detail' => '', 'furisode_image' => '',
+            'graduation_year' => '', 'hakama' => '',
+            'plan' => '', 'option' => [], 'price' => [],
+            'university' => '', 'college' => '', 'parttime' => '', 'work' => '', 'other_status' => '',
+            'sisters' => [],
+            'visit_reasons' => [], 'visit_reason_other' => '',
+            'staff_name' => '',
+        ];
+    }
+
+    /**
+     * 来店動機を処理（「その他」の場合はテキスト入力も含める）予約フォームと同一
+     */
+    private function processVisitReasons(?array $visitReasons, ?string $visitReasonOther): array
+    {
+        if (! $visitReasons || ! is_array($visitReasons)) {
+            return [];
+        }
+        $reasons = [];
+        foreach ($visitReasons as $reason) {
+            if ($reason === 'その他' && $visitReasonOther !== null && $visitReasonOther !== '') {
+                $reasons[] = 'その他(' . $visitReasonOther . ')';
+            } else {
+                $reasons[] = $reason;
+            }
+        }
+        return array_values(array_filter($reasons));
+    }
+
+    /**
+     * 既存の来店動機から「その他」のテキストを抽出
+     */
+    private function extractVisitReasonOther($visitReasons): string
+    {
+        if (! is_array($visitReasons)) {
+            return '';
+        }
+        foreach ($visitReasons as $r) {
+            if (is_string($r) && preg_match('/^その他\((.+)\)$/u', $r, $m)) {
+                return $m[1];
+            }
+        }
+        return '';
+    }
+
+    /**
+     * 既存の来店動機から「その他」を除いた配列を取得（「その他(テキスト)」は「その他」に正規化）
+     */
+    private function getVisitReasonsWithoutOther($visitReasons): array
+    {
+        if (! is_array($visitReasons)) {
+            return [];
+        }
+        $reasons = [];
+        $hasOther = false;
+        foreach ($visitReasons as $r) {
+            if (! is_string($r)) {
+                continue;
+            }
+            if (str_starts_with($r, 'その他(')) {
+                if (! $hasOther) {
+                    $reasons[] = 'その他';
+                    $hasOther = true;
+                }
+            } else {
+                $reasons[] = $r;
+            }
+        }
+        return $reasons;
+    }
+
+    /**
+     * 追加情報を保存してサンクスへリダイレクト
+     * 顧客テーブルに存在する項目は customer を更新し、それ以外のみ additional_info に保存する
+     */
+    public function storeAdditionalInfo(Request $request, Customer $customer)
+    {
+        $payload = $request->validate([
+            'additional_info' => 'required|array',
+        ])['additional_info'];
+
+        $customerUpdate = [];
+        $customerUpdate['name'] = $payload['name_daughter'] ?? $customer->name;
+        $customerUpdate['kana'] = $payload['furigana_daughter'] ?? $customer->kana;
+        $customerUpdate['guardian_name'] = $payload['name_mother'] ?? $customer->guardian_name;
+        $customerUpdate['guardian_name_kana'] = $payload['furigana_mother'] ?? $customer->guardian_name_kana;
+        $customerUpdate['postal_code'] = $payload['postal_code'] ?? $customer->postal_code;
+        $customerUpdate['address'] = $payload['address'] ?? $customer->address;
+        $customerUpdate['staff_name'] = $payload['staff_name'] ?? $customer->staff_name;
+
+        $visitReasons = $payload['visit_reasons'] ?? [];
+        $visitReasonOther = $payload['visit_reason_other'] ?? '';
+        $customerUpdate['visit_reasons'] = $this->processVisitReasons(
+            is_array($visitReasons) ? $visitReasons : [],
+            $visitReasonOther
+        );
+
+        if (! empty($payload['birth_year']) || ! empty($payload['birth_month']) || ! empty($payload['birth_day'])) {
+            $y = (int) ($payload['birth_year'] ?? 0);
+            $m = (int) ($payload['birth_month'] ?? 1);
+            $d = (int) ($payload['birth_day'] ?? 1);
+            if ($y && $m && $d && checkdate($m, $d, $y)) {
+                $customerUpdate['birth_date'] = sprintf('%04d-%02d-%02d', $y, $m, $d);
+            }
+        }
+
+        $ph1 = $payload['phone_home_1'] ?? '';
+        $ph2 = $payload['phone_home_2'] ?? '';
+        $ph3 = $payload['phone_home_3'] ?? '';
+        if ($ph1 !== '' || $ph2 !== '' || $ph3 !== '') {
+            $customerUpdate['phone_number'] = implode('-', array_filter([$ph1, $ph2, $ph3]));
+        }
+
+        $onlyAdditionalInfoKeys = [
+            'entry_date_year', 'entry_date_month', 'entry_date_day',
+            'height', 'foot_size',
+            'phone_daughter_1', 'phone_daughter_2', 'phone_daughter_3',
+            'phone_mother_1', 'phone_mother_2', 'phone_mother_3',
+            'color', 'hobby', 'sports_detail', 'furisode_image',
+            'graduation_year', 'hakama', 'plan', 'option', 'price',
+            'university', 'college', 'parttime', 'work', 'other_status',
+            'sisters',
+        ];
+        $additionalInfoOnly = array_intersect_key($payload, array_fill_keys($onlyAdditionalInfoKeys, true));
+
+        $customer->update(array_merge($customerUpdate, ['additional_info' => $additionalInfoOnly]));
+        return redirect()->route('admin.customers.additional-info.thanks', $customer)
+            ->with('success', '追加情報を保存しました。');
+    }
+
+    /**
+     * 追加情報入力完了（サンクス）ページ
+     */
+    public function additionalInfoThanks(Customer $customer)
+    {
+        return Inertia::render('Admin/Customer/AdditionalInfoThanks', [
+            'customer' => $customer->only('id', 'name'),
+        ]);
+    }
+
+    /**
      * 顧客メモを追加
      */
     public function storeNote(Request $request, Customer $customer)

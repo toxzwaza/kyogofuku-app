@@ -94,8 +94,8 @@
                     </div>
                 </div>
 
-                <!-- 顧客基本情報 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <!-- 顧客基本情報（overflow-visible でツールチップが途切れないようにする） -->
+                <div class="bg-white overflow-visible shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -104,15 +104,38 @@
                                 </svg>
                                 基本情報
                             </h3>
-                            <button
-                                @click="openEditCustomerModal"
-                                class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium shadow-sm transition-colors"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                編集
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <div class="relative group">
+                                    <Link
+                                        :href="route('admin.customers.additional-info', customer.id)"
+                                        class="flex items-center gap-2 border border-gray-300 bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm font-medium shadow-sm transition-colors"
+                                        title="お客様にInformationシートを記入頂き、追加情報を取得します"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        追加情報
+                                    </Link>
+                                    <!-- ホバー時のツールチップ -->
+                                    <div
+                                        class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] pointer-events-none"
+                                    >
+                                        <div class="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg">
+                                            <p>お客様にInformationシートを記入頂き、追加情報を取得します</p>
+                                            <div class="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900" aria-hidden="true"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    @click="openEditCustomerModal"
+                                    class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium shadow-sm transition-colors"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    編集
+                                </button>
+                            </div>
                         </div>
 
                         <!-- 基本情報セクション -->
@@ -270,6 +293,163 @@
                             </h4>
                             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                 <p class="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{{ customer.remarks }}</p>
+                            </div>
+                        </div>
+
+                        <!-- 追加情報セクション（振袖アンケート）※customerの項目はcustomerから、それ以外はadditional_infoから表示 -->
+                        <div v-if="hasAdditionalInfo" class="mb-6">
+                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                追加情報（振袖アンケート）
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- 記入日（additional_info のみ） -->
+                                <div v-if="formatAdditionalInfoDate(ai, 'entry_date')" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">記入日</label>
+                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoDate(ai, 'entry_date') }}</p>
+                                </div>
+                                <!-- お名前・ふりがな（お嬢様）＝ customer -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お名前（お嬢様）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.name || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ふりがな（お嬢様）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.kana || '-' }}</p>
+                                </div>
+                                <!-- お名前・ふりがな（お母様）＝ customer -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お名前（お母様）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.guardian_name || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ふりがな（お母様）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.guardian_name_kana || '-' }}</p>
+                                </div>
+                                <!-- お誕生日 ＝ customer -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お誕生日</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.birth_date || '-' }}</p>
+                                </div>
+                                <!-- 身長・足サイズ（additional_info のみ） -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">身長</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.height ? `${ai.height} cm` : '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">足サイズ</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.foot_size ? `${ai.foot_size} cm` : '-' }}</p>
+                                </div>
+                                <!-- 郵便番号・住所 ＝ customer -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">郵便番号</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.postal_code || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ご住所</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.address || '-' }}</p>
+                                </div>
+                                <!-- お電話：ご自宅＝customer、お嬢様・お母様＝additional_info -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お電話</label>
+                                    <div class="space-y-1 text-sm text-gray-900">
+                                        <p v-if="customer.phone_number">ご自宅：{{ customer.phone_number }}</p>
+                                        <p v-if="formatAdditionalInfoPhone(ai, 'phone_daughter')">お嬢様：{{ formatAdditionalInfoPhone(ai, 'phone_daughter') }}</p>
+                                        <p v-if="formatAdditionalInfoPhone(ai, 'phone_mother')">お母様：{{ formatAdditionalInfoPhone(ai, 'phone_mother') }}</p>
+                                        <p v-if="!customer.phone_number && !formatAdditionalInfoPhone(ai, 'phone_daughter') && !formatAdditionalInfoPhone(ai, 'phone_mother')">-</p>
+                                    </div>
+                                </div>
+                                <!-- 好きな色・好きな事 -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">好きな色</label>
+                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoArray(ai.color) || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">好きな事</label>
+                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoArray(ai.hobby) || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">スポーツ（自由記入）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.sports_detail || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お振袖の好きな柄やイメージ</label>
+                                    <p class="text-base font-medium text-gray-900 whitespace-pre-wrap">{{ ai.furisode_image || '-' }}</p>
+                                </div>
+                                <!-- 学生・ご希望 -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">卒業予定年度</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.graduation_year ? `${ai.graduation_year}年3月` : '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">卒業式にハカマ</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.hakama || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">購入／レンタル</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.plan || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ママ振り・お振袖フォト</label>
+                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoArray(ai.option) || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">価格帯</label>
+                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoArray(ai.price) || '-' }}</p>
+                                </div>
+                                <!-- 進路・状況 -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">大学生（学校名）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.university || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">短大・専門（学校名）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.college || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">アルバイト</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.parttime || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お勤め</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.work || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">その他（進路・状況）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ ai.other_status || '-' }}</p>
+                                </div>
+                                <!-- ご姉妹 -->
+                                <div v-if="formatAdditionalInfoSisters(ai.sisters)" class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ご姉妹</label>
+                                    <p class="text-base font-medium text-gray-900 whitespace-pre-wrap">{{ formatAdditionalInfoSisters(ai.sisters) }}</p>
+                                </div>
+                                <!-- 来店動機 ＝ customer.visit_reasons（チェックボックス表示・予約フォームと同一項目） -->
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">ご来店の動機</label>
+                                    <div class="space-y-2">
+                                        <div
+                                            v-for="reason in visitReasonOptions"
+                                            :key="reason.value"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                :checked="isVisitReasonSelected(reason.value, customer.visit_reasons)"
+                                                disabled
+                                                class="rounded accent-gray-800 w-4 h-4"
+                                            />
+                                            <span class="text-sm font-medium text-gray-900">{{ reason.label }}</span>
+                                            <span v-if="reason.value === 'その他' && getVisitReasonOtherText(customer.visit_reasons)" class="text-sm text-gray-700">（{{ getVisitReasonOtherText(customer.visit_reasons) }}）</span>
+                                        </div>
+                                        <p v-if="!hasAnyVisitReason(customer.visit_reasons)" class="text-sm text-gray-500">-</p>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">担当</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.staff_name || '-' }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2497,6 +2677,76 @@ const formatPostalCode = (val) => {
     const digits = String(val).replace(/-/g, '').replace(/\D/g, '').slice(0, 7);
     if (digits.length === 7) return digits.slice(0, 3) + '-' + digits.slice(3, 7);
     return digits || '-';
+};
+
+// 追加情報（振袖アンケート）の表示用
+const ai = computed(() => props.customer?.additional_info ?? {});
+const hasAdditionalInfo = computed(() => {
+    const a = props.customer?.additional_info;
+    return a && typeof a === 'object' && Object.keys(a).length > 0;
+});
+const formatAdditionalInfoDate = (data, type) => {
+    if (!data) return '';
+    const prefix = type === 'entry_date' ? 'entry_date' : 'birth';
+    const y = data[`${prefix}_year`];
+    const m = data[`${prefix}_month`];
+    const d = data[`${prefix}_day`];
+    if (!y && !m && !d) return '';
+    return [y, m, d].filter(Boolean).join('年') + (d ? '日' : '');
+};
+const formatAdditionalInfoPhone = (data, prefix) => {
+    if (!data) return '';
+    const a = data[`${prefix}_1`];
+    const b = data[`${prefix}_2`];
+    const c = data[`${prefix}_3`];
+    if (!a && !b && !c) return '';
+    return [a, b, c].filter(Boolean).join('－');
+};
+const formatAdditionalInfoArray = (arr) => {
+    if (!Array.isArray(arr) || arr.length === 0) return '';
+    return arr.filter(Boolean).join('、');
+};
+const formatAdditionalInfoSisters = (sisters) => {
+    if (!Array.isArray(sisters) || sisters.length === 0) return '';
+    return sisters
+        .filter(s => s?.name || s?.year || s?.month || s?.day)
+        .map(s => {
+            const parts = [s.name].filter(Boolean);
+            const y = s.year || s.month || s.day ? [s.year, s.month, s.day].filter(Boolean).join('年') + (s.day ? '日' : '') + '生' : '';
+            if (y) parts.push(y);
+            return parts.join(' ');
+        })
+        .join('\n');
+};
+
+// 来店動機の選択肢（Event/ReservationForm と同一）
+const visitReasonOptions = [
+    { value: '紹介', label: '紹介' },
+    { value: 'DM・カタログ', label: 'DM・カタログ' },
+    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
+    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'その他', label: 'その他(テキスト入力)' },
+];
+
+const isVisitReasonSelected = (value, visitReasons) => {
+    if (!Array.isArray(visitReasons)) return false;
+    if (value === 'その他') {
+        return visitReasons.some(r => typeof r === 'string' && r.startsWith('その他('));
+    }
+    return visitReasons.includes(value);
+};
+
+const getVisitReasonOtherText = (visitReasons) => {
+    if (!Array.isArray(visitReasons)) return '';
+    const other = visitReasons.find(r => typeof r === 'string' && r.startsWith('その他('));
+    if (!other) return '';
+    const m = other.match(/^その他\((.+)\)$/);
+    return m && m[1] ? m[1] : '';
+};
+
+const hasAnyVisitReason = (visitReasons) => {
+    if (!Array.isArray(visitReasons) || visitReasons.length === 0) return false;
+    return visitReasons.some(Boolean);
 };
 
 // 時刻をフォーマット（例: 14:30）
