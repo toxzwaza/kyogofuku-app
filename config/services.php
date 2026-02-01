@@ -31,4 +31,14 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        // ローカル環境で SSL 証明書エラー (cURL error 60) を回避（本番では true 推奨）
+        'guzzle' => [
+            'verify' => env('APP_ENV') !== 'local',
+        ],
+    ],
+
 ];

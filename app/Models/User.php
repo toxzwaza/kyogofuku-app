@@ -24,6 +24,8 @@ class User extends Authenticatable
         'login_id',
         'password',
         'theme_color',
+        'google_calendar_refresh_token',
+        'google_calendar_token_expires_at',
     ];
 
     /**
@@ -34,6 +36,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'google_calendar_refresh_token',
     ];
 
     /**
@@ -43,6 +46,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'google_calendar_token_expires_at' => 'datetime',
     ];
 
     /**
@@ -83,5 +87,13 @@ class User extends Authenticatable
     public function schedules()
     {
         return $this->hasMany(StaffSchedule::class);
+    }
+
+    /**
+     * Google カレンダー連携済みか
+     */
+    public function hasGoogleCalendarConnected(): bool
+    {
+        return !empty($this->google_calendar_refresh_token);
     }
 }

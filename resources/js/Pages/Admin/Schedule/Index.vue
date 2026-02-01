@@ -157,17 +157,17 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">作成者</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">登録者</label>
                             <p class="text-sm text-gray-900">{{ selectedSchedule.user?.name || '-' }}</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">参加者</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">担当者</label>
                             
                             <div v-if="isEditing">
-                                <!-- 店舗選択（参加者追加用） -->
+                                <!-- 店舗選択（担当者追加用） -->
                                 <div class="mb-3">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">店舗を選択して参加者を追加</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">店舗を選択して担当者を追加</label>
                                     <select
                                         v-model="selectedShopIdForParticipants"
                                         @change="loadShopUsers(selectedShopIdForParticipants)"
@@ -186,7 +186,7 @@
 
                                 <!-- 参加者追加済み一覧 -->
                                 <div v-if="addedParticipants.length > 0" class="mb-3">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">担当者追加済み</label>
                                     <div class="flex flex-wrap gap-2">
                                         <span
                                             v-for="participant in addedParticipants"
@@ -234,7 +234,7 @@
                                         {{ participant.name }}
                                     </span>
                                 </div>
-                                <p v-else class="text-sm text-gray-500">参加者なし</p>
+                                <p v-else class="text-sm text-gray-500">担当者なし</p>
                             </div>
                         </div>
 
@@ -374,11 +374,11 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">参加者</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">担当者</label>
                             
-                            <!-- 店舗選択（参加者追加用） -->
+                            <!-- 店舗選択（担当者追加用） -->
                             <div class="mb-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">店舗を選択して参加者を追加</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">店舗を選択して担当者を追加</label>
                                 <select
                                     v-model="selectedShopIdForParticipants"
                                     @change="loadShopUsers(selectedShopIdForParticipants)"
@@ -397,7 +397,7 @@
 
                             <!-- 参加者追加済み一覧 -->
                             <div v-if="addedParticipants.length > 0" class="mb-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">担当者追加済み</label>
                                 <div class="flex flex-wrap gap-2">
                                     <span
                                         v-for="participant in addedParticipants"

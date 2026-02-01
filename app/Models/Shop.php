@@ -16,6 +16,7 @@ class Shop extends Model
         'image',
         'is_active',
         'line_group_id',
+        'google_calendar_id',
     ];
 
     protected $casts = [

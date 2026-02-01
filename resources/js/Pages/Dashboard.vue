@@ -26,9 +26,17 @@
         <!-- スケジュール管理 -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-              スケジュール管理
-            </h3>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-800">
+                スケジュール管理
+              </h3>
+              <Link
+                :href="route('profile.edit')"
+                class="text-sm text-indigo-600 hover:text-indigo-800"
+              >
+                Googleカレンダーに同期するにはプロフィールで連携が必要
+              </Link>
+            </div>
             
             <!-- 縦並びで2つのカレンダーを表示 -->
             <div class="space-y-6">
@@ -389,7 +397,7 @@
             <div class="space-y-1 flex-shrink-0">
               <div class="font-semibold text-sm">{{ tooltip.title }}</div>
               <div v-if="tooltip.user" class="text-gray-300">
-                作成者: {{ tooltip.user }}
+                登録者: {{ tooltip.user }}
               </div>
               <div v-if="tooltip.start" class="text-gray-300">
                 開始: {{ formatDateTime(tooltip.start) }}
@@ -398,7 +406,7 @@
                 終了: {{ formatDateTime(tooltip.end) }}
               </div>
               <div v-if="tooltip.participants && tooltip.participants.length > 0" class="text-gray-300">
-                参加者: {{ tooltip.participants.map(p => p.name).join(', ') }}
+                担当者: {{ tooltip.participants.map(p => p.name).join(', ') }}
               </div>
             </div>
             <!-- 説明（一番下に固定） -->
@@ -543,10 +551,10 @@
                     </div>
                   </div>
 
-                  <!-- 作成者 -->
+                  <!-- 登録者 -->
                   <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      作成者
+                      登録者
                     </label>
                     <div class="flex items-center gap-2">
                       <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -560,10 +568,10 @@
                     </div>
                   </div>
 
-                  <!-- 参加者 -->
+                  <!-- 担当者 -->
                   <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      参加者
+                      担当者
                     </label>
                     <div
                       v-if="
@@ -583,7 +591,7 @@
                         {{ participant.name }}
                       </span>
                     </div>
-                    <p v-else class="text-sm text-gray-500 italic">参加者なし</p>
+                    <p v-else class="text-sm text-gray-500 italic">担当者なし</p>
                   </div>
 
                   <!-- 説明 -->
@@ -779,18 +787,26 @@
                         />
                         <span class="ml-2 text-sm text-gray-700">公開する（デフォルト）</span>
                       </label>
+                      <label class="flex items-center cursor-pointer mt-2">
+                        <input
+                          v-model="createScheduleForm.sync_to_google_calendar"
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span class="ml-2 text-sm text-gray-700">Googleカレンダーに同期する</span>
+                      </label>
                     </div>
                   </div>
 
-                  <!-- 参加者 -->
+                  <!-- 担当者 -->
                   <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                      参加者
+                      担当者
                     </label>
                     
-                    <!-- 店舗選択（参加者追加用） -->
+                    <!-- 店舗選択（担当者追加用） -->
                     <div class="mb-3">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">店舗を選択して参加者を追加</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">店舗を選択して担当者を追加</label>
                       <select
                         v-model="selectedShopIdForCreate"
                         @change="loadShopUsersForCreate(selectedShopIdForCreate)"
@@ -807,9 +823,9 @@
                       </select>
                     </div>
 
-                    <!-- 参加者追加済み一覧 -->
+                    <!-- 担当者追加済み一覧 -->
                     <div v-if="addedParticipantsForCreate.length > 0" class="mb-3">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">担当者追加済み</label>
                       <div class="flex flex-wrap gap-2">
                         <span
                           v-for="participant in addedParticipantsForCreate"
@@ -1048,18 +1064,26 @@
                         />
                         <span class="ml-2 text-sm text-gray-700">公開する</span>
                       </label>
+                      <label class="flex items-center cursor-pointer mt-2">
+                        <input
+                          v-model="editScheduleForm.sync_to_google_calendar"
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span class="ml-2 text-sm text-gray-700">Googleカレンダーに同期する</span>
+                      </label>
                     </div>
                   </div>
 
-                  <!-- 参加者 -->
+                  <!-- 担当者 -->
                   <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                      参加者
+                      担当者
                     </label>
                     
-                    <!-- 店舗選択（参加者追加用） -->
+                    <!-- 店舗選択（担当者追加用） -->
                     <div class="mb-3">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">店舗を選択して参加者を追加</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">店舗を選択して担当者を追加</label>
                       <select
                         v-model="selectedShopIdForEdit"
                         @change="loadShopUsersForEdit(selectedShopIdForEdit)"
@@ -1076,9 +1100,9 @@
                       </select>
                     </div>
 
-                    <!-- 参加者追加済み一覧 -->
+                    <!-- 担当者追加済み一覧 -->
                     <div v-if="addedParticipantsForEdit.length > 0" class="mb-3">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">参加者追加済み</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">担当者追加済み</label>
                       <div class="flex flex-wrap gap-2">
                         <span
                           v-for="participant in addedParticipantsForEdit"
@@ -4450,6 +4474,7 @@ const createScheduleForm = ref({
   end_at: '',
   all_day: false,
   is_public: true,
+  sync_to_google_calendar: false,
   participant_ids: [],
   expense_category: '',
   processing: false,
@@ -4571,6 +4596,7 @@ const editScheduleForm = ref({
   end_at: '',
   all_day: false,
   is_public: true,
+  sync_to_google_calendar: false,
   participant_ids: [],
   expense_category: '',
   processing: false,
@@ -4622,6 +4648,7 @@ function handleEventClick(clickInfo) {
     end: endDateTime,
     allDay: event.allDay,
     is_public: event.extendedProps.is_public !== undefined ? event.extendedProps.is_public : true,
+    sync_to_google_calendar: event.extendedProps.sync_to_google_calendar ?? false,
     description: event.extendedProps.description || "",
     user: event.extendedProps.user || null,
     participants: event.extendedProps.participants || [],
@@ -4687,6 +4714,7 @@ function startEditSchedule() {
     end_at: formatDateTimeLocal(endDate),
     all_day: selectedScheduleDetail.value.allDay,
     is_public: selectedScheduleDetail.value.is_public !== undefined ? selectedScheduleDetail.value.is_public : true,
+    sync_to_google_calendar: selectedScheduleDetail.value.sync_to_google_calendar ?? false,
     participant_ids: selectedScheduleDetail.value.participants?.map(p => p.id) || [],
     expense_category: selectedScheduleDetail.value.expense_category || '',
     processing: false,
@@ -4733,6 +4761,7 @@ function updateScheduleFromDashboard() {
     end_at: editScheduleForm.value.end_at,
     all_day: editScheduleForm.value.all_day,
     is_public: editScheduleForm.value.is_public !== undefined ? editScheduleForm.value.is_public : true,
+    sync_to_google_calendar: editScheduleForm.value.sync_to_google_calendar ?? false,
     user_id: selectedScheduleDetail.value.user?.id,
     participant_ids: editScheduleForm.value.participant_ids || [],
     expense_category: editScheduleForm.value.expense_category || null,
@@ -5070,7 +5099,7 @@ function createScheduleFromDashboard() {
   
   // バリデーション: 参加者が登録されていない場合
   if (!createScheduleForm.value.participant_ids || createScheduleForm.value.participant_ids.length === 0) {
-    alert('参加者を1名以上選択してください。');
+    alert('担当者を1名以上選択してください。');
     createScheduleForm.value.processing = false;
     return;
   }
@@ -5078,7 +5107,7 @@ function createScheduleFromDashboard() {
   // バリデーション: 参加者に自分が登録されていない場合
   const currentUserId = props.currentUser?.id;
   if (currentUserId && !createScheduleForm.value.participant_ids.includes(currentUserId)) {
-    alert('参加者に自分を含める必要があります。');
+    alert('担当者に自分を含める必要があります。');
     createScheduleForm.value.processing = false;
     return;
   }
@@ -5101,6 +5130,7 @@ function createScheduleFromDashboard() {
         end_at: '',
         all_day: false,
         is_public: true,
+        sync_to_google_calendar: false,
         participant_ids: [],
         expense_category: '',
         processing: false,

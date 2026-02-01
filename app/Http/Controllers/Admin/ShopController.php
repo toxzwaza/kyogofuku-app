@@ -42,6 +42,7 @@ class ShopController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'is_active' => 'boolean',
             'line_group_id' => 'nullable|string|max:255',
+            'google_calendar_id' => 'nullable|string|max:255',
         ]);
 
         $validated['is_active'] = $request->has('is_active') ? $request->is_active : true;
@@ -78,6 +79,7 @@ class ShopController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'is_active' => 'boolean',
             'line_group_id' => 'nullable|string|max:255',
+            'google_calendar_id' => 'nullable|string|max:255',
         ]);
 
         $validated['is_active'] = $request->has('is_active') ? $request->is_active : $shop->is_active;

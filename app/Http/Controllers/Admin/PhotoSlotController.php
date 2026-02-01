@@ -174,6 +174,8 @@ class PhotoSlotController extends Controller
             if (!empty($participantUserIds)) {
                 $schedule->participantUsers()->sync(array_unique($participantUserIds));
             }
+
+            app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
         }
 
         $message = "{$createdCount}件の前撮り枠を追加しました。";
@@ -408,6 +410,8 @@ class PhotoSlotController extends Controller
                 $schedule->participantUsers()->sync(array_unique($participantUserIds));
             }
 
+            app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
+
             return response()->json([
                 'success' => true,
                 'message' => 'スケジュールを作成しました。',
@@ -498,6 +502,8 @@ class PhotoSlotController extends Controller
 
             // 担当者を参加者として追加
             $schedule->participantUsers()->sync([$photoSlot->user->id]);
+
+            app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
 
             return response()->json([
                 'success' => true,

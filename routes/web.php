@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagControll
 use App\Http\Controllers\Admin\SlideshowController as AdminSlideshowController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineTestController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SesInboundMailController;
 use Illuminate\Foundation\Application;
@@ -59,6 +60,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Google カレンダー連携
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
+    Route::post('/auth/google/disconnect', [GoogleAuthController::class, 'disconnect'])->name('google.disconnect');
 });
 
 // Public Routes

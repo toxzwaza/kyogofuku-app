@@ -150,6 +150,7 @@ class ScheduleController extends Controller
                     'original_end' => $schedule->end_at ? $schedule->end_at->toIso8601String() : $schedule->start_at->toIso8601String(),
                     'description' => $schedule->description,
                     'is_public' => $schedule->is_public ?? true,
+                    'sync_to_google_calendar' => (bool) ($schedule->sync_to_google_calendar ?? false),
                     'photo_slot_id' => $schedule->photo_slot_id,
                     'photo_slot' => $schedule->photoSlot ? [
                         'id' => $schedule->photoSlot->id,
@@ -198,6 +199,7 @@ class ScheduleController extends Controller
             'participant_ids' => 'nullable|array',
             'participant_ids.*' => 'exists:users,id',
             'expense_category' => 'nullable|string|max:255',
+            'sync_to_google_calendar' => 'boolean',
         ]);
 
         // デフォルトのユーザーIDを設定（認証ユーザー）
@@ -208,6 +210,11 @@ class ScheduleController extends Controller
         // デフォルトのis_publicを設定
         if (!isset($validated['is_public'])) {
             $validated['is_public'] = true;
+        }
+
+        // デフォルトのsync_to_google_calendarを設定（ダッシュボード新規は未チェック）
+        if (!isset($validated['sync_to_google_calendar'])) {
+            $validated['sync_to_google_calendar'] = false;
         }
 
         $participantIds = $validated['participant_ids'] ?? [];
@@ -221,6 +228,11 @@ class ScheduleController extends Controller
         }
 
         $schedule->load(['user', 'participantUsers']);
+
+        // sync_to_google_calendar が有効な場合のみGoogleカレンダーへ同期
+        if ($schedule->sync_to_google_calendar) {
+            app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
+        }
 
         return response()->json([
             'success' => true,
@@ -267,20 +279,24 @@ class ScheduleController extends Controller
             'participant_ids' => 'nullable|array',
             'participant_ids.*' => 'exists:users,id',
             'expense_category' => 'nullable|string|max:255',
+            'sync_to_google_calendar' => 'boolean',
         ]);
 
         $participantIds = $validated['participant_ids'] ?? [];
         unset($validated['participant_ids']);
+
+        // sync_to_google_calendar（チェックなしの場合は送信されないため boolean で取得）
+        $validated['sync_to_google_calendar'] = $request->boolean('sync_to_google_calendar');
 
         // end_atがnullの場合、start_atと同じ日の23:59:59を設定
         if (empty($validated['end_at'])) {
             $validated['end_at'] = \Carbon\Carbon::parse($validated['start_at'])->setTime(23, 59, 59);
         }
 
-        $schedule->update($validated);
-
-        // 参加者を更新
+        // 担当者（参加者）を先に更新（Observer 発火時に正しいデータでGoogleカレンダー同期するため）
         $schedule->participantUsers()->sync($participantIds);
+
+        $schedule->update($validated);
 
         // photo_slot_idが紐づいている場合、同じ日付・スタジオの全ての前撮り枠の日付も更新
         if ($schedule->photo_slot_id) {
@@ -311,6 +327,7 @@ class ScheduleController extends Controller
                 'extendedProps' => [
                     'description' => $schedule->description,
                     'is_public' => $schedule->is_public ?? true,
+                    'sync_to_google_calendar' => (bool) $schedule->sync_to_google_calendar,
                     'user' => $schedule->user ? [
                         'id' => $schedule->user->id,
                         'name' => $schedule->user->name,

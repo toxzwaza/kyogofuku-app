@@ -335,7 +335,7 @@ class ReservationController extends Controller
      */
     public function show(EventReservation $reservation)
     {
-        $reservation->load(['event', 'venue', 'customer', 'notes.user', 'statusUpdatedBy', 'schedule', 'emailThreads.emails']);
+        $reservation->load(['event', 'venue', 'customer', 'notes.user', 'statusUpdatedBy', 'schedule.user', 'schedule.participantUsers', 'emailThreads.emails']);
         
         $currentUser = auth()->user();
         $userShops = $currentUser ? $currentUser->shops()
@@ -394,7 +394,24 @@ class ReservationController extends Controller
             'event' => $reservation->event,
             'venues' => $reservation->event->venues()->where('is_active', true)->get(),
             'notes' => $reservation->notes()->with('user')->orderBy('created_at', 'desc')->get(),
-            'schedule' => $reservation->schedule,
+            'schedule' => $reservation->schedule ? [
+                'id' => $reservation->schedule->id,
+                'title' => $reservation->schedule->title,
+                'description' => $reservation->schedule->description,
+                'start_at' => $reservation->schedule->start_at,
+                'end_at' => $reservation->schedule->end_at,
+                'all_day' => $reservation->schedule->all_day,
+                'is_public' => $reservation->schedule->is_public ?? true,
+                'sync_to_google_calendar' => (bool) $reservation->schedule->sync_to_google_calendar,
+                'user' => $reservation->schedule->user ? [
+                    'id' => $reservation->schedule->user->id,
+                    'name' => $reservation->schedule->user->name,
+                ] : null,
+                'participantUsers' => $reservation->schedule->participantUsers->map(fn ($u) => [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                ])->toArray(),
+            ] : null,
             'emailThreads' => $emailThreads,
             'canRestore' => $canRestore,
             'currentUser' => $currentUser ? [
@@ -727,7 +744,7 @@ class ReservationController extends Controller
             return redirect()->back()->with('error', 'この予約は既にスケジュールに追加されています。');
         }
 
-        // スケジュールを作成
+        // スケジュールを作成（予約からの登録はGoogleカレンダー同期を有効で固定）
         $schedule = StaffSchedule::create([
             'user_id' => $validated['user_id'],
             'event_reservation_id' => $reservation->id,
@@ -736,7 +753,7 @@ class ReservationController extends Controller
             'start_at' => $validated['start_at'],
             'end_at' => $validated['end_at'],
             'all_day' => $validated['all_day'] ?? false,
-            'color' => '#3788d8',
+            'sync_to_google_calendar' => true,
         ]);
 
         // 参加者を設定（user_idは自動で含めない - チェックボックスで選択された場合のみ含める）
@@ -745,6 +762,8 @@ class ReservationController extends Controller
             $participantIds = $validated['participant_ids'];
         }
         $schedule->participantUsers()->sync($participantIds);
+
+        app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
 
         return redirect()->back()->with('success', 'スケジュールに追加しました。');
     }

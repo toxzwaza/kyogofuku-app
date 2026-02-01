@@ -95,6 +95,18 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">GoogleカレンダーID</label>
+                                    <input
+                                        v-model="form.google_calendar_id"
+                                        type="text"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        placeholder="例: xxx@group.calendar.google.com または primary"
+                                    />
+                                    <p class="mt-1 text-sm text-gray-500">スケジュール同期先のGoogleカレンダーID。未指定の場合は primary を使用します</p>
+                                    <div v-if="form.errors.google_calendar_id" class="mt-1 text-sm text-red-600">{{ form.errors.google_calendar_id }}</div>
+                                </div>
+
+                                <div>
                                     <label class="flex items-center">
                                         <input
                                             v-model="form.is_active"
@@ -151,6 +163,7 @@ const form = useForm({
     remove_image: false,
     is_active: props.shop.is_active,
     line_group_id: props.shop.line_group_id || '',
+    google_calendar_id: props.shop.google_calendar_id || '',
 });
 
 const handleFileChange = (event) => {

@@ -20,6 +20,7 @@ class StaffSchedule extends Model
         'all_day',
         'expense_category',
         'is_public',
+        'sync_to_google_calendar',
     ];
 
     protected $casts = [
@@ -27,6 +28,7 @@ class StaffSchedule extends Model
         'end_at' => 'datetime',
         'all_day' => 'boolean',
         'is_public' => 'boolean',
+        'sync_to_google_calendar' => 'boolean',
     ];
 
     /**
@@ -68,5 +70,13 @@ class StaffSchedule extends Model
     public function photoSlot()
     {
         return $this->belongsTo(PhotoSlot::class);
+    }
+
+    /**
+     * Google カレンダー同期レコードとのリレーション
+     */
+    public function googleCalendarEventSyncs()
+    {
+        return $this->hasMany(GoogleCalendarEventSync::class);
     }
 }
