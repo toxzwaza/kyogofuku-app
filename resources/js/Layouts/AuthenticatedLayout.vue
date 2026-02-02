@@ -130,21 +130,22 @@ const menuItems = [
                                     @mouseenter="hoveredMenu = menu.key"
                                     @mouseleave="hoveredMenu = null"
                                 >
-                                    <Link
-                                        :href="route(menu.route)"
+                                    <button
+                                        v-if="menu.subItems.length > 0"
+                                        type="button"
                                         :class="[
-                                            'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out',
-                                            route().current(menu.route.replace('.index', '.*')) || 
+                                            'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out cursor-pointer',
+                                            route().current(menu.route.replace('.index', '.*')) ||
                                             (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*'))) ||
                                             (menu.key === 'customers' && (route().current('admin.customer-tags.*') || route().current('admin.constraint-templates.*'))) ||
                                             (menu.key === 'events' && (route().current('admin.venues.*') || route().current('admin.slideshows.*')))
                                                 ? 'theme-active-link'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
                                         ]"
+                                        @click="hoveredMenu = menu.key"
                                     >
                                         {{ menu.label }}
                                         <svg
-                                            v-if="menu.subItems.length > 0"
                                             class="ml-1 h-4 w-4"
                                             fill="none"
                                             stroke="currentColor"
@@ -157,6 +158,21 @@ const menuItems = [
                                                 d="M19 9l-7 7-7-7"
                                             />
                                         </svg>
+                                    </button>
+                                    <Link
+                                        v-else
+                                        :href="route(menu.route)"
+                                        :class="[
+                                            'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out',
+                                            route().current(menu.route.replace('.index', '.*')) ||
+                                            (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*'))) ||
+                                            (menu.key === 'customers' && (route().current('admin.customer-tags.*') || route().current('admin.constraint-templates.*'))) ||
+                                            (menu.key === 'events' && (route().current('admin.venues.*') || route().current('admin.slideshows.*')))
+                                                ? 'theme-active-link'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
+                                        ]"
+                                    >
+                                        {{ menu.label }}
                                     </Link>
                                     <!-- サブナビゲーション -->
                                     <div
