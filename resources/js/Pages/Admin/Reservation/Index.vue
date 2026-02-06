@@ -3401,7 +3401,9 @@ const printTable = () => {
 
   pages.forEach((page, index) => {
     let pageHTML = '<div class="print-page">';
-    pageHTML += `<h2 style="font-size: ${parseFloat(printFontSize.value) + 2}px; margin-bottom: 15px; text-align: center; color: #1f2937; font-weight: bold;">予約一覧 - ${props.event.title}</h2>`;
+    if (index === 0) {
+      pageHTML += `<h2 style="font-size: ${parseFloat(printFontSize.value) + 2}px; margin-bottom: 15px; text-align: center; color: #1f2937; font-weight: bold;">予約一覧 - ${props.event.title}</h2>`;
+    }
 
     // 予約フォームの場合：日付ごとにグループ化
     if (props.event.form_type === "reservation" && page.dateGroups) {
