@@ -22,7 +22,15 @@ class LineWebhookController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    public function pushToLineGroup($message, $groupId = null)
+    /**
+     * LINEグループにメッセージを送信
+     *
+     * @param string $message テキストメッセージ
+     * @param string|null $groupId グループID（nullの場合は.envのLINE_GROUP_IDを使用）
+     * @param string|null $actionUrl オプション。指定時は「URIボタン」を追加送信し、タップで確実にURLを開ける
+     * @param string $actionLabel ボタンラベル（actionUrl指定時のみ、最大20文字）
+     */
+    public function pushToLineGroup($message, $groupId = null, $actionUrl = null, $actionLabel = '詳細を開く')
     {
         $channelToken = env('LINE_CHANNEL_TOKEN');
         
@@ -42,6 +50,52 @@ class LineWebhookController extends Controller
             throw new \Exception('LINE_GROUP_ID is not configured');
         }
 
+        // URL指定時は1通のFlexメッセージ（本文＋URIボタン）にまとめてAPI使用料を節約
+        if (!empty($actionUrl)) {
+            $messages = [
+                [
+                    'type' => 'flex',
+                    'altText' => '新しい予約が届きました',
+                    'contents' => [
+                        'type' => 'bubble',
+                        'body' => [
+                            'type' => 'box',
+                            'layout' => 'vertical',
+                            'contents' => [
+                                [
+                                    'type' => 'text',
+                                    'text' => $message,
+                                    'wrap' => true,
+                                ]
+                            ]
+                        ],
+                        'footer' => [
+                            'type' => 'box',
+                            'layout' => 'vertical',
+                            'contents' => [
+                                [
+                                    'type' => 'button',
+                                    'style' => 'primary',
+                                    'action' => [
+                                        'type' => 'uri',
+                                        'label' => mb_substr($actionLabel, 0, 20),
+                                        'uri' => $actionUrl,
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+        } else {
+            $messages = [
+                [
+                    'type' => 'text',
+                    'text' => $message,
+                ]
+            ];
+        }
+
         $http = new \GuzzleHttp\Client([
             'verify' => false, // SSL証明書の検証を無効化（開発環境用）
         ]);
@@ -54,12 +108,7 @@ class LineWebhookController extends Controller
                 ],
                 'json' => [
                     'to' => $groupId,
-                    'messages' => [
-                        [
-                            'type' => 'text',
-                            'text' => $message,
-                        ]
-                    ]
+                    'messages' => $messages,
                 ]
             ]);
 

@@ -439,7 +439,10 @@ class EventReservationController extends Controller
         $message = "━━━━━━━━━━━━━━━━\n";
         $message .= "📋 新しい{$formTypeName}が届きました\n";
         $message .= "━━━━━━━━━━━━━━━━\n\n";
-        
+
+        // 予約詳細ページのURL（LINEのボタンで送信し、確実にリンクとして開けるようにする）
+        $detailUrl = route('admin.reservations.show', $reservation->id, true);
+
         $message .= "🎯 イベント名: {$event->title}\n";
         $message .= "📝 フォーム種別: {$formTypeName}\n\n";
         
@@ -565,8 +568,8 @@ class EventReservationController extends Controller
         $message .= "予約ID: #{$reservation->id}\n";
         $message .= "━━━━━━━━━━━━━━━━";
 
-        // LINE通知を送信（グループIDを指定）
-        $lineController->pushToLineGroup($message, $groupId);
+        // LINE通知を送信（グループIDを指定、予約詳細URLはボタンで送信して確実にリンク化）
+        $lineController->pushToLineGroup($message, $groupId, $detailUrl, '予約詳細を開く');
     }
 
     /**
