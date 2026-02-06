@@ -1001,10 +1001,20 @@ class CustomerController extends Controller
 
         $validated['customer_id'] = $customer->id;
 
-        CustomerConstraint::create($validated);
+        $constraint = CustomerConstraint::create($validated);
 
-        return redirect()->route('admin.customers.show', $customer)
-            ->with('success', '制約情報を追加しました。');
+        $query = [
+            'template_id' => $validated['constraint_template_id'],
+            'edit_id' => $constraint->id,
+            'signed_at' => $validated['signed_at'] ?? null,
+            'explainer_user_id' => $validated['explainer_user_id'] ?? null,
+        ];
+        if (! empty($validated['check_values'])) {
+            $query['check_values'] = json_encode($validated['check_values']);
+        }
+
+        return redirect()->to(route('admin.customers.constraints.sign', $customer) . '?' . http_build_query(array_filter($query)))
+            ->with('success', '保存が完了しました。');
     }
 
     /**
@@ -1025,8 +1035,18 @@ class CustomerController extends Controller
 
         $customerConstraint->update($validated);
 
-        return redirect()->route('admin.customers.show', $customer)
-            ->with('success', '制約情報を更新しました。');
+        $query = [
+            'template_id' => $customerConstraint->constraint_template_id,
+            'edit_id' => $customerConstraint->id,
+            'signed_at' => $validated['signed_at'] ?? null,
+            'explainer_user_id' => $validated['explainer_user_id'] ?? null,
+        ];
+        if (! empty($validated['check_values'])) {
+            $query['check_values'] = json_encode($validated['check_values']);
+        }
+
+        return redirect()->to(route('admin.customers.constraints.sign', $customer) . '?' . http_build_query(array_filter($query)))
+            ->with('success', '保存が完了しました。');
     }
 
     /**

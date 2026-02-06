@@ -19,6 +19,13 @@
 
         <div class="py-6 print:py-0 print:min-h-0">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 print:max-w-none print:px-0 print:mx-0">
+                <!-- フラッシュメッセージ（印刷時非表示） -->
+                <div
+                    v-if="$page.props.flash?.success"
+                    class="mb-4 p-4 rounded-lg bg-green-50 text-green-800 border border-green-200 print:hidden"
+                >
+                    {{ $page.props.flash.success }}
+                </div>
                 <!-- 印刷用コンテンツ -->
                 <div ref="printArea" class="bg-white shadow-lg rounded-lg print:shadow-none print:rounded-none print-a4-container">
                     <!-- A4用紙スタイル -->
@@ -134,13 +141,17 @@
                         v-if="!isPreviewMode"
                         type="button"
                         @click="saveConstraint"
-                        :disabled="form.processing"
-                        class="inline-flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="form.processing || isSaved"
+                        class="inline-flex items-center gap-2 px-8 py-3 rounded-lg font-medium shadow-sm disabled:cursor-not-allowed"
+                        :class="isSaved
+                            ? 'bg-gray-400 text-white cursor-default'
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50'"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                         <span v-if="form.processing">保存中...</span>
+                        <span v-else-if="isSaved">保存済み</span>
                         <span v-else>保存</span>
                     </button>
                 </div>
@@ -151,7 +162,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { Canvas, PencilBrush } from 'fabric';
 import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue';
 
@@ -204,6 +215,9 @@ const signaturePadStyle = computed(() => ({
 }));
 
 const isEditMode = computed(() => !!props.editId);
+
+const page = usePage();
+const isSaved = computed(() => !!page.props.flash?.success);
 
 const hasDrawnSignature = ref(false);
 const hasSignature = computed(() => form.signature_image || hasDrawnSignature.value);
