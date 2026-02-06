@@ -65,10 +65,10 @@ class EventController extends Controller
         }
         // 'all'の場合はフィルタリングしない
 
-        // 表示順: 受付終了日が新しい順→同順なら受付開始日が新しい順。常時受け付け（end_at null）は末尾
+        // 表示順: 受付終了日が古い順→同順なら受付開始日が新しい順。常時受け付け（end_at null）は末尾
         $events = $query
             ->orderByRaw('CASE WHEN end_at IS NULL THEN 1 ELSE 0 END') // 常時受け付けを下に
-            ->orderBy('end_at', 'desc')
+            ->orderBy('end_at', 'asc')
             ->orderBy('start_at', 'desc')
             ->paginate(20)
             ->withQueryString();
