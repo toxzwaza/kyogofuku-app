@@ -738,13 +738,42 @@
                                         画像ファイル <span class="text-red-500">*</span>
                                     </label>
                                     <input
+                                        ref="photoFileInputCamera"
                                         type="file"
-                                        @change="onPhotoFileChange"
                                         accept="image/*"
                                         capture="environment"
-                                        required
-                                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        class="hidden"
+                                        @change="onPhotoFileChange"
                                     />
+                                    <input
+                                        ref="photoFileInputFile"
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"
+                                        @change="onPhotoFileChange"
+                                    />
+                                    <div class="flex flex-nowrap gap-2">
+                                        <button
+                                            type="button"
+                                            @click="photoFileInputCamera?.click()"
+                                            class="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                        >
+                                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                            </svg>
+                                            カメラで撮影
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="photoFileInputFile?.click()"
+                                            class="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                        >
+                                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            ファイルを選択
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="mt-4">
@@ -763,13 +792,19 @@
                                 <label class="block text-xs font-medium text-gray-700 mb-2">
                                     プレビュー
                                 </label>
-                                <div class="w-32 h-32 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                                <div
+                                    class="relative inline-block w-32 h-32 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 cursor-pointer group hover:border-indigo-500 transition-colors"
+                                    @click="openUnsavedPhotoPreview"
+                                >
                                     <img
                                         :src="photoPreview"
                                         alt="プレビュー"
                                         class="w-full h-full object-cover"
                                     />
                                 </div>
+                                <p class="mt-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                                    「写真を追加」ボタンを押して保存してください。
+                                </p>
                             </div>
                             <div class="mt-4 flex justify-end">
                                 <button
@@ -1766,22 +1801,23 @@
             </div>
         </transition>
 
-        <!-- 写真プレビューモーダル -->
+        <!-- 写真プレビューモーダル（保存済み・未保存プレビュー共通） -->
         <transition name="modal">
             <div
-                v-if="showPhotoPreviewModal && selectedPhoto"
+                v-if="showPhotoPreviewModal && (selectedPhoto || showingUnsavedPhotoPreview)"
                 class="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto z-50 flex items-center justify-center p-4"
-                @click.self="showPhotoPreviewModal = false"
+                @click.self="closePhotoPreviewModal"
             >
                 <div class="relative bg-white rounded-xl shadow-2xl max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                     <!-- ヘッダー -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
                         <h3 class="text-xl font-bold text-gray-900">
-                            {{ selectedPhoto.type?.name || '写真' }}
+                            {{ showingUnsavedPhotoPreview ? 'プレビュー（未保存）' : (selectedPhoto?.type?.name || '写真') }}
                         </h3>
                         <button
-                            @click="showPhotoPreviewModal = false"
+                            @click="closePhotoPreviewModal"
                             class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            title="閉じる"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1793,12 +1829,12 @@
                     <div class="overflow-y-auto flex-1 p-6">
                         <div class="text-center">
                             <img
-                                :src="getPhotoUrl(selectedPhoto.file_path)"
-                                :alt="selectedPhoto.type?.name || '写真'"
+                                :src="showingUnsavedPhotoPreview ? photoPreview : getPhotoUrl(selectedPhoto.file_path)"
+                                :alt="showingUnsavedPhotoPreview ? 'プレビュー' : (selectedPhoto?.type?.name || '写真')"
                                 class="max-w-full max-h-[70vh] mx-auto object-contain rounded-lg"
                             />
                         </div>
-                        <div v-if="selectedPhoto.remarks" class="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <div v-if="selectedPhoto?.remarks" class="mt-4 p-4 bg-gray-50 rounded-lg">
                             <h4 class="text-sm font-semibold text-gray-700 mb-2">備考</h4>
                             <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ selectedPhoto.remarks }}</p>
                         </div>
@@ -2104,6 +2140,7 @@ const showEditContractModal = ref(false);
 const showAddPhotoSlotModal = ref(false);
 const showEditPhotoSlotModal = ref(false);
 const showPhotoPreviewModal = ref(false);
+const showingUnsavedPhotoPreview = ref(false);
 const showPhotoMemoModal = ref(false);
 const showDeleteConfirmModal = ref(false);
 const showTagModal = ref(false);
@@ -2148,6 +2185,9 @@ const photoSlotShopUsers = ref([]);
 
 // 写真プレビュー用URL
 const photoPreview = ref(null);
+// 写真用ファイル入力（カメラ・ファイル選択）
+const photoFileInputCamera = ref(null);
+const photoFileInputFile = ref(null);
 
 // 顧客編集フォーム
 const customerForm = useForm({
@@ -2485,7 +2525,21 @@ const onPhotoFileChange = (event) => {
 // 写真プレビューを開く
 const openPhotoPreview = (photo) => {
     selectedPhoto.value = photo;
+    showingUnsavedPhotoPreview.value = false;
     showPhotoPreviewModal.value = true;
+};
+
+const openUnsavedPhotoPreview = () => {
+    if (!photoPreview.value) return;
+    selectedPhoto.value = null;
+    showingUnsavedPhotoPreview.value = true;
+    showPhotoPreviewModal.value = true;
+};
+
+const closePhotoPreviewModal = () => {
+    showPhotoPreviewModal.value = false;
+    selectedPhoto.value = null;
+    showingUnsavedPhotoPreview.value = false;
 };
 
 // 写真URLを取得
@@ -2512,11 +2566,10 @@ const storeCustomerPhoto = () => {
         onSuccess: () => {
             photoForm.reset();
             photoPreview.value = null;
+            closePhotoPreviewModal();
             // ファイル入力もリセット
-            const fileInput = document.querySelector('input[type="file"][accept="image/*"]');
-            if (fileInput) {
-                fileInput.value = '';
-            }
+            if (photoFileInputCamera.value) photoFileInputCamera.value.value = '';
+            if (photoFileInputFile.value) photoFileInputFile.value.value = '';
         },
     });
 };
