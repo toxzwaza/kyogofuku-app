@@ -53,33 +53,55 @@
                 <!-- ログインフォーム -->
                 <div v-if="!blocked" class="bg-white rounded-2xl shadow-xl p-6 space-y-5">
                     <form @submit.prevent="submit" class="space-y-5">
-                        <!-- ログインID/メールアドレス -->
+                        <!-- 店舗 -->
                         <div>
-                            <label for="login" class="block text-sm font-medium text-gray-700 mb-2">
-                                メールアドレスまたはログインID
+                            <label for="shop_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                店舗
                             </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
-                                <input
-                                    id="login"
-                                    type="text"
-                                    v-model="form.login"
-                                    required
-                                    autofocus
-                                    autocomplete="username"
-                                    class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                                    placeholder="メールアドレスまたはログインIDを入力"
-                                />
-                            </div>
-                            <InputError class="mt-2" :message="form.errors.login" />
+                            <select
+                                id="shop_id"
+                                v-model="form.shop_id"
+                                required
+                                autofocus
+                                class="block w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                            >
+                                <option value="" disabled>店舗を選択してください</option>
+                                <option
+                                    v-for="shop in shops"
+                                    :key="shop.id"
+                                    :value="shop.id"
+                                >
+                                    {{ shop.name }}
+                                </option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.shop_id" />
                         </div>
 
-                        <!-- パスワード -->
+                        <!-- ユーザー -->
                         <div>
+                            <label for="user_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                ユーザー
+                            </label>
+                            <select
+                                id="user_id"
+                                v-model="form.user_id"
+                                required
+                                class="block w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                            >
+                                <option value="" disabled>ユーザーを選択してください</option>
+                                <option
+                                    v-for="user in selectedShopUsers"
+                                    :key="user.id"
+                                    :value="user.id"
+                                >
+                                    {{ user.name }}
+                                </option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.user_id" />
+                        </div>
+
+                        <!-- パスワード（SECURITY_LOGIN=true の場合のみ表示） -->
+                        <div v-if="securityLogin">
                             <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
                                 パスワード
                             </label>
@@ -115,8 +137,8 @@
                             </label>
                         </div>
 
-                        <!-- パスワードリセットリンク -->
-                        <div v-if="canResetPassword" class="text-sm text-right">
+                        <!-- パスワードリセットリンク（パスワード認証時のみ表示） -->
+                        <div v-if="securityLogin && canResetPassword" class="text-sm text-right">
                             <Link
                                 :href="route('password.request')"
                                 class="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
@@ -160,38 +182,127 @@
 </template>
 
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, onMounted, watch } from 'vue';
 
-defineProps({
-    canResetPassword: Boolean,
-    status: String,
-    blocked: {
-        type: Boolean,
-        default: false,
-    },
-    failureCount: {
-        type: Number,
-        default: 0,
-    },
-    ipAddress: {
-        type: String,
-        default: null,
-    },
+const page = usePage();
+
+// デバッグ: 受け取った props をコンソールに出力
+const debugLog = (label, data) => {
+    console.log('[Login Debug]', label, data);
+};
+if (typeof window !== 'undefined') {
+    debugLog('page.props 全体', JSON.parse(JSON.stringify(page.props)));
+    debugLog('page.props.shops (生)', page.props.shops);
+    debugLog('page.props.shops の型', typeof page.props.shops);
+    debugLog('Array.isArray(page.props.shops)', Array.isArray(page.props.shops));
+}
+
+// Inertia の page.props から取得し、必ず配列に正規化する
+const shops = computed(() => {
+    const raw = page.props.shops;
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) return Object.values(raw);
+    return [];
 });
 
+const canResetPassword = computed(() => !!page.props.canResetPassword);
+const status = computed(() => page.props.status ?? null);
+const blocked = computed(() => !!page.props.blocked);
+const failureCount = computed(() => Number(page.props.failureCount) || 0);
+const ipAddress = computed(() => page.props.ipAddress ?? null);
+const securityLogin = computed(() => page.props.securityLogin !== false);
+
 const form = useForm({
-    login: '', // emailまたはlogin_id
+    shop_id: '',
+    user_id: '',
     password: '',
     remember: false,
 });
 
+const selectedShopUsers = computed(() => {
+    if (!form.shop_id) return [];
+    const shop = shops.value.find((s) => Number(s.id) === Number(form.shop_id));
+    const users = shop?.users;
+    if (Array.isArray(users)) return users;
+    if (users && typeof users === 'object') return Object.values(users);
+    return [];
+});
+
+// デバッグ: 店舗選択時に selectedShopUsers を出力
+watch(
+    () => form.shop_id,
+    (newShopId) => {
+        debugLog('watch shop_id - 変更後', { shop_id: newShopId, selectedShopUsers: selectedShopUsers.value });
+    }
+);
+
+// 店舗変更時、選択中のユーザーがその店舗にいなければ user_id をクリア
+watch(
+    () => form.shop_id,
+    (newShopId) => {
+        const shop = shops.value.find((s) => Number(s.id) === Number(newShopId));
+        const users = shop?.users;
+        const userIds = Array.isArray(users) ? users.map((u) => Number(u.id)) : [];
+        if (form.user_id && !userIds.includes(Number(form.user_id))) {
+            form.user_id = '';
+        }
+    }
+);
+
+const STORAGE_KEY = 'kyogofuku_last_login';
+
+onMounted(() => {
+    // デバッグ: 正規化後の shops と選択肢
+    debugLog('onMounted - shops (正規化後)', shops.value);
+    debugLog('onMounted - shops 件数', shops.value.length);
+    shops.value.forEach((shop, i) => {
+        debugLog(`onMounted - shop[${i}]`, {
+            id: shop?.id,
+            name: shop?.name,
+            users: shop?.users,
+            usersIsArray: Array.isArray(shop?.users),
+            usersLength: Array.isArray(shop?.users) ? shop.users.length : '-',
+        });
+    });
+    debugLog('onMounted - form.shop_id', form.shop_id);
+    debugLog('onMounted - selectedShopUsers', selectedShopUsers.value);
+
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        const shopId = saved.shop_id != null ? Number(saved.shop_id) : null;
+        const userId = saved.user_id != null ? Number(saved.user_id) : null;
+        if (shopId == null || userId == null) return;
+        const shop = shops.value.find((s) => Number(s.id) === shopId);
+        const users = shop?.users;
+        const userExists = Array.isArray(users) && users.some((u) => Number(u.id) === userId);
+        if (shop && userExists) {
+            form.shop_id = shopId;
+            form.user_id = userId;
+        }
+    } catch {
+        // 無効なJSONやデータは無視
+    }
+});
+
 const submit = () => {
+    if (form.shop_id && form.user_id) {
+        try {
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({
+                    shop_id: form.shop_id,
+                    user_id: form.user_id,
+                })
+            );
+        } catch {
+            // localStorage が使えない場合は無視
+        }
+    }
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
     });

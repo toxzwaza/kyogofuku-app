@@ -108,4 +108,17 @@ return [
 
     'password_timeout' => 10800,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Security Login (Password Required)
+    |--------------------------------------------------------------------------
+    |
+    | When true, login requires password in addition to shop/user selection.
+    | When false, selecting shop and user is sufficient to log in (no password).
+    | Controlled by .env SECURITY_LOGIN (true/false).
+    |
+    */
+
+    'security_login' => filter_var(env('SECURITY_LOGIN', 'true'), FILTER_VALIDATE_BOOLEAN),
+
 ];

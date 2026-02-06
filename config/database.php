@@ -43,6 +43,7 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
+        // Windows で localhost がタイムアウトする場合は .env の DB_HOST を 127.0.0.1 に変更してください
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),

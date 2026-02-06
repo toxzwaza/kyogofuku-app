@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\ActivityLog;
 use App\Models\BlockedIp;
+use App\Models\Shop;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -35,13 +37,35 @@ class AuthenticatedSessionController extends Controller
                 'blocked' => true,
                 'failureCount' => $blockedIp->failure_count,
                 'ipAddress' => $ipAddress,
+                'shops' => [],
+                'securityLogin' => config('auth.security_login'),
             ]);
         }
+
+        $shops = Shop::where('is_active', true)
+            ->with(['users' => fn ($q) => $q->orderBy('users.name')])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($shop) {
+                return [
+                    'id' => $shop->id,
+                    'name' => $shop->name,
+                    'users' => $shop->users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name])->values()->all(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        // デバッグ: ログイン画面に渡す店舗データ（storage/logs/laravel.log で確認）
+        Log::debug('[Login Debug] create() - shops 件数: ' . count($shops));
+        Log::debug('[Login Debug] create() - shops 内容', ['shops' => $shops]);
 
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
             'blocked' => false,
+            'shops' => $shops ?: [],
+            'securityLogin' => config('auth.security_login'),
         ]);
     }
 
@@ -56,18 +80,16 @@ class AuthenticatedSessionController extends Controller
             // ログイン失敗を記録（ValidationExceptionがスローされた場合）
             // LoginRequestで既に記録されている可能性があるが、念のためここでも記録
             try {
-                $login = $request->input('login');
+                $userId = $request->input('user_id');
+                $shopId = $request->input('shop_id');
                 // 既に記録されているかチェック（重複を避ける）
                 $existingLog = ActivityLog::where('ip_address', $request->ip())
                     ->where('action_type', 'login_failed')
-                    ->where('description', 'like', '%ログイン失敗: ' . $login . '%')
+                    ->where('description', 'like', '%ログイン失敗: user_id=' . $userId . '%')
                     ->where('created_at', '>=', now()->subMinute())
                     ->first();
-                
-                if (!$existingLog) {
-                    // 不正アクセス検知のため、パスワードはそのまま記録
-                    $password = $request->input('password');
-                    
+
+                if (! $existingLog) {
                     ActivityLog::create([
                         'user_id' => null,
                         'shop_id' => null,
@@ -77,11 +99,11 @@ class AuthenticatedSessionController extends Controller
                         'route_name' => 'login',
                         'url' => $request->fullUrl(),
                         'method' => $request->method(),
-                        'description' => 'ログイン失敗: ' . $login,
+                        'description' => 'ログイン失敗: user_id=' . $userId,
                         'old_values' => null,
                         'new_values' => [
-                            'login' => $login,
-                            'password' => $password,
+                            'user_id' => $userId,
+                            'shop_id' => $shopId,
                         ],
                         'ip_address' => $request->ip(),
                         'user_agent' => $request->userAgent(),
@@ -140,7 +162,7 @@ class AuthenticatedSessionController extends Controller
                 // ログ記録に失敗しても処理は続行
                 \Illuminate\Support\Facades\Log::error('Failed to log login failure in controller', [
                     'error' => $logException->getMessage(),
-                    'login' => $request->input('login'),
+                    'user_id' => $request->input('user_id'),
                     'ip' => $request->ip(),
                 ]);
             }

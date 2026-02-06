@@ -3,9 +3,11 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\ActivityLog;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -27,10 +29,14 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'login' => ['required', 'string'], // emailまたはlogin_id
-            'password' => ['required', 'string'],
+        $rules = [
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'shop_id' => ['required', 'integer', 'exists:shops,id'],
         ];
+        if (config('auth.security_login')) {
+            $rules['password'] = ['required', 'string'];
+        }
+        return $rules;
     }
 
     /**
@@ -42,53 +48,71 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $login = $this->input('login');
-        $password = $this->input('password');
+        $userId = (int) $this->input('user_id');
+        $shopId = (int) $this->input('shop_id');
 
-        // emailまたはlogin_idで認証を試行
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'login_id';
-        
-        if (! Auth::attempt([$field => $login, 'password' => $password], $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
-
-            // ログイン失敗を記録（例外がスローされる前に確実に記録）
-            // コントローラー側でも記録されるが、念のためここでも記録
-            // 不正アクセス検知のため、パスワードはそのまま記録
-            try {
-                ActivityLog::create([
-                    'user_id' => null,
-                    'shop_id' => null,
-                    'action_type' => 'login_failed',
-                    'resource_type' => null,
-                    'resource_id' => null,
-                    'route_name' => 'login',
-                    'url' => $this->fullUrl(),
-                    'method' => $this->method(),
-                    'description' => 'ログイン失敗: ' . $login,
-                    'old_values' => null,
-                    'new_values' => [
-                        'login' => $login,
-                        'password' => $password,
-                    ],
-                    'ip_address' => $this->ip(),
-                    'user_agent' => $this->userAgent(),
-                ]);
-            } catch (\Exception $e) {
-                // ログ記録に失敗しても処理は続行（コントローラー側で記録される）
-                \Illuminate\Support\Facades\Log::error('Failed to log login failure in LoginRequest', [
-                    'error' => $e->getMessage(),
-                    'login' => $login,
-                    'ip' => $this->ip(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-            }
-
+        $user = User::find($userId);
+        if (! $user) {
+            $this->recordLoginFailure($userId, $shopId);
             throw ValidationException::withMessages([
-                'login' => trans('auth.failed'),
+                'user_id' => trans('auth.failed'),
             ]);
         }
 
+        // 選択ユーザーが選択店舗に所属しているか確認
+        if (! $user->shops()->where('shops.id', $shopId)->exists()) {
+            throw ValidationException::withMessages([
+                'user_id' => trans('auth.failed'),
+            ]);
+        }
+
+        if (config('auth.security_login')) {
+            $password = $this->input('password');
+            if (! Hash::check($password, $user->password)) {
+                RateLimiter::hit($this->throttleKey());
+                $this->recordLoginFailure($userId, $shopId);
+                throw ValidationException::withMessages([
+                    'password' => trans('auth.failed'),
+                ]);
+            }
+        }
+
         RateLimiter::clear($this->throttleKey());
+        Auth::login($user, $this->boolean('remember'));
+    }
+
+    /**
+     * ログイン失敗を記録する
+     */
+    private function recordLoginFailure(int $userId, int $shopId): void
+    {
+        try {
+            ActivityLog::create([
+                'user_id' => null,
+                'shop_id' => null,
+                'action_type' => 'login_failed',
+                'resource_type' => null,
+                'resource_id' => null,
+                'route_name' => 'login',
+                'url' => $this->fullUrl(),
+                'method' => $this->method(),
+                'description' => 'ログイン失敗: user_id=' . $userId,
+                'old_values' => null,
+                'new_values' => [
+                    'user_id' => $userId,
+                    'shop_id' => $shopId,
+                ],
+                'ip_address' => $this->ip(),
+                'user_agent' => $this->userAgent(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to log login failure in LoginRequest', [
+                'error' => $e->getMessage(),
+                'user_id' => $userId,
+                'ip' => $this->ip(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 
     /**
@@ -107,7 +131,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'password' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -119,6 +143,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->input('login')).'|'.$this->ip());
+        return Str::transliterate(Str::lower((string) $this->input('user_id')).'|'.$this->ip());
     }
 }
