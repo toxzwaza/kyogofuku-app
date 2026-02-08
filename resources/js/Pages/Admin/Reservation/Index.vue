@@ -300,6 +300,28 @@
                 <div class="flex flex-col md:flex-row md:items-end gap-4">
                   <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >開始日</label
+                    >
+                    <input
+                      v-model="filterStartDate"
+                      type="date"
+                      @change="applyFilters"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                      >終了日</label
+                    >
+                    <input
+                      v-model="filterEndDate"
+                      type="date"
+                      @change="applyFilters"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2"
                       >会場</label
                     >
                     <select
@@ -1092,6 +1114,28 @@
                             </option>
                           </select>
                         </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                            >開始日</label
+                          >
+                          <input
+                            v-model="filterStartDate"
+                            type="date"
+                            @change="applyFilters"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                            >終了日</label
+                          >
+                          <input
+                            v-model="filterEndDate"
+                            type="date"
+                            @change="applyFilters"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          />
+                        </div>
                         <div class="flex gap-2">
                           <button
                             @click="applyFilters"
@@ -1109,7 +1153,7 @@
                       </div>
                     </div>
                   </div>
-                </div>
+            </div>
               </div>
 
               <!-- 区切り線 -->
@@ -2203,13 +2247,26 @@ if (initialDatetime) {
 const filterReservationDate = ref(initialDate);
 const filterReservationTime = ref(initialTime);
 
+// 表示する開始日・終了日（開始日デフォルトは本日、終了日は未指定で上限なし）
+const getTodayString = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const filterStartDate = ref(
+  props.filters?.start_date ?? getTodayString()
+);
+const filterEndDate = ref(props.filters?.end_date ?? "");
+
 // 並べ替え用のstate（デフォルトは新しい順）
 const sortDateOrder = ref("asc");
 const sortTimeOrder = ref("asc");
 
 // 予約詳細へのURL（絞り込み状態をクエリで渡す）
 const getReservationShowUrl = (reservationId) => {
-  const params = {};
+  const params = {
+    start_date: filterStartDate.value,
+  };
+  if (filterEndDate.value) params.end_date = filterEndDate.value;
   if (filterVenueId.value) params.venue_id = filterVenueId.value;
   if (filterReservationDate.value && filterReservationTime.value) {
     params.reservation_datetime = `${filterReservationDate.value} ${filterReservationTime.value}:00`;
@@ -2597,7 +2654,12 @@ const onDateChange = () => {
 
 // フィルターを適用
 const applyFilters = () => {
-  const params = {};
+  const params = {
+    start_date: filterStartDate.value,
+  };
+  if (filterEndDate.value) {
+    params.end_date = filterEndDate.value;
+  }
   if (filterVenueId.value) {
     params.venue_id = filterVenueId.value;
   }
@@ -2620,9 +2682,11 @@ const resetFilters = () => {
   filterVenueId.value = "";
   filterReservationDate.value = "";
   filterReservationTime.value = "";
+  filterStartDate.value = getTodayString();
+  filterEndDate.value = "";
   router.get(
     route("admin.events.reservations.index", props.event.id),
-    {},
+    { start_date: getTodayString() },
     {
       preserveState: true,
       preserveScroll: true,
