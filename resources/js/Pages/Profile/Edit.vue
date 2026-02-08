@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
+import GoogleCalendarLinkForm from './Partials/GoogleCalendarLinkForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
 import { Head } from '@inertiajs/vue3';
@@ -8,6 +9,10 @@ import { Head } from '@inertiajs/vue3';
 defineProps({
     mustVerifyEmail: Boolean,
     status: String,
+    googleCalendarRefreshToken: String,
+    googleAuthError: String,
+    authGoogleUrl: String,
+    googleRedirectUri: String,
 });
 </script>
 
@@ -25,6 +30,17 @@ defineProps({
                     <UpdateProfileInformationForm
                         :must-verify-email="mustVerifyEmail"
                         :status="status"
+                        class="max-w-xl"
+                    />
+                </div>
+
+                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                    <GoogleCalendarLinkForm
+                        v-if="authGoogleUrl"
+                        :auth-google-url="authGoogleUrl"
+                        :google-calendar-refresh-token="googleCalendarRefreshToken"
+                        :google-auth-error="googleAuthError"
+                        :google-redirect-uri="googleRedirectUri"
                         class="max-w-xl"
                     />
                 </div>

@@ -21,6 +21,10 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status') ?? session('error'),
+            'googleCalendarRefreshToken' => session('google_calendar_refresh_token'),
+            'googleAuthError' => session('google_auth_error'),
+            'authGoogleUrl' => route('auth.google.redirect'),
+            'googleRedirectUri' => config('services.google.redirect'),
         ]);
     }
 
