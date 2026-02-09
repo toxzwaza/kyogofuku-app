@@ -26,19 +26,72 @@
         <!-- スケジュール管理 -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-800">
-                スケジュール管理
-              </h3>
-              <Link
-                :href="route('profile.edit')"
-                class="text-sm text-indigo-600 hover:text-indigo-800"
-              >
-                Googleカレンダーに同期するにはプロフィールで連携が必要
-              </Link>
+            <!-- ヘッダー + カレンダー表示切替（モダンなトグル） -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div class="flex items-center justify-between sm:justify-start gap-3">
+                <h3 class="text-lg font-semibold text-gray-800">
+                  スケジュール管理
+                </h3>
+                <Link
+                  :href="route('profile.edit')"
+                  class="text-sm text-indigo-600 hover:text-indigo-800 whitespace-nowrap"
+                >
+                  Googleカレンダー連携
+                </Link>
+              </div>
+              <!-- カレンダー表示トグル（モダンデザイン） -->
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-gray-600">
+                  {{ showCalendarSection ? 'カレンダーを表示中' : 'カレンダーは非表示' }}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="showCalendarSection"
+                  @click="showCalendarSection = !showCalendarSection"
+                  :class="[
+                    'relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                    showCalendarSection ? 'bg-indigo-600' : 'bg-gray-200'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      showCalendarSection ? 'translate-x-5' : 'translate-x-1'
+                    ]"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
             </div>
-            
-            <!-- 縦並びで2つのカレンダーを表示 -->
+
+            <!-- カレンダー未表示時の説明 -->
+            <div
+              v-if="!showCalendarSection"
+              class="rounded-xl border border-dashed border-gray-300 bg-gray-50/80 px-6 py-8 text-center"
+            >
+              <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-200/80 text-gray-500 mb-3">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p class="text-sm font-medium text-gray-600 mb-1">カレンダーは非表示です</p>
+              <p class="text-xs text-gray-500 mb-4">上のスイッチをオンにすると店舗・ユーザー単位のスケジュールと請求書発行を表示します</p>
+              <button
+                type="button"
+                @click="showCalendarSection = true"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors shadow-sm"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                カレンダーを表示する
+              </button>
+            </div>
+
+            <!-- 縦並びで2つのカレンダーを表示（v-ifで重いコンポーネントは非表示時は未マウント） -->
+            <template v-if="showCalendarSection">
             <div class="space-y-6">
               <!-- 店舗単位カレンダー -->
               <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -295,7 +348,8 @@
                 </div>
               </div>
             </div>
-            
+            </template>
+
             <!-- 請求書モーダル -->
             <transition name="modal">
               <div
@@ -1181,6 +1235,191 @@
           </div>
         </transition>
 
+                <!-- 最近の予約と最近のメモ（スケジュール管理の下・axios検索・スクロール一覧） -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 最近の予約 -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800">最近の予約</h3>
+                                <Link
+                                    :href="route('admin.events.index')"
+                                    class="text-sm text-indigo-600 hover:text-indigo-900"
+                                >
+                                    すべて見る →
+                                </Link>
+                            </div>
+                            <div class="mb-4 space-y-3">
+                                <div>
+                                    <label for="dashboard-reservation-shop" class="block text-xs font-medium text-gray-600 mb-1">店舗</label>
+                                    <select
+                                        id="dashboard-reservation-shop"
+                                        v-model="reservationFilterShopId"
+                                        @change="onReservationFilterShopChange"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">すべて</option>
+                                        <option v-for="shop in userShops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="dashboard-reservation-event" class="block text-xs font-medium text-gray-600 mb-1">イベント</label>
+                                    <select
+                                        id="dashboard-reservation-event"
+                                        v-model="reservationFilterEventId"
+                                        @change="fetchRecentReservations"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">すべて</option>
+                                        <option v-for="ev in eventsForReservationFilter" :key="ev.id" :value="ev.id">{{ ev.title }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                                <div v-if="recentReservationsLoading" class="p-6 text-center text-sm text-gray-500">
+                                    読込中...
+                                </div>
+                                <template v-else-if="recentReservationsList.length > 0">
+                                    <div
+                                        v-for="reservation in recentReservationsList"
+                                        :key="reservation.id"
+                                        class="p-3 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <Link
+                                            v-if="reservation.event"
+                                            :href="route('admin.reservations.show', reservation.id)"
+                                            class="text-sm font-medium text-indigo-600 hover:text-indigo-900"
+                                        >
+                                            {{ reservation.event.title }}
+                                        </Link>
+                                        <p class="text-sm text-gray-900 mt-1">{{ reservation.name }}</p>
+                                        <div class="mt-1 space-y-0.5 text-xs text-gray-600">
+                                            <p>受付: {{ formatDateTime(reservation.created_at) }}</p>
+                                            <p v-if="reservation.reservation_datetime">予約枠: {{ formatDateTime(reservation.reservation_datetime) }}</p>
+                                            <p v-if="reservation.status">
+                                                <span
+                                                    :class="getReservationStatusBadgeClass(reservation.status)"
+                                                    class="px-2 py-0.5 text-xs font-medium rounded-full"
+                                                >
+                                                    {{ reservation.status }}
+                                                </span>
+                                            </p>
+                                            <p v-if="reservation.schedule?.user">
+                                                担当: {{ reservation.schedule.user.name }}
+                                            </p>
+                                            <p v-else class="text-gray-400">スケジュール未登録</p>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div v-else class="p-6 text-center text-sm text-gray-500">
+                                    予約データがありません
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 最近のメモ -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800">最近のメモ</h3>
+                                <Link
+                                    :href="route('admin.events.index')"
+                                    class="text-sm text-indigo-600 hover:text-indigo-900"
+                                >
+                                    イベント一覧 →
+                                </Link>
+                            </div>
+                            <div class="mb-4 space-y-3">
+                                <div>
+                                    <label for="dashboard-notes-search" class="block text-xs font-medium text-gray-600 mb-1">テキスト検索</label>
+                                    <div class="relative">
+                                        <input
+                                            id="dashboard-notes-search"
+                                            v-model="recentNotesKeyword"
+                                            type="search"
+                                            placeholder="内容・投稿者で検索"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm pl-10 pr-4 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            @input="onNotesSearchInput"
+                                        />
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="dashboard-notes-shop" class="block text-xs font-medium text-gray-600 mb-1">店舗</label>
+                                        <select
+                                            id="dashboard-notes-shop"
+                                            v-model="noteFilterShopId"
+                                            @change="onNoteFilterShopChange"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        >
+                                            <option value="">すべて</option>
+                                            <option v-for="shop in userShops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="dashboard-notes-event" class="block text-xs font-medium text-gray-600 mb-1">イベント</label>
+                                        <select
+                                            id="dashboard-notes-event"
+                                            v-model="noteFilterEventId"
+                                            @change="fetchRecentNotes"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        >
+                                            <option value="">すべて</option>
+                                            <option v-for="ev in eventsForNoteFilter" :key="ev.id" :value="ev.id">{{ ev.title }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                                <div v-if="recentNotesLoading" class="p-6 text-center text-sm text-gray-500">
+                                    読込中...
+                                </div>
+                                <template v-else-if="recentNotesList.length > 0">
+                                    <div
+                                        v-for="note in recentNotesList"
+                                        :key="note.id"
+                                        class="p-3 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <p class="text-sm font-medium text-gray-900">{{ note.user?.name || "不明" }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">{{ formatDateTime(note.created_at) }}</p>
+                                        <p class="text-sm text-gray-700 mt-2 line-clamp-2">{{ note.content }}</p>
+                                        <template v-if="note.reservation">
+                                            <div class="mt-2 text-xs text-gray-600 border-t border-gray-100 pt-2 space-y-0.5">
+                                                <p><span class="font-medium text-gray-700">名前:</span> {{ note.reservation.customer ? note.reservation.customer.name + (note.reservation.customer.kana ? ' (' + note.reservation.customer.kana + ')' : '') : (note.reservation.name || '—') }}</p>
+                                                <p v-if="note.reservation.event"><span class="font-medium text-gray-700">予約イベント:</span> {{ note.reservation.event.title }}</p>
+                                                <p v-if="note.reservation.reservation_datetime"><span class="font-medium text-gray-700">枠:</span> {{ formatDateTime(note.reservation.reservation_datetime) }}</p>
+                                                <p v-if="note.reservation.email && !note.reservation.customer" class="text-gray-500"> {{ note.reservation.email }}</p>
+                                            </div>
+                                            <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                                <Link
+                                                    v-if="note.reservation.customer"
+                                                    :href="route('admin.customers.show', note.reservation.customer.id)"
+                                                    class="text-xs text-indigo-600 hover:text-indigo-900"
+                                                >
+                                                    顧客詳細へ →
+                                                </Link>
+                                                <Link
+                                                    :href="route('admin.reservations.show', note.reservation.id)"
+                                                    class="text-xs text-indigo-600 hover:text-indigo-900"
+                                                >
+                                                    予約詳細へ →
+                                                </Link>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <div v-else class="p-6 text-center text-sm text-gray-500">
+                                    メモがありません
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- フォームタイプ別の統計 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
@@ -1730,104 +1969,6 @@
                     </div>
                 </div>
 
-                <!-- 最近の予約と最近のメモ -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- 最近の予約 -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-semibold text-gray-800">最近の予約</h3>
-                                <Link
-                                    v-if="recentReservations && recentReservations.length > 0"
-                                    :href="route('admin.events.index')"
-                                    class="text-sm text-indigo-600 hover:text-indigo-900"
-                                >
-                                    すべて見る →
-                                </Link>
-                            </div>
-              <div
-                v-if="
-                  props.recentReservations &&
-                  props.recentReservations.length > 0
-                "
-                class="space-y-3"
-              >
-                                <div
-                                    v-for="reservation in props.recentReservations.slice(0, 5)"
-                                    :key="reservation.id"
-                                    class="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0"
-                                >
-                                    <div class="flex justify-between items-start">
-                                        <div class="flex-1">
-                                            <Link
-                                                v-if="reservation.event"
-                                                :href="route('admin.reservations.show', reservation.id)"
-                                                class="text-sm font-medium text-indigo-600 hover:text-indigo-900"
-                                            >
-                                                {{ reservation.event.title }}
-                                            </Link>
-                      <p class="text-sm text-gray-900 mt-1">
-                        {{ reservation.name }}
-                      </p>
-                      <p class="text-xs text-gray-500 mt-1">
-                        {{ formatDateTime(reservation.created_at) }}
-                      </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else class="text-center py-8 text-gray-500">
-                                予約データがありません
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 最近のメモ -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                最近のメモ
-              </h3>
-              <div
-                v-if="props.recentNotes && props.recentNotes.length > 0"
-                class="space-y-3"
-              >
-                                <div
-                                    v-for="note in props.recentNotes.slice(0, 5)"
-                                    :key="note.id"
-                                    class="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0"
-                                >
-                                    <div class="flex justify-between items-start">
-                                        <div class="flex-1">
-                      <p class="text-sm font-medium text-gray-900">
-                        {{ note.user?.name || "不明" }}
-                      </p>
-                      <p class="text-xs text-gray-500 mt-1">
-                        {{ formatDateTime(note.created_at) }}
-                      </p>
-                      <p class="text-sm text-gray-700 mt-2 line-clamp-2">
-                        {{ note.content }}
-                      </p>
-                                            <Link
-                                                v-if="note.reservation"
-                        :href="
-                          route('admin.reservations.show', note.reservation.id)
-                        "
-                                                class="text-xs text-indigo-600 hover:text-indigo-900 mt-1 inline-block"
-                                            >
-                                                予約詳細へ →
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else class="text-center py-8 text-gray-500">
-                                メモがありません
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 今週・来週の予約 -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- 今週の予約 -->
@@ -2110,6 +2251,7 @@ const props = defineProps({
     utmStats: Object,
   shops: Array,
   userShops: Array,
+  filterEvents: Array,
   users: Array,
   currentUser: Object,
 });
@@ -2166,6 +2308,91 @@ const statCards = computed(() => {
 
 const chartType = ref("bar");
 const utmActiveTab = ref("source");
+const showCalendarSection = ref(false);
+
+// 最近の予約・最近のメモ（axios・店舗・イベント絞り込み・メモはテキスト検索）
+const recentReservationsList = ref([]);
+const recentNotesList = ref([]);
+const reservationFilterShopId = ref("");
+const reservationFilterEventId = ref("");
+const recentNotesKeyword = ref("");
+const noteFilterShopId = ref("");
+const noteFilterEventId = ref("");
+const recentReservationsLoading = ref(false);
+const recentNotesLoading = ref(false);
+let notesSearchTimeout = null;
+
+const filterEvents = computed(() => props.filterEvents || []);
+
+// 選択中の店舗に紐づくイベントのみ（最近の予約用）
+const eventsForReservationFilter = computed(() => {
+  const shopId = reservationFilterShopId.value;
+  if (!shopId) return [];
+  const list = filterEvents.value.filter((ev) => (ev.shop_ids || []).includes(Number(shopId)));
+  return list;
+});
+
+// 選択中の店舗に紐づくイベントのみ（最近のメモ用）
+const eventsForNoteFilter = computed(() => {
+  const shopId = noteFilterShopId.value;
+  if (!shopId) return [];
+  return filterEvents.value.filter((ev) => (ev.shop_ids || []).includes(Number(shopId)));
+});
+
+async function fetchRecentReservations() {
+  recentReservationsLoading.value = true;
+  try {
+    const { data } = await axios.get(route("dashboard.recent-reservations"), {
+      params: {
+        shop_id: reservationFilterShopId.value || undefined,
+        event_id: reservationFilterEventId.value || undefined,
+        limit: 50,
+      },
+    });
+    recentReservationsList.value = data;
+  } catch (err) {
+    console.error("最近の予約の取得に失敗しました:", err);
+    recentReservationsList.value = [];
+  } finally {
+    recentReservationsLoading.value = false;
+  }
+}
+
+async function fetchRecentNotes() {
+  recentNotesLoading.value = true;
+  try {
+    const { data } = await axios.get(route("dashboard.recent-notes"), {
+      params: {
+        keyword: recentNotesKeyword.value || undefined,
+        shop_id: noteFilterShopId.value || undefined,
+        event_id: noteFilterEventId.value || undefined,
+        limit: 50,
+      },
+    });
+    recentNotesList.value = data;
+  } catch (err) {
+    console.error("最近のメモの取得に失敗しました:", err);
+    recentNotesList.value = [];
+  } finally {
+    recentNotesLoading.value = false;
+  }
+}
+
+function onNotesSearchInput() {
+  if (notesSearchTimeout) clearTimeout(notesSearchTimeout);
+  notesSearchTimeout = setTimeout(fetchRecentNotes, 300);
+}
+
+function onReservationFilterShopChange() {
+  reservationFilterEventId.value = "";
+  fetchRecentReservations();
+}
+
+function onNoteFilterShopChange() {
+  noteFilterEventId.value = "";
+  fetchRecentNotes();
+}
+
 const shopCalendar = ref(null);
 const userCalendar = ref(null);
 const selectedShopId = ref("");
@@ -3121,6 +3348,19 @@ function downloadInvoice() {
 
 // デフォルト値を設定
 onMounted(() => {
+  // 最近の予約・最近のメモ：デフォルトの絞り込み店舗をログインユーザーの所属店舗（main または先頭）に設定、イベントは未選択
+  if (userShops.value.length > 0) {
+    const mainShop = userShops.value.find((s) => s.main === true || s.main === 1);
+    const defaultShop = mainShop || userShops.value[0];
+    reservationFilterShopId.value = defaultShop.id;
+    noteFilterShopId.value = defaultShop.id;
+    reservationFilterEventId.value = "";
+    noteFilterEventId.value = "";
+  }
+  // 最近の予約・最近のメモをaxiosで取得
+  fetchRecentReservations();
+  fetchRecentNotes();
+
   // LocalStorageから費用科目機能の設定を読み込む
   loadExpenseCategoryFeatureSetting();
   
@@ -4962,6 +5202,17 @@ const formatDateTime = (datetime) => {
   // 無効な日付の場合は"-"を返す
   if (isNaN(date.getTime())) return "-";
   return date.toLocaleString("ja-JP");
+};
+
+const getReservationStatusBadgeClass = (status) => {
+  const classes = {
+    未対応: "bg-gray-100 text-gray-800",
+    確認中: "bg-yellow-100 text-yellow-800",
+    返信待ち: "bg-blue-100 text-blue-800",
+    対応完了済み: "bg-green-100 text-green-800",
+    キャンセル済み: "bg-red-100 text-red-800",
+  };
+  return classes[status] || "bg-gray-100 text-gray-800";
 };
 
 const formatDate = (dateString) => {

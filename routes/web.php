@@ -56,6 +56,8 @@ Route::get('/', function () {
 Route::get('/test', [TestController::class, 'index'])->name('test');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard/recent-reservations', [DashboardController::class, 'recentReservations'])->middleware(['auth', 'verified'])->name('dashboard.recent-reservations');
+Route::get('/dashboard/recent-notes', [DashboardController::class, 'recentNotes'])->middleware(['auth', 'verified'])->name('dashboard.recent-notes');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

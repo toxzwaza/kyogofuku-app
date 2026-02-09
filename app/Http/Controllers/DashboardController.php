@@ -113,6 +113,13 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // 絞り込み用イベント一覧（最近の予約・最近のメモのフィルター用。店舗に紐づくイベントのみ選択可能にするため shop_ids を含める）
+        $filterEvents = Event::with('shops:id')->orderBy('title')->get(['id', 'title'])->map(fn ($e) => [
+            'id' => $e->id,
+            'title' => $e->title,
+            'shop_ids' => $e->shops->pluck('id')->values()->all(),
+        ]);
+
         // 予約枠が満席に近いイベント（残り枠が20%以下）
         $eventsWithLowCapacity = Event::with(['timeslots', 'reservations'])
             ->where('is_public', true)
@@ -413,12 +420,113 @@ class DashboardController extends Controller
             'utmStats' => $utmStats,
             'shops' => $shops,
             'userShops' => $userShops,
+            'filterEvents' => $filterEvents,
             'users' => $users,
             'currentUser' => $currentUser ? [
                 'id' => $currentUser->id,
                 'name' => $currentUser->name,
             ] : null,
         ]);
+    }
+
+    /**
+     * ダッシュボード用：最近の予約一覧（店舗・イベント絞り込み・axios用）
+     */
+    public function recentReservations(Request $request)
+    {
+        $query = EventReservation::where('cancel_flg', false)
+            ->with(['event', 'schedule.user', 'statusUpdatedBy'])
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('event_id')) {
+            $query->where('event_id', $request->event_id);
+        }
+
+        if ($request->filled('shop_id')) {
+            $query->whereHas('event.shops', function ($q) use ($request) {
+                $q->where('shops.id', $request->shop_id);
+            });
+        }
+
+        $limit = min((int) $request->get('limit', 50), 100);
+        $items = $query->limit($limit)->get();
+
+        return response()->json($items->map(function ($r) {
+            $schedule = $r->schedule;
+            return [
+                'id' => $r->id,
+                'name' => $r->name,
+                'created_at' => $r->created_at->format('Y-m-d H:i:s'),
+                'reservation_datetime' => $r->reservation_datetime ?? null,
+                'status' => $r->status,
+                'status_updated_by' => $r->statusUpdatedBy ? ['id' => $r->statusUpdatedBy->id, 'name' => $r->statusUpdatedBy->name] : null,
+                'event' => $r->event ? ['id' => $r->event->id, 'title' => $r->event->title] : null,
+                'schedule' => $schedule ? [
+                    'id' => $schedule->id,
+                    'user' => $schedule->user ? ['id' => $schedule->user->id, 'name' => $schedule->user->name] : null,
+                ] : null,
+            ];
+        }));
+    }
+
+    /**
+     * ダッシュボード用：最近のメモ一覧（テキスト検索・店舗・イベント絞り込み・axios用）
+     */
+    public function recentNotes(Request $request)
+    {
+        $query = ReservationNote::with(['user', 'reservation.event', 'reservation.customer'])
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('content', 'like', "%{$keyword}%")
+                    ->orWhereHas('user', function ($eq) use ($keyword) {
+                        $eq->where('name', 'like', "%{$keyword}%");
+                    });
+            });
+        }
+
+        if ($request->filled('event_id')) {
+            $query->whereHas('reservation', function ($q) use ($request) {
+                $q->where('event_id', $request->event_id);
+            });
+        }
+
+        if ($request->filled('shop_id')) {
+            $query->whereHas('reservation.event.shops', function ($q) use ($request) {
+                $q->where('shops.id', $request->shop_id);
+            });
+        }
+
+        $limit = min((int) $request->get('limit', 50), 100);
+        $items = $query->limit($limit)->get();
+
+        return response()->json($items->map(function ($n) {
+            $res = $n->reservation;
+            $reservationPayload = null;
+            if ($res) {
+                $reservationPayload = [
+                    'id' => $res->id,
+                    'name' => $res->name,
+                    'email' => $res->email,
+                    'reservation_datetime' => $res->reservation_datetime ?? null,
+                    'event' => $res->event ? ['id' => $res->event->id, 'title' => $res->event->title] : null,
+                    'customer' => $res->customer ? [
+                        'id' => $res->customer->id,
+                        'name' => $res->customer->name,
+                        'kana' => $res->customer->kana ?? null,
+                    ] : null,
+                ];
+            }
+            return [
+                'id' => $n->id,
+                'content' => $n->content,
+                'created_at' => $n->created_at->format('Y-m-d H:i:s'),
+                'user' => $n->user ? ['id' => $n->user->id, 'name' => $n->user->name] : null,
+                'reservation' => $reservationPayload,
+            ];
+        }));
     }
 }
 
