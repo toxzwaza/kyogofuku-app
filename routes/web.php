@@ -29,6 +29,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\SesTestController;
+use App\Http\Controllers\S3TestController;
 use App\Http\Controllers\TestController;
 
 /*
@@ -54,6 +55,10 @@ Route::get('/', function () {
 });
 
 Route::get('/test', [TestController::class, 'index'])->name('test');
+
+Route::get('/s3-test', [S3TestController::class, 'index'])->name('s3-test.index');
+Route::post('/s3-test', [S3TestController::class, 'store'])->name('s3-test.store');
+Route::get('/s3-test/signed-url', [S3TestController::class, 'signedUrl'])->name('s3-test.signed-url');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 Route::get('/dashboard/recent-reservations', [DashboardController::class, 'recentReservations'])->middleware(['auth', 'verified'])->name('dashboard.recent-reservations');
