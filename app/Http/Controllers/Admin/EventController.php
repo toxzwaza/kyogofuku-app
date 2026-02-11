@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\DocumentImage;
 use App\Models\Event;
+use App\Models\EventImage;
 use App\Models\Shop;
 use App\Models\UtmSource;
 use App\Models\Venue;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -87,18 +89,67 @@ class EventController extends Controller
     }
 
     /**
-     * イベント追加フォームを表示
+     * イベント追加フォームを表示（複製時は copy_from で複製元を渡す）
      */
-    public function create()
+    public function create(Request $request)
     {
         $shops = Shop::where('is_active', true)->get();
         $venues = Venue::where('is_active', true)->get();
         $documents = Document::orderBy('created_at', 'desc')->get();
 
+        $copySourceEvent = null;
+        if ($request->filled('copy_from')) {
+            $source = Event::with(['shops', 'venues', 'documents', 'images'])
+                ->findOrFail($request->copy_from);
+
+            $slug = $source->slug . '-copy';
+            $counter = 1;
+            while (Event::where('slug', $slug)->exists()) {
+                $slug = $source->slug . '-copy-' . $counter;
+                $counter++;
+            }
+
+            $copySourceEvent = [
+                'id' => $source->id,
+                'title' => $source->title,
+                'description' => $source->description ?? '',
+                'form_type' => $source->form_type,
+                'start_at' => $source->start_at?->format('Y-m-d'),
+                'end_at' => $source->end_at?->format('Y-m-d'),
+                'is_public' => $source->is_public,
+                'gtm_id' => $source->gtm_id ?? '',
+                'success_text' => $source->success_text ?? '',
+                'slug_aliases' => $source->slug_aliases ?? [],
+                'slug' => $slug,
+                'shop_ids' => $source->shops->pluck('id')->values()->all(),
+                'venue_ids' => $source->venues->pluck('id')->values()->all(),
+                'document_ids' => $source->documents->pluck('id')->values()->all(),
+                'images' => $source->images->map(fn ($img) => [
+                    'id' => $img->id,
+                    'path' => $img->path,
+                    'webp_path' => $img->webp_path,
+                    'alt' => $img->alt,
+                    'sort_order' => $img->sort_order,
+                ])->values()->all(),
+                'slideshow_positions' => DB::table('event_slideshow_positions')
+                    ->where('event_id', $source->id)
+                    ->orderBy('position')
+                    ->orderBy('sort_order')
+                    ->get()
+                    ->map(fn ($row) => [
+                        'position' => $row->position,
+                        'sort_order' => $row->sort_order,
+                        'slideshow_id' => $row->slideshow_id,
+                    ])
+                    ->all(),
+            ];
+        }
+
         return Inertia::render('Admin/Event/Create', [
             'shops' => $shops,
             'venues' => $venues,
             'documents' => $documents,
+            'copySourceEvent' => $copySourceEvent,
         ]);
     }
 
@@ -147,6 +198,7 @@ class EventController extends Controller
             'new_venue_phone' => 'nullable|string|max:255',
             'document_ids' => 'nullable|array',
             'document_ids.*' => 'exists:documents,id',
+            'copy_from' => 'nullable|exists:events,id',
         ]);
 
         // date型なのでそのまま使用（datetime-localの場合はT以降を削除）
@@ -208,6 +260,38 @@ class EventController extends Controller
         // 資料請求フォームの場合、資料を関連付け
         if ($event->form_type === 'document' && $request->has('document_ids')) {
             $event->documents()->attach($request->document_ids);
+        }
+
+        // 複製時：画像（同一 path 参照）とスライドショー位置を引き継ぐ（ファイルは複製しない）
+        if ($request->filled('copy_from')) {
+            $sourceImages = EventImage::where('event_id', $request->copy_from)
+                ->orderBy('sort_order')
+                ->get();
+            foreach ($sourceImages as $img) {
+                EventImage::create([
+                    'event_id' => $event->id,
+                    'path' => $img->path,
+                    'webp_path' => $img->webp_path,
+                    'alt' => $img->alt,
+                    'sort_order' => $img->sort_order,
+                ]);
+            }
+
+            $sourcePositions = DB::table('event_slideshow_positions')
+                ->where('event_id', $request->copy_from)
+                ->orderBy('position')
+                ->orderBy('sort_order')
+                ->get();
+            foreach ($sourcePositions as $row) {
+                DB::table('event_slideshow_positions')->insert([
+                    'event_id' => $event->id,
+                    'slideshow_id' => $row->slideshow_id,
+                    'position' => $row->position,
+                    'sort_order' => $row->sort_order,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         return redirect()->route('admin.events.index')

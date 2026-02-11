@@ -2349,7 +2349,9 @@ async function fetchRecentReservations() {
         limit: 50,
       },
     });
-    recentReservationsList.value = data;
+    recentReservationsList.value = [...data].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
   } catch (err) {
     console.error("最近の予約の取得に失敗しました:", err);
     recentReservationsList.value = [];
@@ -2369,7 +2371,9 @@ async function fetchRecentNotes() {
         limit: 50,
       },
     });
-    recentNotesList.value = data;
+    recentNotesList.value = [...data].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
   } catch (err) {
     console.error("最近のメモの取得に失敗しました:", err);
     recentNotesList.value = [];

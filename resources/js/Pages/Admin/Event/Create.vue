@@ -1,10 +1,10 @@
 <template>
-    <Head title="イベント追加" />
+    <Head :title="isCopyMode ? 'イベント複製' : 'イベント追加'" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">イベント追加</h2>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ isCopyMode ? 'イベント複製' : 'イベント追加' }}</h2>
                 <Link
                     :href="route('admin.events.index')"
                     class="text-indigo-600 hover:text-indigo-900"
@@ -420,34 +420,65 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
     shops: Array,
     venues: Array,
     documents: Array,
+    copySourceEvent: Object,
 });
 
-const form = useForm({
-    title: '',
-    slug: '',
-    slug_aliases: [],
-    description: '',
-    form_type: 'reservation',
-    start_at: '',
-    end_at: '',
-    shop_ids: [],
-    venue_ids: [],
-    document_ids: [],
-    new_venue_name: '',
-    new_venue_description: '',
-    new_venue_address: '',
-    new_venue_phone: '',
-    is_public: true,
-    gtm_id: '',
-    success_text: '',
-});
+const isCopyMode = computed(() => !!props.copySourceEvent);
+
+const getInitialFormData = () => {
+    const src = props.copySourceEvent;
+    if (src) {
+        return {
+            title: src.title ?? '',
+            slug: src.slug ?? '',
+            slug_aliases: Array.isArray(src.slug_aliases) ? [...src.slug_aliases] : [],
+            description: src.description ?? '',
+            form_type: src.form_type ?? 'reservation',
+            start_at: src.start_at ?? '',
+            end_at: src.end_at ?? '',
+            shop_ids: Array.isArray(src.shop_ids) ? [...src.shop_ids] : [],
+            venue_ids: Array.isArray(src.venue_ids) ? [...src.venue_ids] : [],
+            document_ids: Array.isArray(src.document_ids) ? [...src.document_ids] : [],
+            new_venue_name: '',
+            new_venue_description: '',
+            new_venue_address: '',
+            new_venue_phone: '',
+            is_public: src.is_public ?? true,
+            gtm_id: src.gtm_id ?? '',
+            success_text: src.success_text ?? '',
+            copy_from: src.id,
+        };
+    }
+    return {
+        title: '',
+        slug: '',
+        slug_aliases: [],
+        description: '',
+        form_type: 'reservation',
+        start_at: '',
+        end_at: '',
+        shop_ids: [],
+        venue_ids: [],
+        document_ids: [],
+        new_venue_name: '',
+        new_venue_description: '',
+        new_venue_address: '',
+        new_venue_phone: '',
+        is_public: true,
+        gtm_id: '',
+        success_text: '',
+        copy_from: null,
+    };
+};
+
+const form = useForm(getInitialFormData());
 
 const slugError = ref('');
 const successTextError = ref('');
@@ -474,8 +505,10 @@ const generateDefaultSlug = () => {
     return `${formTypePrefix}_${randomString}`;
 };
 
-// 初期slugを設定
-form.slug = generateDefaultSlug();
+// 複製モードでない場合のみ初期slugを設定
+if (!props.copySourceEvent) {
+    form.slug = generateDefaultSlug();
+}
 
 // form_typeが変更されたときにslugを再生成
 watch(() => form.form_type, () => {

@@ -133,7 +133,7 @@ class SlideshowController extends Controller
     public function destroyImage(SlideshowImage $image)
     {
         $slideshowId = $image->slideshow_id;
-        
+
         // ストレージからファイルを削除
         if (Storage::disk('public')->exists($image->path)) {
             Storage::disk('public')->delete($image->path);
@@ -143,6 +143,33 @@ class SlideshowController extends Controller
 
         return redirect()->route('admin.slideshows.show', $slideshowId)
             ->with('success', '画像を削除しました。');
+    }
+
+    /**
+     * スライドショー画像を一括削除
+     */
+    public function destroyBulk(Request $request, Slideshow $slideshow)
+    {
+        $validated = $request->validate([
+            'image_ids' => 'required|array|min:1',
+            'image_ids.*' => 'integer|exists:slideshow_images,id',
+        ]);
+
+        $images = SlideshowImage::where('slideshow_id', $slideshow->id)
+            ->whereIn('id', $validated['image_ids'])
+            ->get();
+
+        foreach ($images as $image) {
+            if (Storage::disk('public')->exists($image->path)) {
+                Storage::disk('public')->delete($image->path);
+            }
+            $image->delete();
+        }
+
+        $count = $images->count();
+
+        return redirect()->route('admin.slideshows.show', $slideshow->id)
+            ->with('success', "{$count}件の画像を削除しました。");
     }
 
     /**

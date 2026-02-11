@@ -111,6 +111,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/events/{event}/images/create', [AdminEventImageController::class, 'create'])->name('events.images.create');
     Route::post('/events/{event}/images', [AdminEventImageController::class, 'store'])->name('events.images.store');
     Route::delete('/images/{image}', [AdminEventImageController::class, 'destroy'])->name('images.destroy');
+    Route::post('/events/{event}/images/bulk-destroy', [AdminEventImageController::class, 'destroyBulk'])->name('events.images.bulk-destroy');
     Route::post('/events/{event}/images/{image}/convert-webp', [AdminEventImageController::class, 'convertToWebp'])->name('events.images.convert-webp');
     Route::post('/events/{event}/images/sort', [AdminEventImageController::class, 'updateSortOrder'])->name('events.images.sort');
     Route::post('/events/{event}/slideshow-positions', [AdminEventImageController::class, 'updateSlideshowPositions'])->name('events.slideshow-positions.update');
@@ -123,6 +124,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::put('/slideshows/{slideshow}', [AdminSlideshowController::class, 'update'])->name('slideshows.update');
     Route::delete('/slideshows/{slideshow}', [AdminSlideshowController::class, 'destroy'])->name('slideshows.destroy');
     Route::post('/slideshows/{slideshow}/images', [AdminSlideshowController::class, 'storeImage'])->name('slideshows.images.store');
+    Route::post('/slideshows/{slideshow}/images/bulk-destroy', [AdminSlideshowController::class, 'destroyBulk'])->name('slideshows.images.bulk-destroy');
     Route::delete('/slideshow-images/{image}', [AdminSlideshowController::class, 'destroyImage'])->name('slideshow-images.destroy');
     Route::post('/slideshows/{slideshow}/images/sort', [AdminSlideshowController::class, 'updateImageSortOrder'])->name('slideshows.images.sort');
     

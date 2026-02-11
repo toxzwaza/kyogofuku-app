@@ -47,6 +47,14 @@
                                     <span class="text-sm font-medium text-indigo-600">{{ selectedIds.size }}件選択中</span>
                                     <button
                                         type="button"
+                                        @click="bulkDeleteSelected"
+                                        :disabled="isBulkDeleting"
+                                        class="px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {{ isBulkDeleting ? '削除中...' : '選択した画像を削除' }}
+                                    </button>
+                                    <button
+                                        type="button"
                                         @click="clearSelection"
                                         class="text-sm text-gray-600 hover:text-gray-800 underline"
                                     >
@@ -247,6 +255,7 @@ const convertingImageId = ref(null);
 const slideshowPositionsLocal = ref({});
 const selectedIds = ref(new Set());
 const previewImage = ref(null);
+const isBulkDeleting = ref(false);
 
 // ドラッグ時の自動スクロール用
 const AUTO_SCROLL_ZONE = 80;
@@ -523,6 +532,25 @@ const deleteImage = (id) => {
             },
         });
     }
+};
+
+// 選択した画像をまとめて削除
+const bulkDeleteSelected = () => {
+    if (selectedIds.value.size === 0) return;
+    const count = selectedIds.value.size;
+    if (!confirm(`選択した${count}件の画像を削除しますか？この操作は取り消せません。`)) return;
+    isBulkDeleting.value = true;
+    router.post(route('admin.events.images.bulk-destroy', props.event.id), {
+        image_ids: Array.from(selectedIds.value),
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            selectedIds.value = new Set();
+        },
+        onFinish: () => {
+            isBulkDeleting.value = false;
+        },
+    });
 };
 
 const convertToWebp = (image) => {

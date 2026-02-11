@@ -191,18 +191,21 @@ class EventImageController extends Controller
 
     /**
      * イベント画像を削除
+     * 同一 path を参照する他の EventImage がいる場合はストレージのファイルは削除しない（複製で共有しているため）
      */
     public function destroy(EventImage $image)
     {
         $eventId = $image->event_id;
-        
-        // ストレージから元のファイルを削除
-        if (Storage::disk('public')->exists($image->path)) {
+
+        $otherUsesSamePath = EventImage::where('path', $image->path)->where('id', '!=', $image->id)->exists();
+        $otherUsesSameWebpPath = $image->webp_path
+            && EventImage::where('webp_path', $image->webp_path)->where('id', '!=', $image->id)->exists();
+
+        if (!$otherUsesSamePath && Storage::disk('public')->exists($image->path)) {
             Storage::disk('public')->delete($image->path);
         }
-        
-        // WebPファイルも削除
-        if ($image->webp_path && Storage::disk('public')->exists($image->webp_path)) {
+
+        if (!$otherUsesSameWebpPath && $image->webp_path && Storage::disk('public')->exists($image->webp_path)) {
             Storage::disk('public')->delete($image->webp_path);
         }
 
@@ -210,6 +213,40 @@ class EventImageController extends Controller
 
         return redirect()->route('admin.events.images.index', $eventId)
             ->with('success', '画像を削除しました。');
+    }
+
+    /**
+     * 複数のイベント画像をまとめて削除
+     */
+    public function destroyBulk(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'image_ids' => 'required|array|min:1',
+            'image_ids.*' => 'integer|exists:event_images,id',
+        ]);
+
+        $images = EventImage::where('event_id', $event->id)
+            ->whereIn('id', $validated['image_ids'])
+            ->get();
+
+        $idsBeingDeleted = $validated['image_ids'];
+        foreach ($images as $image) {
+            $otherUsesSamePath = EventImage::where('path', $image->path)->whereNotIn('id', $idsBeingDeleted)->exists();
+            $otherUsesSameWebpPath = $image->webp_path
+                && EventImage::where('webp_path', $image->webp_path)->whereNotIn('id', $idsBeingDeleted)->exists();
+
+            if (!$otherUsesSamePath && Storage::disk('public')->exists($image->path)) {
+                Storage::disk('public')->delete($image->path);
+            }
+            if (!$otherUsesSameWebpPath && $image->webp_path && Storage::disk('public')->exists($image->webp_path)) {
+                Storage::disk('public')->delete($image->webp_path);
+            }
+            $image->delete();
+        }
+
+        $count = $images->count();
+        return redirect()->route('admin.events.images.index', $event->id)
+            ->with('success', "{$count}件の画像を削除しました。");
     }
 
     /**
