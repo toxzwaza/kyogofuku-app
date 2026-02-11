@@ -338,8 +338,21 @@ class CustomerController extends Controller
                 ];
             });
 
+        // 顧客写真に表示用 URL を付与（s3=署名URL、public=ローカルURL）
+        $customerForInertia = $customer->toArray();
+        $customerForInertia['photos'] = $customer->photos->map(function ($photo) {
+            $item = $photo->toArray();
+            if (($photo->storage_disk ?? 'public') === 's3') {
+                $path = str_replace('\\', '/', $photo->file_path); // S3 キーは常に /
+                $item['url'] = Storage::disk('s3_private')->temporaryUrl($path, now()->addMinutes(60));
+            } else {
+                $item['url'] = '/storage/' . $photo->file_path;
+            }
+            return $item;
+        })->values()->all();
+
         return Inertia::render('Admin/Customer/Show', [
-            'customer' => $customer,
+            'customer' => $customerForInertia,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'ceremonyAreas' => $ceremonyAreas,
             'shops' => $shops,
@@ -898,12 +911,14 @@ class CustomerController extends Controller
         ]);
 
         $file = $request->file('photo');
-        $path = $file->store('customers/' . $customer->id, 'public');
+        $path = $file->store('customers/' . $customer->id, 's3_private');
+        $path = str_replace('\\', '/', $path); // S3 は常に / のため Windows の \ を正規化
 
         CustomerPhoto::create([
             'customer_id' => $customer->id,
             'photo_type_id' => $validated['photo_type_id'],
             'file_path' => $path,
+            'storage_disk' => 's3',
             'remarks' => $validated['remarks'] ?? null,
         ]);
 
@@ -921,13 +936,43 @@ class CustomerController extends Controller
         }
 
         if ($photo->file_path) {
-            Storage::disk('public')->delete($photo->file_path);
+            $disk = ($photo->storage_disk ?? 'public') === 's3' ? 's3_private' : ($photo->storage_disk ?? 'public');
+            $path = $disk === 's3_private' ? str_replace('\\', '/', $photo->file_path) : $photo->file_path;
+            Storage::disk($disk)->delete($path);
         }
 
         $photo->delete();
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '写真を削除しました。');
+    }
+
+    /**
+     * 顧客写真を S3 に移行（public → s3）
+     */
+    public function migrateCustomerPhotoToS3(Customer $customer, CustomerPhoto $photo)
+    {
+        if ($photo->customer_id !== $customer->id) {
+            abort(404);
+        }
+        if (($photo->storage_disk ?? 'public') === 's3') {
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('info', 'この写真は既に S3 に保存されています。');
+        }
+
+        if (! Storage::disk('public')->exists($photo->file_path)) {
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('error', '元のファイルが見つかりません。');
+        }
+
+        $content = Storage::disk('public')->get($photo->file_path);
+        $s3Path = str_replace('\\', '/', $photo->file_path);
+        Storage::disk('s3_private')->put($s3Path, $content);
+        $photo->update(['storage_disk' => 's3', 'file_path' => $s3Path]);
+        Storage::disk('public')->delete($photo->file_path);
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '写真を S3 に移行しました。');
     }
 
     /**
@@ -1057,7 +1102,9 @@ class CustomerController extends Controller
         // 関連する写真ファイルを削除
         foreach ($customer->photos as $photo) {
             if ($photo->file_path) {
-                Storage::disk('public')->delete($photo->file_path);
+                $disk = ($photo->storage_disk ?? 'public') === 's3' ? 's3_private' : ($photo->storage_disk ?? 'public');
+                $path = $disk === 's3_private' ? str_replace('\\', '/', $photo->file_path) : $photo->file_path;
+                Storage::disk($disk)->delete($path);
             }
         }
 

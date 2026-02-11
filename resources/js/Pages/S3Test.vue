@@ -215,7 +215,7 @@ function isImage(item) {
 async function openSignedUrl(item) {
     loadingSignedUrl.value = item.id;
     try {
-        const disk = item.visibility_type === 'public' ? 's3_public' : 's3';
+        const disk = item.visibility_type === 'public' ? 's3_public' : 's3_private';
         const { data } = await axios.get(route('s3-test.signed-url'), {
             params: { path: item.path, disk },
         });

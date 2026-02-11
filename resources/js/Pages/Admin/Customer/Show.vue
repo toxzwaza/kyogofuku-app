@@ -823,20 +823,35 @@
                             <div v-for="photo in customer.photos" :key="photo.id" class="relative group cursor-pointer" @click="openPhotoPreview(photo)">
                                 <div class="aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-indigo-500 transition-colors relative">
                                     <img
-                                        :src="getPhotoUrl(photo.file_path)"
+                                        :src="getPhotoUrl(photo)"
                                         :alt="photo.type?.name || '写真'"
                                         class="w-full h-full object-cover"
                                     />
-                                    <button
-                                        type="button"
-                                        class="absolute top-1 right-1 w-7 h-7 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 shadow-md z-10"
-                                        title="写真を削除"
-                                        @click.stop="deleteCustomerPhoto(photo)"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
+                                    <div class="absolute top-1 right-1 flex gap-1 z-10">
+                                        <button
+                                            v-if="photo.storage_disk !== 's3'"
+                                            type="button"
+                                            class="w-7 h-7 flex items-center justify-center rounded-full bg-indigo-500 text-white hover:bg-indigo-600 shadow-md"
+                                            title="S3 に移行"
+                                            :disabled="migratingPhotoId === photo.id"
+                                            @click.stop="migratePhotoToS3(photo)"
+                                        >
+                                            <svg v-if="migratingPhotoId !== photo.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            <span v-else class="text-xs">...</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="w-7 h-7 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 shadow-md"
+                                            title="写真を削除"
+                                            @click.stop="deleteCustomerPhoto(photo)"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="mt-2 text-sm">
                                     <div class="font-medium text-gray-900">{{ photo.type?.name || '-' }}</div>
@@ -1829,7 +1844,7 @@
                     <div class="overflow-y-auto flex-1 p-6">
                         <div class="text-center">
                             <img
-                                :src="showingUnsavedPhotoPreview ? photoPreview : getPhotoUrl(selectedPhoto.file_path)"
+                                :src="showingUnsavedPhotoPreview ? photoPreview : getPhotoUrl(selectedPhoto)"
                                 :alt="showingUnsavedPhotoPreview ? 'プレビュー' : (selectedPhoto?.type?.name || '写真')"
                                 class="max-w-full max-h-[70vh] mx-auto object-contain rounded-lg"
                             />
@@ -2543,8 +2558,21 @@ const closePhotoPreviewModal = () => {
 };
 
 // 写真URLを取得
-const getPhotoUrl = (filePath) => {
-    return `/storage/${filePath}`;
+const getPhotoUrl = (photo) => {
+    if (!photo) return '';
+    if (photo.url) return photo.url;
+    return `/storage/${photo.file_path || ''}`;
+};
+
+const migratingPhotoId = ref(null);
+const migratePhotoToS3 = (photo) => {
+    if (migratingPhotoId.value !== null) return;
+    if (!confirm('この写真を S3 に移行しますか？')) return;
+    migratingPhotoId.value = photo.id;
+    router.post(route('admin.customers.photos.migrate-to-s3', { customer: props.customer.id, photo: photo.id }), {}, {
+        preserveScroll: true,
+        onFinish: () => { migratingPhotoId.value = null; },
+    });
 };
 
 // 顧客写真を削除

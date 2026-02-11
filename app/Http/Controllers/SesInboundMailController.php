@@ -234,7 +234,7 @@ class SesInboundMailController extends Controller
                             $filename = $attachment['filename'];
                             $content = $attachment['content'];
                             
-                            // ストレージに保存（明示的に local。将来 S3 へ移行する場合は disk('s3') 等に変更）
+                            // ストレージに保存（明示的に local。将来 S3 へ移行する場合は disk('s3_private') 等に変更）
                             $storagePath = 'email-attachments/' . $email->id . '/' . $filename;
                             $saved = Storage::disk('local')->put($storagePath, $content);
                             

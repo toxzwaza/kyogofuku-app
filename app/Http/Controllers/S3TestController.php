@@ -30,7 +30,9 @@ class S3TestController extends Controller
                 $data['thumbnail_url'] = $url;
             } else {
                 $data['url'] = null;
-                $data['thumbnail_url'] = Storage::disk('s3')->temporaryUrl($item->path, now()->addMinutes(5));
+                // 旧データは path が 'private/...' のため、root 配下のパスに変換
+                $pathForUrl = str_starts_with($item->path, 'private/') ? substr($item->path, 8) : $item->path;
+                $data['thumbnail_url'] = Storage::disk('s3_private')->temporaryUrl($pathForUrl, now()->addMinutes(5));
             }
             return $data;
         })->values();
@@ -57,8 +59,8 @@ class S3TestController extends Controller
         $uniqueName = Str::random(8) . ($extension ? '.' . $extension : '');
 
         if ($validated['visibility_type'] === 'private') {
-            $path = 'private/' . $datePrefix . '/' . $uniqueName;
-            $file->storeAs('private/' . $datePrefix, $uniqueName, 's3');
+            $path = $datePrefix . '/' . $uniqueName;
+            $file->storeAs($datePrefix, $uniqueName, 's3_private');
         } else {
             $path = $datePrefix . '/' . $uniqueName;
             $file->storeAs($datePrefix, $uniqueName, 's3_public');
@@ -74,17 +76,17 @@ class S3TestController extends Controller
     }
 
     /**
-     * 署名付き URL を返す（方式A: s3 / 方式B: s3_public）
+     * 署名付き URL を返す（s3_private / s3_public）
      */
     public function signedUrl(Request $request)
     {
         $validated = $request->validate([
             'path' => 'required|string',
-            'disk' => 'nullable|string|in:s3,s3_public',
+            'disk' => 'nullable|string|in:s3_private,s3_public',
         ]);
 
         $path = $validated['path'];
-        $disk = $validated['disk'] ?? 's3';
+        $disk = $validated['disk'] ?? 's3_private';
         $url = Storage::disk($disk)->temporaryUrl($path, now()->addMinutes(60));
 
         return response()->json(['url' => $url]);

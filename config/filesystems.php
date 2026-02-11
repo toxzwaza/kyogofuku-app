@@ -44,7 +44,9 @@ return [
             'throw' => false,
         ],
 
-        's3' => [
+        // 非公開ファイル用。すべて private/ プレフィックス配下に保存される。
+        // directory_separator を / に固定し、Windows でも S3 キーが private/... になるようにする。
+        's3_private' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
@@ -53,10 +55,12 @@ return [
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => true,
             'visibility' => 'private',
+            'root' => 'private',
+            'directory_separator' => '/',
         ],
 
-        // 方式B用。ACL 禁止バケットのため visibility は private（ACL を送らない）。
-        // public/ プレフィックスを公開する場合はバケットポリシーで GetObject を許可すること。
+        // 公開用。すべて public/ プレフィックス配下に保存される。ACL 禁止バケットのため visibility は private。
+        // public/ を公開する場合はバケットポリシーで GetObject を許可すること。
         's3_public' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -67,6 +71,7 @@ return [
             'throw' => true,
             'root' => 'public',
             'visibility' => 'private',
+            'directory_separator' => '/',
         ],
 
     ],
