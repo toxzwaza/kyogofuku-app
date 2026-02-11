@@ -80,15 +80,29 @@
                                                 alt="会場画像"
                                                 class="w-32 h-32 object-cover rounded border border-gray-300"
                                             />
-                                            <button
-                                                v-if="venue.image_url && !previewImage"
-                                                type="button"
-                                                @click="removeImage"
-                                                class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs -mt-2 -mr-2 hover:bg-red-600"
-                                                title="画像を削除"
-                                            >
-                                                ×
-                                            </button>
+                                            <div v-if="venue.image_url && !previewImage" class="absolute top-0 right-0 flex gap-1 -mt-2 -mr-2">
+                                                <button
+                                                    v-if="venue.storage_disk !== 's3'"
+                                                    type="button"
+                                                    class="w-7 h-7 flex items-center justify-center rounded-full bg-indigo-500 text-white hover:bg-indigo-600 shadow-md"
+                                                    title="S3 に移行"
+                                                    :disabled="migratingImage"
+                                                    @click="migrateImageToS3"
+                                                >
+                                                    <svg v-if="!migratingImage" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                    </svg>
+                                                    <span v-else class="text-xs">...</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="w-7 h-7 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 shadow-md"
+                                                    title="画像を削除"
+                                                    @click="removeImage"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -132,7 +146,7 @@
 import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     venue: Object,
@@ -141,6 +155,7 @@ const props = defineProps({
 const fileInput = ref(null);
 const previewImage = ref(null);
 const removeImageFlag = ref(false);
+const migratingImage = ref(false);
 
 const form = useForm({
     name: props.venue.name,
@@ -167,6 +182,7 @@ const handleFileChange = (event) => {
 };
 
 const removeImage = () => {
+    if (!confirm('画像を削除しますか？')) return;
     form.remove_image = true;
     form.image = null;
     previewImage.value = null;
@@ -174,6 +190,12 @@ const removeImage = () => {
     if (fileInput.value) {
         fileInput.value.value = '';
     }
+    form.transform((data) => ({
+        ...data,
+        _method: 'PUT',
+    })).post(route('admin.venues.update', props.venue.id), {
+        forceFormData: true,
+    });
 };
 
 const submit = () => {
@@ -182,6 +204,16 @@ const submit = () => {
         _method: 'PUT',
     })).post(route('admin.venues.update', props.venue.id), {
         forceFormData: true,
+    });
+};
+
+const migrateImageToS3 = () => {
+    if (migratingImage.value) return;
+    if (!confirm('この画像を S3 に移行しますか？（WebP に変換して保存します）')) return;
+    migratingImage.value = true;
+    router.post(route('admin.venues.migrate-image-to-s3', props.venue.id), {}, {
+        preserveScroll: true,
+        onFinish: () => { migratingImage.value = false; },
     });
 };
 </script>

@@ -6,8 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Slideshow;
 use App\Models\SlideshowImage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class SlideshowController extends Controller
 {
@@ -37,9 +42,15 @@ class SlideshowController extends Controller
     public function show(Slideshow $slideshow)
     {
         $slideshow->load('images');
+        $slideshowForInertia = $slideshow->toArray();
+        $slideshowForInertia['images'] = $slideshow->images->map(function ($image) {
+            $item = $image->toArray();
+            $item['url'] = $image->url;
+            return $item;
+        })->values()->all();
 
         return Inertia::render('Admin/Slideshow/Show', [
-            'slideshow' => $slideshow,
+            'slideshow' => $slideshowForInertia,
         ]);
     }
 
@@ -86,10 +97,14 @@ class SlideshowController extends Controller
      */
     public function destroy(Slideshow $slideshow)
     {
-        // 画像ファイルを削除
+        $slideshow->load('images');
         foreach ($slideshow->images as $image) {
-            if (Storage::disk('public')->exists($image->path)) {
-                Storage::disk('public')->delete($image->path);
+            if ($image->path) {
+                $disk = ($image->storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
+                $path = $disk === 's3_public' ? str_replace('\\', '/', $image->path) : $image->path;
+                if (Storage::disk($disk)->exists($path)) {
+                    Storage::disk($disk)->delete($path);
+                }
             }
         }
 
@@ -100,7 +115,7 @@ class SlideshowController extends Controller
     }
 
     /**
-     * スライドショー画像を追加
+     * スライドショー画像を追加（WebP に変換して S3 public/slideshows/ にのみ保存）
      */
     public function storeImage(Request $request, Slideshow $slideshow)
     {
@@ -110,14 +125,25 @@ class SlideshowController extends Controller
             'alt' => 'nullable|string|max:255',
         ]);
 
+        $manager = $this->createImageManager();
+        if (! $manager) {
+            return redirect()->route('admin.slideshows.show', $slideshow->id)
+                ->with('error', 'WebP変換に必要な画像ドライバー（GD/Imagick）が利用できません。');
+        }
+
         $maxSortOrder = $slideshow->images()->max('sort_order') ?? 0;
 
         foreach ($request->file('images') as $index => $file) {
-            $path = $file->store('slideshows/' . $slideshow->id, 'public');
-            
+            $webpPath = $this->convertUploadToWebpAndPutS3($file, (int) $slideshow->id, $manager);
+            if (! $webpPath) {
+                return redirect()->route('admin.slideshows.show', $slideshow->id)
+                    ->with('error', '画像の WebP 変換に失敗しました。');
+            }
+
             SlideshowImage::create([
                 'slideshow_id' => $slideshow->id,
-                'path' => $path,
+                'path' => $webpPath,
+                'storage_disk' => 's3',
                 'alt' => $request->alt ?? null,
                 'sort_order' => $maxSortOrder + $index + 1,
             ]);
@@ -128,17 +154,112 @@ class SlideshowController extends Controller
     }
 
     /**
+     * 利用可能なドライバーでImageManagerを作成
+     */
+    private function createImageManager()
+    {
+        if (extension_loaded('gd') && function_exists('imagecreatetruecolor')) {
+            try {
+                return new ImageManager(new GdDriver());
+            } catch (\Exception $e) {
+                Log::warning('GDドライバーの初期化に失敗: ' . $e->getMessage());
+            }
+        }
+        if (extension_loaded('imagick')) {
+            try {
+                return new ImageManager(new ImagickDriver());
+            } catch (\Exception $e) {
+                Log::warning('Imagickドライバーの初期化に失敗: ' . $e->getMessage());
+            }
+        }
+        Log::warning('画像処理ドライバー（GD/Imagick）が利用できません。');
+        return null;
+    }
+
+    /**
+     * アップロードファイルを WebP に変換して S3（s3_public）に保存（public/slideshows/ 配下）
+     * @return string|null 保存した WebP のパス（slideshows/{id}/{unique}.webp）、失敗時は null
+     */
+    private function convertUploadToWebpAndPutS3($uploadedFile, int $slideshowId, $manager)
+    {
+        if (! $manager) {
+            return null;
+        }
+        try {
+            $webpPath = 'slideshows/' . $slideshowId . '/' . Str::random(40) . '.webp';
+            $image = $manager->read($uploadedFile->getRealPath());
+            $tmpPath = tempnam(sys_get_temp_dir(), 'webp');
+            $image->toWebp(80)->save($tmpPath);
+            $content = file_get_contents($tmpPath);
+            @unlink($tmpPath);
+            Storage::disk('s3_public')->put($webpPath, $content);
+            return $webpPath;
+        } catch (\Exception $e) {
+            Log::error('WebP変換エラー (S3 slideshows/' . $slideshowId . '): ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * スライドショー画像を S3 に移行（public → s3_public、WebP に変換して保存）
+     */
+    public function migrateSlideshowImageToS3(Slideshow $slideshow, SlideshowImage $image)
+    {
+        if ($image->slideshow_id !== $slideshow->id) {
+            abort(404);
+        }
+        if (($image->storage_disk ?? 'public') === 's3') {
+            return redirect()->route('admin.slideshows.show', $slideshow->id)
+                ->with('info', 'この画像は既に S3 に保存されています。');
+        }
+
+        if (! Storage::disk('public')->exists($image->path)) {
+            return redirect()->route('admin.slideshows.show', $slideshow->id)
+                ->with('error', '元のファイルが見つかりません。');
+        }
+
+        $manager = $this->createImageManager();
+        if (! $manager) {
+            return redirect()->route('admin.slideshows.show', $slideshow->id)
+                ->with('error', 'WebP変換に必要な画像ドライバーが利用できません。');
+        }
+
+        try {
+            $content = Storage::disk('public')->get($image->path);
+            $pathInfo = pathinfo($image->path);
+            $webpPath = 'slideshows/' . $slideshow->id . '/' . Str::random(40) . '.webp';
+            $tmpPath = tempnam(sys_get_temp_dir(), 'img');
+            file_put_contents($tmpPath, $content);
+            $img = $manager->read($tmpPath);
+            $webpTmp = tempnam(sys_get_temp_dir(), 'webp');
+            $img->toWebp(80)->save($webpTmp);
+            $webpContent = file_get_contents($webpTmp);
+            @unlink($tmpPath);
+            @unlink($webpTmp);
+            Storage::disk('s3_public')->put($webpPath, $webpContent);
+            $image->update(['storage_disk' => 's3', 'path' => $webpPath]);
+            Storage::disk('public')->delete($image->path);
+        } catch (\Exception $e) {
+            Log::error('スライドショー画像 S3 移行エラー: ' . $e->getMessage());
+            return redirect()->route('admin.slideshows.show', $slideshow->id)
+                ->with('error', 'S3 への移行に失敗しました。');
+        }
+
+        return redirect()->route('admin.slideshows.show', $slideshow->id)
+            ->with('success', '画像を S3 に移行しました。');
+    }
+
+    /**
      * スライドショー画像を削除
      */
     public function destroyImage(SlideshowImage $image)
     {
         $slideshowId = $image->slideshow_id;
-
-        // ストレージからファイルを削除
-        if (Storage::disk('public')->exists($image->path)) {
-            Storage::disk('public')->delete($image->path);
+        $disk = ($image->storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
+        $path = $disk === 's3_public' ? str_replace('\\', '/', $image->path) : $image->path;
+        if ($image->path && Storage::disk($disk)->exists($path)) {
+            Storage::disk($disk)->delete($path);
         }
-
         $image->delete();
 
         return redirect()->route('admin.slideshows.show', $slideshowId)
@@ -160,8 +281,10 @@ class SlideshowController extends Controller
             ->get();
 
         foreach ($images as $image) {
-            if (Storage::disk('public')->exists($image->path)) {
-                Storage::disk('public')->delete($image->path);
+            $disk = ($image->storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
+            $path = $disk === 's3_public' ? str_replace('\\', '/', $image->path) : $image->path;
+            if ($image->path && Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
             }
             $image->delete();
         }

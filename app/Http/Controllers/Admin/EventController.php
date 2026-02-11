@@ -271,6 +271,7 @@ class EventController extends Controller
                 EventImage::create([
                     'event_id' => $event->id,
                     'path' => $img->path,
+                    'storage_disk' => $img->storage_disk ?? 'public',
                     'webp_path' => $img->webp_path,
                     'alt' => $img->alt,
                     'sort_order' => $img->sort_order,

@@ -9,6 +9,7 @@ use App\Models\Slideshow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
@@ -25,7 +26,9 @@ class EventImageController extends Controller
             return [
                 'id' => $image->id,
                 'path' => $image->path,
+                'url' => $image->url,
                 'webp_path' => $image->webp_path,
+                'webp_url' => $image->webp_url,
                 'alt' => $image->alt,
                 'sort_order' => $image->sort_order,
                 'file_format' => strtoupper(pathinfo($image->path, PATHINFO_EXTENSION) ?: '-'),
@@ -80,23 +83,26 @@ class EventImageController extends Controller
         ]);
 
         $maxSortOrder = $event->images()->max('sort_order') ?? 0;
-        
-        // 利用可能なドライバーでImageManagerを初期化
+
         $manager = $this->createImageManager();
+        if (!$manager) {
+            return redirect()->route('admin.events.images.create', $event->id)
+                ->with('error', 'WebP変換に必要な画像ドライバー（GD/Imagick）が利用できません。');
+        }
 
         foreach ($request->file('images') as $index => $file) {
-            $path = $file->store('events/' . $event->id, 'public');
-            
-            // WebP版を生成（ドライバーが利用可能な場合のみ）
-            $webpPath = null;
-            if ($manager) {
-                $webpPath = $this->convertPathToWebp($path, $manager);
+            // S3 には WebP のみ保存（元の JPEG 等は保存しない）
+            $webpPath = $this->convertUploadToWebpAndPutS3($file, (int) $event->id, $manager);
+            if (!$webpPath) {
+                return redirect()->route('admin.events.images.create', $event->id)
+                    ->with('error', '画像の WebP 変換に失敗しました。');
             }
-            
+
             EventImage::create([
                 'event_id' => $event->id,
-                'path' => $path,
-                'webp_path' => $webpPath,
+                'path' => $webpPath,
+                'storage_disk' => 's3',
+                'webp_path' => null,
                 'alt' => $request->alt ?? null,
                 'sort_order' => $maxSortOrder + $index + 1,
             ]);
@@ -135,29 +141,48 @@ class EventImageController extends Controller
     }
 
     /**
-     * 画像パスをWebP形式に変換
+     * アップロードファイルを WebP に変換して S3 に保存（S3 には WebP のみ保存）
+     * @return string|null 保存した WebP のパス（events/{id}/{unique}.webp）、失敗時は null
+     */
+    private function convertUploadToWebpAndPutS3($uploadedFile, int $eventId, $manager)
+    {
+        if (!$manager) {
+            return null;
+        }
+        try {
+            $webpPath = 'events/' . $eventId . '/' . Str::random(40) . '.webp';
+            $image = $manager->read($uploadedFile->getRealPath());
+            $tmpPath = tempnam(sys_get_temp_dir(), 'webp');
+            $image->toWebp(80)->save($tmpPath);
+            $content = file_get_contents($tmpPath);
+            @unlink($tmpPath);
+            Storage::disk('s3_public')->put($webpPath, $content);
+            return $webpPath;
+        } catch (\Exception $e) {
+            \Log::error('WebP変換エラー (S3 events/' . $eventId . '): ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 画像パスをWebP形式に変換（ローカル public 用）
      */
     private function convertPathToWebp($originalPath, $manager)
     {
         if (!$manager) {
             return null;
         }
-        
         try {
             $fullPath = Storage::disk('public')->path($originalPath);
             $pathInfo = pathinfo($originalPath);
             $webpPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.webp';
             $webpFullPath = Storage::disk('public')->path($webpPath);
-            
-            // 画像を読み込んでWebPに変換
+
             $image = $manager->read($fullPath);
-            
-            // WebPとして保存（品質80%）
             $image->toWebp(80)->save($webpFullPath);
-            
+
             return $webpPath;
         } catch (\Exception $e) {
-            // エラーが発生した場合はnullを返す（既存画像と同様に扱う）
             \Log::error("WebP変換エラー ({$originalPath}): " . $e->getMessage());
             return null;
         }
@@ -178,7 +203,12 @@ class EventImageController extends Controller
                 ->with('error', '画像処理ドライバー（GD/Imagick）が利用できません。');
         }
 
+        $webpPath = null;
+        if (($image->storage_disk ?? 'public') === 's3') {
+            $webpPath = $this->convertS3PathToWebp($image->path, $manager);
+        } else {
             $webpPath = $this->convertPathToWebp($image->path, $manager);
+        }
         if ($webpPath) {
             $image->update(['webp_path' => $webpPath]);
             return redirect()->route('admin.events.images.index', $event->id)
@@ -190,23 +220,56 @@ class EventImageController extends Controller
     }
 
     /**
+     * S3上の画像をWebPに変換してS3に保存（既存画像用）
+     */
+    private function convertS3PathToWebp(string $originalPath, $manager)
+    {
+        if (!$manager) {
+            return null;
+        }
+        try {
+            $path = str_replace('\\', '/', $originalPath);
+            $content = Storage::disk('s3_public')->get($path);
+            $pathInfo = pathinfo($path);
+            $webpPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.webp';
+            $tmpPath = tempnam(sys_get_temp_dir(), 'img');
+            file_put_contents($tmpPath, $content);
+            $image = $manager->read($tmpPath);
+            $webpTmp = tempnam(sys_get_temp_dir(), 'webp');
+            $image->toWebp(80)->save($webpTmp);
+            $webpContent = file_get_contents($webpTmp);
+            @unlink($tmpPath);
+            @unlink($webpTmp);
+            Storage::disk('s3_public')->put($webpPath, $webpContent);
+            return $webpPath;
+        } catch (\Exception $e) {
+            \Log::error("WebP変換エラー (S3 {$originalPath}): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * イベント画像を削除
      * 同一 path を参照する他の EventImage がいる場合はストレージのファイルは削除しない（複製で共有しているため）
      */
     public function destroy(EventImage $image)
     {
         $eventId = $image->event_id;
+        $disk = ($image->storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
 
         $otherUsesSamePath = EventImage::where('path', $image->path)->where('id', '!=', $image->id)->exists();
         $otherUsesSameWebpPath = $image->webp_path
             && EventImage::where('webp_path', $image->webp_path)->where('id', '!=', $image->id)->exists();
 
-        if (!$otherUsesSamePath && Storage::disk('public')->exists($image->path)) {
-            Storage::disk('public')->delete($image->path);
+        $path = $disk === 's3_public' ? str_replace('\\', '/', $image->path) : $image->path;
+        if (!$otherUsesSamePath && Storage::disk($disk)->exists($path)) {
+            Storage::disk($disk)->delete($path);
         }
-
-        if (!$otherUsesSameWebpPath && $image->webp_path && Storage::disk('public')->exists($image->webp_path)) {
-            Storage::disk('public')->delete($image->webp_path);
+        if (!$otherUsesSameWebpPath && $image->webp_path) {
+            $webpPath = $disk === 's3_public' ? str_replace('\\', '/', $image->webp_path) : $image->webp_path;
+            if (Storage::disk($disk)->exists($webpPath)) {
+                Storage::disk($disk)->delete($webpPath);
+            }
         }
 
         $image->delete();
@@ -231,15 +294,20 @@ class EventImageController extends Controller
 
         $idsBeingDeleted = $validated['image_ids'];
         foreach ($images as $image) {
+            $disk = ($image->storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
             $otherUsesSamePath = EventImage::where('path', $image->path)->whereNotIn('id', $idsBeingDeleted)->exists();
             $otherUsesSameWebpPath = $image->webp_path
                 && EventImage::where('webp_path', $image->webp_path)->whereNotIn('id', $idsBeingDeleted)->exists();
 
-            if (!$otherUsesSamePath && Storage::disk('public')->exists($image->path)) {
-                Storage::disk('public')->delete($image->path);
+            $path = $disk === 's3_public' ? str_replace('\\', '/', $image->path) : $image->path;
+            if (!$otherUsesSamePath && Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
             }
-            if (!$otherUsesSameWebpPath && $image->webp_path && Storage::disk('public')->exists($image->webp_path)) {
-                Storage::disk('public')->delete($image->webp_path);
+            if (!$otherUsesSameWebpPath && $image->webp_path) {
+                $webpPath = $disk === 's3_public' ? str_replace('\\', '/', $image->webp_path) : $image->webp_path;
+                if (Storage::disk($disk)->exists($webpPath)) {
+                    Storage::disk($disk)->delete($webpPath);
+                }
             }
             $image->delete();
         }

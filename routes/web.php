@@ -129,6 +129,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::put('/slideshows/{slideshow}', [AdminSlideshowController::class, 'update'])->name('slideshows.update');
     Route::delete('/slideshows/{slideshow}', [AdminSlideshowController::class, 'destroy'])->name('slideshows.destroy');
     Route::post('/slideshows/{slideshow}/images', [AdminSlideshowController::class, 'storeImage'])->name('slideshows.images.store');
+    Route::post('/slideshows/{slideshow}/images/{image}/migrate-to-s3', [AdminSlideshowController::class, 'migrateSlideshowImageToS3'])->name('slideshows.images.migrate-to-s3');
     Route::post('/slideshows/{slideshow}/images/bulk-destroy', [AdminSlideshowController::class, 'destroyBulk'])->name('slideshows.images.bulk-destroy');
     Route::delete('/slideshow-images/{image}', [AdminSlideshowController::class, 'destroyImage'])->name('slideshow-images.destroy');
     Route::post('/slideshows/{slideshow}/images/sort', [AdminSlideshowController::class, 'updateImageSortOrder'])->name('slideshows.images.sort');
@@ -249,6 +250,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/venues/{venue}', [AdminVenueController::class, 'show'])->name('venues.show');
     Route::get('/venues/{venue}/edit', [AdminVenueController::class, 'edit'])->name('venues.edit');
     Route::put('/venues/{venue}', [AdminVenueController::class, 'update'])->name('venues.update');
+    Route::post('/venues/{venue}/migrate-image-to-s3', [AdminVenueController::class, 'migrateVenueImageToS3'])->name('venues.migrate-image-to-s3');
     Route::delete('/venues/{venue}', [AdminVenueController::class, 'destroy'])->name('venues.destroy');
     
     // 会場管理（イベント単位）

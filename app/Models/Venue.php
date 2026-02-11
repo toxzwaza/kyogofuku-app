@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Venue extends Model
 {
@@ -15,6 +16,7 @@ class Venue extends Model
         'address',
         'phone',
         'image',
+        'storage_disk',
         'is_active',
     ];
 
@@ -43,15 +45,19 @@ class Venue extends Model
     }
 
     /**
-     * Storage URLを取得
+     * Storage URLを取得（public=ローカル / s3=s3_public）
      */
     public function getImageUrlAttribute()
     {
-        if (!$this->image) {
+        if (! $this->image) {
             return null;
         }
         if (str_starts_with($this->image, 'http')) {
             return $this->image;
+        }
+        if (($this->storage_disk ?? 'public') === 's3') {
+            $path = str_replace('\\', '/', $this->image);
+            return Storage::disk('s3_public')->url($path);
         }
         return asset('storage/' . $this->image);
     }

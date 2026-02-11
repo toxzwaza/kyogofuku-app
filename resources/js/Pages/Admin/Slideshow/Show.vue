@@ -252,15 +252,28 @@
                                     <!-- 画像（クリックで拡大プレビュー） -->
                                     <button
                                         type="button"
-                                        class="flex-shrink-0 rounded overflow-hidden border border-gray-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow"
+                                        class="relative flex-shrink-0 rounded overflow-hidden border border-gray-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow"
                                         @click.stop="openPreview(image)"
                                         title="クリックで拡大表示"
                                     >
                                         <img
-                                            :src="getImageUrl(image.path)"
+                                            :src="getImageUrl(image)"
                                             :alt="image.alt || 'スライドショー画像'"
                                             class="w-32 h-32 object-cover block pointer-events-none"
                                         />
+                                        <button
+                                            v-if="image.storage_disk !== 's3'"
+                                            type="button"
+                                            class="absolute top-1 right-1 w-7 h-7 flex items-center justify-center rounded-full bg-indigo-500 text-white hover:bg-indigo-600 shadow-md z-10"
+                                            title="S3 に移行"
+                                            :disabled="migratingImageId === image.id"
+                                            @click.stop="migrateImageToS3(image)"
+                                        >
+                                            <svg v-if="migratingImageId !== image.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            <span v-else class="text-xs">...</span>
+                                        </button>
                                     </button>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm text-gray-600">順序: {{ index + 1 }}</p>
@@ -316,7 +329,7 @@
                 >
                     <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
                         <img
-                            :src="getImageUrl(previewImage.path)"
+                            :src="getImageUrl(previewImage)"
                             :alt="previewImage.alt || 'スライドショー画像'"
                             class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl"
                             @click.stop
@@ -359,6 +372,7 @@ const previewImages = ref([]);
 const selectedIds = ref(new Set());
 const previewImage = ref(null);
 const isBulkDeleting = ref(false);
+const migratingImageId = ref(null);
 
 const AUTO_SCROLL_ZONE = 80;
 const SCROLL_STEP = 14;
@@ -388,11 +402,22 @@ const imageForm = useForm({
     alt: '',
 });
 
-const getImageUrl = (path) => {
-    if (path.startsWith('http')) {
-        return path;
-    }
-    return `/storage/${path}`;
+const getImageUrl = (image) => {
+    if (image?.url) return image.url;
+    const path = image?.path ?? image;
+    if (typeof path === 'string' && path.startsWith('http')) return path;
+    return `/storage/${path || ''}`;
+};
+
+const migrateImageToS3 = (image) => {
+    if (migratingImageId.value !== null) return;
+    if (!confirm('この画像を S3 に移行しますか？（WebP に変換して保存します）')) return;
+    migratingImageId.value = image.id;
+    router.post(
+        route('admin.slideshows.images.migrate-to-s3', { slideshow: props.slideshow.id, image: image.id }),
+        {},
+        { preserveScroll: true, onFinish: () => { migratingImageId.value = null; } }
+    );
 };
 
 const toggleSelection = (id) => {

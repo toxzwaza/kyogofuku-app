@@ -119,7 +119,7 @@
                                         title="クリックで拡大表示"
                                     >
                                         <img
-                                            :src="getImageUrl(image.path)"
+                                            :src="getImageUrl(image)"
                                             :alt="image.alt || 'イベント画像'"
                                             class="w-32 h-32 object-cover block pointer-events-none"
                                         />
@@ -131,15 +131,6 @@
                                         <p v-if="image.alt" class="text-sm text-gray-600 truncate">Alt: {{ image.alt }}</p>
                                     </div>
                                     <div class="flex-shrink-0 flex flex-col gap-2 items-end" @click.stop>
-                                        <button
-                                            v-if="!image.webp_path"
-                                            type="button"
-                                            @click="convertToWebp(image)"
-                                            :disabled="convertingImageId === image.id"
-                                            class="text-indigo-600 hover:text-indigo-800 disabled:opacity-50 text-sm"
-                                        >
-                                            {{ convertingImageId === image.id ? '変換中...' : 'WebPに変換' }}
-                                        </button>
                                         <button
                                             @click="deleteImage(image.id)"
                                             class="text-red-600 hover:text-red-900 text-sm"
@@ -208,7 +199,7 @@
                 >
                     <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
                         <img
-                            :src="getImageUrl(previewImage.path)"
+                            :src="getImageUrl(previewImage)"
                             :alt="previewImage.alt || 'イベント画像'"
                             class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl"
                             @click.stop
@@ -251,7 +242,6 @@ const dropTargetIndex = ref(null);
 const dropMode = ref('insert'); // 'insert' = 行の間へ挿入, 'swap' = 行の上で入れ替え
 const INSERT_ZONE_RATIO = 0.25; // 行の上からこの割合までを「挿入」ゾーンとする
 const isSavingSlideshows = ref(false);
-const convertingImageId = ref(null);
 const slideshowPositionsLocal = ref({});
 const selectedIds = ref(new Set());
 const previewImage = ref(null);
@@ -263,7 +253,7 @@ const SCROLL_STEP = 14;
 const lastScrollDirection = ref(null);
 let scrollIntervalId = null;
 
-// props.imagesが更新されたらsortedImagesを同期（WebP変換後のリダイレクトなど）
+// props.imagesが更新されたらsortedImagesを同期
 watch(() => props.images, (newVal) => {
     if (newVal && Array.isArray(newVal) && newVal.length > 0) {
         sortedImages.value = [...newVal];
@@ -337,10 +327,10 @@ const reorderSlideshowsAtPosition = (position, newOrder) => {
     }
 };
 
-const getImageUrl = (path) => {
-    if (path.startsWith('http')) {
-        return path;
-    }
+const getImageUrl = (image) => {
+    if (image.url) return image.url;
+    const path = image.path ?? image;
+    if (typeof path === 'string' && path.startsWith('http')) return path;
     return `/storage/${path}`;
 };
 
@@ -551,20 +541,6 @@ const bulkDeleteSelected = () => {
             isBulkDeleting.value = false;
         },
     });
-};
-
-const convertToWebp = (image) => {
-    convertingImageId.value = image.id;
-    router.post(
-        route('admin.events.images.convert-webp', [props.event.id, image.id]),
-        {},
-        {
-            preserveScroll: true,
-            onFinish: () => {
-                convertingImageId.value = null;
-            },
-        }
-    );
 };
 
 const saveSlideshowPositions = () => {

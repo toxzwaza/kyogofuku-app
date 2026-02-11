@@ -22,7 +22,11 @@ use App\Models\CustomerConstraint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class CustomerController extends Controller
 {
@@ -900,7 +904,7 @@ class CustomerController extends Controller
     }
 
     /**
-     * 顧客写真を追加
+     * 顧客写真を追加（WebP に変換して S3 にのみ保存）
      */
     public function storeCustomerPhoto(Request $request, Customer $customer)
     {
@@ -910,20 +914,76 @@ class CustomerController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
+        $manager = $this->createImageManager();
+        if (! $manager) {
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('error', 'WebP変換に必要な画像ドライバー（GD/Imagick）が利用できません。');
+        }
+
         $file = $request->file('photo');
-        $path = $file->store('customers/' . $customer->id, 's3_private');
-        $path = str_replace('\\', '/', $path); // S3 は常に / のため Windows の \ を正規化
+        $webpPath = $this->convertUploadToWebpAndPutS3Private($file, (int) $customer->id, $manager);
+        if (! $webpPath) {
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('error', '写真の WebP 変換に失敗しました。');
+        }
 
         CustomerPhoto::create([
             'customer_id' => $customer->id,
             'photo_type_id' => $validated['photo_type_id'],
-            'file_path' => $path,
+            'file_path' => $webpPath,
             'storage_disk' => 's3',
             'remarks' => $validated['remarks'] ?? null,
         ]);
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '写真を追加しました。');
+    }
+
+    /**
+     * 利用可能なドライバーでImageManagerを作成
+     */
+    private function createImageManager()
+    {
+        if (extension_loaded('gd') && function_exists('imagecreatetruecolor')) {
+            try {
+                return new ImageManager(new GdDriver());
+            } catch (\Exception $e) {
+                Log::warning('GDドライバーの初期化に失敗: ' . $e->getMessage());
+            }
+        }
+        if (extension_loaded('imagick')) {
+            try {
+                return new ImageManager(new ImagickDriver());
+            } catch (\Exception $e) {
+                Log::warning('Imagickドライバーの初期化に失敗: ' . $e->getMessage());
+            }
+        }
+        Log::warning('画像処理ドライバー（GD/Imagick）が利用できません。');
+        return null;
+    }
+
+    /**
+     * アップロードファイルを WebP に変換して S3（s3_private）に保存
+     * @return string|null 保存した WebP のパス（customers/{id}/{unique}.webp）、失敗時は null
+     */
+    private function convertUploadToWebpAndPutS3Private($uploadedFile, int $customerId, $manager)
+    {
+        if (! $manager) {
+            return null;
+        }
+        try {
+            $webpPath = 'customers/' . $customerId . '/' . Str::random(40) . '.webp';
+            $image = $manager->read($uploadedFile->getRealPath());
+            $tmpPath = tempnam(sys_get_temp_dir(), 'webp');
+            $image->toWebp(80)->save($tmpPath);
+            $content = file_get_contents($tmpPath);
+            @unlink($tmpPath);
+            Storage::disk('s3_private')->put($webpPath, $content);
+            return $webpPath;
+        } catch (\Exception $e) {
+            Log::error('WebP変換エラー (S3 customers/' . $customerId . '): ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
