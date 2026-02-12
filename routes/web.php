@@ -208,6 +208,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/customers/{customer}/constraints/sign', [AdminCustomerController::class, 'constraintSignForm'])->name('customers.constraints.sign');
     Route::post('/customers/{customer}/constraints', [AdminCustomerController::class, 'storeCustomerConstraint'])->name('customers.constraints.store');
     Route::put('/customers/{customer}/constraints/{customerConstraint}', [AdminCustomerController::class, 'updateCustomerConstraint'])->name('customers.constraints.update');
+    Route::delete('/customers/{customer}/constraints/{customerConstraint}', [AdminCustomerController::class, 'destroyCustomerConstraint'])->name('customers.constraints.destroy');
     Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])->name('customers.destroy');
     
     // 制約テンプレート管理

@@ -556,7 +556,16 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.plan?.name || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.kimono_type }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 py-1 text-xs rounded-full" :class="(contract.status || '確定') === '確定' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'">
+                                            <span
+                                                class="px-2 py-1 text-xs rounded-full"
+                                                :class="
+                                                    (contract.status || '確定') === '確定'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : (contract.status || '') === 'キャンセル'
+                                                            ? 'bg-gray-100 text-gray-800'
+                                                            : 'bg-amber-100 text-amber-800'
+                                                "
+                                            >
                                                 {{ contract.status || '確定' }}
                                             </span>
                                         </td>
@@ -1196,6 +1205,7 @@
                                     >
                                         <option value="保留">保留</option>
                                         <option value="確定">確定</option>
+                                        <option value="キャンセル">キャンセル</option>
                                     </select>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -1345,6 +1355,7 @@
                                     <select v-model="editContractForm.status" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                                         <option value="保留">保留</option>
                                         <option value="確定">確定</option>
+                                        <option value="キャンセル">キャンセル</option>
                                     </select>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">

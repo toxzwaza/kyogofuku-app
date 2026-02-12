@@ -666,7 +666,7 @@ class CustomerController extends Controller
             'plan_id' => 'required|exists:plans,id',
             'contract_date' => 'required|date',
             'kimono_type' => 'required|in:振袖,袴',
-            'status' => 'required|in:保留,確定',
+            'status' => 'required|in:保留,確定,キャンセル',
             'warranty_flag' => 'boolean',
             'total_amount' => 'nullable|integer|min:0',
             'preparation_venue' => 'nullable|string|max:255',
@@ -698,7 +698,7 @@ class CustomerController extends Controller
             'plan_id' => 'required|exists:plans,id',
             'contract_date' => 'required|date',
             'kimono_type' => 'required|in:振袖,袴',
-            'status' => 'required|in:保留,確定',
+            'status' => 'required|in:保留,確定,キャンセル',
             'warranty_flag' => 'boolean',
             'total_amount' => 'nullable|integer|min:0',
             'preparation_venue' => 'nullable|string|max:255',
@@ -1152,6 +1152,22 @@ class CustomerController extends Controller
 
         return redirect()->to(route('admin.customers.constraints.sign', $customer) . '?' . http_build_query(array_filter($query)))
             ->with('success', '保存が完了しました。');
+    }
+
+    /**
+     * 顧客制約を削除
+     */
+    public function destroyCustomerConstraint(Customer $customer, CustomerConstraint $customerConstraint)
+    {
+        if ($customerConstraint->customer_id !== $customer->id) {
+            abort(403);
+        }
+
+        $customerConstraint->delete();
+
+        return redirect()
+            ->route('admin.customers.show', $customer)
+            ->with('success', '制約情報を削除しました。');
     }
 
     /**

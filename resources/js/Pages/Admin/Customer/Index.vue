@@ -147,6 +147,7 @@
                                             <option :value="null">全て</option>
                                             <option value="確定">確定</option>
                                             <option value="保留">保留</option>
+                                            <option value="キャンセル">キャンセル</option>
                                         </select>
                                     </div>
                                     <div>
