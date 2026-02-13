@@ -256,7 +256,7 @@
                                             <div class="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center">
                                                 <img
                                                     v-if="getFullBodyPhoto(customer)"
-                                                    :src="getPhotoUrl(getFullBodyPhoto(customer).file_path)"
+                                                    :src="getPhotoUrl(getFullBodyPhoto(customer))"
                                                     :alt="customer.name"
                                                     class="w-full h-full object-cover"
                                                 />
@@ -763,9 +763,10 @@ const getFullBodyPhoto = (customer) => {
     return customer.photos.find(photo => photo.photo_type_id === 1) || null;
 };
 
-// 写真URLを取得
-const getPhotoUrl = (filePath) => {
-    return `/storage/${filePath}`;
+// 写真URLを取得（バックエンドで付与されたurlがあればそれを使用、なければローカルstorageパス）
+const getPhotoUrl = (photo) => {
+    if (photo?.url) return photo.url;
+    return photo?.file_path ? `/storage/${photo.file_path}` : '';
 };
 </script>
 

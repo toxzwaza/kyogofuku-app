@@ -136,6 +136,22 @@ class CustomerController extends Controller
             'tags'
         ])->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
+        // サムネイル用写真に表示用URLを付与（S3の場合は署名付き一時URL）
+        $customers->getCollection()->transform(function ($customer) {
+            $photosWithUrl = $customer->photos->map(function ($photo) {
+                $item = $photo->toArray();
+                if (($photo->storage_disk ?? 'public') === 's3') {
+                    $path = str_replace('\\', '/', $photo->file_path);
+                    $item['url'] = Storage::disk('s3_private')->temporaryUrl($path, now()->addMinutes(60));
+                } else {
+                    $item['url'] = '/storage/' . ($photo->file_path ?? '');
+                }
+                return $item;
+            });
+            $customer->setRelation('photos', $photosWithUrl);
+            return $customer;
+        });
+
         // フォーム用のマスターデータを取得
         $ceremonyAreas = CeremonyArea::orderBy('name')->get();
         $shops = Shop::orderBy('name')->get();
@@ -323,9 +339,16 @@ class CustomerController extends Controller
         // 顧客タグ一覧を取得（有効なもののみ）
         $customerTags = CustomerTag::where('is_active', true)->orderBy('name')->get();
 
-        // 制約テンプレート一覧（有効、店舗・スタッフ付き）
-        $constraintTemplates = ConstraintTemplate::where('is_active', true)
-            ->with(['shops' => fn($q) => $q->where('is_active', true)->orderBy('name')])
+        // 制約テンプレート一覧（有効、ログインユーザー所属店舗に紐づくもののみ、店舗・スタッフ付き）
+        $userShopIds = $userShops->pluck('id')->toArray();
+        $constraintTemplatesQuery = ConstraintTemplate::where('is_active', true)
+            ->with(['shops' => fn($q) => $q->where('is_active', true)->orderBy('name')]);
+        if (!empty($userShopIds)) {
+            $constraintTemplatesQuery->whereHas('shops', fn($q) => $q->whereIn('shops.id', $userShopIds));
+        } else {
+            $constraintTemplatesQuery->whereRaw('0 = 1');
+        }
+        $constraintTemplates = $constraintTemplatesQuery
             ->orderBy('name')
             ->get()
             ->map(function ($t) {
@@ -1041,7 +1064,12 @@ class CustomerController extends Controller
     public function constraintSignForm(Request $request, Customer $customer)
     {
         $templateId = $request->query('template_id');
+        $userShopIds = auth()->user()
+            ? auth()->user()->shops()->where('shops.is_active', true)->pluck('shops.id')->toArray()
+            : [];
         $template = ConstraintTemplate::with(['shops' => fn($q) => $q->where('is_active', true)])
+            ->where('is_active', true)
+            ->whereHas('shops', fn($q) => $q->whereIn('shops.id', $userShopIds))
             ->findOrFail($templateId);
 
         // テンプレートに紐づく店舗のスタッフを取得
@@ -1103,6 +1131,17 @@ class CustomerController extends Controller
             'explainer_user_id' => 'nullable|exists:users,id',
             'check_values' => 'nullable|array',
         ]);
+
+        $userShopIds = auth()->user()
+            ? auth()->user()->shops()->where('shops.is_active', true)->pluck('shops.id')->toArray()
+            : [];
+        $templateAllowed = !empty($userShopIds) && ConstraintTemplate::where('id', $validated['constraint_template_id'])
+            ->where('is_active', true)
+            ->whereHas('shops', fn($q) => $q->whereIn('shops.id', $userShopIds))
+            ->exists();
+        if (!$templateAllowed) {
+            abort(403, 'この制約テンプレートは選択できません。');
+        }
 
         $validated['customer_id'] = $customer->id;
 
