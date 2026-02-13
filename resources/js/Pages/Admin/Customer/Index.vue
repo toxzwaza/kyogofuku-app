@@ -46,15 +46,32 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-gray-700 mb-1">成人式エリア</label>
-                                    <select
-                                        v-model="searchForm.ceremony_area_id"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                    >
-                                        <option :value="null">全て</option>
-                                        <option v-for="area in ceremonyAreas" :key="area.id" :value="area.id">
-                                            {{ area.name }}
-                                        </option>
-                                    </select>
+                                    <div class="flex gap-2 items-end">
+                                        <div class="flex-1 min-w-0">
+                                            <select
+                                                v-model="searchForm.ceremony_prefecture"
+                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                @change="searchForm.ceremony_area_id = null"
+                                            >
+                                                <option :value="null">全て</option>
+                                                <option v-for="pref in ceremonyPrefectures" :key="pref" :value="pref">
+                                                    {{ pref }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <select
+                                                v-model="searchForm.ceremony_area_id"
+                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                :disabled="!searchForm.ceremony_prefecture"
+                                            >
+                                                <option :value="null">全て</option>
+                                                <option v-for="area in searchCeremonyAreasFiltered" :key="area.id" :value="area.id">
+                                                    {{ area.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-gray-700 mb-1">電話番号</label>
@@ -432,15 +449,32 @@
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         成人式エリア
                                     </label>
-                                    <select
-                                        v-model="customerForm.ceremony_area_id"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                    >
-                                        <option :value="null">選択してください</option>
-                                        <option v-for="area in ceremonyAreas" :key="area.id" :value="area.id">
-                                            {{ area.name }}
-                                        </option>
-                                    </select>
+                                    <div class="flex gap-2 items-end">
+                                        <div class="flex-1 min-w-0">
+                                            <select
+                                                v-model="customerFormCeremonyPrefecture"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                @change="customerForm.ceremony_area_id = null"
+                                            >
+                                                <option :value="null">選択してください</option>
+                                                <option v-for="pref in ceremonyPrefectures" :key="pref" :value="pref">
+                                                    {{ pref }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <select
+                                                v-model="customerForm.ceremony_area_id"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                :disabled="!customerFormCeremonyPrefecture"
+                                            >
+                                                <option :value="null">選択してください</option>
+                                                <option v-for="area in customerFormCeremonyAreasFiltered" :key="area.id" :value="area.id">
+                                                    {{ area.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -584,7 +618,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
@@ -602,10 +636,45 @@ const props = defineProps({
 // モーダル表示フラグ
 const showAddCustomerModal = ref(false);
 
+// 成人式エリア：県の一覧（重複なし・ソート）
+const ceremonyPrefectures = computed(() => {
+    const areas = props.ceremonyAreas || [];
+    const prefs = [...new Set(areas.map((a) => a.prefecture).filter(Boolean))];
+    return prefs.sort((a, b) => (a || '').localeCompare(b || ''));
+});
+// 検索用：選択された県に属する市のみ
+const searchCeremonyAreasFiltered = computed(() => {
+    const pref = searchForm.ceremony_prefecture;
+    if (!pref) return [];
+    return (props.ceremonyAreas || []).filter((a) => a.prefecture === pref);
+});
+// 顧客追加フォーム用：選択された県に属する市のみ
+const customerFormCeremonyPrefecture = ref(null);
+const customerFormCeremonyAreasFiltered = computed(() => {
+    const pref = customerFormCeremonyPrefecture.value;
+    if (!pref) return [];
+    return (props.ceremonyAreas || []).filter((a) => a.prefecture === pref);
+});
+// 顧客追加モーダルを開いたときに県を同期（既に ceremony_area_id がある場合）
+watch(showAddCustomerModal, (visible) => {
+    if (visible) {
+        const id = customerForm.ceremony_area_id;
+        const areas = props.ceremonyAreas || [];
+        customerFormCeremonyPrefecture.value = id ? (areas.find((a) => a.id == id)?.prefecture ?? null) : null;
+    }
+});
+
 // 検索フォーム
 const searchForm = reactive({
     name: props.filters?.name || '',
     kana: props.filters?.kana || '',
+    ceremony_prefecture: (() => {
+        const id = props.filters?.ceremony_area_id;
+        if (id == null || id === '') return null;
+        const areas = props.ceremonyAreas || [];
+        const area = areas.find((a) => a.id == id);
+        return area?.prefecture ?? null;
+    })(),
     ceremony_area_id: props.filters?.ceremony_area_id || null,
     phone_number: props.filters?.phone_number || '',
     created_at_from: props.filters?.created_at_from || '',
@@ -686,6 +755,7 @@ const searchCustomers = () => {
 const resetSearch = () => {
     searchForm.name = '';
     searchForm.kana = '';
+    searchForm.ceremony_prefecture = null;
     searchForm.ceremony_area_id = null;
     searchForm.phone_number = '';
     searchForm.created_at_from = '';

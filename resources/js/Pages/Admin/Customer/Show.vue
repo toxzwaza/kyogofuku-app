@@ -1031,15 +1031,32 @@
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         成人式エリア
                                     </label>
-                                    <select
-                                        v-model="customerForm.ceremony_area_id"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                    >
-                                        <option :value="null">選択してください</option>
-                                        <option v-for="area in ceremonyAreas" :key="area.id" :value="area.id">
-                                            {{ area.name }}
-                                        </option>
-                                    </select>
+                                    <div class="flex gap-2 items-end">
+                                        <div class="flex-1 min-w-0">
+                                            <select
+                                                v-model="editFormCeremonyPrefecture"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                @change="customerForm.ceremony_area_id = null"
+                                            >
+                                                <option :value="null">選択してください</option>
+                                                <option v-for="pref in ceremonyPrefectures" :key="pref" :value="pref">
+                                                    {{ pref }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <select
+                                                v-model="customerForm.ceremony_area_id"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                :disabled="!editFormCeremonyPrefecture"
+                                            >
+                                                <option :value="null">選択してください</option>
+                                                <option v-for="area in editFormCeremonyAreasFiltered" :key="area.id" :value="area.id">
+                                                    {{ area.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -2159,6 +2176,20 @@ const getScheduleAssigneeNames = (reservation) => {
     return users.map((u) => u?.name).filter(Boolean).join('、');
 };
 
+// 成人式エリア：県の一覧（重複なし・ソート）
+const ceremonyPrefectures = computed(() => {
+    const areas = props.ceremonyAreas || [];
+    const prefs = [...new Set(areas.map((a) => a.prefecture).filter(Boolean))];
+    return prefs.sort((a, b) => (a || '').localeCompare(b || ''));
+});
+// 顧客編集フォーム用：選択された県に属する市のみ
+const editFormCeremonyPrefecture = ref(null);
+const editFormCeremonyAreasFiltered = computed(() => {
+    const pref = editFormCeremonyPrefecture.value;
+    if (!pref) return [];
+    return (props.ceremonyAreas || []).filter((a) => a.prefecture === pref);
+});
+
 // モーダル表示フラグ
 const showEditCustomerModal = ref(false);
 const showAddContractModal = ref(false);
@@ -2731,6 +2762,9 @@ const openEditCustomerModal = () => {
     customerForm.postal_code = props.customer.postal_code || '';
     customerForm.address = props.customer.address || '';
     customerForm.remarks = props.customer.remarks || '';
+    const areaId = props.customer.ceremony_area_id;
+    const areas = props.ceremonyAreas || [];
+    editFormCeremonyPrefecture.value = areaId ? (areas.find((a) => a.id == areaId)?.prefecture ?? null) : null;
     showEditCustomerModal.value = true;
 };
 
