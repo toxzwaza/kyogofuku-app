@@ -33,7 +33,7 @@
                         <!-- 顧客情報 -->
                         <div class="mb-4 pb-4 border-b border-gray-200 print:mb-1 print:pb-1">
                             <p class="text-sm text-gray-600" :style="dsFontStyle">顧客名: <span class="font-semibold text-gray-900">{{ customer.name }}</span>
-                                <span v-if="customer.kana" class="ml-2 text-gray-500">({{ customer.kana }})</span>
+                                <span v-if="customer.kana" class="ml-2 text-gray-500">({{ customer.kana }})</span>様
                             </p>
                         </div>
 
