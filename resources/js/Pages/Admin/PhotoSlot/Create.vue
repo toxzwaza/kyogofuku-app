@@ -13,8 +13,12 @@
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <form @submit.prevent="submit">
+                        <form @submit.prevent="addToPendingList">
                             <div class="space-y-4">
+                                <div class="mb-4">
+                                    <h3 class="text-sm font-medium text-gray-700">個別追加</h3>
+                                    <p class="text-xs text-gray-500 mt-1">枠を追加してから保存ボタンで一括登録します</p>
+                                </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">
                                         スタジオ <span class="text-red-500">*</span>
@@ -173,14 +177,80 @@
                                     </Link>
                                     <button
                                         type="submit"
-                                        :disabled="form.processing"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        :disabled="!canAddToPending"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        {{ form.processing ? '保存中...' : '保存' }}
+                                        追加
                                     </button>
                                 </div>
                             </div>
                         </form>
+
+                        <!-- 追加済み前撮り枠リスト -->
+                        <div v-if="pendingSlotGroups.length > 0" class="mt-8 border-t pt-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                                追加済み前撮り枠（{{ pendingSlotGroups.length }}グループ）
+                            </h3>
+                            <div class="space-y-3">
+                                <div
+                                    v-for="(group, index) in pendingSlotGroups"
+                                    :key="index"
+                                    class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                                >
+                                    <div class="flex-1 grid grid-cols-4 gap-4">
+                                        <div>
+                                            <span class="text-xs text-gray-500">スタジオ</span>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ getStudioName(group.photo_studio_id) }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span class="text-xs text-gray-500">撮影日</span>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ group.shoot_date }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span class="text-xs text-gray-500">撮影時間</span>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ group.shoot_times.join(', ') }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span class="text-xs text-gray-500">担当店舗</span>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ getShopNames(group.shop_ids) }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="removeFromPendingList(index)"
+                                        class="ml-4 px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md"
+                                    >
+                                        削除
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 保存ボタン -->
+                            <div class="flex justify-end space-x-4 mt-6 pt-4 border-t">
+                                <Link
+                                    :href="route('admin.photo-slots.index')"
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                >
+                                    キャンセル
+                                </Link>
+                                <button
+                                    type="button"
+                                    @click="submit"
+                                    :disabled="isSubmitting"
+                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                >
+                                    {{ isSubmitting ? '保存中...' : '保存（' + totalSlotCount + '件）' }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -212,6 +282,10 @@ const form = useForm({
 if (props.userShops && props.userShops.length > 0) {
     form.shop_ids = props.userShops.map(shop => shop.id);
 }
+
+// 追加待ちの枠グループリスト
+const pendingSlotGroups = ref([]);
+const isSubmitting = ref(false);
 
 // 8:00から16:00まで30分間隔の時間スロットを生成
 const generateTimeSlots = () => {
@@ -254,7 +328,6 @@ const allSelectedTimes = computed(() => {
     const times = [...selectedTimes.value];
     customTimes.value.forEach(time => {
         if (time && time.trim() !== '') {
-            // 既に選択されている時間でない場合のみ追加
             if (!times.includes(time)) {
                 times.push(time);
             }
@@ -263,16 +336,88 @@ const allSelectedTimes = computed(() => {
     return times.sort();
 });
 
-const submit = () => {
-    // 選択された時間をform.shoot_timesに設定
-    form.shoot_times = allSelectedTimes.value;
-    
-    if (form.shoot_times.length === 0) {
+// 追加ボタンの有効/無効
+const canAddToPending = computed(() => {
+    return form.photo_studio_id && form.shoot_date && allSelectedTimes.value.length > 0;
+});
+
+// 追加済み枠の総数（保存ボタンの表示用）
+const totalSlotCount = computed(() => {
+    return pendingSlotGroups.value.reduce((sum, g) => sum + g.shoot_times.length, 0);
+});
+
+// スタジオ名を取得
+const getStudioName = (studioId) => {
+    if (!studioId) return '未選択';
+    const studio = props.photoStudios?.find(s => s.id === studioId);
+    return studio ? studio.name : '不明';
+};
+
+// 担当店舗名を取得（カンマ区切り）
+const getShopNames = (shopIds) => {
+    if (!shopIds || shopIds.length === 0) return 'なし';
+    const names = (shopIds || []).map(id => {
+        const shop = props.shops?.find(s => s.id === id);
+        return shop ? shop.name : null;
+    }).filter(Boolean);
+    return names.length > 0 ? names.join(', ') : 'なし';
+};
+
+// リストに追加
+const addToPendingList = () => {
+    const times = allSelectedTimes.value;
+    if (!form.photo_studio_id) {
+        alert('スタジオを選択してください。');
+        return;
+    }
+    if (!form.shoot_date) {
+        alert('撮影日を入力してください。');
+        return;
+    }
+    if (times.length === 0) {
         alert('少なくとも1つの時間枠を選択してください。');
         return;
     }
-    
-    form.post(route('admin.photo-slots.store'));
+
+    pendingSlotGroups.value.push({
+        photo_studio_id: parseInt(form.photo_studio_id),
+        shoot_date: form.shoot_date,
+        shoot_times: [...times],
+        shop_ids: Array.isArray(form.shop_ids) ? [...form.shop_ids] : [],
+    });
+};
+
+// リストから削除
+const removeFromPendingList = (index) => {
+    pendingSlotGroups.value.splice(index, 1);
+};
+
+// 一括保存
+const submit = () => {
+    if (pendingSlotGroups.value.length === 0) {
+        alert('追加された枠がありません。先に枠を追加してください。');
+        return;
+    }
+
+    isSubmitting.value = true;
+
+    const bulkForm = useForm({
+        slot_groups: pendingSlotGroups.value,
+    });
+
+    bulkForm.post(route('admin.photo-slots.store'), {
+        preserveState: false,
+        preserveScroll: false,
+        onSuccess: () => {
+            isSubmitting.value = false;
+        },
+        onError: () => {
+            isSubmitting.value = false;
+        },
+        onFinish: () => {
+            isSubmitting.value = false;
+        },
+    });
 };
 </script>
 

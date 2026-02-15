@@ -85,10 +85,16 @@ class PhotoSlotController extends Controller
     }
 
     /**
-     * 前撮り枠を保存（複数枠対応）
+     * 前撮り枠を保存（複数枠・複数グループ一括対応）
      */
     public function store(Request $request)
     {
+        // slot_groups 形式（一括登録モード）
+        if ($request->has('slot_groups') && is_array($request->slot_groups)) {
+            return $this->storeSlotGroups($request);
+        }
+
+        // 従来形式（後方互換）
         $validated = $request->validate([
             'photo_studio_id' => 'required|exists:photo_studios,id',
             'shoot_date' => 'required|date',
@@ -98,13 +104,100 @@ class PhotoSlotController extends Controller
             'shop_ids.*' => 'exists:shops,id',
         ]);
 
+        return $this->processSingleGroup($request, $validated);
+    }
+
+    /**
+     * slot_groups 形式で複数グループを一括保存
+     */
+    protected function storeSlotGroups(Request $request)
+    {
+        $validated = $request->validate([
+            'slot_groups' => 'required|array|min:1',
+            'slot_groups.*.photo_studio_id' => 'required|exists:photo_studios,id',
+            'slot_groups.*.shoot_date' => 'required|date',
+            'slot_groups.*.shoot_times' => 'required|array|min:1',
+            'slot_groups.*.shoot_times.*' => 'required|date_format:H:i',
+            'slot_groups.*.shop_ids' => 'nullable|array',
+            'slot_groups.*.shop_ids.*' => 'exists:shops,id',
+        ]);
+
+        $totalCreatedCount = 0;
+        $totalSkippedCount = 0;
+        $allErrors = [];
+
+        foreach ($validated['slot_groups'] as $groupIndex => $group) {
+            $result = $this->processSingleGroup($request, $group);
+            // processSingleGroup は redirect を返すため、結果を集約する方式に変更
+            // 代わりに、ループ内で直接処理を行う
+            $createdCount = 0;
+            $skippedCount = 0;
+            $errors = [];
+            $firstCreatedSlot = null;
+
+            foreach ($group['shoot_times'] as $shootTime) {
+                $existingSlot = PhotoSlot::where('photo_studio_id', $group['photo_studio_id'])
+                    ->where('shoot_date', $group['shoot_date'])
+                    ->where('shoot_time', $shootTime)
+                    ->first();
+
+                if ($existingSlot) {
+                    $skippedCount++;
+                    $errors[] = "グループ" . ($groupIndex + 1) . " {$shootTime}: 既に存在するためスキップ";
+                    continue;
+                }
+
+                $photoSlot = PhotoSlot::create([
+                    'photo_studio_id' => $group['photo_studio_id'],
+                    'shoot_date' => $group['shoot_date'],
+                    'shoot_time' => $shootTime,
+                ]);
+
+                if (!empty($group['shop_ids'])) {
+                    $photoSlot->shops()->attach($group['shop_ids']);
+                }
+
+                if ($firstCreatedSlot === null) {
+                    $firstCreatedSlot = $photoSlot;
+                }
+                $createdCount++;
+            }
+
+            if ($firstCreatedSlot !== null) {
+                $this->createStaffScheduleForGroup($request, $firstCreatedSlot, $group['shoot_times']);
+            }
+
+            $totalCreatedCount += $createdCount;
+            $totalSkippedCount += $skippedCount;
+            $allErrors = array_merge($allErrors, $errors);
+        }
+
+        $message = "{$totalCreatedCount}件の前撮り枠を追加しました。";
+        if ($totalSkippedCount > 0) {
+            $message .= "（{$totalSkippedCount}件は既存のためスキップ）";
+        }
+
+        $redirect = redirect()->route('admin.photo-slots.index')
+            ->with('success', $message);
+
+        if (!empty($allErrors)) {
+            $redirect->with('slotErrors', $allErrors);
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * 単一グループの前撮り枠を保存（従来形式用）
+     */
+    protected function processSingleGroup(Request $request, array $validated)
+    {
         $createdCount = 0;
         $skippedCount = 0;
         $errors = [];
         $firstCreatedSlot = null;
 
-        foreach ($validated['shoot_times'] as $index => $shootTime) {
-            // 同じスタジオ、日付、時間の組み合わせが既に存在するかチェック
+        foreach ($validated['shoot_times'] as $shootTime) {
             $existingSlot = PhotoSlot::where('photo_studio_id', $validated['photo_studio_id'])
                 ->where('shoot_date', $validated['shoot_date'])
                 ->where('shoot_time', $shootTime)
@@ -122,60 +215,18 @@ class PhotoSlotController extends Controller
                 'shoot_time' => $shootTime,
             ]);
 
-            // 担当店舗を中間テーブルに保存
             if (!empty($validated['shop_ids'])) {
                 $photoSlot->shops()->attach($validated['shop_ids']);
             }
 
-            // 最初に作成した枠を保存（スケジュール作成用）
             if ($firstCreatedSlot === null) {
                 $firstCreatedSlot = $photoSlot;
             }
-
             $createdCount++;
         }
 
-        // スタッフスケジュールを1つだけ作成（枠が1つ以上作成された場合）
         if ($firstCreatedSlot !== null) {
-            $firstCreatedSlot->load(['studio', 'shops.users']);
-            $studioName = $firstCreatedSlot->studio ? $firstCreatedSlot->studio->name : '未設定';
-            
-            $shootDate = Carbon::parse($firstCreatedSlot->shoot_date);
-            
-            // 選択された時間の中で一番早い時間と一番遅い時間を取得
-            $sortedTimes = collect($validated['shoot_times'])->sort()->values();
-            $earliestTime = $sortedTimes->first();
-            $latestTime = $sortedTimes->last();
-            
-            // 一番早い時間をstart_atに設定
-            [$startHour, $startMinute] = explode(':', $earliestTime);
-            $startAt = $shootDate->copy()->setTime((int)$startHour, (int)$startMinute, 0);
-            
-            // 一番遅い時間をend_atに設定
-            [$endHour, $endMinute] = explode(':', $latestTime);
-            $endAt = $shootDate->copy()->setTime((int)$endHour, (int)$endMinute, 0);
-            
-            $schedule = StaffSchedule::create([
-                'user_id' => $request->user()->id,
-                'photo_slot_id' => $firstCreatedSlot->id,
-                'title' => '[前撮り]' . $studioName,
-                'start_at' => $startAt,
-                'end_at' => $endAt,
-                'all_day' => true,
-            ]);
-
-            // 担当店舗に所属するスタッフ全員を参加者として登録
-            $participantUserIds = [];
-            foreach ($firstCreatedSlot->shops as $shop) {
-                foreach ($shop->users as $user) {
-                    $participantUserIds[] = $user->id;
-                }
-            }
-            if (!empty($participantUserIds)) {
-                $schedule->participantUsers()->sync(array_unique($participantUserIds));
-            }
-
-            app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
+            $this->createStaffScheduleForGroup($request, $firstCreatedSlot, $validated['shoot_times']);
         }
 
         $message = "{$createdCount}件の前撮り枠を追加しました。";
@@ -185,12 +236,53 @@ class PhotoSlotController extends Controller
 
         $redirect = redirect()->route('admin.photo-slots.index')
             ->with('success', $message);
-        
+
         if (!empty($errors)) {
             $redirect->with('slotErrors', $errors);
         }
-        
+
         return $redirect;
+    }
+
+    /**
+     * グループ用のスタッフスケジュールを作成
+     */
+    protected function createStaffScheduleForGroup(Request $request, PhotoSlot $firstCreatedSlot, array $shootTimes): void
+    {
+        $firstCreatedSlot->load(['studio', 'shops.users']);
+        $studioName = $firstCreatedSlot->studio ? $firstCreatedSlot->studio->name : '未設定';
+        $shootDate = Carbon::parse($firstCreatedSlot->shoot_date);
+
+        $sortedTimes = collect($shootTimes)->sort()->values();
+        $earliestTime = $sortedTimes->first();
+        $latestTime = $sortedTimes->last();
+
+        [$startHour, $startMinute] = explode(':', $earliestTime);
+        $startAt = $shootDate->copy()->setTime((int)$startHour, (int)$startMinute, 0);
+
+        [$endHour, $endMinute] = explode(':', $latestTime);
+        $endAt = $shootDate->copy()->setTime((int)$endHour, (int)$endMinute, 0);
+
+        $schedule = StaffSchedule::create([
+            'user_id' => $request->user()->id,
+            'photo_slot_id' => $firstCreatedSlot->id,
+            'title' => '[前撮り]' . $studioName,
+            'start_at' => $startAt,
+            'end_at' => $endAt,
+            'all_day' => true,
+        ]);
+
+        $participantUserIds = [];
+        foreach ($firstCreatedSlot->shops as $shop) {
+            foreach ($shop->users as $user) {
+                $participantUserIds[] = $user->id;
+            }
+        }
+        if (!empty($participantUserIds)) {
+            $schedule->participantUsers()->sync(array_unique($participantUserIds));
+        }
+
+        app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
     }
 
     /**
