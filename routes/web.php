@@ -7,6 +7,7 @@ use App\Http\Controllers\PostalCodeController;
 use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
+use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\TimeslotController as AdminTimeslotController;
 use App\Http\Controllers\Admin\TimeslotTemplateController as AdminTimeslotTemplateController;
@@ -120,6 +121,10 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/events/{event}/images/{image}/convert-webp', [AdminEventImageController::class, 'convertToWebp'])->name('events.images.convert-webp');
     Route::post('/events/{event}/images/sort', [AdminEventImageController::class, 'updateSortOrder'])->name('events.images.sort');
     Route::post('/events/{event}/slideshow-positions', [AdminEventImageController::class, 'updateSlideshowPositions'])->name('events.slideshow-positions.update');
+    
+    // CTAデザイン設定
+    Route::get('/events/{event}/cta-design', [AdminEventCtaDesignController::class, 'edit'])->name('events.cta-design.edit');
+    Route::post('/events/{event}/cta-design', [AdminEventCtaDesignController::class, 'update'])->name('events.cta-design.update');
     
     // スライドショー管理
     Route::get('/slideshows', [AdminSlideshowController::class, 'index'])->name('slideshows.index');

@@ -34,6 +34,18 @@
                 画像管理
             </Link>
             <Link
+                :href="route('admin.events.cta-design.edit', event.id)"
+                :class="[
+                    'group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-rose-600 to-rose-700 rounded-lg shadow-sm hover:from-rose-700 hover:to-rose-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-all duration-200',
+                    isCurrentPage('admin.events.cta-design.edit', { event: event.id }) ? 'opacity-50 cursor-default pointer-events-none' : ''
+                ]"
+            >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                CTAデザイン
+            </Link>
+            <Link
                 :href="route('admin.events.reservations.index', event.id)"
                 :class="[
                     'group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200',
@@ -98,6 +110,7 @@ const isCurrentPage = (routeName, params = {}) => {
     const patterns = {
         'admin.events.show': `/admin/events/${params.event}`,
         'admin.events.images.index': `/admin/events/${params.event}/images`,
+        'admin.events.cta-design.edit': `/admin/events/${params.event}/cta-design`,
         'admin.events.reservations.index': `/admin/events/${params.event}/reservations`,
         'admin.events.timeslots.index': `/admin/events/${params.event}/timeslots`,
     };
