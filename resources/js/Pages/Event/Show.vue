@@ -1,12 +1,21 @@
 <template>
     <Head :title="event.title" />
 
-    <div class="min-h-screen relative" style="background-color: rgb(233, 226, 220);">
-        <!-- 背景画像 -->
-        <div class="fixed inset-0 z-0 opacity-30" style="background-image: url('/storage/background_img/1.png'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
+    <div class="min-h-screen relative" :style="{ backgroundColor: event.background_color || 'rgb(233, 226, 220)' }">
+        <!-- 背景画像（LP設定で有効かつアップロード済みの場合のみ表示） -->
+        <div
+            v-if="event.background_image_enabled && event.background_image_url"
+            class="fixed inset-0 z-0 opacity-30 bg-cover bg-center bg-no-repeat"
+            :style="{ backgroundImage: `url(${event.background_image_url})` }"
+        ></div>
+
+        <!-- 星キラキラ（低頻度） -->
+        <div class="lp-sparkle" aria-hidden="true">
+            <span v-for="n in 24" :key="n" class="lp-sparkle__dot"></span>
+        </div>
         
         <!-- ローディング画面 -->
-        <div v-if="isLoading" class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgb(233, 226, 220);">
+        <div v-if="isLoading" class="fixed inset-0 z-50 flex items-center justify-center" :style="{ backgroundColor: event.background_color || 'rgb(233, 226, 220)' }">
             <div class="text-center">
                 <!-- ローディングスピナー -->
                 <div class="relative w-20 h-20 mx-auto mb-6">
@@ -32,7 +41,10 @@
             >
         <!-- イベント画像とスライドショー（縦並び） -->
         <div v-if="!showSuccess" class="w-full md:flex md:justify-center">
-            <div class="w-full md:max-w-2xl">
+            <div
+                class="w-full md:max-w-2xl event-content-column"
+                :style="{ backgroundColor: event.content_background_color || '#ffffff' }"
+            >
                 <template v-for="(item, index) in displayItems" :key="`${item.type}-${item.id || index}`">
                     <!-- 画像 -->
                     <div
@@ -49,6 +61,7 @@
                                 ? 'revealed' 
                                 : ''
                         ]"
+                        :style="(item.data.margin_top_px != null || item.data.margin_bottom_px != null) ? { marginTop: item.data.margin_top_px != null ? `${item.data.margin_top_px}px` : undefined, marginBottom: item.data.margin_bottom_px != null ? `${item.data.margin_bottom_px}px` : undefined } : undefined"
                     >
                         <!-- WebPパスが存在する場合（新規アップロード画像）のみ<picture>要素を使用 -->
                         <picture v-if="item.data.webp_path">
@@ -81,6 +94,35 @@
                             :interval="item.data.autoplay_interval"
                             :fullscreen="item.data.fullscreen"
                         />
+                    </div>
+                    <!-- CTAボタン（予約フォームを開く） -->
+                    <div
+                        v-else-if="item.type === 'cta_button'"
+                        :data-cta-reveal="item.id"
+                        :data-cta-id="item.id"
+                        :class="[
+                            'scroll-reveal-image cta-button-wrap py-8 px-4',
+                            revealedCta.has(item.id) ? 'revealed' : ''
+                        ]"
+                    >
+                        <div class="cta-inline-container">
+                            <button
+                                type="button"
+                                :class="['cta-inline-button', `cta-inline-button--${event.cta_color_type || 'red'}`]"
+                                @click="showReservationForm = true"
+                            >
+                                <span class="cta-inline-button__shine" aria-hidden="true"></span>
+                                <span class="cta-inline-button__content">
+                                    <span class="cta-inline-button__icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </span>
+                                    <span class="cta-inline-button__label">予約する</span>
+                                    <span class="cta-inline-button__sub">空き枠を確認</span>
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </template>
             </div>
@@ -157,6 +199,23 @@
                                     :src="venue.image_url"
                                     :alt="venue.name"
                                     class="w-full h-full object-cover"
+                                />
+                            </div>
+                        </div>
+                        <!-- Googleマップ（住所とAPIキーがある場合のみ） -->
+                        <div v-if="venue.address && googleMapsEmbedApiKey" class="border-t border-gray-100">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 pt-4 pb-2">地図</p>
+                            <div class="w-full aspect-video max-h-64 px-6 pb-4">
+                                <iframe
+                                    :src="getVenueMapEmbedUrl(venue.address)"
+                                    width="100%"
+                                    height="100%"
+                                    style="border:0"
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    allowfullscreen
+                                    loading="lazy"
+                                    class="rounded-lg"
+                                    title="会場の地図"
                                 />
                             </div>
                         </div>
@@ -368,6 +427,10 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    ctaButtonPositions: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const selectedTimeslot = ref(null);
@@ -375,6 +438,20 @@ const showReservationForm = ref(false);
 const currentStep = ref(props.showSuccess ? 'success' : 'form'); // 'form', 'confirm', 'success'
 const confirmFormData = ref(props.successFormData || null);
 const isLoading = ref(true);
+
+/** Google Maps Embed API キー（開催会場マップ用） */
+const googleMapsEmbedApiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_API_KEY || '';
+
+/**
+ * 会場住所から Google Maps Embed iframe の URL を生成
+ * @param {string} address - 住所
+ * @returns {string}
+ */
+function getVenueMapEmbedUrl(address) {
+  if (!address || !googleMapsEmbedApiKey) return '';
+  const q = encodeURIComponent(address);
+  return `https://www.google.com/maps/embed/v1/place?key=${googleMapsEmbedApiKey}&q=${q}`;
+}
 
 /**
  * 会場の開催日リストを表示用にフォーマット
@@ -423,7 +500,9 @@ function formatVenueDates(dateStrings) {
 // スクロールアニメーション用
 const imageRefs = ref(new Map());
 const revealedImages = ref(new Set());
+const revealedCta = ref(new Set());
 let observer = null;
+let ctaObserver = null;
 
 // 初回ローディング管理
 onMounted(() => {
@@ -499,6 +578,10 @@ onUnmounted(() => {
     if (observer) {
         observer.disconnect();
         observer = null;
+    }
+    if (ctaObserver) {
+        ctaObserver.disconnect();
+        ctaObserver = null;
     }
 });
 
@@ -681,15 +764,44 @@ const setupScrollAnimation = () => {
                 }
             }
         });
+
+        // CTAボタン要素を監視（ふわっと表示）
+        if (ctaObserver) ctaObserver.disconnect();
+        ctaObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('data-cta-id');
+                        if (id && !revealedCta.value.has(id)) {
+                            setTimeout(() => {
+                                revealedCta.value = new Set([...revealedCta.value, id]);
+                            }, 50);
+                            ctaObserver.unobserve(entry.target);
+                        }
+                    }
+                });
+            },
+            { threshold: 0.1, rootMargin: '0px 0px -80px 0px' }
+        );
+        document.querySelectorAll('[data-cta-reveal]').forEach((el) => {
+            if (el && ctaObserver) ctaObserver.observe(el);
+        });
     });
 };
 
-// 画像とスライドショーを順序付けして配列化
+// CTAボタンを表示するか（予約フォームかつ終了前かつ成功画面でない）
+const showCtaButtons = computed(() => (
+    props.event?.form_type === 'reservation' && !props.isEnded && !props.showSuccess
+));
+
+// 画像とスライドショーとCTAボタンを順序付けして配列化
 const displayItems = computed(() => {
     const items = [];
     const positions = props.slideshowPositions || {};
     const slideshows = props.slideshows || {};
     const images = props.images || [];
+    const ctaPositions = Array.isArray(props.ctaButtonPositions) ? props.ctaButtonPositions : [];
+    const showCta = showCtaButtons.value;
 
     // 最初の画像の前にスライドショーがある場合（複数対応）
     if (positions['0'] && Array.isArray(positions['0'])) {
@@ -704,6 +816,10 @@ const displayItems = computed(() => {
                     });
                 }
             });
+    }
+    // 最初の画像の前にCTAボタン
+    if (showCta && ctaPositions.includes(0)) {
+        items.push({ type: 'cta_button', id: 'cta-0' });
     }
 
     // 画像とスライドショーを交互に配置
@@ -731,6 +847,10 @@ const displayItems = computed(() => {
                     }
                 });
         }
+        // この画像の後にCTAボタン
+        if (showCta && ctaPositions.includes(position)) {
+            items.push({ type: 'cta_button', id: `cta-${position}` });
+        }
     });
 
     return items;
@@ -748,6 +868,64 @@ const getImageIndex = (item, allItems) => {
 </script>
 
 <style scoped>
+/* 公開ページのコンテンツカラム（画像・スライドショー等のラッパー） */
+.event-content-column {
+    box-shadow: 0px 0px 5px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* LP全体の星キラキラ（低頻度）・画像・スライドショーの上に表示 */
+.lp-sparkle {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.lp-sparkle__dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.6);
+    animation: lp-twinkle 14s ease-in-out infinite;
+}
+
+/* 散らばり位置（%） */
+.lp-sparkle__dot:nth-child(1) { left: 8%; top: 12%; animation-delay: 0s; }
+.lp-sparkle__dot:nth-child(2) { left: 92%; top: 8%; animation-delay: 1.2s; }
+.lp-sparkle__dot:nth-child(3) { left: 15%; top: 45%; animation-delay: 2.8s; }
+.lp-sparkle__dot:nth-child(4) { left: 88%; top: 38%; animation-delay: 0.5s; }
+.lp-sparkle__dot:nth-child(5) { left: 6%; top: 78%; animation-delay: 4s; }
+.lp-sparkle__dot:nth-child(6) { left: 94%; top: 72%; animation-delay: 3.2s; }
+.lp-sparkle__dot:nth-child(7) { left: 28%; top: 22%; animation-delay: 5.5s; }
+.lp-sparkle__dot:nth-child(8) { left: 72%; top: 55%; animation-delay: 6.8s; }
+.lp-sparkle__dot:nth-child(9) { left: 45%; top: 8%; animation-delay: 1.8s; }
+.lp-sparkle__dot:nth-child(10) { left: 52%; top: 88%; animation-delay: 7.5s; }
+.lp-sparkle__dot:nth-child(11) { left: 3%; top: 32%; animation-delay: 9s; }
+.lp-sparkle__dot:nth-child(12) { left: 97%; top: 62%; animation-delay: 4.5s; }
+.lp-sparkle__dot:nth-child(13) { left: 38%; top: 65%; animation-delay: 10.2s; }
+.lp-sparkle__dot:nth-child(14) { left: 62%; top: 18%; animation-delay: 2.2s; }
+.lp-sparkle__dot:nth-child(15) { left: 22%; top: 85%; animation-delay: 8.2s; }
+.lp-sparkle__dot:nth-child(16) { left: 78%; top: 28%; animation-delay: 11s; }
+.lp-sparkle__dot:nth-child(17) { left: 12%; top: 58%; animation-delay: 5s; }
+.lp-sparkle__dot:nth-child(18) { left: 85%; top: 82%; animation-delay: 12.5s; }
+.lp-sparkle__dot:nth-child(19) { left: 55%; top: 42%; animation-delay: 3.5s; }
+.lp-sparkle__dot:nth-child(20) { left: 35%; top: 35%; animation-delay: 6.2s; }
+.lp-sparkle__dot:nth-child(21) { left: 68%; top: 68%; animation-delay: 9.8s; }
+.lp-sparkle__dot:nth-child(22) { left: 18%; top: 5%; animation-delay: 13s; }
+.lp-sparkle__dot:nth-child(23) { left: 82%; top: 92%; animation-delay: 7s; }
+.lp-sparkle__dot:nth-child(24) { left: 48%; top: 58%; animation-delay: 11.8s; }
+
+@keyframes lp-twinkle {
+    0% { opacity: 0; transform: scale(0.6); }
+    2% { opacity: 0.9; transform: scale(1); }
+    6% { opacity: 0.9; transform: scale(1); }
+    18% { opacity: 0; transform: scale(0.75); }
+    100% { opacity: 0; transform: scale(0.6); }
+}
+
 .scroll-reveal-image {
     opacity: 0;
     transform: translateY(30px);
@@ -758,6 +936,329 @@ const getImageIndex = (item, allItems) => {
 .scroll-reveal-image.revealed {
     opacity: 1;
     transform: translateY(0);
+}
+
+.cta-inline-container {
+    max-width: 20rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cta-inline-button {
+    --cta-shadow-base: rgba(190, 18, 60, 0.35);
+    --cta-shadow-float: rgba(190, 18, 60, 0.4);
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 1.75rem;
+    border-radius: 1.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, filter 0.35s ease;
+    background-size: 200% 200%;
+    animation:
+        cta-gradient-shift 8s ease infinite,
+        cta-float 2.8s ease-in-out infinite;
+}
+
+.cta-inline-button:hover {
+    transform: scale(1.06) translateY(-2px);
+    filter: brightness(1.08);
+    animation-play-state: paused;
+}
+
+.cta-inline-button:active {
+    transform: scale(0.98) translateY(0);
+}
+
+/* CTA色プリセット（background / box-shadow を選択色に合わせ、アニメーション内の影は --cta-shadow-* で各色に合致） */
+.cta-inline-button--red {
+    --cta-shadow-base: rgba(190, 18, 60, 0.35);
+    --cta-shadow-float: rgba(190, 18, 60, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #b91c3a 0%, #dc2626 35%, #e11d48 70%, #f472b6 100%);
+}
+.cta-inline-button--red:hover { box-shadow: 0 12px 28px -4px rgba(190, 18, 60, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--red:active { box-shadow: 0 2px 10px rgba(190, 18, 60, 0.3); }
+
+.cta-inline-button--pink {
+    --cta-shadow-base: rgba(190, 24, 93, 0.35);
+    --cta-shadow-float: rgba(190, 24, 93, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #be185d 0%, #db2777 35%, #ec4899 70%, #f9a8d4 100%);
+}
+.cta-inline-button--pink:hover { box-shadow: 0 12px 28px -4px rgba(190, 24, 93, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--pink:active { box-shadow: 0 2px 10px rgba(190, 24, 93, 0.3); }
+
+.cta-inline-button--rose {
+    --cta-shadow-base: rgba(225, 29, 72, 0.35);
+    --cta-shadow-float: rgba(225, 29, 72, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #e11d48 0%, #f43f5e 35%, #fb7185 70%, #fecdd3 100%);
+}
+.cta-inline-button--rose:hover { box-shadow: 0 12px 28px -4px rgba(225, 29, 72, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--rose:active { box-shadow: 0 2px 10px rgba(225, 29, 72, 0.3); }
+
+.cta-inline-button--orange {
+    --cta-shadow-base: rgba(234, 88, 12, 0.35);
+    --cta-shadow-float: rgba(234, 88, 12, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #c2410c 0%, #ea580c 35%, #f97316 70%, #fdba74 100%);
+}
+.cta-inline-button--orange:hover { box-shadow: 0 12px 28px -4px rgba(234, 88, 12, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--orange:active { box-shadow: 0 2px 10px rgba(234, 88, 12, 0.3); }
+
+.cta-inline-button--amber {
+    --cta-shadow-base: rgba(217, 119, 6, 0.35);
+    --cta-shadow-float: rgba(217, 119, 6, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #b45309 0%, #d97706 35%, #f59e0b 70%, #fcd34d 100%);
+}
+.cta-inline-button--amber:hover { box-shadow: 0 12px 28px -4px rgba(217, 119, 6, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--amber:active { box-shadow: 0 2px 10px rgba(217, 119, 6, 0.3); }
+
+.cta-inline-button--purple {
+    --cta-shadow-base: rgba(124, 58, 237, 0.35);
+    --cta-shadow-float: rgba(124, 58, 237, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #6d28d9 0%, #7c3aed 35%, #8b5cf6 70%, #c4b5fd 100%);
+}
+.cta-inline-button--purple:hover { box-shadow: 0 12px 28px -4px rgba(124, 58, 237, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--purple:active { box-shadow: 0 2px 10px rgba(124, 58, 237, 0.3); }
+
+.cta-inline-button--violet {
+    --cta-shadow-base: rgba(139, 92, 246, 0.35);
+    --cta-shadow-float: rgba(139, 92, 246, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #5b21b6 0%, #7c3aed 35%, #8b5cf6 70%, #a78bfa 100%);
+}
+.cta-inline-button--violet:hover { box-shadow: 0 12px 28px -4px rgba(139, 92, 246, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--violet:active { box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3); }
+
+.cta-inline-button--indigo {
+    --cta-shadow-base: rgba(99, 102, 241, 0.35);
+    --cta-shadow-float: rgba(99, 102, 241, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #4338ca 0%, #4f46e5 35%, #6366f1 70%, #a5b4fc 100%);
+}
+.cta-inline-button--indigo:hover { box-shadow: 0 12px 28px -4px rgba(99, 102, 241, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--indigo:active { box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3); }
+
+.cta-inline-button--blue {
+    --cta-shadow-base: rgba(37, 99, 235, 0.35);
+    --cta-shadow-float: rgba(37, 99, 235, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #1d4ed8 0%, #2563eb 35%, #3b82f6 70%, #93c5fd 100%);
+}
+.cta-inline-button--blue:hover { box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--blue:active { box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3); }
+
+.cta-inline-button--sky {
+    --cta-shadow-base: rgba(14, 165, 233, 0.35);
+    --cta-shadow-float: rgba(14, 165, 233, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #0369a1 0%, #0ea5e9 35%, #38bdf8 70%, #7dd3fc 100%);
+}
+.cta-inline-button--sky:hover { box-shadow: 0 12px 28px -4px rgba(14, 165, 233, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--sky:active { box-shadow: 0 2px 10px rgba(14, 165, 233, 0.3); }
+
+.cta-inline-button--cyan {
+    --cta-shadow-base: rgba(6, 182, 212, 0.35);
+    --cta-shadow-float: rgba(6, 182, 212, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #0e7490 0%, #06b6d4 35%, #22d3ee 70%, #67e8f9 100%);
+}
+.cta-inline-button--cyan:hover { box-shadow: 0 12px 28px -4px rgba(6, 182, 212, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--cyan:active { box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3); }
+
+.cta-inline-button--teal {
+    --cta-shadow-base: rgba(20, 184, 166, 0.35);
+    --cta-shadow-float: rgba(20, 184, 166, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #0f766e 0%, #14b8a6 35%, #2dd4bf 70%, #5eead4 100%);
+}
+.cta-inline-button--teal:hover { box-shadow: 0 12px 28px -4px rgba(20, 184, 166, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--teal:active { box-shadow: 0 2px 10px rgba(20, 184, 166, 0.3); }
+
+.cta-inline-button--green {
+    --cta-shadow-base: rgba(22, 163, 74, 0.35);
+    --cta-shadow-float: rgba(22, 163, 74, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #15803d 0%, #16a34a 35%, #22c55e 70%, #86efac 100%);
+}
+.cta-inline-button--green:hover { box-shadow: 0 12px 28px -4px rgba(22, 163, 74, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--green:active { box-shadow: 0 2px 10px rgba(22, 163, 74, 0.3); }
+
+.cta-inline-button--emerald {
+    --cta-shadow-base: rgba(16, 185, 129, 0.35);
+    --cta-shadow-float: rgba(16, 185, 129, 0.4);
+    box-shadow:
+        0 4px 14px 0 var(--cta-shadow-base),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    background: linear-gradient(145deg, #047857 0%, #10b981 35%, #34d399 70%, #6ee7b7 100%);
+}
+.cta-inline-button--emerald:hover { box-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; }
+.cta-inline-button--emerald:active { box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3); }
+
+.cta-inline-button__shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        115deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.25) 45%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0.25) 55%,
+        transparent 70%
+    );
+    transform: translateX(-100%) skewX(-18deg);
+    pointer-events: none;
+    /* 約4秒周期でシャインが自動スウェップ（約0.7秒で通過） */
+    animation: cta-shine-auto 4s ease-in-out infinite;
+}
+
+.cta-inline-button:hover .cta-inline-button__shine {
+    /* ホバー時も同じスウェップを実行（1回だけ） */
+    animation: cta-shine-hover 0.65s ease forwards;
+}
+
+@keyframes cta-shine-auto {
+    0% { transform: translateX(-100%) skewX(-18deg); }
+    17% { transform: translateX(100%) skewX(-18deg); }
+    17.01% { transform: translateX(-100%) skewX(-18deg); }
+    100% { transform: translateX(-100%) skewX(-18deg); }
+}
+
+@keyframes cta-shine-hover {
+    0% { transform: translateX(-100%) skewX(-18deg); }
+    100% { transform: translateX(100%) skewX(-18deg); }
+}
+
+.cta-inline-button__content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+}
+
+.cta-inline-button__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(4px);
+    animation: cta-icon-float 2.2s ease-in-out infinite;
+}
+
+.cta-inline-button__icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.cta-inline-button__label {
+    font-size: 1.25rem;
+    letter-spacing: 0.05em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    animation: cta-label-subtle 3s ease-in-out infinite;
+}
+
+.cta-inline-button__sub {
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.95;
+    letter-spacing: 0.08em;
+    animation: cta-sub-subtle 3.2s ease-in-out infinite;
+}
+
+@keyframes cta-gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* ボタン全体のゆるやかな浮き上がり＋影の呼吸（影色は各モディファイアの --cta-shadow-* を使用） */
+@keyframes cta-float {
+    0%, 100% {
+        transform: translateY(0);
+        box-shadow:
+            0 4px 14px 0 var(--cta-shadow-base),
+            0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+            0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    }
+    50% {
+        transform: translateY(-4px);
+        box-shadow:
+            0 10px 24px -2px var(--cta-shadow-float),
+            0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+            0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+    }
+}
+
+/* アイコンの軽い上下＋拡縮 */
+@keyframes cta-icon-float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-2px) scale(1.08); }
+}
+
+/* ラベルのごくわずかな透明度の揺らぎ */
+@keyframes cta-label-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.92; }
+}
+
+/* サブテキストのわずかな透明度の揺らぎ（位相をずらす） */
+@keyframes cta-sub-subtle {
+    0%, 100% { opacity: 0.95; }
+    50% { opacity: 0.78; }
 }
 </style>
 

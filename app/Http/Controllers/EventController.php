@@ -80,6 +80,8 @@ class EventController extends Controller
                 'webp_path' => $image->webp_url,
                 'alt' => $image->alt,
                 'sort_order' => $image->sort_order,
+                'margin_top_px' => $image->margin_top_px,
+                'margin_bottom_px' => $image->margin_bottom_px,
             ];
         });
 
@@ -195,6 +197,14 @@ class EventController extends Controller
             })->values();
         }
 
+        // CTAボタン表示位置（画像間）
+        $ctaButtonPositions = \Illuminate\Support\Facades\DB::table('event_cta_button_positions')
+            ->where('event_id', $event->id)
+            ->orderBy('position')
+            ->pluck('position')
+            ->values()
+            ->toArray();
+
         // UTMトラッキングレコードを作成（UTMパラメータがない場合はHPを補填）
         $request = request();
         EventUtmTracking::create([
@@ -211,6 +221,7 @@ class EventController extends Controller
             'images' => $images,
             'slideshowPositions' => $slideshowPositions,
             'slideshows' => $slideshows,
+            'ctaButtonPositions' => $ctaButtonPositions,
             'timeslots' => $availableTimeslots,
             'shops' => $shops,
             'venues' => $venues,

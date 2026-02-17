@@ -25,12 +25,19 @@ class Event extends Model
         'cta_web_button_path',
         'cta_phone_button_path',
         'cta_storage_disk',
+        'background_color',
+        'content_background_color',
+        'background_image_enabled',
+        'background_image_path',
+        'background_image_storage_disk',
+        'cta_color_type',
     ];
 
     protected $casts = [
         'start_at' => 'date',
         'end_at' => 'date',
         'is_public' => 'boolean',
+        'background_image_enabled' => 'boolean',
         'slug_aliases' => 'array',
     ];
 
@@ -38,6 +45,7 @@ class Event extends Model
         'cta_background_url',
         'cta_web_button_url',
         'cta_phone_button_url',
+        'background_image_url',
     ];
 
     /**
@@ -71,6 +79,23 @@ class Event extends Model
     public function getCtaPhoneButtonUrlAttribute(): ?string
     {
         return $this->getCtaUrl($this->cta_phone_button_path);
+    }
+
+    /**
+     * LP背景画像のURLを取得
+     */
+    public function getBackgroundImageUrlAttribute(): ?string
+    {
+        $path = $this->background_image_path;
+        if (!$path) {
+            return null;
+        }
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+        $disk = ($this->background_image_storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
+        $path = str_replace('\\', '/', $path);
+        return Storage::disk($disk)->url($path);
     }
 
     /**

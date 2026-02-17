@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogControll
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
 use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignController;
+use App\Http\Controllers\Admin\EventLpSettingsController as AdminEventLpSettingsController;
 use App\Http\Controllers\Admin\ReservationController as AdminReservationController;
 use App\Http\Controllers\Admin\TimeslotController as AdminTimeslotController;
 use App\Http\Controllers\Admin\TimeslotTemplateController as AdminTimeslotTemplateController;
@@ -119,12 +120,18 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::delete('/images/{image}', [AdminEventImageController::class, 'destroy'])->name('images.destroy');
     Route::post('/events/{event}/images/bulk-destroy', [AdminEventImageController::class, 'destroyBulk'])->name('events.images.bulk-destroy');
     Route::post('/events/{event}/images/{image}/convert-webp', [AdminEventImageController::class, 'convertToWebp'])->name('events.images.convert-webp');
+    Route::patch('/events/{event}/images/{image}/margin', [AdminEventImageController::class, 'updateMargin'])->name('events.images.margin');
     Route::post('/events/{event}/images/sort', [AdminEventImageController::class, 'updateSortOrder'])->name('events.images.sort');
     Route::post('/events/{event}/slideshow-positions', [AdminEventImageController::class, 'updateSlideshowPositions'])->name('events.slideshow-positions.update');
+    Route::post('/events/{event}/cta-button-positions', [AdminEventImageController::class, 'updateCtaButtonPositions'])->name('events.cta-button-positions.update');
     
     // CTAデザイン設定
     Route::get('/events/{event}/cta-design', [AdminEventCtaDesignController::class, 'edit'])->name('events.cta-design.edit');
     Route::post('/events/{event}/cta-design', [AdminEventCtaDesignController::class, 'update'])->name('events.cta-design.update');
+
+    // LP設定
+    Route::get('/events/{event}/lp-settings', [AdminEventLpSettingsController::class, 'edit'])->name('events.lp-settings.edit');
+    Route::post('/events/{event}/lp-settings', [AdminEventLpSettingsController::class, 'update'])->name('events.lp-settings.update');
     
     // スライドショー管理
     Route::get('/slideshows', [AdminSlideshowController::class, 'index'])->name('slideshows.index');

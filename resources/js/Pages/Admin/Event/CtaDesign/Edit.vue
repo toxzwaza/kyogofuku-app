@@ -128,6 +128,31 @@
                                 </div>
                             </div>
 
+                            <!-- CTAボタンの色（画像間のインラインボタン） -->
+                            <div class="border-b border-gray-200 pb-8">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">CTAボタンの色</label>
+                                <p class="text-xs text-gray-500 mb-3">公開ページの画像間にある「予約する」ボタンの色です。アニメーションは共通で、色のみ変更できます。</p>
+                                <select
+                                    v-model="form.cta_color_type"
+                                    class="rounded-md border-gray-300 shadow-sm max-w-xs"
+                                >
+                                    <option value="red">赤系（既定）</option>
+                                    <option value="pink">ピンク系</option>
+                                    <option value="rose">ローズ系</option>
+                                    <option value="orange">オレンジ系</option>
+                                    <option value="amber">アンバー系</option>
+                                    <option value="purple">パープル系</option>
+                                    <option value="violet">バイオレット系</option>
+                                    <option value="indigo">インディゴ系</option>
+                                    <option value="blue">青系</option>
+                                    <option value="sky">スカイ系</option>
+                                    <option value="cyan">シアン系</option>
+                                    <option value="teal">ティール系</option>
+                                    <option value="green">緑系</option>
+                                    <option value="emerald">エメラルド系</option>
+                                </select>
+                            </div>
+
                             <div class="flex justify-end items-center gap-4 pt-6 border-t border-gray-200 mt-8">
                                 <span class="text-sm text-gray-500">画像を選択・変更したら必ず押してください</span>
                                 <button
@@ -175,6 +200,7 @@ const form = useForm({
     remove_cta_background: false,
     remove_cta_web_button: false,
     remove_cta_phone_button: false,
+    cta_color_type: props.event.cta_color_type || 'red',
 });
 
 function handleBackgroundChange(event) {

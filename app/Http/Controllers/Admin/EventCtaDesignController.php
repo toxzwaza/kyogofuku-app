@@ -36,6 +36,7 @@ class EventCtaDesignController extends Controller
             'remove_cta_background' => 'nullable|boolean',
             'remove_cta_web_button' => 'nullable|boolean',
             'remove_cta_phone_button' => 'nullable|boolean',
+            'cta_color_type' => 'nullable|string|in:red,pink,rose,orange,amber,purple,violet,indigo,blue,sky,cyan,teal,green,emerald',
         ]);
 
         $manager = $this->createImageManager();
@@ -83,6 +84,9 @@ class EventCtaDesignController extends Controller
             }
         }
 
+        if ($request->has('cta_color_type')) {
+            $updates['cta_color_type'] = $request->input('cta_color_type');
+        }
         if (!empty($updates)) {
             $event->update($updates);
         }

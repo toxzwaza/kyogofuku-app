@@ -22,6 +22,18 @@
                 イベント複製
             </Link>
             <Link
+                :href="route('admin.events.lp-settings.edit', event.id)"
+                :class="[
+                    'group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-slate-600 to-slate-700 rounded-lg shadow-sm hover:from-slate-700 hover:to-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-all duration-200',
+                    isCurrentPage('admin.events.lp-settings.edit', { event: event.id }) ? 'opacity-50 cursor-default pointer-events-none' : ''
+                ]"
+            >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                LP設定
+            </Link>
+            <Link
                 :href="route('admin.events.images.index', event.id)"
                 :class="[
                     'group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg shadow-sm hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200',
@@ -109,6 +121,7 @@ const isCurrentPage = (routeName, params = {}) => {
     // URLパターンで判定
     const patterns = {
         'admin.events.show': `/admin/events/${params.event}`,
+        'admin.events.lp-settings.edit': `/admin/events/${params.event}/lp-settings`,
         'admin.events.images.index': `/admin/events/${params.event}/images`,
         'admin.events.cta-design.edit': `/admin/events/${params.event}/cta-design`,
         'admin.events.reservations.index': `/admin/events/${params.event}/reservations`,

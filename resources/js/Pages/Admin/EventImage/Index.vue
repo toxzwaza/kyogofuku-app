@@ -73,6 +73,13 @@
                                 @reorder="reorderSlideshowsAtPosition(0, $event)"
                                 label="最初の画像の前にスライドショーを表示"
                             />
+                            <CtaButtonPositionToggle
+                                :position="0"
+                                label="最初の画像の前にCTAボタンを表示"
+                                :model-value="hasCtaAtPosition(0)"
+                                @update:model-value="setCtaAtPosition(0, $event)"
+                                class="mb-4"
+                            />
 
                             <div
                                 v-for="(image, index) in sortedImages"
@@ -132,6 +139,13 @@
                                     </div>
                                     <div class="flex-shrink-0 flex flex-col gap-2 items-end" @click.stop>
                                         <button
+                                            type="button"
+                                            @click="openMarginModal(image)"
+                                            class="text-indigo-600 hover:text-indigo-900 text-sm"
+                                        >
+                                            詳細
+                                        </button>
+                                        <button
                                             @click="deleteImage(image.id)"
                                             class="text-red-600 hover:text-red-900 text-sm"
                                         >
@@ -152,15 +166,30 @@
                                     label="この画像の後にスライドショーを表示"
                                     class="mb-4"
                                 />
+                                <CtaButtonPositionToggle
+                                    v-if="index < sortedImages.length - 1 || index === sortedImages.length - 1"
+                                    :position="index + 1"
+                                    :label="`${index + 1}枚目の画像の後にCTAボタンを表示`"
+                                    :model-value="hasCtaAtPosition(index + 1)"
+                                    @update:model-value="setCtaAtPosition(index + 1, $event)"
+                                    class="mb-4"
+                                />
                             </div>
 
-                            <div class="pt-4 flex space-x-4">
+                            <div class="pt-4 flex flex-wrap gap-4 items-center">
                                 <button
                                     @click="saveSlideshowPositions"
                                     :disabled="isSavingSlideshows"
                                     class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
                                 >
                                     {{ isSavingSlideshows ? '保存中...' : 'スライドショー位置を保存' }}
+                                </button>
+                                <button
+                                    @click="saveCtaButtonPositions"
+                                    :disabled="isSavingCtaButtons"
+                                    class="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-gray-400"
+                                >
+                                    {{ isSavingCtaButtons ? '保存中...' : 'CTAボタン位置を保存' }}
                                 </button>
                                 <Link
                                     :href="route('admin.slideshows.index')"
@@ -218,6 +247,72 @@
                 </div>
             </Transition>
         </Teleport>
+
+        <!-- 画像詳細（マージン）モーダル -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-200"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition ease-in duration-150"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="marginModalImage"
+                    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+                    @click.self="closeMarginModal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="画像詳細・マージン設定"
+                >
+                    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">画像詳細 - 余白（マージン）</h3>
+                        <p class="text-sm text-gray-500 mb-4">公開ページでこの画像の上・下に余白（px）を付けます。未入力の場合は余白なしです。</p>
+                        <form @submit.prevent="submitMargin" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">上マージン（px）</label>
+                                <input
+                                    v-model.number="marginForm.margin_top_px"
+                                    type="number"
+                                    min="0"
+                                    max="500"
+                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                    placeholder="未設定"
+                                />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">下マージン（px）</label>
+                                <input
+                                    v-model.number="marginForm.margin_bottom_px"
+                                    type="number"
+                                    min="0"
+                                    max="500"
+                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                    placeholder="未設定"
+                                />
+                            </div>
+                            <div class="flex justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    @click="closeMarginModal"
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                >
+                                    キャンセル
+                                </button>
+                                <button
+                                    type="submit"
+                                    :disabled="isSavingMargin"
+                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                                >
+                                    {{ isSavingMargin ? '保存中...' : '保存' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
 
@@ -228,12 +323,17 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
 import SlideshowPositionManager from './Components/SlideshowPositionManager.vue';
+import CtaButtonPositionToggle from './Components/CtaButtonPositionToggle.vue';
 
 const props = defineProps({
     event: Object,
     images: Array,
     slideshows: Array,
     slideshowPositions: Object,
+    ctaButtonPositions: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const sortedImages = ref([...(props.images || [])]);
@@ -242,10 +342,15 @@ const dropTargetIndex = ref(null);
 const dropMode = ref('insert'); // 'insert' = 行の間へ挿入, 'swap' = 行の上で入れ替え
 const INSERT_ZONE_RATIO = 0.25; // 行の上からこの割合までを「挿入」ゾーンとする
 const isSavingSlideshows = ref(false);
+const isSavingCtaButtons = ref(false);
 const slideshowPositionsLocal = ref({});
+const ctaButtonPositionsLocal = ref([...(props.ctaButtonPositions || [])].map(Number).filter(n => !Number.isNaN(n)));
 const selectedIds = ref(new Set());
 const previewImage = ref(null);
 const isBulkDeleting = ref(false);
+const marginModalImage = ref(null);
+const marginForm = ref({ margin_top_px: null, margin_bottom_px: null });
+const isSavingMargin = ref(false);
 
 // ドラッグ時の自動スクロール用
 const AUTO_SCROLL_ZONE = 80;
@@ -327,6 +432,23 @@ const reorderSlideshowsAtPosition = (position, newOrder) => {
     }
 };
 
+// CTAボタン表示位置
+const hasCtaAtPosition = (position) => ctaButtonPositionsLocal.value.includes(position);
+const setCtaAtPosition = (position, checked) => {
+    const set = new Set(ctaButtonPositionsLocal.value);
+    if (checked) set.add(position);
+    else set.delete(position);
+    ctaButtonPositionsLocal.value = Array.from(set).sort((a, b) => a - b);
+};
+const saveCtaButtonPositions = () => {
+    isSavingCtaButtons.value = true;
+    router.post(route('admin.events.cta-button-positions.update', props.event.id), {
+        positions: ctaButtonPositionsLocal.value,
+    }, {
+        onFinish: () => { isSavingCtaButtons.value = false; },
+    });
+};
+
 const getImageUrl = (image) => {
     if (image.url) return image.url;
     const path = image.path ?? image;
@@ -353,6 +475,31 @@ const openPreview = (image) => {
 
 const closePreview = () => {
     previewImage.value = null;
+};
+
+// マージン（詳細）モーダル
+const openMarginModal = (image) => {
+    marginModalImage.value = image;
+    marginForm.value = {
+        margin_top_px: image.margin_top_px ?? '',
+        margin_bottom_px: image.margin_bottom_px ?? '',
+    };
+};
+const closeMarginModal = () => {
+    marginModalImage.value = null;
+};
+const submitMargin = () => {
+    if (!marginModalImage.value || !props.event?.id) return;
+    const payload = {
+        margin_top_px: marginForm.value.margin_top_px === '' || marginForm.value.margin_top_px == null ? null : Number(marginForm.value.margin_top_px),
+        margin_bottom_px: marginForm.value.margin_bottom_px === '' || marginForm.value.margin_bottom_px == null ? null : Number(marginForm.value.margin_bottom_px),
+    };
+    isSavingMargin.value = true;
+    router.patch(route('admin.events.images.margin', [props.event.id, marginModalImage.value.id]), payload, {
+        preserveScroll: true,
+        onSuccess: () => { closeMarginModal(); },
+        onFinish: () => { isSavingMargin.value = false; },
+    });
 };
 
 const handlePreviewEsc = (e) => {

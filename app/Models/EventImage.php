@@ -17,10 +17,14 @@ class EventImage extends Model
         'webp_path',
         'alt',
         'sort_order',
+        'margin_top_px',
+        'margin_bottom_px',
     ];
 
     protected $casts = [
         'sort_order' => 'integer',
+        'margin_top_px' => 'integer',
+        'margin_bottom_px' => 'integer',
     ];
 
     /**

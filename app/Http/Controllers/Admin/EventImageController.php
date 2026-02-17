@@ -32,6 +32,8 @@ class EventImageController extends Controller
                 'alt' => $image->alt,
                 'sort_order' => $image->sort_order,
                 'file_format' => strtoupper(pathinfo($image->path, PATHINFO_EXTENSION) ?: '-'),
+                'margin_top_px' => $image->margin_top_px,
+                'margin_bottom_px' => $image->margin_bottom_px,
             ];
         })->values();
         $slideshows = Slideshow::orderBy('created_at', 'desc')->get();
@@ -53,11 +55,20 @@ class EventImageController extends Controller
             })
             ->toArray();
 
+        // CTAボタン表示位置
+        $ctaButtonPositions = DB::table('event_cta_button_positions')
+            ->where('event_id', $event->id)
+            ->orderBy('position')
+            ->pluck('position')
+            ->values()
+            ->toArray();
+
         return Inertia::render('Admin/EventImage/Index', [
             'event' => $event,
             'images' => $images,
             'slideshows' => $slideshows,
             'slideshowPositions' => $slideshowPositions,
+            'ctaButtonPositions' => $ctaButtonPositions,
         ]);
     }
 
@@ -373,6 +384,60 @@ class EventImageController extends Controller
 
         return redirect()->route('admin.events.images.index', $event->id)
             ->with('success', 'スライドショー位置を更新しました。');
+    }
+
+    /**
+     * CTAボタン表示位置を更新
+     */
+    public function updateCtaButtonPositions(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'positions' => 'required|array',
+            'positions.*' => 'integer|min:0',
+        ]);
+
+        $positions = array_values(array_unique($validated['positions']));
+        sort($positions);
+
+        DB::table('event_cta_button_positions')
+            ->where('event_id', $event->id)
+            ->delete();
+
+        $now = now();
+        foreach ($positions as $position) {
+            DB::table('event_cta_button_positions')->insert([
+                'event_id' => $event->id,
+                'position' => $position,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        return redirect()->route('admin.events.images.index', $event->id)
+            ->with('success', 'CTAボタン位置を更新しました。');
+    }
+
+    /**
+     * 画像の上下マージン（px）を更新
+     */
+    public function updateMargin(Request $request, Event $event, EventImage $image)
+    {
+        if ($image->event_id !== $event->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'margin_top_px' => 'nullable|integer|min:0|max:500',
+            'margin_bottom_px' => 'nullable|integer|min:0|max:500',
+        ]);
+
+        $image->update([
+            'margin_top_px' => $validated['margin_top_px'] ?? null,
+            'margin_bottom_px' => $validated['margin_bottom_px'] ?? null,
+        ]);
+
+        return redirect()->route('admin.events.images.index', $event->id)
+            ->with('success', 'マージンを更新しました。');
     }
 }
 

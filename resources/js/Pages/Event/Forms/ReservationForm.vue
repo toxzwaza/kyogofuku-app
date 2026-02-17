@@ -85,6 +85,23 @@
                                 />
                             </div>
                         </div>
+                        <!-- Googleマップ（住所とAPIキーがある場合のみ） -->
+                        <div v-if="venue.address && googleMapsEmbedApiKey" class="border-t border-gray-100">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 pt-4 pb-2">地図</p>
+                            <div class="w-full aspect-video max-h-64 px-6 pb-4">
+                                <iframe
+                                    :src="getVenueMapEmbedUrl(venue.address)"
+                                    width="100%"
+                                    height="100%"
+                                    style="border:0"
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    allowfullscreen
+                                    loading="lazy"
+                                    class="rounded-lg"
+                                    title="会場の地図"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -622,6 +639,20 @@ const eventVenues = computed(() => {
     }
     return [];
 });
+
+/** Google Maps Embed API キー（開催会場マップ用） */
+const googleMapsEmbedApiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_API_KEY || '';
+
+/**
+ * 会場住所から Google Maps Embed iframe の URL を生成
+ * @param {string} address - 住所
+ * @returns {string}
+ */
+function getVenueMapEmbedUrl(address) {
+    if (!address || !googleMapsEmbedApiKey) return '';
+    const q = encodeURIComponent(address);
+    return `https://www.google.com/maps/embed/v1/place?key=${googleMapsEmbedApiKey}&q=${q}`;
+}
 
 /**
  * 会場の開催日リストを表示用にフォーマット
