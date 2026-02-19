@@ -107,7 +107,13 @@
                                                 <span v-else class="text-gray-400">未設定</span>
                                             </dd>
                                         </div>
-                                        
+                                        <div class="sm:col-span-2">
+                                            <dt class="text-sm font-medium text-gray-500">受付終了時メッセージ</dt>
+                                            <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line">
+                                                <span v-if="event.ended_message_text">{{ event.ended_message_text }}</span>
+                                                <span v-else class="text-gray-400">未設定</span>
+                                            </dd>
+                                        </div>
                                         <div>
                                             <dt class="text-sm font-medium text-gray-500">公開状態</dt>
                                             <dd class="mt-1">
@@ -255,6 +261,18 @@
                                                     <p class="mt-1 text-xs text-gray-500">成功ページのURLに含めるテキストを入力してください（任意）。設定すると `/event/{event}/reserve/success/{text}` の形式になります。英数字、ハイフン、アンダースコアのみ使用可能です。</p>
                                                     <div v-if="successTextError" class="mt-1 text-sm text-red-600">{{ successTextError }}</div>
                                                     <div v-if="editForm.errors.success_text" class="mt-1 text-sm text-red-600">{{ editForm.errors.success_text }}</div>
+                                                </div>
+
+                                                <div class="sm:col-span-2">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">受付終了時メッセージ</label>
+                                                    <textarea
+                                                        v-model="editForm.ended_message_text"
+                                                        rows="3"
+                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        placeholder="例: 次回の開催は未定です。"
+                                                    ></textarea>
+                                                    <p class="mt-1 text-xs text-gray-500">公開ページで受付終了後に表示される「このイベントは〇月〇日をもって終了いたしました。」の下に、改行して赤色で表示されます。未入力の場合は表示しません。</p>
+                                                    <div v-if="editForm.errors.ended_message_text" class="mt-1 text-sm text-red-600">{{ editForm.errors.ended_message_text }}</div>
                                                 </div>
                                             </div>
 
@@ -1145,6 +1163,7 @@ const editForm = useForm({
     document_ids: props.event.documents ? props.event.documents.map(doc => doc.id) : [],
     gtm_id: props.event.gtm_id || '',
     success_text: props.event.success_text || '',
+    ended_message_text: props.event.ended_message_text || '',
 });
 
 const newVenueForm = useForm({
@@ -1233,6 +1252,7 @@ const startEdit = () => {
     editForm.document_ids = props.event.documents ? props.event.documents.map(doc => doc.id) : [];
     editForm.gtm_id = props.event.gtm_id || '';
     editForm.success_text = props.event.success_text || '';
+    editForm.ended_message_text = props.event.ended_message_text || '';
     successTextError.value = '';
     slugError.value = '';
 };

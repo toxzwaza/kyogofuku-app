@@ -291,6 +291,7 @@
                 <p class="text-xl font-semibold text-gray-800">
                     このイベントは{{ endDate }}をもって終了いたしました。
                 </p>
+                <p v-if="event.ended_message_text" class="mt-4 text-base text-red-600 whitespace-pre-line">{{ event.ended_message_text }}</p>
             </div>
         </div>
 

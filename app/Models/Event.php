@@ -21,6 +21,7 @@ class Event extends Model
         'is_public',
         'gtm_id',
         'success_text',
+        'ended_message_text',
         'cta_background_path',
         'cta_web_button_path',
         'cta_phone_button_path',
