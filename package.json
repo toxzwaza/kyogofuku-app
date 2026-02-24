@@ -24,6 +24,7 @@
         "@fullcalendar/interaction": "^6.1.19",
         "@fullcalendar/timegrid": "^6.1.19",
         "@fullcalendar/vue3": "^6.1.19",
+        "@panzoom/panzoom": "^4.6.1",
         "chart.js": "^4.5.1",
         "fabric": "^6.9.1",
         "marked": "^17.0.1",

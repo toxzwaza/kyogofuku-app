@@ -68,38 +68,40 @@
         >
             <div
                 v-if="showModal && currentModalImage"
-                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70"
+                class="slideshow-modal-overlay"
                 @click.self="closeModal"
                 @keydown.esc="closeModal"
                 role="dialog"
                 aria-modal="true"
                 :aria-label="currentModalImage.alt || '画像を拡大表示'"
             >
-                <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
-                    <img
-                        :src="currentModalImage.path"
-                        :alt="currentModalImage.alt || 'スライドショー画像'"
-                        class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl"
-                        @click.stop
-                    />
-                    <button
-                        type="button"
-                        class="absolute -top-10 right-0 p-2 text-white hover:text-gray-300 rounded-full hover:bg-white/10 transition-colors"
-                        @click="closeModal"
-                        aria-label="閉じる"
-                    >
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                <div ref="panzoomParentRef" class="slideshow-modal-panzoom-parent">
+                    <div ref="panzoomElemRef" class="slideshow-modal-panzoom-elem">
+                        <img
+                            :src="currentModalImage.path"
+                            :alt="currentModalImage.alt || 'スライドショー画像'"
+                            class="slideshow-modal-img"
+                            @click.stop
+                        />
+                    </div>
                 </div>
+                <button
+                    type="button"
+                    class="slideshow-modal-close-btn"
+                    @click="closeModal"
+                    aria-label="閉じる"
+                >
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
         </Transition>
     </Teleport>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import { Autoplay, Pagination, EffectFade, EffectCube, EffectCoverflow } from 'swiper/modules';
 
@@ -109,6 +111,9 @@ import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 import 'swiper/css/effect-cube';
 import 'swiper/css/effect-coverflow';
+
+// Panzoom for modal image zoom (transform-origin 50% 50% で中央基準、contain で枠内に制限)
+import Panzoom from '@panzoom/panzoom';
 
 const props = defineProps({
     images: {
@@ -179,6 +184,45 @@ const openModal = (_swiper, event) => {
 const closeModal = () => {
     showModal.value = false;
 };
+
+const panzoomParentRef = ref(null);
+const panzoomElemRef = ref(null);
+let panzoomInstance = null;
+
+const initPanzoom = () => {
+    const parent = panzoomParentRef.value;
+    const elem = panzoomElemRef.value;
+    if (!parent || !elem) return;
+    if (panzoomInstance) {
+        panzoomInstance.destroy();
+        panzoomInstance = null;
+    }
+    panzoomInstance = Panzoom(elem, {
+        minScale: 0.5,
+        maxScale: 15,
+        cursor: 'grab',
+        startScale: 1,
+    });
+    parent.addEventListener('wheel', panzoomInstance.zoomWithWheel, { passive: false });
+};
+
+const destroyPanzoom = () => {
+    const parent = panzoomParentRef.value;
+    if (panzoomInstance) {
+        if (parent) parent.removeEventListener('wheel', panzoomInstance.zoomWithWheel);
+        panzoomInstance.destroy();
+        panzoomInstance = null;
+    }
+};
+
+watch(showModal, async (visible) => {
+    if (visible) {
+        await nextTick();
+        initPanzoom();
+    } else {
+        destroyPanzoom();
+    }
+});
 
 const onEscapeKey = (e) => {
     if (e.key === 'Escape' && showModal.value) {
@@ -262,6 +306,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('keydown', onEscapeKey);
+    destroyPanzoom();
 });
 
 </script>
@@ -272,7 +317,7 @@ onUnmounted(() => {
     overflow: hidden;
 }
 
-/* 拡大アイコン（リキッドスタイル） */
+/* 拡大アイコン（リキッドスタイル・明暗どちらの背景でも見やすい） */
 .slideshow-expand-btn {
     position: absolute;
     top: 12px;
@@ -287,19 +332,26 @@ onUnmounted(() => {
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.95);
-    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.98);
+    background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
 }
 
 .slideshow-expand-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.5);
     transform: scale(1.08);
     opacity: 1;
+    box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .slideshow-expand-btn:active {
@@ -392,5 +444,81 @@ onUnmounted(() => {
     .slideshow-fullscreen .slideshow-image {
         min-height: 100vh;
     }
+}
+
+/* モーダルオーバーレイ（画面いっぱい） */
+.slideshow-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background-color: rgba(0, 0, 0, 0.7);
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* Panzoom 親（画面いっぱい、中央に画像を配置） */
+.slideshow-modal-panzoom-parent {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Panzoom 適用要素（画像のラッパー、常に中央に配置） */
+.slideshow-modal-panzoom-elem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* モーダル内画像（横に余白を持たせてすっきり表示） */
+.slideshow-modal-img {
+    max-width: calc(100vw - 2.5rem);
+    max-height: calc(100vh - 2.5rem);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 0.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: block;
+}
+
+/* モーダル閉じるボタン（リキッドスタイル・拡大アイコンと統一） */
+.slideshow-modal-close-btn {
+    position: fixed;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: rgba(255, 255, 255, 0.98);
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.slideshow-modal-close-btn:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: scale(1.08);
+    box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.slideshow-modal-close-btn:active {
+    transform: scale(0.96);
 }
 </style>
