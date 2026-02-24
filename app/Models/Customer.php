@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class Customer extends Model
 {
+    use HasEagerLimit;
     protected $fillable = [
         'name', 'kana', 'guardian_name', 'guardian_name_kana', 'birth_date', 'coming_of_age_year',
         'ceremony_area_id', 'phone_number', 'postal_code', 'address',

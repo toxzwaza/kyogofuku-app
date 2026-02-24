@@ -12,10 +12,11 @@
         "inertiajs/inertia-laravel": "^0.6.8",
         "intervention/image": "^3.11",
         "laravel/framework": "^9.19",
-        "league/flysystem-aws-s3-v3": "^3.0",
         "laravel/sanctum": "^3.2",
         "laravel/socialite": "*",
         "laravel/tinker": "^2.7",
+        "league/flysystem-aws-s3-v3": "^3.0",
+        "staudenmeir/eloquent-eager-limit": "^1.7",
         "tightenco/ziggy": "^1.0",
         "zbateson/mail-mime-parser": "^3.0"
     },
