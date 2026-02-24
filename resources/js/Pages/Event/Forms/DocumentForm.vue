@@ -87,7 +87,9 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">生年月日</label>
                 <input
                     v-model="form.birth_date"
-                    type="date"
+                    type="text"
+                    placeholder="例: 20000101 または 2000-01-01"
+                    maxlength="10"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
                 <div v-if="form.errors.birth_date" class="mt-1 text-sm text-red-600">{{ form.errors.birth_date }}</div>
@@ -241,11 +243,25 @@ const searchAddress = async () => {
     }
 };
 
+// 生年月日を YYYY-MM-DD に正規化（数字8桁の場合はハイフンを補完）
+const normalizeBirthDate = (value) => {
+    if (!value || typeof value !== 'string') return value;
+    const digits = value.replace(/\D/g, '');
+    if (digits.length === 8) {
+        return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return value.trim();
+    return value;
+};
+
 const submit = () => {
     if (!form.privacy_agreed) {
         return;
     }
-    
+
+    // 送信前に生年月日を YYYY-MM-DD に正規化
+    form.birth_date = normalizeBirthDate(form.birth_date);
+
     // 確認ページに遷移
     emit('confirm', form.data());
 };

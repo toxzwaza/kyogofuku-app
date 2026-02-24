@@ -389,8 +389,10 @@
                     </label>
                     <input
                         v-model="form.birth_date"
-                        type="date"
+                        type="text"
                         required
+                        placeholder="例: 20000101 または 2000-01-01"
+                        maxlength="10"
                         class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
                     />
                 </div>
@@ -402,15 +404,12 @@
                         </svg>
                         成人式予定年月
                     </label>
-                    <select
+                    <input
                         v-model="form.seijin_year"
-                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4 bg-white"
-                    >
-                        <option value="">選択してください</option>
-                        <option v-for="year in seijinYears" :key="year" :value="year">
-                            {{ year }}年
-                        </option>
-                    </select>
+                        type="text"
+                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                        placeholder="例: 2021年度"
+                    />
                 </div>
             </div>
 
@@ -807,36 +806,31 @@ const getUrlParamArray = (key, defaultValue = []) => {
     return defaultValue;
 };
 
-// 成人式予定年の選択肢（現在年から10年後まで）
-const currentYear = new Date().getFullYear();
-const seijinYears = Array.from({ length: 11 }, (_, i) => currentYear + i);
+// 生年月日から「成人式の年度（開催年）」を返す
+// 仕様：その人が「20歳になる年」の翌年（1月開催）を成人式年度とみなす
+// 例: 2000-08-19 -> 2021, 2000-03-09 -> 2020（早生まれ）
+const getSeijinshikiYear = (birthdate) => {
+    const d = birthdate instanceof Date ? new Date(birthdate) : new Date(String(birthdate));
+    if (Number.isNaN(d.getTime())) {
+        return null;
+    }
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const turning20 = y + 20;
+    const isEarly = (m < 4) || (m === 4 && day === 1);
+    return isEarly ? turning20 : turning20 + 1;
+};
 
-// 生年月日から成人式予定年を計算する関数
-const calculateSeijinYear = (birthDate) => {
-    if (!birthDate) {
-        return null;
+// 生年月日を YYYY-MM-DD に正規化（数字8桁の場合はハイフンを補完）
+const normalizeBirthDate = (value) => {
+    if (!value || typeof value !== 'string') return value;
+    const digits = value.replace(/\D/g, '');
+    if (digits.length === 8) {
+        return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
     }
-    
-    try {
-        const date = new Date(birthDate);
-        if (isNaN(date.getTime())) {
-            return null;
-        }
-        
-        // 生年月日の年 + 20 = 成人式予定年
-        const birthYear = date.getFullYear();
-        const seijinYear = birthYear + 20;
-        
-        // 計算された年が選択肢に含まれているか確認
-        if (seijinYears.includes(seijinYear)) {
-            return seijinYear;
-        }
-        
-        return null;
-    } catch (error) {
-        console.error('生年月日の計算エラー:', error);
-        return null;
-    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return value.trim();
+    return value;
 };
 
 // URLパラメータから生年月日と成人式予定年を取得
@@ -844,9 +838,10 @@ const urlBirthDate = getUrlParam('birth_date', '');
 const urlSeijinYear = urlParams.has('seijin_year') ? parseInt(urlParams.get('seijin_year'), 10) : null;
 
 // URLパラメータから成人式予定年が取得できない場合、生年月日から計算
-let initialSeijinYear = urlSeijinYear;
+let initialSeijinYear = urlSeijinYear !== null ? `${urlSeijinYear}年度` : '';
 if (!initialSeijinYear && urlBirthDate) {
-    initialSeijinYear = calculateSeijinYear(urlBirthDate);
+    const calculated = getSeijinshikiYear(normalizeBirthDate(urlBirthDate));
+    if (calculated !== null) initialSeijinYear = `${calculated}年度`;
 }
 
 console.log('[デバッグ] URLパラメータから取得:', {
@@ -902,13 +897,13 @@ const visitReasonOptions = [
     { value: 'その他', label: 'その他(テキスト入力)' },
 ];
 
-// 生年月日の変更を監視して、成人式予定年を自動選択
+// 生年月日の変更を監視して、成人式予定年を自動計算して入力
 watch(() => form.birth_date, (newBirthDate) => {
     if (newBirthDate) {
-        const calculatedYear = calculateSeijinYear(newBirthDate);
-        if (calculatedYear && !form.seijin_year) {
-            // 既に値が設定されていない場合のみ自動選択
-            form.seijin_year = calculatedYear;
+        const normalized = normalizeBirthDate(newBirthDate);
+        const calculatedYear = getSeijinshikiYear(normalized);
+        if (calculatedYear !== null) {
+            form.seijin_year = `${calculatedYear}年度`;
         }
     }
 });
@@ -998,6 +993,9 @@ const submit = () => {
         alert('予約日時を選択してください。');
         return;
     }
+
+    // 送信前に生年月日を YYYY-MM-DD に正規化
+    form.birth_date = normalizeBirthDate(form.birth_date);
 
     // 確認ページに遷移
     emit('confirm', {
