@@ -549,14 +549,25 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="contract in customer.contracts" :key="contract.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.contract_date }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.shop?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.plan?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.kimono_type }}</td>
+                                    <tr
+                                        v-for="contract in customer.contracts"
+                                        :key="contract.id"
+                                        :class="contract.deleted_at ? 'bg-gray-100 opacity-75' : ''"
+                                    >
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.contract_date }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.shop?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.plan?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.kimono_type }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span
+                                                v-if="contract.deleted_at"
+                                                class="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-600"
+                                            >
+                                                無効
+                                            </span>
+                                            <span
+                                                v-else
                                                 class="px-2 py-1 text-xs rounded-full"
                                                 :class="
                                                     (contract.status || '確定') === '確定'
@@ -569,15 +580,21 @@
                                                 {{ contract.status || '確定' }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.total_amount ? `¥${contract.total_amount.toLocaleString()}` : '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.total_amount ? `¥${contract.total_amount.toLocaleString()}` : '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 py-1 text-xs rounded-full" :class="contract.warranty_flag ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                                            <span
+                                                class="px-2 py-1 text-xs rounded-full"
+                                                :class="[
+                                                    contract.warranty_flag ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800',
+                                                    contract.deleted_at ? 'opacity-70' : ''
+                                                ]"
+                                            >
                                                 {{ contract.warranty_flag ? 'あり' : 'なし' }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.user?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.preparation_venue || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contract.preparation_date || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.user?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.preparation_venue || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.preparation_date || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <button
                                                 type="button"
@@ -1339,6 +1356,9 @@
                         </button>
                     </div>
                     <form @submit.prevent="updateContract" class="overflow-y-auto flex-1 px-6 py-5">
+                        <div v-if="editingContract?.deleted_at" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                            この成約は削除済み（無効）です。復元する場合は「更新」を押してください。データベースから完全に消す場合は「完全に削除」を押してください。
+                        </div>
                         <div class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -1406,12 +1426,26 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                            <button type="button" @click="showEditContractModal = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">キャンセル</button>
-                            <button type="submit" :disabled="editContractForm.processing" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span v-if="editContractForm.processing">更新中...</span>
-                                <span v-else>更新</span>
-                            </button>
+                        <div class="flex justify-between items-center space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <div class="flex items-center">
+                                <button
+                                    type="button"
+                                    @click="deleteContractConfirm"
+                                    :disabled="editContractForm.processing"
+                                    :class="editingContract?.deleted_at
+                                        ? 'px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                                        : 'px-4 py-2 border border-red-300 text-red-700 rounded-md text-sm font-medium hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed'"
+                                >
+                                    {{ editingContract?.deleted_at ? '完全に削除' : '削除' }}
+                                </button>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button type="button" @click="showEditContractModal = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">キャンセル</button>
+                                <button type="submit" :disabled="editContractForm.processing" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span v-if="editContractForm.processing">更新中...</span>
+                                    <span v-else>更新</span>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -2854,6 +2888,23 @@ const updateContract = () => {
         t._method = 'PUT';
         return t;
     }).post(route('admin.customers.contracts.update', { customer: props.customer.id, contract: editingContract.value.id }), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showEditContractModal.value = false;
+            editingContract.value = null;
+        },
+    });
+};
+
+// 成約情報削除（論理削除、または削除済みの場合は物理削除）
+const deleteContractConfirm = () => {
+    if (!editingContract.value) return;
+    const isTrashed = !!editingContract.value.deleted_at;
+    const message = isTrashed
+        ? 'この成約情報をデータベースから完全に削除します。復元できません。よろしいですか？'
+        : 'この成約情報を削除してもよろしいですか？\n（論理削除のため、一覧には無効として表示され、編集から復元できます）';
+    if (!window.confirm(message)) return;
+    router.delete(route('admin.customers.contracts.destroy', { customer: props.customer.id, contract: editingContract.value.id }), {
         preserveScroll: true,
         onSuccess: () => {
             showEditContractModal.value = false;

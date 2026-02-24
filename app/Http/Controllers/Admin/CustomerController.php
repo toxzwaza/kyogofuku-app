@@ -282,6 +282,9 @@ class CustomerController extends Controller
     {
         $customer->load([
             'ceremonyArea',
+            'contracts' => function ($q) {
+                $q->withTrashed()->orderBy('contract_date', 'desc');
+            },
             'contracts.shop',
             'contracts.plan',
             'contracts.user',
@@ -708,13 +711,13 @@ class CustomerController extends Controller
     }
 
     /**
-     * 成約情報を更新
+     * 成約情報を更新（削除済みの場合は復元して更新）
      */
-    public function updateContract(Request $request, Customer $customer, Contract $contract)
+    public function updateContract(Request $request, Customer $customer, $contract)
     {
-        if ($contract->customer_id !== $customer->id) {
-            abort(403);
-        }
+        $contractModel = Contract::withTrashed()
+            ->where('customer_id', $customer->id)
+            ->findOrFail($contract);
 
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
@@ -732,10 +735,34 @@ class CustomerController extends Controller
 
         $validated['warranty_flag'] = $request->has('warranty_flag') ? (bool)$request->warranty_flag : false;
 
-        $contract->update($validated);
+        if ($contractModel->trashed()) {
+            $contractModel->restore();
+        }
+        $contractModel->update($validated);
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '成約情報を更新しました。');
+    }
+
+    /**
+     * 成約情報を削除（論理削除、または削除済みの場合は物理削除）
+     */
+    public function destroyContract(Customer $customer, $contract)
+    {
+        $contractModel = Contract::withTrashed()
+            ->where('customer_id', $customer->id)
+            ->findOrFail($contract);
+
+        if ($contractModel->trashed()) {
+            $contractModel->forceDelete();
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('success', '成約情報を完全に削除しました。');
+        }
+
+        $contractModel->delete(); // 論理削除（deleted_at を設定）
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '成約情報を削除しました。');
     }
 
     /**
