@@ -21,6 +21,7 @@
             :coverflowEffect="type === 'coverflow' ? effectConfig : undefined"
             class="slideshow-swiper"
             @slideChange="onSlideChange"
+            @click="openModal"
         >
             <swiper-slide
                 v-for="(image, index) in images"
@@ -40,7 +41,61 @@
                 </div>
             </swiper-slide>
         </swiper>
+
+        <!-- 拡大アイコン（リキッドスタイル） -->
+        <button
+            v-if="images && images.length > 0"
+            type="button"
+            class="slideshow-expand-btn"
+            @click="openModal"
+            aria-label="画像を拡大して表示"
+        >
+            <svg class="slideshow-expand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+        </button>
     </div>
+
+    <!-- 画像拡大モーダル -->
+    <Teleport to="body">
+        <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+        >
+            <div
+                v-if="showModal && currentModalImage"
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70"
+                @click.self="closeModal"
+                @keydown.esc="closeModal"
+                role="dialog"
+                aria-modal="true"
+                :aria-label="currentModalImage.alt || '画像を拡大表示'"
+            >
+                <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
+                    <img
+                        :src="currentModalImage.path"
+                        :alt="currentModalImage.alt || 'スライドショー画像'"
+                        class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl"
+                        @click.stop
+                    />
+                    <button
+                        type="button"
+                        class="absolute -top-10 right-0 p-2 text-white hover:text-gray-300 rounded-full hover:bg-white/10 transition-colors"
+                        @click="closeModal"
+                        aria-label="閉じる"
+                    >
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </Transition>
+    </Teleport>
 </template>
 
 <script setup>
@@ -107,6 +162,29 @@ const animationDuration = computed(() => {
 const swiperRef = ref(null);
 const currentSlideIndex = ref(0);
 const isAnimating = ref(false);
+const showModal = ref(false);
+
+const currentModalImage = computed(() => {
+    if (!props.images || props.images.length === 0) return null;
+    const idx = currentSlideIndex.value % props.images.length;
+    return props.images[idx];
+});
+
+const openModal = (_swiper, event) => {
+    // ページネーションドットのクリックはスライド変更のみでモーダルを開かない
+    if (event?.target?.closest?.('.swiper-pagination')) return;
+    showModal.value = true;
+};
+
+const closeModal = () => {
+    showModal.value = false;
+};
+
+const onEscapeKey = (e) => {
+    if (e.key === 'Escape' && showModal.value) {
+        closeModal();
+    }
+};
 
 
 const onSlideChange = (swiper) => {
@@ -179,6 +257,11 @@ onMounted(() => {
         isAnimating.value = true;
         currentSlideIndex.value = 0;
     }
+    window.addEventListener('keydown', onEscapeKey);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', onEscapeKey);
 });
 
 </script>
@@ -187,6 +270,45 @@ onMounted(() => {
 .slideshow-container {
     position: relative;
     overflow: hidden;
+}
+
+/* 拡大アイコン（リキッドスタイル） */
+.slideshow-expand-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+}
+
+.slideshow-expand-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.08);
+    opacity: 1;
+}
+
+.slideshow-expand-btn:active {
+    transform: scale(0.96);
+}
+
+.slideshow-expand-icon {
+    width: 22px;
+    height: 22px;
 }
 
 .slideshow-swiper {
