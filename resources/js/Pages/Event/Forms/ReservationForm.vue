@@ -833,6 +833,18 @@ const normalizeBirthDate = (value) => {
     return value;
 };
 
+// seijin_yearをサーバー送信用に正規化（"2021年度" → 2021、空はnull）
+const normalizeSeijinYearForSubmit = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value === 'number' && Number.isInteger(value) && value >= 2000 && value <= 2100) return value;
+    const str = String(value).trim();
+    const match = str.match(/^(\d{4})年度?$/);
+    if (match) return parseInt(match[1], 10);
+    const num = parseInt(str.replace(/\D/g, ''), 10);
+    if (!isNaN(num) && num >= 2000 && num <= 2100) return num;
+    return null;
+};
+
 // URLパラメータから生年月日と成人式予定年を取得
 const urlBirthDate = getUrlParam('birth_date', '');
 const urlSeijinYear = urlParams.has('seijin_year') ? parseInt(urlParams.get('seijin_year'), 10) : null;
@@ -997,12 +1009,13 @@ const submit = () => {
     // 送信前に生年月日を YYYY-MM-DD に正規化
     form.birth_date = normalizeBirthDate(form.birth_date);
 
-    // 確認ページに遷移
+    // 確認ページに遷移（seijin_yearはサーバーが期待する整数形式に変換）
     emit('confirm', {
         ...form.data(),
         reservation_datetime: form.reservation_datetime,
         timeslot_id: internalSelectedTimeslot.value.id, // 予約枠IDを追加
         from_admin: props.fromAdmin,
+        seijin_year: normalizeSeijinYearForSubmit(form.seijin_year),
     });
 };
 </script>
