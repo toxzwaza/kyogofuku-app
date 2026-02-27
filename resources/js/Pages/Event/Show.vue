@@ -49,18 +49,6 @@
                     <!-- 画像 -->
                     <div
                         v-if="item.type === 'image'"
-                        :ref="el => setImageRef(el, item.originalIndex !== undefined ? item.originalIndex : index)"
-                        :class="[
-                            // 一枚目（originalIndex 0）はアニメーションなし、二枚目以降はアニメーション
-                            (item.originalIndex !== undefined ? item.originalIndex : index) === 0 
-                                ? '' 
-                                : 'scroll-reveal-image',
-                            // 二枚目以降のみrevealedクラスを適用
-                            (item.originalIndex !== undefined ? item.originalIndex : index) !== 0 && 
-                            (item.originalIndex !== undefined ? revealedImages.has(item.originalIndex) : revealedImages.has(index))
-                                ? 'revealed' 
-                                : ''
-                        ]"
                         :style="(item.data.margin_top_px != null || item.data.margin_bottom_px != null) ? { marginTop: item.data.margin_top_px != null ? `${item.data.margin_top_px}px` : undefined, marginBottom: item.data.margin_bottom_px != null ? `${item.data.margin_bottom_px}px` : undefined } : undefined"
                     >
                         <!-- WebPパスが存在する場合（新規アップロード画像）のみ<picture>要素を使用 -->
@@ -96,15 +84,7 @@
                         />
                     </div>
                     <!-- CTAボタン（予約フォームを開く） -->
-                    <div
-                        v-else-if="item.type === 'cta_button'"
-                        :data-cta-reveal="item.id"
-                        :data-cta-id="item.id"
-                        :class="[
-                            'scroll-reveal-image cta-button-wrap py-8 px-4',
-                            revealedCta.has(item.id) ? 'revealed' : ''
-                        ]"
-                    >
+                    <div v-else-if="item.type === 'cta_button'" class="cta-button-wrap py-8 px-4">
                         <div class="cta-inline-container">
                             <button
                                 type="button"
@@ -398,7 +378,7 @@
 </template>
 
 <script setup>
-import { ref, computed, defineAsyncComponent, onMounted, nextTick, onUnmounted } from 'vue';
+import { ref, computed, defineAsyncComponent, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Slideshow from '@/Components/Slideshow.vue';
 
@@ -438,7 +418,7 @@ const selectedTimeslot = ref(null);
 const showReservationForm = ref(false);
 const currentStep = ref(props.showSuccess ? 'success' : 'form'); // 'form', 'confirm', 'success'
 const confirmFormData = ref(props.successFormData || null);
-const isLoading = ref(true);
+const isLoading = ref(false);
 
 /** Google Maps Embed API キー（開催会場マップ用） */
 const googleMapsEmbedApiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_API_KEY || '';
@@ -498,93 +478,8 @@ function formatVenueDates(dateStrings) {
   });
 }
 
-// スクロールアニメーション用
-const imageRefs = ref(new Map());
-const revealedImages = ref(new Set());
-const revealedCta = ref(new Set());
-let observer = null;
-let ctaObserver = null;
+// 初回表示は即時（isLoading は false のまま）。ローディングは Inertia のページ遷移時のみ使用
 
-// 初回ローディング管理
-onMounted(() => {
-    // 画像の読み込みを待つ
-    const images = document.querySelectorAll('img');
-    let loadedCount = 0;
-    const totalImages = images.length;
-    
-    if (totalImages === 0) {
-        // 画像がない場合は短い遅延後にローディングを終了
-        setTimeout(async () => {
-            await nextTick();
-            isLoading.value = false;
-        }, 500);
-    } else {
-        images.forEach((img) => {
-            if (img.complete) {
-                loadedCount++;
-                if (loadedCount === totalImages) {
-                    setTimeout(async () => {
-                        await nextTick();
-                        isLoading.value = false;
-                        // ローディング終了後にスクロールアニメーションを設定
-                        setTimeout(() => {
-                            setupScrollAnimation();
-                        }, 500);
-                    }, 300);
-                }
-            } else {
-                img.addEventListener('load', async () => {
-                    loadedCount++;
-                    if (loadedCount === totalImages) {
-                        setTimeout(async () => {
-                            await nextTick();
-                            isLoading.value = false;
-                            // ローディング終了後にスクロールアニメーションを設定
-                            setTimeout(() => {
-                                setupScrollAnimation();
-                            }, 500);
-                        }, 300);
-                    }
-                });
-                img.addEventListener('error', async () => {
-                    loadedCount++;
-                    if (loadedCount === totalImages) {
-                        setTimeout(async () => {
-                            await nextTick();
-                            isLoading.value = false;
-                            // ローディング終了後にスクロールアニメーションを設定
-                            setTimeout(() => {
-                                setupScrollAnimation();
-                            }, 500);
-                        }, 300);
-                    }
-                });
-            }
-        });
-    }
-    
-    // 最大3秒でローディングを終了（タイムアウト）
-    setTimeout(async () => {
-        await nextTick();
-        isLoading.value = false;
-        // ローディング終了後にスクロールアニメーションを設定
-        setTimeout(() => {
-            setupScrollAnimation();
-        }, 500);
-    }, 3000);
-});
-
-// クリーンアップ
-onUnmounted(() => {
-    if (observer) {
-        observer.disconnect();
-        observer = null;
-    }
-    if (ctaObserver) {
-        ctaObserver.disconnect();
-        ctaObserver = null;
-    }
-});
 
 // Inertia.jsのページ遷移時のローディング管理
 router.on('start', () => {
@@ -596,10 +491,6 @@ router.on('finish', async () => {
     setTimeout(async () => {
         await nextTick();
         isLoading.value = false;
-        // ページ遷移後にもスクロールアニメーションを設定
-        setTimeout(() => {
-            setupScrollAnimation();
-        }, 500);
     }, 300);
 });
 
@@ -703,93 +594,6 @@ const closeForm = () => {
     confirmFormData.value = null;
 };
 
-// 画像要素のrefを設定
-const setImageRef = (el, index) => {
-    if (el && index !== undefined && index !== null) {
-        imageRefs.value.set(index, el);
-        // 既にobserverが設定されている場合は、すぐに監視を開始
-        if (observer && !revealedImages.value.has(index)) {
-            observer.observe(el);
-        }
-    }
-};
-
-// Intersection Observerの設定
-const setupScrollAnimation = () => {
-    if (typeof window === 'undefined' || !window.IntersectionObserver) {
-        return;
-    }
-
-    // 既存のobserverがあれば破棄
-    if (observer) {
-        observer.disconnect();
-    }
-
-    observer = new IntersectionObserver(
-        (entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    // Mapからindexを取得
-                    let foundIndex = null;
-                    imageRefs.value.forEach((ref, index) => {
-                        if (ref === entry.target) {
-                            foundIndex = index;
-                        }
-                    });
-                    
-                    if (foundIndex !== null && !revealedImages.value.has(foundIndex)) {
-                        // 少し遅延させてアニメーションを開始
-                        setTimeout(() => {
-                            revealedImages.value.add(foundIndex);
-                        }, 50);
-                        // 一度表示されたら監視を停止
-                        observer.unobserve(entry.target);
-                    }
-                }
-            });
-        },
-        {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px', // ビューポートに入る少し前にトリガー
-        }
-    );
-
-    // 画像要素を監視
-    nextTick(() => {
-        imageRefs.value.forEach((ref, index) => {
-            if (ref && observer && !revealedImages.value.has(index)) {
-                // 一枚目（index 0）はアニメーションなしで表示済みなのでスキップ
-                // 2枚目以降の画像はスクロールでビューポートに入ったときにアニメーション
-                if (index !== 0) {
-                    observer.observe(ref);
-                }
-            }
-        });
-
-        // CTAボタン要素を監視（ふわっと表示）
-        if (ctaObserver) ctaObserver.disconnect();
-        ctaObserver = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        const id = entry.target.getAttribute('data-cta-id');
-                        if (id && !revealedCta.value.has(id)) {
-                            setTimeout(() => {
-                                revealedCta.value = new Set([...revealedCta.value, id]);
-                            }, 50);
-                            ctaObserver.unobserve(entry.target);
-                        }
-                    }
-                });
-            },
-            { threshold: 0.1, rootMargin: '0px 0px -80px 0px' }
-        );
-        document.querySelectorAll('[data-cta-reveal]').forEach((el) => {
-            if (el && ctaObserver) ctaObserver.observe(el);
-        });
-    });
-};
-
 // CTAボタンを表示するか（予約フォームかつ終了前かつ成功画面でない）
 const showCtaButtons = computed(() => (
     props.event?.form_type === 'reservation' && !props.isEnded && !props.showSuccess
@@ -857,15 +661,6 @@ const displayItems = computed(() => {
     return items;
 });
 
-// displayItemsが変更されたときにスクロールアニメーションを再設定
-const imageItems = computed(() => {
-    return displayItems.value.filter(item => item.type === 'image');
-});
-
-// 画像のインデックスを取得するヘルパー関数
-const getImageIndex = (item, allItems) => {
-    return allItems.findIndex(i => i.id === item.id && i.type === 'image');
-};
 </script>
 
 <style scoped>
@@ -925,18 +720,6 @@ const getImageIndex = (item, allItems) => {
     6% { opacity: 0.9; transform: scale(1); }
     18% { opacity: 0; transform: scale(0.75); }
     100% { opacity: 0; transform: scale(0.6); }
-}
-
-.scroll-reveal-image {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-    will-change: opacity, transform;
-}
-
-.scroll-reveal-image.revealed {
-    opacity: 1;
-    transform: translateY(0);
 }
 
 .cta-inline-container {

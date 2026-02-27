@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\EventReservation;
 use App\Models\EventUtmTracking;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -56,20 +57,32 @@ class EventController extends Controller
         
         if ($canReserve && !$isEnded) {
             // 全枠を表示（満枠も含む）。本日より前の枠は受付終了のため表示しない
-            $availableTimeslots = $event->timeslots()
+            $timeslots = $event->timeslots()
                 ->where('is_active', true)
                 ->whereDate('start_at', '>=', Carbon::today())
                 ->orderBy('start_at', 'asc')
-                ->get()
-                ->map(function ($timeslot) use ($event) {
-                    $reservationCount = $event->reservations()
-                        ->where('cancel_flg', false)
-                        ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
-                        ->count();
-                    $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
-                    return $timeslot;
-                })
-                ->values();
+                ->get();
+
+            // 予約数を1クエリで一括取得（N+1回避）
+            $reservationCounts = [];
+            if ($timeslots->isNotEmpty()) {
+                $dateTimes = $timeslots->map(fn ($t) => $t->start_at->format('Y-m-d H:i:s'))->values()->all();
+                $counts = EventReservation::where('event_id', $event->id)
+                    ->where('cancel_flg', false)
+                    ->whereIn('reservation_datetime', $dateTimes)
+                    ->selectRaw('reservation_datetime, count(*) as cnt')
+                    ->groupBy('reservation_datetime')
+                    ->pluck('cnt', 'reservation_datetime')
+                    ->all();
+                $reservationCounts = $counts;
+            }
+
+            $availableTimeslots = $timeslots->map(function ($timeslot) use ($reservationCounts) {
+                $dt = $timeslot->start_at->format('Y-m-d H:i:s');
+                $reservationCount = $reservationCounts[$dt] ?? 0;
+                $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
+                return $timeslot;
+            })->values();
         }
 
         // 画像のURLを変換
