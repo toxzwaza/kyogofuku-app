@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             EventSeeder::class,
             EventImageSeeder::class,
+            AttendanceRecordSeeder::class,
             VenueSeeder::class,
             EventTimeslotSeeder::class,
             EventReservationSeeder::class,

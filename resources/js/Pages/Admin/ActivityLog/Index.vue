@@ -273,6 +273,7 @@
 import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { formatDateTimeJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     activityLogs: Object,
@@ -316,11 +317,7 @@ const resetFilters = () => {
     });
 };
 
-const formatDateTime = (datetime) => {
-    if (!datetime) return '-';
-    const date = new Date(datetime);
-    return date.toLocaleString('ja-JP');
-};
+const formatDateTime = (datetime) => formatDateTimeJa(datetime);
 
 
 // アクションタイプのラベルを取得

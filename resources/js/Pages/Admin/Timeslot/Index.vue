@@ -265,6 +265,7 @@ import { ref, computed, watch } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import axios from 'axios';
+import { formatDateTimeJa, formatDateJa } from '@/utils/dateFormat';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
 
@@ -327,29 +328,9 @@ const getVenueName = (venueKey) => {
     return timeslot?.venue?.name || `会場ID: ${venueKey}`;
 };
 
-const formatDateTime = (datetime) => {
-    if (!datetime) return '-';
-    const date = new Date(datetime);
-    return date.toLocaleString('ja-JP');
-};
-
-const formatDateHeader = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'long',
-    });
-};
-
-const formatTime = (datetime) => {
-    const date = new Date(datetime);
-    return date.toLocaleTimeString('ja-JP', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-};
+const formatDateTime = (datetime) => formatDateTimeJa(datetime);
+const formatDateHeader = (dateString) => formatDateJa(dateString);
+const formatTime = (datetime) => formatDateTimeJa(datetime);
 
 const deleteTimeslot = async (id) => {
     if (!confirm('本当に削除しますか？')) return;

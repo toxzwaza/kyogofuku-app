@@ -2095,6 +2095,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import axios from "axios";
+import { formatDateTimeJa, formatDateJa } from "@/utils/dateFormat";
 import ActionButton from "@/Components/ActionButton.vue";
 import EventNavigation from "@/Components/EventNavigation.vue";
 
@@ -2774,41 +2775,15 @@ const getReservationUrl = (timeslot) => {
   return `${baseUrl}?${params.toString()}`;
 };
 
-const formatDateTime = (datetime) => {
-  if (!datetime) return "-";
-  const date = new Date(datetime);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${month}/${day} ${hours}:${minutes}`;
-};
+const formatDateTime = (datetime) => formatDateTimeJa(datetime);
 
-// 時間のみを表示（hh:mm）
-const formatTimeOnly = (datetime) => {
-  if (!datetime) return "-";
-  const date = new Date(datetime);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
+// 時間のみを表示（yyyy年mm月dd日 hh:mm:ss形式で統一）
+const formatTimeOnly = (datetime) => formatDateTimeJa(datetime);
 
-// 選択肢などで使用する日時フォーマット（改行なし）
-const formatDateTimeForOption = (datetime) => {
-  if (!datetime) return "-";
-  const date = new Date(datetime);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${month}/${day} ${hours}:${minutes}`;
-};
+// 選択肢などで使用する日時フォーマット
+const formatDateTimeForOption = (datetime) => formatDateTimeJa(datetime);
 
-const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ja-JP");
-};
+const formatDate = (dateString) => formatDateJa(dateString);
 
 // 郵便番号を XXX-XXXX 形式で表示
 const formatPostalCode = (val) => {
@@ -2818,32 +2793,12 @@ const formatPostalCode = (val) => {
   return digits || "-";
 };
 
-// 日付選択肢用のフォーマット（YYYY-MM-DD形式から表示用に変換）
-const formatDateForOption = (dateString) => {
-  if (!dateString) return "-";
-  const date = new Date(dateString + "T00:00:00");
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}/${month}/${day}`;
-};
+// 日付選択肢用のフォーマット
+const formatDateForOption = (dateString) => formatDateJa(dateString ? dateString + "T00:00:00" : null);
 
-const formatDateHeader = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "long",
-  });
-};
+const formatDateHeader = (dateString) => formatDateJa(dateString);
 
-const formatTime = (datetime) => {
-  const date = new Date(datetime);
-  return date.toLocaleTimeString("ja-JP", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+const formatTime = (datetime) => formatDateTimeJa(datetime);
 
 const getFormTypeLabel = (formType) => {
   const labels = {

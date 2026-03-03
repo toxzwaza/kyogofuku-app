@@ -1054,6 +1054,7 @@ import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { formatDateJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     event: Object,
@@ -1351,15 +1352,8 @@ const getFormTypeLabel = (formType) => {
 };
 
 const formatDate = (date) => {
-    if (!date) {
-        return '常時受付中';
-    }
-    const d = new Date(date);
-    return d.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
+    if (!date) return '常時受付中';
+    return formatDateJa(date);
 };
 
 // 資料管理機能

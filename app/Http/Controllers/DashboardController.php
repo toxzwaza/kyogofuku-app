@@ -9,6 +9,7 @@ use App\Models\EventUtmTracking;
 use App\Models\ReservationNote;
 use App\Models\Shop;
 use App\Models\User;
+use App\Models\AttendanceRecord;
 use App\Models\Customer;
 use App\Models\Contract;
 use App\Models\PhotoSlot;
@@ -398,6 +399,42 @@ class DashboardController extends Controller
                 ->count()
             : 0;
 
+        // 勤怠状態（今日の出勤・休憩中判定）
+        $attendanceStatus = [
+            'isWorking' => false,
+            'isOnBreak' => false,
+            'clockInAt' => null,
+            'breakStartAt' => null,
+            'todayRecord' => null,
+        ];
+        if ($currentUser) {
+            $todayRecord = AttendanceRecord::where('user_id', $currentUser->id)
+                ->whereDate('date', $today)
+                ->with('breaks')
+                ->first();
+            if ($todayRecord) {
+                $attendanceStatus['todayRecord'] = [
+                    'id' => $todayRecord->id,
+                    'date' => $todayRecord->date->format('Y-m-d'),
+                    'shop_id' => $todayRecord->shop_id,
+                    'clock_in_at' => $todayRecord->clock_in_at?->toIso8601String(),
+                    'clock_out_at' => $todayRecord->clock_out_at?->toIso8601String(),
+                    'status' => $todayRecord->status,
+                    'breaks' => $todayRecord->breaks->map(fn ($b) => [
+                        'id' => $b->id,
+                        'start_at' => $b->start_at?->toIso8601String(),
+                        'end_at' => $b->end_at?->toIso8601String(),
+                    ])->values()->all(),
+                ];
+                $attendanceStatus['isWorking'] = $todayRecord->isWorking();
+                $attendanceStatus['isOnBreak'] = $todayRecord->isOnBreak();
+                $attendanceStatus['clockInAt'] = $todayRecord->clock_in_at?->toIso8601String();
+                $activeBreak = $todayRecord->breaks()->whereNull('end_at')->first();
+                $attendanceStatus['breakStartAt'] = $activeBreak?->start_at?->toIso8601String();
+                $attendanceStatus['cancellableAction'] = $this->getCancellableAction($todayRecord);
+            }
+        }
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'pendingContractsCount' => $pendingContractsCount,
@@ -425,8 +462,31 @@ class DashboardController extends Controller
             'currentUser' => $currentUser ? [
                 'id' => $currentUser->id,
                 'name' => $currentUser->name,
+                'canManageAttendance' => $currentUser->canManageAttendance(),
             ] : null,
+            'attendanceStatus' => $attendanceStatus,
+            'attendanceManualUrl' => config('attendance.manual_url', ''),
+            'attendanceManualUrlManager' => config('attendance.manual_url_manager', ''),
         ]);
+    }
+
+    /**
+     * 取り消し可能なアクションを取得（一番新しいステータスのみ）
+     * 優先順位: 休憩中 → 退勤 → 休憩終了 → 出勤
+     */
+    private function getCancellableAction(AttendanceRecord $record): ?string
+    {
+        if ($record->isOnBreak()) {
+            return 'break_start'; // 休憩開始を取り消す
+        }
+        if ($record->clock_out_at !== null) {
+            return 'clock_out'; // 退勤を取り消す
+        }
+        $completedBreak = $record->breaks->filter(fn ($b) => $b->end_at !== null)->last();
+        if ($completedBreak) {
+            return 'break_end'; // 休憩終了を取り消す（最後の休憩）
+        }
+        return 'clock_in'; // 出勤を取り消す
     }
 
     /**

@@ -124,6 +124,73 @@ const menuItems = [
                                     ダッシュボード
                                 </NavLink>
                                 <div
+                                    class="relative -my-px"
+                                    @mouseenter="hoveredMenu = 'attendance'"
+                                    @mouseleave="hoveredMenu = null"
+                                >
+                                    <button
+                                        type="button"
+                                        :class="[
+                                            'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out cursor-pointer',
+                                            route().current('attendance.*') || route().current('admin.attendance.*')
+                                                ? 'theme-active-link'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
+                                        ]"
+                                    >
+                                        勤怠管理
+                                        <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    <div
+                                        v-if="hoveredMenu === 'attendance'"
+                                        class="absolute top-full left-0 pt-1 w-48 z-50"
+                                        @mouseenter="hoveredMenu = 'attendance'"
+                                        @mouseleave="hoveredMenu = null"
+                                    >
+                                        <div class="bg-white rounded-md shadow-lg py-1 border border-gray-200">
+                                            <Link
+                                                :href="route('attendance.history')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('attendance.history') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                勤怠履歴
+                                            </Link>
+                                            <Link
+                                                :href="route('attendance.provisional.create')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('attendance.provisional.*') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                仮登録
+                                            </Link>
+                                            <Link
+                                                v-if="$page.props.auth?.user?.canManageAttendance"
+                                                :href="route('attendance.approvals')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('attendance.approvals') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                承認依頼
+                                            </Link>
+                                            <Link
+                                                v-if="$page.props.auth?.user?.canManageAttendance"
+                                                :href="route('admin.attendance.index')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('admin.attendance.index') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                勤怠管理一覧
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
                                     v-for="menu in menuItems"
                                     :key="menu.key"
                                     class="relative -my-px"
@@ -278,6 +345,21 @@ const menuItems = [
                     <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
                             ダッシュボード
+                        </ResponsiveNavLink>
+                        <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            勤怠管理
+                        </div>
+                        <ResponsiveNavLink :href="route('attendance.history')" :active="route().current('attendance.history')" class="pl-8">
+                            勤怠履歴
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('attendance.provisional.create')" :active="route().current('attendance.provisional.*')" class="pl-8">
+                            仮登録
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink v-if="$page.props.auth?.user?.canManageAttendance" :href="route('attendance.approvals')" :active="route().current('attendance.approvals')" class="pl-8">
+                            承認依頼
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink v-if="$page.props.auth?.user?.canManageAttendance" :href="route('admin.attendance.index')" :active="route().current('admin.attendance.index')" class="pl-8">
+                            勤怠管理一覧
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*') && !route().current('admin.venues.*') && !route().current('admin.slideshows.*')">
                             イベント管理

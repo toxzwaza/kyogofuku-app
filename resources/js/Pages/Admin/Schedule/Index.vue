@@ -478,6 +478,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import axios from 'axios';
+import { formatDateTimeJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     shops: Array,
@@ -845,9 +846,7 @@ function closeDetailModal() {
 }
 
 function formatDateTime(datetime) {
-    if (!datetime) return '-';
-    const date = new Date(datetime);
-    return date.toLocaleString('ja-JP');
+    return formatDateTimeJa(datetime);
 }
 
 function formatDateTimeLocal(date) {

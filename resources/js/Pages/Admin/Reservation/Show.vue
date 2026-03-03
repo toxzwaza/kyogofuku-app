@@ -1487,17 +1487,8 @@ const indexBackUrl = computed(() => {
   return search ? `${base}?${search}` : base;
 });
 
-const formatDateTime = (datetime) => {
-  if (!datetime) return "-";
-  const date = new Date(datetime);
-  return date.toLocaleString("ja-JP");
-};
-
-const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ja-JP");
-};
+const formatDateTime = (datetime) => formatDateTimeJa(datetime);
+const formatDate = (dateString) => formatDateJa(dateString);
 
 // 郵便番号を XXX-XXXX 形式で表示
 const formatPostalCode = (val) => {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventReservationController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\PhotoSlotController as AdminPhotoSlotController;
 use App\Http\Controllers\Admin\PhotoStudioController as AdminPhotoStudioController;
 use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagController;
+use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
 use App\Http\Controllers\Admin\ConstraintTemplateController as AdminConstraintTemplateController;
 use App\Http\Controllers\Admin\SlideshowController as AdminSlideshowController;
 use App\Http\Controllers\LineWebhookController;
@@ -66,13 +68,32 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['au
 Route::get('/dashboard/recent-reservations', [DashboardController::class, 'recentReservations'])->middleware(['auth', 'verified'])->name('dashboard.recent-reservations');
 Route::get('/dashboard/recent-notes', [DashboardController::class, 'recentNotes'])->middleware(['auth', 'verified'])->name('dashboard.recent-notes');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     // Google カレンダー OAuth
     Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+
+    // 勤怠管理
+    Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])->name('attendance.clock-in');
+    Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut'])->name('attendance.clock-out');
+    Route::post('/attendance/break-start', [AttendanceController::class, 'breakStart'])->name('attendance.break-start');
+    Route::post('/attendance/break-end', [AttendanceController::class, 'breakEnd'])->name('attendance.break-end');
+    Route::post('/attendance/cancel-last', [AttendanceController::class, 'cancelLastAction'])->name('attendance.cancel-last');
+    Route::get('/attendance/provisional/create', [AttendanceController::class, 'createProvisional'])->name('attendance.provisional.create');
+    Route::post('/attendance/provisional', [AttendanceController::class, 'storeProvisional'])->name('attendance.provisional.store');
+    Route::get('/attendance/provisional/{record}/edit', [AttendanceController::class, 'editProvisional'])->name('attendance.provisional.edit');
+    Route::put('/attendance/provisional/{record}', [AttendanceController::class, 'updateProvisional'])->name('attendance.provisional.update');
+    Route::post('/attendance/provisional/{record}/apply', [AttendanceController::class, 'apply'])->name('attendance.provisional.apply');
+    Route::get('/attendance/history', [AttendanceController::class, 'history'])->name('attendance.history');
+    Route::get('/api/attendance/status', [AttendanceController::class, 'status'])->name('attendance.status');
+    Route::get('/attendance/approvals', [AttendanceController::class, 'approvalIndex'])->name('attendance.approvals');
+    Route::post('/attendance/approvals/{record}/approve', [AttendanceController::class, 'approve'])->name('attendance.approvals.approve');
+    Route::post('/attendance/approvals/{record}/reject', [AttendanceController::class, 'reject'])->name('attendance.approvals.reject');
+    Route::post('/attendance/approvals/batch-approve', [AttendanceController::class, 'batchApprove'])->name('attendance.approvals.batch-approve');
+    Route::post('/attendance/approvals/batch-reject', [AttendanceController::class, 'batchReject'])->name('attendance.approvals.batch-reject');
 });
 
 // Public Routes
@@ -281,6 +302,11 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/api/schedules/predict-expense-category', [AdminScheduleController::class, 'predictExpenseCategory'])->name('schedules.predict-expense-category');
     Route::delete('/api/schedules/{schedule}', [AdminScheduleController::class, 'destroy'])->name('schedules.destroy');
     
+    // 勤怠管理（管理者・勤怠管理者）
+    Route::get('/attendance', [AdminAttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('/attendance/export-csv', [AdminAttendanceController::class, 'exportCsv'])->name('attendance.export-csv');
+    Route::put('/attendance/{record}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
+
     // 資料管理
     Route::post('/documents', [AdminEventController::class, 'storeDocument'])->name('documents.store');
     Route::put('/documents/{document}', [AdminEventController::class, 'updateDocument'])->name('documents.update');

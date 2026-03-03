@@ -88,5 +88,13 @@ class Shop extends Model
     {
         return $this->belongsToMany(ConstraintTemplate::class, 'constraint_template_shop');
     }
+
+    /**
+     * 勤怠レコードとのリレーション
+     */
+    public function attendanceRecords()
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
 }
 

@@ -95,6 +95,20 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">勤怠権限</label>
+                                    <select
+                                        v-model="form.attendance_role"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">一般</option>
+                                        <option value="shop_manager">管理者（所属店舗のみ）</option>
+                                        <option value="attendance_manager">勤怠管理者（全店舗）</option>
+                                    </select>
+                                    <p class="mt-1 text-sm text-gray-500">勤怠の閲覧・承認権限を設定します</p>
+                                    <div v-if="form.errors.attendance_role" class="mt-1 text-sm text-red-600">{{ form.errors.attendance_role }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">所属店舗</label>
                                     <div v-if="shops && shops.length > 0" class="space-y-2">
                                         <label
@@ -172,6 +186,7 @@ const form = useForm({
     email: props.user.email,
     login_id: props.user.login_id || '',
     theme_color: props.user.theme_color || '',
+    attendance_role: props.user.attendance_role || '',
     password: '',
     password_confirmation: '',
     shop_ids: props.user.shops ? props.user.shops.map(shop => shop.id) : [],

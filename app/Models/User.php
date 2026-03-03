@@ -24,6 +24,7 @@ class User extends Authenticatable
         'login_id',
         'password',
         'theme_color',
+        'attendance_role',
     ];
 
     /**
@@ -83,5 +84,37 @@ class User extends Authenticatable
     public function schedules()
     {
         return $this->hasMany(StaffSchedule::class);
+    }
+
+    /**
+     * 勤怠レコードとのリレーション
+     */
+    public function attendanceRecords()
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
+    /**
+     * 管理者（所属店舗の勤怠確認・承認）かどうか
+     */
+    public function isShopManager(): bool
+    {
+        return $this->attendance_role === 'shop_manager';
+    }
+
+    /**
+     * 勤怠管理者（全店舗の勤怠確認・承認）かどうか
+     */
+    public function isAttendanceManager(): bool
+    {
+        return $this->attendance_role === 'attendance_manager';
+    }
+
+    /**
+     * 勤怠の閲覧・承認権限があるか
+     */
+    public function canManageAttendance(): bool
+    {
+        return $this->isShopManager() || $this->isAttendanceManager();
     }
 }

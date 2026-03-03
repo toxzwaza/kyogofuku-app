@@ -10,6 +10,206 @@
 
         <div class="py-12">
             <div class="max-w-10xl mx-auto sm:px-6 lg:px-8 space-y-8">
+                <!-- 勤怠打刻エリア（左右分割） -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">勤怠打刻</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- 左: 時計 + 打刻ボタン -->
+                        <div class="space-y-4">
+                            <div class="max-w-full">
+                                <DigitalClock :time="currentTime" />
+                            </div>
+                            <div v-if="userShops.length > 1" class="flex items-center gap-2">
+                                <label class="text-sm font-medium text-gray-700 min-w-[4rem]">店舗</label>
+                                <select
+                                    v-model="clockInShopId"
+                                    class="flex-1 max-w-xs rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option value="">選択してください</option>
+                                    <option v-for="shop in userShops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    :disabled="!canClockIn || !!punchingAction"
+                                    @click="clockIn"
+                                    :class="[
+                                        'px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium transition-colors',
+                                        (canClockIn && !punchingAction) ? 'hover:bg-green-700 opacity-100 cursor-pointer' : 'opacity-40 cursor-not-allowed'
+                                    ]"
+                                >
+                                    {{ punchingAction === 'clock_in' ? '処理中...' : '出勤' }}
+                                </button>
+                                <button
+                                    type="button"
+                                    :disabled="!canBreakStart || !!punchingAction"
+                                    @click="breakStart"
+                                    :class="[
+                                        'px-4 py-2.5 bg-amber-500 text-white rounded-lg font-medium transition-colors',
+                                        (canBreakStart && !punchingAction) ? 'hover:bg-amber-600 opacity-100 cursor-pointer' : 'opacity-40 cursor-not-allowed'
+                                    ]"
+                                >
+                                    {{ punchingAction === 'break_start' ? '処理中...' : '休憩開始' }}
+                                </button>
+                                <button
+                                    type="button"
+                                    :disabled="!canBreakEnd || !!punchingAction"
+                                    @click="breakEnd"
+                                    :class="[
+                                        'px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium transition-colors',
+                                        (canBreakEnd && !punchingAction) ? 'hover:bg-indigo-700 opacity-100 cursor-pointer' : 'opacity-40 cursor-not-allowed'
+                                    ]"
+                                >
+                                    {{ punchingAction === 'break_end' ? '処理中...' : '休憩終了' }}
+                                </button>
+                                <button
+                                    type="button"
+                                    :disabled="!canClockOut || !!punchingAction"
+                                    @click="clockOut"
+                                    :class="[
+                                        'px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium transition-colors',
+                                        (canClockOut && !punchingAction) ? 'hover:bg-red-700 opacity-100 cursor-pointer' : 'opacity-40 cursor-not-allowed'
+                                    ]"
+                                >
+                                    {{ punchingAction === 'clock_out' ? '処理中...' : '退勤' }}
+                                </button>
+                            </div>
+                            <div class="flex flex-wrap gap-2 pt-2">
+                                <Link :href="route('attendance.provisional.create')" class="text-sm text-indigo-600 hover:text-indigo-800">日付指定で仮登録</Link>
+                                <span class="text-gray-300">|</span>
+                                <Link :href="route('attendance.history')" class="text-sm text-gray-600 hover:text-gray-800">勤怠履歴</Link>
+                                <template v-if="currentUser?.canManageAttendance">
+                                    <span class="text-gray-300">|</span>
+                                    <Link :href="route('attendance.approvals')" class="text-sm text-amber-600 hover:text-amber-800">承認依頼</Link>
+                                    <span class="text-gray-300">|</span>
+                                    <Link :href="route('admin.attendance.index')" class="text-sm text-purple-600 hover:text-purple-800">勤怠管理</Link>
+                                </template>
+                                <template v-if="attendanceManualLinkUrl">
+                                    <span class="text-gray-300">|</span>
+                                    <a
+                                        :href="attendanceManualLinkUrl"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="text-sm text-blue-600 hover:text-blue-800"
+                                    >
+                                        {{ attendanceManualLabel }}
+                                    </a>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- 右: ステータス履歴 -->
+                        <div
+                            :class="[
+                                'rounded-lg p-4 border',
+                                attendanceStatus?.todayRecord
+                                    ? [
+                                        'border border-gray-200 border-l-4',
+                                        attendanceStatus.isOnBreak
+                                            ? 'bg-amber-50/80 border-l-amber-400'
+                                            : attendanceStatus.isWorking
+                                                ? 'bg-green-50/80 border-l-green-400'
+                                                : 'bg-slate-50/80 border-l-slate-400'
+                                    ]
+                                    : 'bg-gray-50/50 border border-gray-200'
+                            ]"
+                        >
+                            <h4 class="text-sm font-semibold text-gray-700 mb-3">本日の勤務ステータス</h4>
+                            <!-- 現在の状態表示 -->
+                            <div v-if="attendanceStatus?.todayRecord" class="mb-4">
+                                <div
+                                    :class="[
+                                        'rounded-lg px-3 py-2 text-sm font-semibold text-center',
+                                        attendanceStatus.isOnBreak
+                                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                            : attendanceStatus.isWorking
+                                                ? 'bg-green-100 text-green-800 border border-green-300'
+                                                : attendanceStatus.todayRecord.clock_out_at
+                                                    ? 'bg-slate-100 text-slate-700 border border-slate-300'
+                                                    : 'bg-green-100 text-green-800 border border-green-300'
+                                    ]"
+                                >
+                                    <span v-if="attendanceStatus.isOnBreak">休憩中</span>
+                                    <span v-else-if="attendanceStatus.isWorking">勤務中</span>
+                                    <span v-else-if="attendanceStatus.todayRecord.clock_out_at">退勤済み</span>
+                                    <span v-else>勤務中</span>
+                                </div>
+                                <p class="mt-1.5 text-xs text-gray-500 text-center">
+                                    <template v-if="attendanceStatus.isOnBreak">休憩終了の打刻をお願いします</template>
+                                    <template v-else-if="attendanceStatus.isWorking">休憩または退勤の打刻が可能です</template>
+                                    <template v-else-if="attendanceStatus.todayRecord.clock_out_at">本日の勤務は終了しています</template>
+                                    <template v-else>休憩または退勤の打刻が可能です</template>
+                                </p>
+                            </div>
+                            <div v-if="attendanceStatus?.todayRecord" class="space-y-1.5 text-sm">
+                                <p class="text-xs font-medium text-gray-500 mb-1">打刻履歴</p>
+                                <div class="flex items-center gap-3 py-1.5 border-b border-gray-100">
+                                    <span class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold shrink-0">出</span>
+                                    <span class="text-gray-600">勤務開始</span>
+                                    <div class="ml-auto flex items-center gap-2">
+                                        <button
+                                            v-if="attendanceStatus.cancellableAction === 'clock_in'"
+                                            type="button"
+                                            :disabled="attendanceCancelLoading"
+                                            @click="cancelLastAttendanceAction"
+                                            class="text-xs text-red-600 hover:text-red-800 hover:underline disabled:opacity-50 shrink-0"
+                                        >{{ attendanceCancelLoading ? '取消中' : '取消' }}</button>
+                                        <span class="font-mono text-gray-900">{{ formatAttendanceTime(attendanceStatus.todayRecord.clock_in_at) }}</span>
+                                    </div>
+                                </div>
+                                <template v-for="(b, idx) in attendanceStatus.todayRecord.breaks" :key="idx">
+                                    <div class="flex items-center gap-3 py-1.5 border-b border-gray-100">
+                                        <span class="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold shrink-0">休</span>
+                                        <span class="text-gray-600">休憩{{ attendanceStatus.todayRecord.breaks.length > 1 ? idx + 1 : '' }} 開始</span>
+                                        <span v-if="!b.end_at" class="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-800 text-xs rounded">休憩中</span>
+                                        <div class="ml-auto flex items-center gap-2">
+                                            <button
+                                                v-if="attendanceStatus.cancellableAction === 'break_start' && !b.end_at"
+                                                type="button"
+                                                :disabled="attendanceCancelLoading"
+                                                @click="cancelLastAttendanceAction"
+                                                class="text-xs text-red-600 hover:text-red-800 hover:underline disabled:opacity-50 shrink-0"
+                                            >{{ attendanceCancelLoading ? '取消中' : '取消' }}</button>
+                                            <span class="font-mono text-gray-900">{{ formatAttendanceTime(b.start_at) }}</span>
+                                        </div>
+                                    </div>
+                                    <div v-if="b.end_at" class="flex items-center gap-3 py-1.5 border-b border-gray-100 pl-9">
+                                        <span class="text-gray-500 text-xs">→ 終了</span>
+                                        <div class="ml-auto flex items-center gap-2">
+                                            <button
+                                                v-if="attendanceStatus.cancellableAction === 'break_end' && isLastCompletedBreak(idx)"
+                                                type="button"
+                                                :disabled="attendanceCancelLoading"
+                                                @click="cancelLastAttendanceAction"
+                                                class="text-xs text-red-600 hover:text-red-800 hover:underline disabled:opacity-50 shrink-0"
+                                            >{{ attendanceCancelLoading ? '取消中' : '取消' }}</button>
+                                            <span class="font-mono text-gray-700">{{ formatAttendanceTime(b.end_at) }}</span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div v-if="attendanceStatus.todayRecord.clock_out_at" class="flex items-center gap-3 py-1.5">
+                                    <span class="w-6 h-6 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-xs font-bold shrink-0">退</span>
+                                    <span class="text-gray-600">退勤</span>
+                                    <div class="ml-auto flex items-center gap-2">
+                                        <button
+                                            v-if="attendanceStatus.cancellableAction === 'clock_out'"
+                                            type="button"
+                                            :disabled="attendanceCancelLoading"
+                                            @click="cancelLastAttendanceAction"
+                                            class="text-xs text-red-600 hover:text-red-800 hover:underline disabled:opacity-50 shrink-0"
+                                        >{{ attendanceCancelLoading ? '取消中' : '取消' }}</button>
+                                        <span class="font-mono text-gray-900">{{ formatAttendanceTime(attendanceStatus.todayRecord.clock_out_at) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="text-sm text-gray-500 py-4">
+                                本日の勤怠はまだありません。左の出勤ボタンから打刻してください。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 統計情報カード -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
@@ -2205,8 +2405,9 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import DigitalClock from "@/Components/DigitalClock.vue";
 import ActionButton from "@/Components/ActionButton.vue";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, router } from "@inertiajs/vue3";
 import StatCard from "../Components/StatCard.vue";
 import TrendChart from "../Components/TrendChart.vue";
 import FullCalendar from "@fullcalendar/vue3";
@@ -2228,8 +2429,10 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import jaLocale from "@fullcalendar/core/locales/ja";
 import axios from "axios";
+import { formatDateTimeJa, formatDateJa } from "@/utils/dateFormat";
 
 const props = defineProps({
+    attendanceStatus: Object,
     stats: Object,
     pendingContractsCount: Number,
     undecidedPhotoSlotsCount: Number,
@@ -2254,9 +2457,21 @@ const props = defineProps({
   filterEvents: Array,
   users: Array,
   currentUser: Object,
+  attendanceManualUrl: String,
+  attendanceManualUrlManager: String,
 });
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
+
+// 勤怠権限に応じたマニュアルURL・表示文言
+const attendanceManualLinkUrl = computed(() => {
+    const isManager = props.currentUser?.canManageAttendance;
+    const url = isManager ? (props.attendanceManualUrlManager || props.attendanceManualUrl) : props.attendanceManualUrl;
+    return url || "";
+});
+const attendanceManualLabel = computed(() =>
+    props.currentUser?.canManageAttendance ? "勤怠管理の使い方" : "勤怠打刻の使い方"
+);
 
 // ログインユーザーのデフォルト店舗（main=1 を優先、なければ先頭）
 const defaultShopId = computed(() => {
@@ -2309,6 +2524,129 @@ const statCards = computed(() => {
 const chartType = ref("bar");
 const utmActiveTab = ref("source");
 const showCalendarSection = ref(false);
+
+// デジタル時計
+const currentTime = ref("");
+const currentDate = ref("");
+let clockInterval = null;
+function updateClock() {
+    const now = new Date();
+    currentTime.value = now.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    currentDate.value = now.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "short" });
+}
+
+// 勤怠打刻
+const attendanceStatus = computed(() => props.attendanceStatus || {});
+const cancellableActionLabel = computed(() => {
+    const a = attendanceStatus.value?.cancellableAction;
+    const labels = { clock_in: '出勤を取り消す', break_start: '休憩開始を取り消す', break_end: '休憩終了を取り消す', clock_out: '退勤を取り消す' };
+    return labels[a] ?? '';
+});
+
+function isLastCompletedBreak(idx) {
+    const breaks = attendanceStatus.value?.todayRecord?.breaks ?? [];
+    const b = breaks[idx];
+    if (!b?.end_at) return false;
+    return !breaks.slice(idx + 1).some((x) => x.end_at);
+}
+const punchingAction = ref(null);
+const attendanceCancelLoading = ref(false);
+const clockInShopId = ref("");
+const canClockIn = computed(() => {
+    const shops = props.userShops || [];
+    return !attendanceStatus.value?.todayRecord && (shops.length <= 1 || !!clockInShopId.value);
+});
+const canBreakStart = computed(() => !!attendanceStatus.value?.isWorking);
+const canBreakEnd = computed(() => !!attendanceStatus.value?.isOnBreak);
+const canClockOut = computed(() => !!attendanceStatus.value?.isWorking);
+watch(
+    () => props.userShops,
+    (shops) => {
+        if (shops && shops.length > 0 && !clockInShopId.value) {
+            const main = shops.find((s) => s.main === true || s.main === 1);
+            clockInShopId.value = (main || shops[0])?.id ?? "";
+        }
+    },
+    { immediate: true }
+);
+
+function formatAttendanceTime(isoStr) {
+    if (isoStr === null || isoStr === undefined) return "-";
+    const date = new Date(isoStr);
+    if (isNaN(date.getTime())) return "-";
+    const h = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+    return `${h}:${min}`;
+}
+
+async function clockIn() {
+    const shops = props.userShops || [];
+    const shopId = shops.length === 1 ? shops[0].id : clockInShopId.value;
+    if (!shopId) return;
+    punchingAction.value = 'clock_in';
+    try {
+        const { data } = await axios.post(route("attendance.clock-in"), { shop_id: shopId });
+        if (data.success) router.reload();
+        else alert(data.message || "出勤の登録に失敗しました。");
+    } catch (err) {
+        alert(err.response?.data?.message || "出勤の登録に失敗しました。");
+    } finally {
+        punchingAction.value = null;
+    }
+}
+
+async function clockOut() {
+    punchingAction.value = 'clock_out';
+    try {
+        const { data } = await axios.post(route("attendance.clock-out"));
+        if (data.success) router.reload();
+        else alert(data.message || "退勤の登録に失敗しました。");
+    } catch (err) {
+        alert(err.response?.data?.message || "退勤の登録に失敗しました。");
+    } finally {
+        punchingAction.value = null;
+    }
+}
+
+async function breakStart() {
+    punchingAction.value = 'break_start';
+    try {
+        const { data } = await axios.post(route("attendance.break-start"));
+        if (data.success) router.reload();
+        else alert(data.message || "休憩開始の登録に失敗しました。");
+    } catch (err) {
+        alert(err.response?.data?.message || "休憩開始の登録に失敗しました。");
+    } finally {
+        punchingAction.value = null;
+    }
+}
+
+async function breakEnd() {
+    punchingAction.value = 'break_end';
+    try {
+        const { data } = await axios.post(route("attendance.break-end"));
+        if (data.success) router.reload();
+        else alert(data.message || "休憩終了の登録に失敗しました。");
+    } catch (err) {
+        alert(err.response?.data?.message || "休憩終了の登録に失敗しました。");
+    } finally {
+        punchingAction.value = null;
+    }
+}
+
+async function cancelLastAttendanceAction() {
+    const label = cancellableActionLabel.value;
+    if (!label || !confirm(`${label}。よろしいですか？`)) return;
+    attendanceCancelLoading.value = true;
+    try {
+        await axios.post(route("attendance.cancel-last"), {}, { headers: { "Accept": "application/json", "X-Requested-With": "XMLHttpRequest" } });
+        router.reload();
+    } catch (err) {
+        alert(err.response?.data?.message || "取消に失敗しました。");
+    } finally {
+        attendanceCancelLoading.value = false;
+    }
+}
 
 // 最近の予約・最近のメモ（axios・店舗・イベント絞り込み・メモはテキスト検索）
 const recentReservationsList = ref([]);
@@ -3352,6 +3690,10 @@ function downloadInvoice() {
 
 // デフォルト値を設定
 onMounted(() => {
+  // デジタル時計の初期表示と更新
+  updateClock();
+  clockInterval = setInterval(updateClock, 1000);
+
   // 最近の予約・最近のメモ：デフォルトの絞り込み店舗をログインユーザーの所属店舗（main または先頭）に設定、イベントは未選択
   if (userShops.value.length > 0) {
     const mainShop = userShops.value.find((s) => s.main === true || s.main === 1);
@@ -3450,6 +3792,11 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   if (resizeTimeout) {
     clearTimeout(resizeTimeout);
+  }
+  // デジタル時計のインターバルをクリア
+  if (clockInterval) {
+    clearInterval(clockInterval);
+    clockInterval = null;
   }
   // 現在時刻インジケーターのインターバルをクリア
   if (currentTimeIndicatorInterval) {
@@ -5200,13 +5547,7 @@ function handleEventResize(resizeInfo) {
     });
 }
 
-const formatDateTime = (datetime) => {
-  if (!datetime) return "-";
-  const date = new Date(datetime);
-  // 無効な日付の場合は"-"を返す
-  if (isNaN(date.getTime())) return "-";
-  return date.toLocaleString("ja-JP");
-};
+const formatDateTime = (datetime) => formatDateTimeJa(datetime);
 
 const getReservationStatusBadgeClass = (status) => {
   const classes = {
@@ -5219,11 +5560,7 @@ const getReservationStatusBadgeClass = (status) => {
   return classes[status] || "bg-gray-100 text-gray-800";
 };
 
-const formatDate = (dateString) => {
-  if (!dateString) return "-";
-    const date = new Date(dateString);
-  return date.toLocaleDateString("ja-JP");
-};
+const formatDate = (dateString) => formatDateJa(dateString);
 
 // 店舗変更時の処理
 async function onShopChange() {

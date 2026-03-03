@@ -144,6 +144,7 @@ class UserController extends Controller
             'login_id' => 'nullable|string|max:255|unique:users,login_id,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'theme_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'attendance_role' => 'nullable|in:shop_manager,attendance_manager',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
@@ -154,6 +155,7 @@ class UserController extends Controller
             'email' => $validated['email'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'theme_color' => $validated['theme_color'] ?? null,
+            'attendance_role' => $validated['attendance_role'] ?? null,
         ]);
 
         if ($request->filled('password')) {
