@@ -1,109 +1,99 @@
-# ConoHa VPS (Ubuntu) で cron を設定する方法
+# Google Calendar トークン維持の定期実行（Python + HTTP 方式）
 
-Laravel のタスクスケジューラ（例: Google Calendar トークン維持処理の週1回実行）を ConoHa VPS の Ubuntu サーバーで定期実行するための設定手順です。
+Docker でコンテナを分けている構成で、Laravel スケジューラ + supervisor を使わずに、**Python スクリプトで HTTP アクセス**する方式で Google Calendar の refresh トークンを定期実行します。
 
 ## 概要
 
-Laravel のスケジューラは、**1分ごと** に `php artisan schedule:run` を実行する cron ジョブが必要です。`schedule:run` がその時点で実行すべきタスクを判断して実行します。
+- Laravel アプリにトークン維持用の **HTTP エンドポイント** を用意
+- **Python スクリプト** がそのエンドポイントに週1回アクセス
+- Python は **VPS ホスト側** で実行（Docker 外）。cron の設定がシンプルになる
 
-## 設定手順
+```
+[VPS cron] → Python スクリプト → HTTP GET → Laravel アプリ (Docker) → Google Calendar API
+```
 
-### 1. cron を編集する
+## 1. Laravel 側の設定
+
+### .env に追加
+
+```
+GOOGLE_CALENDAR_KEEP_TOKEN_SECRET=ランダムな文字列を設定
+```
+
+例: `openssl rand -hex 32` で生成した値などを設定してください。
+
+### エンドポイント
+
+- **URL**: `https://あなたのドメイン/api/google-calendar/keep-token`
+- **認証**: `X-Api-Key` ヘッダー または `?token=xxx` クエリパラメータで上記シークレットを送信
+
+## 2. Python スクリプトの実行
+
+### 基本
+
+```bash
+python3 scripts/keep_google_calendar_token_alive.py \
+  --url https://あなたのドメイン \
+  --token "GOOGLE_CALENDAR_KEEP_TOKEN_SECRETの値"
+```
+
+### 環境変数でトークンを渡す場合
+
+```bash
+export GOOGLE_CALENDAR_KEEP_TOKEN_SECRET="あなたのシークレット"
+python3 scripts/keep_google_calendar_token_alive.py --url https://あなたのドメイン
+```
+
+## 3. ConoHa VPS (Ubuntu) で cron を設定
+
+### 3-1. Python がインストールされているか確認
+
+```bash
+python3 --version
+```
+
+標準の Ubuntu には通常 Python3 が含まれています。
+
+### 3-2. プロジェクトをホストに配置
+
+Laravel プロジェクトを VPS のホスト側にクローンまたは配置し、`scripts/keep_google_calendar_token_alive.py` が存在することを確認します。
+
+Docker でアプリを動かしている場合、プロジェクトはホストの `/var/www/kyogofuku-app` などにマウントされていることが多いです。そのパスを前提にします。
+
+### 3-3. cron を編集
 
 ```bash
 crontab -e
 ```
 
-Web サーバーと同じユーザー（例: `www-data`）で実行する場合:
-
-```bash
-sudo crontab -u www-data -e
-```
-
-### 2. 以下の行を追加する
+### 3-4. 以下の行を追加（毎週月曜 2:00 に実行）
 
 ```cron
-* * * * * cd /path/to/kyogofuku-app && php artisan schedule:run >> /dev/null 2>&1
+0 2 * * 1 cd /path/to/kyogofuku-app && GOOGLE_CALENDAR_KEEP_TOKEN_SECRET="あなたのシークレット" python3 scripts/keep_google_calendar_token_alive.py --url https://あなたのドメイン >> /path/to/kyogofuku-app/storage/logs/keep-token.log 2>&1
 ```
 
-`/path/to/kyogofuku-app` を Laravel プロジェクトの**実際の絶対パス**に置き換えてください。
+`/path/to/kyogofuku-app` と `https://あなたのドメイン`、`あなたのシークレット` を実際の値に置き換えてください。
 
-- 例: `/var/www/kyogofuku-app`
-- 例: `/home/deploy/kyogofuku-app`
-
-### 3. ログを残したい場合
-
-スケジューラの標準出力をファイルに残す場合:
-
-```cron
-* * * * * cd /path/to/kyogofuku-app && php artisan schedule:run >> /path/to/kyogofuku-app/storage/logs/scheduler.log 2>&1
-```
-
-**ログの出力先（2種類）:**
-
-| ログ | ファイル | 内容 |
-|------|----------|------|
-| スケジューラの出力 | `storage/logs/scheduler.log` | どのコマンドが実行されたか（`schedule:run` の stdout） |
-| アプリケーションログ | `storage/logs/laravel.log` | コマンド内の `Log::info()` など（例: トークン維持の成功/失敗） |
-
-`google-calendar:keep-token-alive` はサービス層で `Log::info` / `Log::warning` / `Log::error` を使用しているため、`laravel.log` にも記録されます。
-
-### 4. Docker コンテナの場合
-
-コンテナ内にエディタがない場合、`crontab -e` の代わりに以下で登録できます:
+### 3-5. ログを見る
 
 ```bash
-echo '* * * * * cd /var/www/html && php artisan schedule:run >> /var/www/html/storage/logs/scheduler.log 2>&1' | crontab -
+tail -f /path/to/kyogofuku-app/storage/logs/keep-token.log
 ```
 
-**重要:** コンテナ内で cron デーモンを起動する必要があります。コンテナの起動スクリプトや CMD に `cron -f` を追加してください（フォアグラウンドで動作させ、コンテナが終了しないようにする）。
+## 4. 動作確認
 
-## 補足・確認事項
-
-### PHP のフルパスを使う場合
-
-`php` コマンドがパスに含まれていない場合は、フルパスを指定します。
-
-```bash
-which php
-# 例: /usr/bin/php
-```
-
-```cron
-* * * * * cd /path/to/kyogofuku-app && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
-```
-
-### storage の書き込み権限
-
-cron 実行ユーザーが `storage/logs` に書き込めるようにしておきます。
-
-```bash
-sudo chown -R www-data:www-data /path/to/kyogofuku-app/storage
-# または
-sudo chmod -R 775 /path/to/kyogofuku-app/storage
-```
-
-### 登録済みスケジュールの確認
+手動で実行してレスポンスを確認します。
 
 ```bash
 cd /path/to/kyogofuku-app
-php artisan schedule:list
+export GOOGLE_CALENDAR_KEEP_TOKEN_SECRET="あなたのシークレット"
+python3 scripts/keep_google_calendar_token_alive.py --url https://あなたのドメイン
 ```
 
-`google-calendar:keep-token-alive` が表示されれば、スケジュール登録は問題ありません。
+成功時は `{"success":true,"message":"トークン維持処理が成功しました"}` が返ります。
 
-### 手動で動作確認
+## 5. 注意点
 
-```bash
-cd /path/to/kyogofuku-app
-php artisan schedule:run
-```
-
-## 実行されるタスク
-
-- **google-calendar:keep-token-alive**: 毎週月曜 2:00 に実行（Google Calendar の refresh トークン維持）
-
-## 注意点
-
-- **実行ユーザー**: Web サーバーと同じユーザー（例: `www-data`）で cron を動かすと、`.env` の読み込みや権限で問題が起きにくいです。
-- **本番環境**: `APP_ENV=production` および `GOOGLE_CALENDAR_REFRESH_TOKEN` が正しく設定されていることを確認してください。
+- **GOOGLE_CALENDAR_KEEP_TOKEN_SECRET** は推測困難な長い文字列にしてください。
+- エンドポイントは認証なしで呼べると誰でもトークン維持処理を実行できてしまうため、必ずシークレットを設定してください。
+- Docker 内の Laravel に到達できる URL（ホストから見て `http://localhost:ポート` や `https://ドメイン`）を `--url` に指定してください。
