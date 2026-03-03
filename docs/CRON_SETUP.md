@@ -39,6 +39,25 @@ sudo crontab -u www-data -e
 * * * * * cd /path/to/kyogofuku-app && php artisan schedule:run >> /path/to/kyogofuku-app/storage/logs/scheduler.log 2>&1
 ```
 
+**ログの出力先（2種類）:**
+
+| ログ | ファイル | 内容 |
+|------|----------|------|
+| スケジューラの出力 | `storage/logs/scheduler.log` | どのコマンドが実行されたか（`schedule:run` の stdout） |
+| アプリケーションログ | `storage/logs/laravel.log` | コマンド内の `Log::info()` など（例: トークン維持の成功/失敗） |
+
+`google-calendar:keep-token-alive` はサービス層で `Log::info` / `Log::warning` / `Log::error` を使用しているため、`laravel.log` にも記録されます。
+
+### 4. Docker コンテナの場合
+
+コンテナ内にエディタがない場合、`crontab -e` の代わりに以下で登録できます:
+
+```bash
+echo '* * * * * cd /var/www/html && php artisan schedule:run >> /var/www/html/storage/logs/scheduler.log 2>&1' | crontab -
+```
+
+**重要:** コンテナ内で cron デーモンを起動する必要があります。コンテナの起動スクリプトや CMD に `cron -f` を追加してください（フォアグラウンドで動作させ、コンテナが終了しないようにする）。
+
 ## 補足・確認事項
 
 ### PHP のフルパスを使う場合
