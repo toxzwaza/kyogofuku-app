@@ -15,7 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Google Calendar refresh トークンの6ヶ月未使用による失効を防ぐ（週1回）
+        $schedule->command('google-calendar:keep-token-alive')->weeklyOn(1, '02:00');
     }
 
     /**

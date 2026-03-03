@@ -174,6 +174,36 @@ class GoogleCalendarSyncService
     }
 
     /**
+     * refresh トークンを定期的に使用して6ヶ月未使用による失効を防ぐ
+     * （週1回のスケジュール実行用。トークン未設定時は false、成功時は true）
+     */
+    public function keepRefreshTokenAlive(): bool
+    {
+        $refreshToken = config('services.google.calendar_refresh_token');
+        if (empty($refreshToken)) {
+            Log::warning('[GoogleCalendar] GOOGLE_CALENDAR_REFRESH_TOKEN が未設定のためスキップ');
+
+            return false;
+        }
+
+        try {
+            $client = $this->createAuthenticatedClient();
+            $service = new Calendar($client);
+
+            // 軽い API 呼び出しでトークンを使用（6ヶ月未使用の失効を防ぐ）
+            $service->calendarList->listCalendarList(['maxResults' => 1]);
+
+            Log::info('[GoogleCalendar] トークン維持処理が成功しました');
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('[GoogleCalendar] トークン維持処理が失敗しました', ['error' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+
+    /**
      * 担当者の所属店舗を取得（.env の GOOGLE_CALENDAR_REFRESH_TOKEN を使用して同期）
      * 戻り値: Shop[]
      */
