@@ -16,12 +16,12 @@ class GoogleCalendarKeepTokenController extends Controller
     {
         $secret = config('services.google.calendar_keep_token_secret');
         if (empty($secret)) {
-            return response()->json(['success' => false, 'message' => 'エンドポイントが未設定です'], 503);
+            return response()->json(['success' => false, 'message' => 'エンドポイントが未設定です'], 503, [], JSON_UNESCAPED_UNICODE);
         }
 
         $token = $request->header('X-Api-Key') ?? $request->query('token');
         if ($token !== $secret) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401, [], JSON_UNESCAPED_UNICODE);
         }
 
         $result = $syncService->keepRefreshTokenAlive();
@@ -29,6 +29,6 @@ class GoogleCalendarKeepTokenController extends Controller
         return response()->json([
             'success' => $result,
             'message' => $result ? 'トークン維持処理が成功しました' : 'トークン未設定のためスキップしました',
-        ]);
+        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 }
