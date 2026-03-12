@@ -42,6 +42,7 @@ class UtmAnalyticsApiController extends Controller
         }
 
         $events = Event::where('utm_analytics_enabled', true)
+            ->orderByRaw('COALESCE(utm_analytics_sort_order, 999999) ASC')
             ->orderByDesc('created_at')
             ->get();
 

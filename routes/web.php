@@ -7,6 +7,7 @@ use App\Http\Controllers\EventReservationController;
 use App\Http\Controllers\PostalCodeController;
 use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
+use App\Http\Controllers\Admin\EventUtmAnalyticsOrderController;
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
 use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignController;
 use App\Http\Controllers\Admin\EventLpSettingsController as AdminEventLpSettingsController;
@@ -115,7 +116,9 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/events/{event}', [AdminEventController::class, 'show'])->name('events.show');
     Route::put('/events/{event}', [AdminEventController::class, 'update'])->name('events.update');
     Route::post('/events/{event}/generate-url', [AdminEventController::class, 'generateUrl'])->name('events.generate-url');
-    
+    Route::get('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'index'])->name('events.utm-analytics-order');
+    Route::post('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'updateOrder'])->name('events.utm-analytics-order.update');
+
     // 前撮り管理
     Route::get('/photo-slots', [AdminPhotoSlotController::class, 'index'])->name('photo-slots.index');
     Route::get('/photo-slots/create', [AdminPhotoSlotController::class, 'create'])->name('photo-slots.create');

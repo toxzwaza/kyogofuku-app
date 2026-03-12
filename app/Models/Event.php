@@ -20,6 +20,7 @@ class Event extends Model
         'end_at',
         'is_public',
         'utm_analytics_enabled',
+        'utm_analytics_sort_order',
         'gtm_id',
         'success_text',
         'ended_message_text',
