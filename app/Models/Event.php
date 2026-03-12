@@ -19,6 +19,7 @@ class Event extends Model
         'start_at',
         'end_at',
         'is_public',
+        'utm_analytics_enabled',
         'gtm_id',
         'success_text',
         'ended_message_text',
@@ -38,6 +39,7 @@ class Event extends Model
         'start_at' => 'date',
         'end_at' => 'date',
         'is_public' => 'boolean',
+        'utm_analytics_enabled' => 'boolean',
         'background_image_enabled' => 'boolean',
         'slug_aliases' => 'array',
     ];

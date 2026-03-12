@@ -122,6 +122,14 @@
                                                 </span>
                                             </dd>
                                         </div>
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500">UTM分析APIに含める</dt>
+                                            <dd class="mt-1">
+                                                <span class="px-2 py-1 text-xs rounded-full" :class="event.utm_analytics_enabled ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'">
+                                                    {{ event.utm_analytics_enabled ? 'ON' : 'OFF' }}
+                                                </span>
+                                            </dd>
+                                        </div>
 
                                     </dl>
                                 </div>
@@ -235,6 +243,18 @@
                                                         />
                                                         <span class="ml-2 text-sm text-gray-700">公開</span>
                                                     </label>
+                                                </div>
+
+                                                <div>
+                                                    <label class="flex items-center">
+                                                        <input
+                                                            v-model="editForm.utm_analytics_enabled"
+                                                            type="checkbox"
+                                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        />
+                                                        <span class="ml-2 text-sm text-gray-700">UTM分析APIに含める</span>
+                                                    </label>
+                                                    <p class="mt-1 text-xs text-gray-500">ONにすると、流入経路分析APIの返却対象イベントになります。</p>
                                                 </div>
 
                                                 <div>
@@ -1160,6 +1180,7 @@ const editForm = useForm({
     start_at: props.event.start_at ? new Date(props.event.start_at).toISOString().split('T')[0] : '',
     end_at: props.event.end_at ? new Date(props.event.end_at).toISOString().split('T')[0] : '',
     is_public: props.event.is_public,
+    utm_analytics_enabled: props.event.utm_analytics_enabled ?? false,
     shop_ids: props.event.shops ? props.event.shops.map(shop => shop.id) : [],
     document_ids: props.event.documents ? props.event.documents.map(doc => doc.id) : [],
     gtm_id: props.event.gtm_id || '',
@@ -1249,6 +1270,7 @@ const startEdit = () => {
     editForm.start_at = props.event.start_at ? new Date(props.event.start_at).toISOString().split('T')[0] : '';
     editForm.end_at = props.event.end_at ? new Date(props.event.end_at).toISOString().split('T')[0] : '';
     editForm.is_public = props.event.is_public;
+    editForm.utm_analytics_enabled = props.event.utm_analytics_enabled ?? false;
     editForm.shop_ids = props.event.shops ? props.event.shops.map(shop => shop.id) : [];
     editForm.document_ids = props.event.documents ? props.event.documents.map(doc => doc.id) : [];
     editForm.gtm_id = props.event.gtm_id || '';

@@ -391,6 +391,7 @@ class EventController extends Controller
             'gtm_id' => 'nullable|string|max:255',
             'success_text' => 'nullable|string|max:255|regex:/^[a-zA-Z0-9_-]+$/',
             'ended_message_text' => 'nullable|string|max:1000',
+            'utm_analytics_enabled' => 'boolean',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'document_ids' => 'nullable|array',
@@ -417,6 +418,8 @@ class EventController extends Controller
                 $validated['slug_aliases'] = null;
             }
         }
+
+        $validated['utm_analytics_enabled'] = $request->has('utm_analytics_enabled') ? $request->utm_analytics_enabled : false;
 
         $event->update($validated);
 

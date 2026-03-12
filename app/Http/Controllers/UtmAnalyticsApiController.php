@@ -14,6 +14,9 @@ class UtmAnalyticsApiController extends Controller
     /**
      * UTM 流入経路分析データを返す（GAS 等から計測・分析用に利用）
      * 認証: X-Api-Key ヘッダー または token クエリパラメータで UTM_ANALYTICS_API_SECRET を送信
+     *
+     * 返却: utm_analytics_enabled=true のイベントのみ。作成日の降順。
+     * GAS ではイベント一覧＋予約総数をデフォルト表示し、クリックで utm_source 別の内訳を表示可能。
      */
     public function __invoke(Request $request): JsonResponse
     {
@@ -27,45 +30,49 @@ class UtmAnalyticsApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401, [], JSON_UNESCAPED_UNICODE);
         }
 
-        $query = EventReservation::where('cancel_flg', false);
+        $baseQuery = EventReservation::where('cancel_flg', false);
 
         if ($request->has('from_date')) {
             $fromDate = Carbon::parse($request->input('from_date'))->startOfDay();
-            $query->whereDate('created_at', '>=', $fromDate);
+            $baseQuery->whereDate('created_at', '>=', $fromDate);
         }
         if ($request->has('to_date')) {
             $toDate = Carbon::parse($request->input('to_date'))->endOfDay();
-            $query->whereDate('created_at', '<=', $toDate);
+            $baseQuery->whereDate('created_at', '<=', $toDate);
         }
 
-        $bySource = (clone $query)
-            ->select(DB::raw('COALESCE(utm_source, \'（未計測）\') as source'), DB::raw('count(*) as count'))
-            ->groupBy(DB::raw('COALESCE(utm_source, \'（未計測）\')'))
-            ->orderByDesc('count')
-            ->get()
-            ->map(fn($item) => ['source' => $item->source, 'count' => (int) $item->count])
-            ->values()
-            ->toArray();
+        $events = Event::where('utm_analytics_enabled', true)
+            ->orderByDesc('created_at')
+            ->get();
 
-        $publishedEvents = Event::where('is_public', true)->orderBy('title')->get();
-        $byEvent = [];
-        foreach ($publishedEvents as $event) {
-            $eventQuery = (clone $query)->where('event_id', $event->id);
-            $count = $eventQuery->count();
-            if ($count > 0) {
-                $byEvent[] = [
-                    'event_id' => $event->id,
-                    'event_title' => $event->title,
-                    'count' => $count,
-                ];
-            }
+        $eventsData = [];
+        foreach ($events as $event) {
+            $eventQuery = (clone $baseQuery)->where('event_id', $event->id);
+            $totalCount = $eventQuery->count();
+
+            $sources = (clone $eventQuery)
+                ->select(DB::raw('COALESCE(utm_source, \'（未計測）\') as source'), DB::raw('count(*) as count'))
+                ->groupBy(DB::raw('COALESCE(utm_source, \'（未計測）\')'))
+                ->orderByDesc('count')
+                ->get()
+                ->map(fn($item) => ['source' => $item->source, 'count' => (int) $item->count])
+                ->values()
+                ->toArray();
+
+            $eventsData[] = [
+                'event_id' => $event->id,
+                'event_title' => $event->title,
+                'total_count' => $totalCount,
+                'sources' => $sources,
+            ];
         }
+
+        $totalConversion = array_sum(array_column($eventsData, 'total_count'));
 
         return response()->json([
             'success' => true,
-            'total_conversion' => $query->count(),
-            'by_source' => $bySource,
-            'by_event' => $byEvent,
+            'total_conversion' => $totalConversion,
+            'events' => $eventsData,
         ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 }
