@@ -3167,8 +3167,7 @@ const formatAdditionalInfoSisters = (sisters) => {
 const visitReasonOptions = [
     { value: '紹介', label: '紹介' },
     { value: 'DM・カタログ', label: 'DM・カタログ' },
-    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
-    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'SNS・WEB広告', label: 'SNS・WEB広告' },
     { value: 'その他', label: 'その他(テキスト入力)' },
 ];
 
@@ -3176,6 +3175,9 @@ const isVisitReasonSelected = (value, visitReasons) => {
     if (!Array.isArray(visitReasons)) return false;
     if (value === 'その他') {
         return visitReasons.some(r => typeof r === 'string' && r.startsWith('その他('));
+    }
+    if (value === 'SNS・WEB広告') {
+        return visitReasons.some(r => r === 'SNS・WEB広告' || r === 'SNS広告(Instaなど)' || r === 'WEB広告');
     }
     return visitReasons.includes(value);
 };

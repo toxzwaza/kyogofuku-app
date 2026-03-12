@@ -213,8 +213,8 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.seijin_year ? formData.seijin_year + '年' : '-' }}</p>
                     </div>
 
-                    <!-- 学校名 -->
-                    <div class="group">
+                    <!-- 学校名（非表示） -->
+                    <div v-if="false" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,8 +226,8 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.school_name || '-' }}</p>
                     </div>
 
-                    <!-- 担当者名 -->
-                    <div class="group">
+                    <!-- 担当者名（非表示） -->
+                    <div v-if="false" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,8 +260,8 @@
                         </p>
                     </div>
 
-                    <!-- 駐車場利用 -->
-                    <div class="group">
+                    <!-- 駐車場利用（非表示） -->
+                    <div v-if="false" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,8 +273,8 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.parking_usage || '-' }}</p>
                     </div>
 
-                    <!-- 駐車台数 -->
-                    <div v-if="formData.parking_usage === 'あり'" class="group">
+                    <!-- 駐車台数（非表示） -->
+                    <div v-if="false && formData.parking_usage === 'あり'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

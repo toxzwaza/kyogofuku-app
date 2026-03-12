@@ -282,6 +282,15 @@
                         </label>
                         <p class="text-base font-medium text-gray-900">{{ reservation.visit_reasons && reservation.visit_reasons.length > 0 ? reservation.visit_reasons.join("、") : "-" }}</p>
                       </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                          流入経路
+                        </label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.utm_source || "-" }}</p>
+                      </div>
                     </div>
                   </div>
 

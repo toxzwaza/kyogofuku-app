@@ -8,7 +8,6 @@ use App\Models\EmailThread;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
-use App\Models\EventUtmTracking;
 use App\Http\Controllers\LineWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -186,33 +185,11 @@ class EventReservationController extends Controller
             'heard_from' => $request->heard_from,
             'inquiry_message' => $request->inquiry_message,
             'privacy_agreed' => $request->has('privacy_agreed') ? $request->privacy_agreed : false,
+            'utm_source' => $request->input('utm_source') ?? $request->session()->get('event_utm_sources.' . $event->id),
         ]);
 
         // リレーションをロード（LINE通知で使用）
         $reservation->load('venue');
-
-        // UTMトラッキングを紐づけ
-        $sessionId = $request->session()->getId();
-        $tracking = EventUtmTracking::where('session_id', $sessionId)
-            ->whereNull('event_reservation_id')
-            ->where('event_id', $event->id)
-            ->latest()
-            ->first();
-
-        // 該当event_idのtrackingが見つからない場合は、同じセッションの最新のtrackingを使用
-        if (!$tracking) {
-            $tracking = EventUtmTracking::where('session_id', $sessionId)
-                ->whereNull('event_reservation_id')
-                ->latest()
-                ->first();
-        }
-
-        // trackingが見つかった場合、event_reservation_idを更新
-        if ($tracking) {
-            $tracking->update([
-                'event_reservation_id' => $reservation->id,
-            ]);
-        }
 
         // 送信データをセッションに保存（成功ページで表示するため）
         $formData = $request->only([

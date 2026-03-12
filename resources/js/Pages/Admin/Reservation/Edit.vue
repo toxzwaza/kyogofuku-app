@@ -605,8 +605,7 @@ const getTimeslotBadge = (timeslot) => {
 const visitReasonOptions = [
     { value: '紹介', label: '紹介' },
     { value: 'DM・カタログ', label: 'DM・カタログ' },
-    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
-    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'SNS・WEB広告', label: 'SNS・WEB広告' },
     { value: 'その他', label: 'その他(テキスト入力)' },
 ];
 
@@ -644,14 +643,15 @@ const extractVisitReasonOther = (visitReasons) => {
     return '';
 };
 
-// 既存の来店動機から「その他」を除いた配列を取得
+// 既存の来店動機から「その他」を除いた配列を取得（SNS広告・WEB広告はSNS・WEB広告に正規化）
 const getVisitReasonsWithoutOther = (visitReasons) => {
     if (!visitReasons || !Array.isArray(visitReasons)) {
         return [];
     }
     const reasons = [];
     let hasOther = false;
-    
+    let hasSnsWeb = false;
+
     visitReasons.forEach(r => {
         if (!r || typeof r !== 'string') {
             return;
@@ -662,12 +662,16 @@ const getVisitReasonsWithoutOther = (visitReasons) => {
                 reasons.push('その他');
                 hasOther = true;
             }
+        } else if (r === 'SNS広告(Instaなど)' || r === 'WEB広告' || r === 'SNS・WEB広告') {
+            if (!hasSnsWeb) {
+                reasons.push('SNS・WEB広告');
+                hasSnsWeb = true;
+            }
         } else {
-            // その他の理由はそのまま追加
             reasons.push(r);
         }
     });
-    
+
     return reasons;
 };
 

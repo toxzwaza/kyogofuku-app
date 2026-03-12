@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
-use App\Models\EventUtmTracking;
 use App\Models\ReservationNote;
 use App\Models\Shop;
 use App\Models\User;
@@ -292,90 +291,42 @@ class DashboardController extends Controller
         ->sortBy('reservation_datetime')
         ->values();
 
-        // UTMトラッキング分析データ
-        $utmStats = [
-            'total_access' => EventUtmTracking::count(),
-            'total_conversion' => EventUtmTracking::whereNotNull('event_reservation_id')->count(),
-            'by_source' => EventUtmTracking::select('utm_source', DB::raw('count(*) as access_count'))
-                ->selectRaw('sum(case when event_reservation_id is not null then 1 else 0 end) as conversion_count')
-                ->whereNotNull('utm_source')
-                ->groupBy('utm_source')
-                ->orderByDesc('access_count')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'source' => $item->utm_source,
-                        'access_count' => $item->access_count,
-                        'conversion_count' => $item->conversion_count,
-                        'conversion_rate' => $item->access_count > 0 ? round(($item->conversion_count / $item->access_count) * 100, 2) : 0,
-                    ];
-                }),
-            'by_medium' => EventUtmTracking::select('utm_medium', DB::raw('count(*) as access_count'))
-                ->selectRaw('sum(case when event_reservation_id is not null then 1 else 0 end) as conversion_count')
-                ->whereNotNull('utm_medium')
-                ->groupBy('utm_medium')
-                ->orderByDesc('access_count')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'medium' => $item->utm_medium,
-                        'access_count' => $item->access_count,
-                        'conversion_count' => $item->conversion_count,
-                        'conversion_rate' => $item->access_count > 0 ? round(($item->conversion_count / $item->access_count) * 100, 2) : 0,
-                    ];
-                }),
-            'by_campaign' => EventUtmTracking::select('utm_campaign', DB::raw('count(*) as access_count'))
-                ->selectRaw('sum(case when event_reservation_id is not null then 1 else 0 end) as conversion_count')
-                ->whereNotNull('utm_campaign')
-                ->groupBy('utm_campaign')
-                ->orderByDesc('access_count')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'campaign' => $item->utm_campaign,
-                        'access_count' => $item->access_count,
-                        'conversion_count' => $item->conversion_count,
-                        'conversion_rate' => $item->access_count > 0 ? round(($item->conversion_count / $item->access_count) * 100, 2) : 0,
-                    ];
-                }),
-            'by_id' => EventUtmTracking::select('utm_id', DB::raw('count(*) as access_count'))
-                ->selectRaw('sum(case when event_reservation_id is not null then 1 else 0 end) as conversion_count')
-                ->whereNotNull('utm_id')
-                ->groupBy('utm_id')
-                ->orderByDesc('access_count')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'id' => $item->utm_id,
-                        'access_count' => $item->access_count,
-                        'conversion_count' => $item->conversion_count,
-                        'conversion_rate' => $item->access_count > 0 ? round(($item->conversion_count / $item->access_count) * 100, 2) : 0,
-                    ];
-                }),
-            'by_event' => EventUtmTracking::with('event')
-                ->select('event_id', DB::raw('count(*) as access_count'))
-                ->selectRaw('sum(case when event_reservation_id is not null then 1 else 0 end) as conversion_count')
-                ->whereNotNull('event_id')
-                ->groupBy('event_id')
-                ->orderByDesc('access_count')
-                ->limit(10)
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'event' => $item->event ? [
-                            'id' => $item->event->id,
-                            'title' => $item->event->title,
-                        ] : null,
-                        'access_count' => $item->access_count,
-                        'conversion_count' => $item->conversion_count,
-                        'conversion_rate' => $item->access_count > 0 ? round(($item->conversion_count / $item->access_count) * 100, 2) : 0,
-                    ];
-                }),
-        ];
+        // 流入経路（utm_source）分析データ（event_reservations ベース）
+        $bySource = EventReservation::where('cancel_flg', false)
+            ->select(DB::raw('COALESCE(utm_source, \'（未計測）\') as source'), DB::raw('count(*) as count'))
+            ->groupBy(DB::raw('COALESCE(utm_source, \'（未計測）\')'))
+            ->orderByDesc('count')
+            ->get()
+            ->map(fn($item) => ['source' => $item->source, 'count' => (int) $item->count])
+            ->values()
+            ->toArray();
 
-        $utmStats['overall_conversion_rate'] = $utmStats['total_access'] > 0 
-            ? round(($utmStats['total_conversion'] / $utmStats['total_access']) * 100, 2) 
-            : 0;
+        $publishedEvents = Event::where('is_public', true)->orderBy('title')->get();
+        $byEventWithSources = $publishedEvents->map(function ($event) {
+            $sources = EventReservation::where('cancel_flg', false)
+                ->where('event_id', $event->id)
+                ->select(DB::raw('COALESCE(utm_source, \'（未計測）\') as source'), DB::raw('count(*) as count'))
+                ->groupBy(DB::raw('COALESCE(utm_source, \'（未計測）\')'))
+                ->orderByDesc('count')
+                ->get()
+                ->map(fn($item) => ['source' => $item->source, 'count' => (int) $item->count])
+                ->values()
+                ->toArray();
+            $totalCount = array_sum(array_column($sources, 'count'));
+
+            return [
+                'event_id' => $event->id,
+                'event_title' => $event->title,
+                'sources' => $sources,
+                'total_count' => $totalCount,
+            ];
+        })->filter(fn($item) => $item['total_count'] > 0)->values()->toArray();
+
+        $utmStats = [
+            'total_conversion' => EventReservation::where('cancel_flg', false)->count(),
+            'by_source' => $bySource,
+            'by_event_with_sources' => $byEventWithSources,
+        ];
 
         // 店舗一覧（スケジュール用）
         $shops = Shop::where('is_active', true)->orderBy('name')->get();

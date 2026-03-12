@@ -699,12 +699,28 @@ const searchForm = reactive({
     })(),
 });
 
+// 来店動機をフォーム用に正規化（SNS広告・WEB広告はSNS・WEB広告に統合）
+const normalizeVisitReasonsForForm = (reasons) => {
+    if (!Array.isArray(reasons)) return [];
+    const result = [];
+    let hasSnsWeb = false;
+    for (const r of reasons) {
+        if (!r || typeof r !== 'string') continue;
+        if (r.startsWith('その他(')) result.push(r);
+        else if (r === 'SNS広告(Instaなど)' || r === 'WEB広告' || r === 'SNS・WEB広告') {
+            if (!hasSnsWeb) { result.push('SNS・WEB広告'); hasSnsWeb = true; }
+        } else {
+            result.push(r);
+        }
+    }
+    return result;
+};
+
 // 来店動機・検討中プランの選択肢（予約フォームと共通）
 const visitReasonOptions = [
     { value: '紹介', label: '紹介' },
     { value: 'DM・カタログ', label: 'DM・カタログ' },
-    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
-    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'SNS・WEB広告', label: 'SNS・WEB広告' },
     { value: 'その他', label: 'その他(テキスト入力)' },
 ];
 const availablePlans = [
@@ -795,7 +811,7 @@ const applyPrefillFromReservation = () => {
     customerForm.referred_by_name = p.referred_by_name ?? '';
     customerForm.school_name = p.school_name ?? '';
     customerForm.staff_name = p.staff_name ?? '';
-    customerForm.visit_reasons = Array.isArray(p.visit_reasons) ? [...p.visit_reasons] : [];
+    customerForm.visit_reasons = normalizeVisitReasonsForForm(p.visit_reasons ?? []);
     customerForm.considering_plans = Array.isArray(p.considering_plans) ? [...p.considering_plans] : [];
 };
 

@@ -1685,31 +1685,19 @@
                     </div>
                 </div>
 
-                <!-- UTMトラッキング分析 -->
+                <!-- 流入経路（UTM Source）分析 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                            UTMトラッキング分析
+                            流入経路分析
                         </h3>
-                        
+
                         <!-- 全体統計 -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-                                <p class="text-sm text-gray-600 mb-1">総アクセス数</p>
-                                <p class="text-2xl font-bold text-indigo-600">
-                                    {{ props.utmStats?.total_access || 0 }}
-                                </p>
-                            </div>
-                            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                                <p class="text-sm text-gray-600 mb-1">総コンバージョン数</p>
+                        <div class="mb-6">
+                            <div class="bg-green-50 p-4 rounded-lg border border-green-200 inline-block">
+                                <p class="text-sm text-gray-600 mb-1">総予約数（流入元計測分）</p>
                                 <p class="text-2xl font-bold text-green-600">
                                     {{ props.utmStats?.total_conversion || 0 }}
-                                </p>
-                            </div>
-                            <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                <p class="text-sm text-gray-600 mb-1">コンバージョン率</p>
-                                <p class="text-2xl font-bold text-purple-600">
-                                    {{ props.utmStats?.overall_conversion_rate || 0 }}%
                                 </p>
                             </div>
                         </div>
@@ -1726,40 +1714,7 @@
                                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
                                     ]"
                                 >
-                                    UTM Source
-                                </button>
-                                <button
-                                    @click="utmActiveTab = 'medium'"
-                                    :class="[
-                                        'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
-                                        utmActiveTab === 'medium'
-                                            ? 'border-indigo-500 text-indigo-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                                    ]"
-                                >
-                                    UTM Medium
-                                </button>
-                                <button
-                                    @click="utmActiveTab = 'campaign'"
-                                    :class="[
-                                        'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
-                                        utmActiveTab === 'campaign'
-                                            ? 'border-indigo-500 text-indigo-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                                    ]"
-                                >
-                                    UTM Campaign
-                                </button>
-                                <button
-                                    @click="utmActiveTab = 'id'"
-                                    :class="[
-                                        'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
-                                        utmActiveTab === 'id'
-                                            ? 'border-indigo-500 text-indigo-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                                    ]"
-                                >
-                                    UTM ID
+                                    流入元（UTM Source）
                                 </button>
                                 <button
                                     @click="utmActiveTab = 'event'"
@@ -1777,22 +1732,16 @@
 
                         <!-- タブコンテンツ -->
                         <div class="overflow-x-auto">
-                            <!-- UTM Source -->
+                            <!-- 流入元（UTM Source） -->
                             <div v-if="utmActiveTab === 'source'" class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                UTM Source
+                                                流入元
                                             </th>
                                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                アクセス数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン率
+                                                予約数
                                             </th>
                                         </tr>
                                     </thead>
@@ -1802,17 +1751,11 @@
                                                 {{ item.source }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.access_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_rate }}%
+                                                {{ item.count }}
                                             </td>
                                         </tr>
                                         <tr v-if="!props.utmStats?.by_source || props.utmStats.by_source.length === 0">
-                                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            <td colspan="2" class="px-6 py-4 text-center text-sm text-gray-500">
                                                 データがありません
                                             </td>
                                         </tr>
@@ -1820,136 +1763,7 @@
                                 </table>
                             </div>
 
-                            <!-- UTM Medium -->
-                            <div v-if="utmActiveTab === 'medium'" class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                UTM Medium
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                アクセス数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン率
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        <tr v-for="item in props.utmStats?.by_medium || []" :key="item.medium">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {{ item.medium }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.access_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_rate }}%
-                                            </td>
-                                        </tr>
-                                        <tr v-if="!props.utmStats?.by_medium || props.utmStats.by_medium.length === 0">
-                                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-                                                データがありません
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- UTM Campaign -->
-                            <div v-if="utmActiveTab === 'campaign'" class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                UTM Campaign
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                アクセス数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン率
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        <tr v-for="item in props.utmStats?.by_campaign || []" :key="item.campaign">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {{ item.campaign }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.access_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_rate }}%
-                                            </td>
-                                        </tr>
-                                        <tr v-if="!props.utmStats?.by_campaign || props.utmStats.by_campaign.length === 0">
-                                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-                                                データがありません
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- UTM ID -->
-                            <div v-if="utmActiveTab === 'id'" class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                UTM ID
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                アクセス数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン率
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        <tr v-for="item in props.utmStats?.by_id || []" :key="item.id">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {{ item.id }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.access_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_rate }}%
-                                            </td>
-                                        </tr>
-                                        <tr v-if="!props.utmStats?.by_id || props.utmStats.by_id.length === 0">
-                                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-                                                データがありません
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- イベント別 -->
+                            <!-- イベント別（公開中イベントの流入元ごとの予約数） -->
                             <div v-if="utmActiveTab === 'event'" class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
@@ -1957,41 +1771,35 @@
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 イベント
                                             </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                アクセス数
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                流入元
                                             </th>
                                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン数
-                                            </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                コンバージョン率
+                                                件数
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
-                                        <tr v-for="item in props.utmStats?.by_event || []" :key="item.event?.id">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                <Link
-                                                    v-if="item.event"
-                                                    :href="route('admin.events.show', item.event.id)"
-                                                    class="text-indigo-600 hover:text-indigo-900"
-                                                >
-                                                    {{ item.event.title }}
-                                                </Link>
-                                                <span v-else class="text-gray-500">不明</span>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.access_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_count }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ item.conversion_rate }}%
-                                            </td>
-                                        </tr>
-                                        <tr v-if="!props.utmStats?.by_event || props.utmStats.by_event.length === 0">
-                                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        <template v-for="eventItem in (props.utmStats?.by_event_with_sources || [])" :key="eventItem.event_id">
+                                            <tr v-for="(sourceItem, idx) in eventItem.sources" :key="`${eventItem.event_id}-${sourceItem.source}-${idx}`">
+                                                <td v-if="idx === 0" :rowspan="eventItem.sources.length" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 align-top border-r border-gray-200">
+                                                    <Link
+                                                        :href="route('admin.events.show', eventItem.event_id)"
+                                                        class="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        {{ eventItem.event_title }}
+                                                    </Link>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {{ sourceItem.source }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                                                    {{ sourceItem.count }}
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr v-if="!props.utmStats?.by_event_with_sources || props.utmStats.by_event_with_sources.length === 0">
+                                            <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
                                                 データがありません
                                             </td>
                                         </tr>

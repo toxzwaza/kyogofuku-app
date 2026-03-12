@@ -31,6 +31,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // UTM 流入経路分析 API 用（GAS 等からアクセス時の認証）
+    'utm_analytics_api_secret' => env('UTM_ANALYTICS_API_SECRET'),
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

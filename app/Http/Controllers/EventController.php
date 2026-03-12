@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventReservation;
-use App\Models\EventUtmTracking;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -218,16 +217,10 @@ class EventController extends Controller
             ->values()
             ->toArray();
 
-        // UTMトラッキングレコードを作成（UTMパラメータがない場合はHPを補填）
+        // 流入経路（utm_source）をセッションに保持（予約時に event_reservations に保存するため）
         $request = request();
-        EventUtmTracking::create([
-            'session_id' => $request->session()->getId(),
-            'event_id' => $event->id,
-            'utm_source' => $request->input('utm_source') ?: 'NONE',
-            'utm_medium' => $request->input('utm_medium'),
-            'utm_campaign' => $request->input('utm_campaign'),
-            'utm_id' => $request->input('utm_id'),
-        ]);
+        $utmSource = $request->input('utm_source') ?: 'NONE';
+        $request->session()->put('event_utm_sources.' . $event->id, $utmSource);
 
         return Inertia::render('Event/Show', [
             'event' => $event,

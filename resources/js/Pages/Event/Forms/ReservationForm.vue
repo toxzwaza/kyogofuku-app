@@ -413,7 +413,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-if="false" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                         <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -477,7 +477,7 @@
                 </div>
             </div>
 
-            <div>
+            <div v-if="false">
                 <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
                     <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -506,7 +506,7 @@
                 </div>
             </div>
 
-            <div v-if="form.parking_usage === 'あり'">
+            <div v-if="false && form.parking_usage === 'あり'">
                 <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                     <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -904,8 +904,7 @@ const availablePlans = [
 const visitReasonOptions = [
     { value: '紹介', label: '紹介' },
     { value: 'DM・カタログ', label: 'DM・カタログ' },
-    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
-    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'SNS・WEB広告', label: 'SNS・WEB広告' },
     { value: 'その他', label: 'その他(テキスト入力)' },
 ];
 

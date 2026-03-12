@@ -386,12 +386,28 @@ const colorOptions = ['赤', '黄', 'オレンジ', 'ピンク', '青', '水色'
 const hobbyOptions = ['旅行', 'アウトドア', 'スポーツ', '音楽', '映画'];
 const priceOptions = ['5万～10万', '11万～20万', '21万～25万', '26万～30万', '31万～40万', '41万～50万', '51万～60万', '61万～80万', '81万以上', '100万以上'];
 
+// 来店動機をフォーム用に正規化（SNS広告・WEB広告はSNS・WEB広告に統合）
+const normalizeVisitReasonsForForm = (reasons) => {
+    if (!Array.isArray(reasons)) return [];
+    const result = [];
+    let hasSnsWeb = false;
+    for (const r of reasons) {
+        if (!r || typeof r !== 'string') continue;
+        if (r.startsWith('その他(')) result.push(r);
+        else if (r === 'SNS広告(Instaなど)' || r === 'WEB広告' || r === 'SNS・WEB広告') {
+            if (!hasSnsWeb) { result.push('SNS・WEB広告'); hasSnsWeb = true; }
+        } else {
+            result.push(r);
+        }
+    }
+    return result;
+};
+
 // 来店動機の選択肢（Event/ReservationForm と同一）
 const visitReasonOptions = [
     { value: '紹介', label: '紹介' },
     { value: 'DM・カタログ', label: 'DM・カタログ' },
-    { value: 'SNS広告(Instaなど)', label: 'SNS広告(Instaなど)' },
-    { value: 'WEB広告', label: 'WEB広告' },
+    { value: 'SNS・WEB広告', label: 'SNS・WEB広告' },
     { value: 'その他', label: 'その他(テキスト入力)' },
 ];
 
@@ -440,7 +456,7 @@ const form = useForm({
     work: props.initial.work ?? '',
     other_status: props.initial.other_status ?? '',
     sisters: initialSisters,
-    visit_reasons: Array.isArray(props.initial.visit_reasons) ? [...props.initial.visit_reasons] : [],
+    visit_reasons: normalizeVisitReasonsForForm(props.initial.visit_reasons ?? []),
     visit_reason_other: props.initial.visit_reason_other ?? '',
     staff_name: props.initial.staff_name ?? '',
 });

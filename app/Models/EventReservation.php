@@ -38,6 +38,7 @@ class EventReservation extends Model
         'privacy_agreed',
         'cancel_flg',
         'customer_id',
+        'utm_source',
     ];
 
     protected $casts = [
