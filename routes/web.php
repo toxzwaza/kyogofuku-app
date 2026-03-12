@@ -112,12 +112,12 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // イベント一覧
     Route::get('/events', [AdminEventController::class, 'index'])->name('events.index');
     Route::get('/events/create', [AdminEventController::class, 'create'])->name('events.create');
+    Route::get('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'index'])->name('events.utm-analytics-order');
+    Route::post('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'updateOrder'])->name('events.utm-analytics-order.update');
     Route::post('/events', [AdminEventController::class, 'store'])->name('events.store');
     Route::get('/events/{event}', [AdminEventController::class, 'show'])->name('events.show');
     Route::put('/events/{event}', [AdminEventController::class, 'update'])->name('events.update');
     Route::post('/events/{event}/generate-url', [AdminEventController::class, 'generateUrl'])->name('events.generate-url');
-    Route::get('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'index'])->name('events.utm-analytics-order');
-    Route::post('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'updateOrder'])->name('events.utm-analytics-order.update');
 
     // 前撮り管理
     Route::get('/photo-slots', [AdminPhotoSlotController::class, 'index'])->name('photo-slots.index');
