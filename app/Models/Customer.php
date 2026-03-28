@@ -11,7 +11,10 @@ class Customer extends Model
     use HasEagerLimit;
     protected $fillable = [
         'name', 'kana', 'guardian_name', 'guardian_name_kana', 'birth_date', 'coming_of_age_year',
-        'ceremony_area_id', 'phone_number', 'postal_code', 'address',
+        'ceremony_area_id',
+        'seijin_preparation_venue', 'seijin_preparation_time', 'other_store_preparation',
+        'other_store_salon_name', 'other_store_salon_address', 'other_store_salon_phone', 'kimono_ship_date',
+        'phone_number', 'postal_code', 'address',
         'email', 'referred_by_name', 'school_name', 'staff_name',
         'visit_reasons', 'considering_plans',
         'remarks', 'additional_info',
@@ -21,6 +24,8 @@ class Customer extends Model
         'visit_reasons' => 'array',
         'considering_plans' => 'array',
         'additional_info' => 'array',
+        'other_store_preparation' => 'boolean',
+        'kimono_ship_date' => 'date',
     ];
 
     public function ceremonyArea()

@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'theme_color',
         'attendance_role',
+        'work_attribute_id',
     ];
 
     /**
@@ -92,6 +93,14 @@ class User extends Authenticatable
     public function attendanceRecords()
     {
         return $this->hasMany(AttendanceRecord::class);
+    }
+
+    /**
+     * 勤務属性マスタ
+     */
+    public function workAttribute()
+    {
+        return $this->belongsTo(WorkAttribute::class);
     }
 
     /**

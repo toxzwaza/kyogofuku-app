@@ -109,6 +109,19 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">勤務属性</label>
+                                    <select
+                                        v-model="form.work_attribute_id"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option :value="null">未設定</option>
+                                        <option v-for="wa in workAttributes" :key="wa.id" :value="wa.id">{{ wa.name }}</option>
+                                    </select>
+                                    <p class="mt-1 text-sm text-gray-500">給与用のベース勤務時間に使用します</p>
+                                    <div v-if="form.errors.work_attribute_id" class="mt-1 text-sm text-red-600">{{ form.errors.work_attribute_id }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">所属店舗</label>
                                     <div v-if="shops && shops.length > 0" class="space-y-2">
                                         <label
@@ -178,6 +191,10 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 const props = defineProps({
     user: Object,
     shops: Array,
+    workAttributes: {
+        type: Array,
+        default: () => [],
+    },
     main_shop_id: Number,
 });
 
@@ -187,6 +204,7 @@ const form = useForm({
     login_id: props.user.login_id || '',
     theme_color: props.user.theme_color || '',
     attendance_role: props.user.attendance_role || '',
+    work_attribute_id: props.user.work_attribute_id ?? '',
     password: '',
     password_confirmation: '',
     shop_ids: props.user.shops ? props.user.shops.map(shop => shop.id) : [],

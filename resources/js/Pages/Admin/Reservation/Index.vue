@@ -59,7 +59,7 @@
     </template>
 
     <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+      <div class="mx-auto sm:px-6 lg:px-8 space-y-6">
         <!-- 成功メッセージ -->
         <div v-if="$page.props.success" class="rounded-md bg-green-50 p-4">
           <div class="flex">
@@ -398,11 +398,132 @@
 
               <div
                 v-if="groupedByVenue && Object.keys(groupedByVenue).length > 0"
+                class="flex flex-col xl:flex-row gap-6 xl:gap-8 items-start"
               >
+                <!-- 左：絞り込み結果の会場・日付・時間へのジャンプ一覧 -->
+                <aside
+                  class="w-full xl:w-64 shrink-0 xl:sticky xl:top-6 z-10 rounded-lg border border-gray-200 bg-gray-50/90 backdrop-blur-sm shadow-sm overflow-hidden"
+                  aria-label="日付表示の目次"
+                >
+                  <div
+                    class="px-3 py-2.5 border-b border-gray-200 bg-white/80"
+                  >
+                    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      表示中の枠一覧
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                      クリックで該当箇所へ移動します
+                    </p>
+                  </div>
+                  <nav
+                    class="max-h-[min(50vh,20rem)] xl:max-h-[min(70vh,calc(100vh-8rem))] overflow-y-auto p-3 text-sm"
+                  >
+                    <ul class="space-y-3">
+                      <li
+                        v-for="section in scheduleNavSections"
+                        :key="section.venueKey"
+                        class="space-y-1.5"
+                      >
+                        <a
+                          :href="'#' + section.venueAnchorId"
+                          class="flex items-start gap-2 font-semibold text-indigo-700 hover:text-indigo-900 hover:underline rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          @click.prevent="
+                            scrollToScheduleAnchor(section.venueAnchorId)
+                          "
+                        >
+                          <svg
+                            class="w-4 h-4 mt-0.5 shrink-0 text-indigo-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                            />
+                          </svg>
+                          <span class="min-w-0 break-words">{{
+                            section.venueName
+                          }}</span>
+                        </a>
+                        <ul
+                          class="ml-2 pl-2 border-l border-gray-200 space-y-2"
+                        >
+                          <li
+                            v-for="d in section.dates"
+                            :key="d.dateKey"
+                            class="space-y-1"
+                          >
+                            <a
+                              :href="'#' + d.dateAnchorId"
+                              class="flex items-start gap-1.5 text-gray-700 hover:text-gray-900 hover:underline rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-xs sm:text-sm"
+                              @click.prevent="
+                                scrollToScheduleAnchor(d.dateAnchorId)
+                              "
+                            >
+                              <svg
+                                class="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                              <span>{{ d.dateLabel }}</span>
+                            </a>
+                            <ul class="ml-3 pl-2 border-l border-gray-100 space-y-0.5">
+                              <li
+                                v-for="t in d.timeslots"
+                                :key="t.id"
+                              >
+                                <a
+                                  :href="'#' + t.slotAnchorId"
+                                  class="flex items-center gap-1.5 py-0.5 pl-1 text-xs text-gray-600 hover:text-indigo-700 hover:underline rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 tabular-nums"
+                                  @click.prevent="
+                                    scrollToScheduleAnchor(t.slotAnchorId)
+                                  "
+                                >
+                                  <svg
+                                    class="w-3 h-3 shrink-0 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                  {{ t.timeLabel }}
+                                </a>
+                              </li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </nav>
+                </aside>
+
+                <!-- 右：従来の会場・日付・枠ブロック -->
+                <div class="flex-1 min-w-0 space-y-0 w-full">
                 <div
                   v-for="venueKey in orderedVenueKeys"
                   :key="venueKey"
-                  class="border-b border-gray-300 pb-8 last:border-b-0 last:pb-0"
+                  :id="scheduleVenueElId(venueKey)"
+                  class="scroll-mt-24 border-b border-gray-300 pb-8 last:border-b-0 last:pb-0"
                 >
                   <h2 class="text-2xl font-bold mb-6 text-indigo-700">
                     {{ getVenueName(venueKey) }}
@@ -410,7 +531,8 @@
                   <div
                     v-for="(dateGroup, date) in groupedByVenue[venueKey]"
                     :key="date"
-                    class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0 mb-6"
+                    :id="scheduleDateElId(venueKey, date)"
+                    class="scroll-mt-20 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0 mb-6"
                   >
                     <h3 class="text-xl font-semibold my-4 text-gray-800">
                       {{ formatDateHeader(date) }}
@@ -419,8 +541,9 @@
                       <div
                         v-for="timeslot in dateGroup"
                         :key="timeslot.id"
+                        :id="scheduleSlotElId(timeslot.id)"
                         :class="getTimeslotBorderClass(timeslot)"
-                        class="border-2 rounded-lg overflow-hidden"
+                        class="scroll-mt-16 border-2 rounded-lg overflow-hidden"
                       >
                         <!-- 時間枠ヘッダー -->
                         <div
@@ -552,40 +675,190 @@
                               reservation.cancel_flg ? 'bg-gray-200' : 'hover:bg-gray-50',
                             ]"
                           >
-                            <div class="flex justify-between items-start">
-                              <div class="flex-1">
-                                <div class="flex items-center space-x-3 mb-2">
+                            <div class="flex justify-between items-start gap-4">
+                              <div class="flex-1 min-w-0">
+                                <div
+                                  class="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3"
+                                >
                                   <span
                                     class="text-lg font-semibold text-gray-900"
                                     >{{ reservation.name }}</span
                                   >
-                                  <span class="text-xs text-gray-500"
+                                  <span class="text-xs text-gray-500 tabular-nums"
                                     >ID: {{ reservation.id }}</span
                                   >
                                   <span
-                                    v-if="reservation.status"
-                                    :class="
-                                      getStatusBadgeClass(reservation.status)
-                                    "
-                                    class="px-2 py-0.5 text-xs font-medium rounded-full"
+                                    v-if="reservation.cancel_flg"
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
                                   >
-                                    {{ reservation.status
-                                    }}<span v-if="reservation.status_updated_by"
-                                      >:{{
-                                        reservation.status_updated_by.name
-                                      }}</span
-                                    >
-                                  </span>
-
-                                  <span
-                                    v-if="reservation.venue"
-                                    class="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full"
-                                  >
-                                    {{ reservation.venue.name }}
+                                    キャンセル
                                   </span>
                                 </div>
+
                                 <div
-                                  class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600"
+                                  class="flex flex-col gap-2 mb-3 pb-3 border-b border-gray-100"
+                                >
+                                  <div
+                                    class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm"
+                                  >
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                      <svg
+                                        class="w-4 h-4 text-gray-400 shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                      >
+                                        <path
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                                        />
+                                      </svg>
+                                      <span class="text-gray-500 shrink-0"
+                                        >対応ステータス:</span
+                                      >
+                                      <template v-if="reservation.status">
+                                        <span
+                                          :class="
+                                            getStatusBadgeClass(
+                                              reservation.status
+                                            )
+                                          "
+                                          class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
+                                        >
+                                          {{ reservation.status }}
+                                        </span>
+                                        <span
+                                          v-if="reservation.status_updated_by"
+                                          class="text-xs text-gray-500 truncate max-w-[10rem] sm:max-w-xs"
+                                          :title="
+                                            reservation.status_updated_by.name
+                                          "
+                                        >
+                                          （{{
+                                            reservation.status_updated_by.name
+                                          }}）
+                                        </span>
+                                      </template>
+                                      <span v-else class="text-gray-400">—</span>
+                                    </div>
+
+                                    <div
+                                      class="flex items-center gap-1.5 min-w-0"
+                                    >
+                                      <svg
+                                        class="w-4 h-4 text-gray-400 shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                      >
+                                        <path
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                        />
+                                      </svg>
+                                      <span class="text-gray-500 shrink-0"
+                                        >会場:</span
+                                      >
+                                      <span
+                                        class="text-gray-800 font-medium truncate"
+                                        :title="
+                                          reservation.venue
+                                            ? reservation.venue.name
+                                            : ''
+                                        "
+                                      >
+                                        {{
+                                          reservation.venue
+                                            ? reservation.venue.name
+                                            : "—"
+                                        }}
+                                      </span>
+                                    </div>
+
+                                    <div
+                                      class="flex items-center gap-1.5 min-w-0"
+                                    >
+                                      <svg
+                                        class="w-4 h-4 text-gray-400 shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                      >
+                                        <path
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                                        />
+                                      </svg>
+                                      <span class="text-gray-500 shrink-0"
+                                        >入場チケット送付:</span
+                                      >
+                                      <span
+                                        :class="
+                                          getEntranceTicketSendBadgeClass(
+                                            reservation.entrance_ticket_send_status
+                                          )
+                                        "
+                                        class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
+                                      >
+                                        {{
+                                          reservation.entrance_ticket_send_status ||
+                                          "未送付"
+                                        }}
+                                      </span>
+                                    </div>
+
+                                    <div
+                                      v-if="reservation.customer_id"
+                                      class="flex items-center gap-1.5 min-w-0"
+                                    >
+                                      <svg
+                                        class="w-4 h-4 text-gray-400 shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                      >
+                                        <path
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                        />
+                                        <path
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                        />
+                                      </svg>
+                                      <span class="text-gray-500 shrink-0"
+                                        >成人式エリア:</span
+                                      >
+                                      <span
+                                        class="text-gray-800 font-medium truncate"
+                                        :title="
+                                          reservation.ceremony_area_name || ''
+                                        "
+                                      >
+                                        {{
+                                          reservation.ceremony_area_name || "—"
+                                        }}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div
+                                  class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600"
                                 >
                                   <div class="flex items-center">
                                     <svg
@@ -670,22 +943,16 @@
                                     </span>
                                   </div>
                                   <div
-                                    v-if="
-                                      reservation.schedule &&
-                                      reservation.schedule.participantUsers &&
-                                      reservation.schedule.participantUsers.length > 0
-                                    "
+                                    v-if="reservation.admin_assignee"
                                     class="md:col-span-2"
                                   >
                                     <span class="text-gray-500 mr-2"
                                       >担当者:</span
                                     >
                                     <span
-                                      v-for="participant in reservation.schedule.participantUsers"
-                                      :key="participant.id"
-                                      class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full mr-1"
+                                      class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full"
                                     >
-                                      {{ participant.name }}
+                                      {{ reservation.admin_assignee }}
                                     </span>
                                   </div>
                                 </div>
@@ -728,6 +995,7 @@
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
               </div>
               <div v-else class="text-center py-12 text-gray-500">
@@ -1479,23 +1747,8 @@
                                 : "-"
                             }}
                           </td>
-                          <td class="px-6 py-4 whitespace-nowrap">
-                            <span
-                              v-if="
-                                reservation.schedule &&
-                                reservation.schedule.participantUsers &&
-                                reservation.schedule.participantUsers.length > 0
-                              "
-                            >
-                              <span
-                                v-for="participant in reservation.schedule.participantUsers"
-                                :key="participant.id"
-                                class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full mr-1"
-                              >
-                                {{ participant.name }}
-                              </span>
-                            </span>
-                            <span v-else class="text-sm text-gray-500">-</span>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ reservation.admin_assignee || "-" }}
                           </td>
                           <td
                             class="px-6 py-4 text-sm text-gray-900"
@@ -1616,23 +1869,8 @@
                               : "-"
                           }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <span
-                            v-if="
-                              reservation.schedule &&
-                              reservation.schedule.participantUsers &&
-                              reservation.schedule.participantUsers.length > 0
-                            "
-                          >
-                            <span
-                              v-for="participant in reservation.schedule.participantUsers"
-                              :key="participant.id"
-                              class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full mr-1"
-                            >
-                              {{ participant.name }}
-                            </span>
-                          </span>
-                          <span v-else class="text-sm text-gray-500">-</span>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {{ reservation.admin_assignee || "-" }}
                         </td>
                       </template>
 
@@ -1665,23 +1903,8 @@
                               : "-"
                           }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                          <span
-                            v-if="
-                              reservation.schedule &&
-                              reservation.schedule.participantUsers &&
-                              reservation.schedule.participantUsers.length > 0
-                            "
-                          >
-                            <span
-                              v-for="participant in reservation.schedule.participantUsers"
-                              :key="participant.id"
-                              class="inline-block px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full mr-1"
-                            >
-                              {{ participant.name }}
-                            </span>
-                          </span>
-                          <span v-else class="text-sm text-gray-500">-</span>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {{ reservation.admin_assignee || "-" }}
                         </td>
                       </template>
 
@@ -2800,6 +3023,44 @@ const formatDateHeader = (dateString) => formatDateJa(dateString);
 
 const formatTime = (datetime) => formatDateTimeJa(datetime);
 
+/** 日付表示：アンカー用 ID（目次リンクと本文を対応） */
+const scheduleVenueElId = (venueKey) => `schedule-venue-${String(venueKey)}`;
+const scheduleDateElId = (venueKey, dateKey) =>
+  `schedule-date-${String(venueKey)}-${dateKey}`;
+const scheduleSlotElId = (timeslotId) => `schedule-slot-${timeslotId}`;
+
+const scheduleNavSections = computed(() => {
+  const groups = groupedByVenue.value;
+  const keys = orderedVenueKeys.value;
+  if (!groups || !keys.length) return [];
+  return keys.map((venueKey) => {
+    const dateObj = groups[venueKey];
+    const dateKeys = Object.keys(dateObj).sort();
+    return {
+      venueKey,
+      venueName: getVenueName(venueKey),
+      venueAnchorId: scheduleVenueElId(venueKey),
+      dates: dateKeys.map((dateKey) => ({
+        dateKey,
+        dateLabel: formatDateHeader(dateKey),
+        dateAnchorId: scheduleDateElId(venueKey, dateKey),
+        timeslots: dateObj[dateKey].map((ts) => ({
+          id: ts.id,
+          timeLabel: formatTime(ts.start_at),
+          slotAnchorId: scheduleSlotElId(ts.id),
+        })),
+      })),
+    };
+  });
+});
+
+function scrollToScheduleAnchor(anchorId) {
+  const el = document.getElementById(anchorId);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 const getFormTypeLabel = (formType) => {
   const labels = {
     reservation: "予約",
@@ -2826,6 +3087,13 @@ const getStatusBadgeClass = (status) => {
     対応完了済み: "bg-green-100 text-green-800",
   };
   return classes[status] || "bg-gray-100 text-gray-800";
+};
+
+const getEntranceTicketSendBadgeClass = (value) => {
+  if (value === "送付済み") {
+    return "bg-green-100 text-green-800";
+  }
+  return "bg-gray-100 text-gray-800";
 };
 
 // 色分けロジックの修正版
@@ -3378,16 +3646,7 @@ const getColumnValue = (reservation, columnKey) => {
     case "heard_from":
       return reservation.heard_from || "-";
     case "participants":
-      if (
-        reservation.schedule &&
-        reservation.schedule.participantUsers &&
-        reservation.schedule.participantUsers.length > 0
-      ) {
-        return reservation.schedule.participantUsers
-          .map((p) => p.name)
-          .join(", ");
-      }
-      return "-";
+      return reservation.admin_assignee || "-";
     case "created_at":
       return formatDateTime(reservation.created_at);
     default:

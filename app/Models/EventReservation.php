@@ -29,6 +29,8 @@ class EventReservation extends Model
         'furigana',
         'school_name',
         'staff_name',
+        'admin_assignee',
+        'entrance_ticket_send_status',
         'visit_reasons',
         'parking_usage',
         'parking_car_count',

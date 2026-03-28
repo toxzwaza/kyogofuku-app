@@ -20,6 +20,7 @@ use App\Models\CustomerTag;
 use App\Models\ConstraintTemplate;
 use App\Models\CustomerConstraint;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -67,13 +68,43 @@ class CustomerController extends Controller
             $query->where('phone_number', 'LIKE', '%' . $request->phone_number . '%');
         }
 
+        // 成人式情報（顧客マスタ）
+        if ($request->filled('seijin_preparation_venue')) {
+            $query->where('seijin_preparation_venue', 'LIKE', '%' . $request->seijin_preparation_venue . '%');
+        }
+        if ($request->filled('seijin_preparation_time')) {
+            $query->where('seijin_preparation_time', 'LIKE', '%' . $request->seijin_preparation_time . '%');
+        }
+        if ($request->has('other_store_preparation')) {
+            $query->where('other_store_preparation', $request->boolean('other_store_preparation'));
+        }
+        $otherStorePrepOn = $request->has('other_store_preparation') && $request->boolean('other_store_preparation');
+        $salonNameFilled = $request->filled('other_store_salon_name');
+        if ($otherStorePrepOn && ! $salonNameFilled) {
+            $query->where(function ($q) {
+                $q->whereNull('other_store_salon_name')
+                    ->orWhere('other_store_salon_name', '');
+            });
+        }
+        if ($salonNameFilled) {
+            $query->where('other_store_salon_name', 'LIKE', '%' . $request->other_store_salon_name . '%');
+        }
+        if ($request->filled('kimono_ship_date')) {
+            $query->whereDate('kimono_ship_date', $request->kimono_ship_date);
+        }
+
         // 成約情報での検索（成約情報の店舗で絞り込み）
-        if ($request->filled('contract_date_from') || $request->filled('contract_date_to') 
-            || $request->filled('shop_id') || $request->filled('plan_id') 
-            || $request->filled('kimono_type') || $request->has('warranty_flag') 
+        $contractStatusNone = $request->filled('contract_status') && $request->contract_status === '成約なし';
+        if ($contractStatusNone) {
+            $query->whereDoesntHave('contracts');
+        } elseif (
+            $request->filled('contract_date_from') || $request->filled('contract_date_to')
+            || $request->filled('shop_id') || $request->filled('plan_id')
+            || $request->filled('kimono_type') || $request->has('warranty_flag')
             || $request->filled('user_id') || $request->filled('preparation_venue')
-            || $request->filled('preparation_date') || $request->filled('contract_status')) {
-            
+            || $request->filled('preparation_date')
+            || $request->filled('contract_status')
+        ) {
             $query->whereHas('contracts', function ($q) use ($request) {
                 if ($request->filled('shop_id')) {
                     $q->where('shop_id', $request->shop_id);
@@ -104,6 +135,33 @@ class CustomerController extends Controller
                 }
                 if ($request->filled('contract_status')) {
                     $q->where('status', $request->contract_status);
+                }
+            });
+        }
+
+        // 制約情報での検索
+        $constraintNone = $request->filled('constraint_presence') && $request->constraint_presence === '制約なし';
+        if ($constraintNone) {
+            $query->whereDoesntHave('constraints');
+        } elseif (
+            $request->filled('constraint_template_id')
+            || $request->filled('constraint_signed_at_from')
+            || $request->filled('constraint_signed_at_to')
+            || $request->filled('constraint_explainer_user_id')
+            || ($request->filled('constraint_presence') && $request->constraint_presence === '制約あり')
+        ) {
+            $query->whereHas('constraints', function ($q) use ($request) {
+                if ($request->filled('constraint_template_id')) {
+                    $q->where('constraint_template_id', $request->constraint_template_id);
+                }
+                if ($request->filled('constraint_signed_at_from')) {
+                    $q->whereDate('signed_at', '>=', $request->constraint_signed_at_from);
+                }
+                if ($request->filled('constraint_signed_at_to')) {
+                    $q->whereDate('signed_at', '<=', $request->constraint_signed_at_to);
+                }
+                if ($request->filled('constraint_explainer_user_id')) {
+                    $q->where('explainer_user_id', $request->constraint_explainer_user_id);
                 }
             });
         }
@@ -157,6 +215,7 @@ class CustomerController extends Controller
         $shops = Shop::orderBy('name')->get();
         $plans = Plan::orderBy('name')->get();
         $users = User::orderBy('name')->get();
+        $constraintTemplates = ConstraintTemplate::orderBy('name')->get(['id', 'name']);
 
         // 予約詳細から顧客追加の場合、予約者情報をプリフィル用に渡す
         $prefillFromReservation = null;
@@ -189,14 +248,31 @@ class CustomerController extends Controller
             'shops' => $shops,
             'plans' => $plans,
             'users' => $users,
+            'constraintTemplates' => $constraintTemplates,
             'filters' => $request->only([
                 'name', 'kana', 'ceremony_area_id', 'phone_number',
                 'created_at_from', 'created_at_to',
+                'seijin_preparation_venue', 'seijin_preparation_time', 'other_store_preparation',
+                'other_store_salon_name', 'kimono_ship_date',
                 'contract_date_from', 'contract_date_to', 'shop_id', 'plan_id',
                 'kimono_type', 'warranty_flag', 'user_id', 'preparation_venue', 'preparation_date',
-                'contract_status', 'photo_slot_details_undecided', 'photo_slot_shop_id'
+                'contract_status',
+                'constraint_presence', 'constraint_template_id', 'constraint_signed_at_from',
+                'constraint_signed_at_to', 'constraint_explainer_user_id',
+                'photo_slot_details_undecided', 'photo_slot_shop_id',
             ]),
             'prefillFromReservation' => $prefillFromReservation,
+        ]);
+    }
+
+    /**
+     * 顧客一覧の成人式情報フィルター用 datalist（遅延取得用・JSON）
+     */
+    public function seijinFilterOptions()
+    {
+        return response()->json([
+            'seijin_preparation_venues' => $this->distinctSeijinPreparationVenues(),
+            'other_store_salon_names' => $this->distinctOtherStoreSalonNames(),
         ]);
     }
 
@@ -235,7 +311,7 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => 'required|string|max:255',
             'kana' => 'nullable|string|max:255',
             'guardian_name' => 'nullable|string|max:255',
@@ -255,10 +331,12 @@ class CustomerController extends Controller
             'considering_plans' => 'nullable|array',
             'considering_plans.*' => 'nullable|string|max:255',
             'event_reservation_id' => 'nullable|exists:event_reservations,id',
-        ]);
+        ], $this->rulesForCustomerSeijinFields()));
 
         $eventReservationId = $validated['event_reservation_id'] ?? null;
         unset($validated['event_reservation_id']);
+
+        $validated = $this->normalizeCustomerSeijinFields($validated);
 
         $customer = Customer::create($validated);
 
@@ -381,6 +459,23 @@ class CustomerController extends Controller
             return $item;
         })->values()->all();
 
+        $customerForInertia['constraints'] = $customer->constraints->map(function ($cc) {
+            $item = $cc->toArray();
+            if ($cc->relationLoaded('constraintTemplate') && $cc->constraintTemplate) {
+                $item['constraint_template'] = $cc->constraintTemplate->toArray();
+            }
+            if (! empty($cc->attachment_path) && ($cc->attachment_disk ?? 's3') === 's3') {
+                $path = str_replace('\\', '/', $cc->attachment_path);
+                $item['attachment_url'] = Storage::disk('s3_private')->temporaryUrl($path, now()->addMinutes(60));
+            } elseif (! empty($cc->attachment_path)) {
+                $item['attachment_url'] = '/storage/'.$cc->attachment_path;
+            } else {
+                $item['attachment_url'] = null;
+            }
+
+            return $item;
+        })->values()->all();
+
         return Inertia::render('Admin/Customer/Show', [
             'customer' => $customerForInertia,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
@@ -399,7 +494,42 @@ class CustomerController extends Controller
                 ];
             }),
             'constraintTemplates' => $constraintTemplates,
+            'otherStoreSalonNameOptions' => $this->distinctOtherStoreSalonNames(),
         ]);
+    }
+
+    /**
+     * 仕度会場として登録済みの値（重複なし・昇順）
+     *
+     * @return list<string>
+     */
+    private function distinctSeijinPreparationVenues(): array
+    {
+        return Customer::query()
+            ->whereNotNull('seijin_preparation_venue')
+            ->where('seijin_preparation_venue', '!=', '')
+            ->distinct()
+            ->orderBy('seijin_preparation_venue')
+            ->pluck('seijin_preparation_venue')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * 他店お支度の美容室名として登録済みの値（重複なし・昇順）
+     *
+     * @return list<string>
+     */
+    private function distinctOtherStoreSalonNames(): array
+    {
+        return Customer::query()
+            ->whereNotNull('other_store_salon_name')
+            ->where('other_store_salon_name', '!=', '')
+            ->distinct()
+            ->orderBy('other_store_salon_name')
+            ->pluck('other_store_salon_name')
+            ->values()
+            ->all();
     }
 
     /**
@@ -663,7 +793,7 @@ class CustomerController extends Controller
      */
     public function update(Request $request, Customer $customer)
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => 'required|string|max:255',
             'kana' => 'nullable|string|max:255',
             'guardian_name' => 'nullable|string|max:255',
@@ -674,12 +804,52 @@ class CustomerController extends Controller
             'postal_code' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
-        ]);
+        ], $this->rulesForCustomerSeijinFields()));
+
+        $validated = $this->normalizeCustomerSeijinFields($validated);
 
         $customer->update($validated);
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '顧客情報を更新しました。');
+    }
+
+    /**
+     * 成人式情報（顧客マスタ）のバリデーションルール
+     */
+    private function rulesForCustomerSeijinFields(): array
+    {
+        return [
+            'seijin_preparation_venue' => 'nullable|string|max:255',
+            'seijin_preparation_time' => 'nullable|string|max:255',
+            'other_store_preparation' => 'nullable|boolean',
+            'other_store_salon_name' => 'nullable|string|max:255',
+            'other_store_salon_address' => 'nullable|string|max:255',
+            'other_store_salon_phone' => 'nullable|string|max:255',
+            'kimono_ship_date' => 'nullable|date',
+        ];
+    }
+
+    /**
+     * 他店お支度が無効のときサロン関連・着物発送日をクリアする
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalizeCustomerSeijinFields(array $data): array
+    {
+        $data['other_store_preparation'] = (bool) ($data['other_store_preparation'] ?? false);
+        if (! $data['other_store_preparation']) {
+            $data['other_store_salon_name'] = null;
+            $data['other_store_salon_address'] = null;
+            $data['other_store_salon_phone'] = null;
+            $data['kimono_ship_date'] = null;
+        } else {
+            $data['other_store_salon_address'] = null;
+            $data['other_store_salon_phone'] = null;
+        }
+
+        return $data;
     }
 
     /**
@@ -1086,6 +1256,35 @@ class CustomerController extends Controller
     }
 
     /**
+     * 制約添付ファイルを S3（private）に保存
+     *
+     * @return array{attachment_path: string, attachment_disk: string, attachment_original_name: string}
+     */
+    private function storeConstraintAttachment(\Illuminate\Http\UploadedFile $file, int $customerId): array
+    {
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'bin');
+        $safeExt = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'], true) ? $ext : 'bin';
+        $path = 'customers/'.$customerId.'/constraints/'.Str::random(40).'.'.$safeExt;
+        Storage::disk('s3_private')->put($path, $file->get());
+
+        return [
+            'attachment_path' => $path,
+            'attachment_disk' => 's3',
+            'attachment_original_name' => $file->getClientOriginalName(),
+        ];
+    }
+
+    private function deleteConstraintAttachmentIfAny(CustomerConstraint $constraint): void
+    {
+        if (empty($constraint->attachment_path)) {
+            return;
+        }
+        $disk = ($constraint->attachment_disk ?? 's3') === 's3' ? 's3_private' : ($constraint->attachment_disk ?? 'public');
+        $path = $disk === 's3_private' ? str_replace('\\', '/', $constraint->attachment_path) : $constraint->attachment_path;
+        Storage::disk($disk)->delete($path);
+    }
+
+    /**
      * 制約署名フォームを表示
      */
     public function constraintSignForm(Request $request, Customer $customer)
@@ -1156,23 +1355,46 @@ class CustomerController extends Controller
             'signed_at' => 'nullable|date',
             'signature_image' => 'nullable|string',
             'explainer_user_id' => 'nullable|exists:users,id',
-            'check_values' => 'nullable|array',
+            'attachment' => 'nullable|file|mimes:jpeg,jpg,png,gif,webp,pdf|max:10240',
         ]);
+
+        $checkValues = $request->input('check_values');
+        if (is_string($checkValues)) {
+            $checkValues = json_decode($checkValues, true) ?? [];
+        }
+        if (! is_array($checkValues)) {
+            $checkValues = [];
+        }
+        $validated['check_values'] = $checkValues;
 
         $userShopIds = auth()->user()
             ? auth()->user()->shops()->where('shops.is_active', true)->pluck('shops.id')->toArray()
             : [];
-        $templateAllowed = !empty($userShopIds) && ConstraintTemplate::where('id', $validated['constraint_template_id'])
+        $templateAllowed = ! empty($userShopIds) && ConstraintTemplate::where('id', $validated['constraint_template_id'])
             ->where('is_active', true)
-            ->whereHas('shops', fn($q) => $q->whereIn('shops.id', $userShopIds))
+            ->whereHas('shops', fn ($q) => $q->whereIn('shops.id', $userShopIds))
             ->exists();
-        if (!$templateAllowed) {
+        if (! $templateAllowed) {
             abort(403, 'この制約テンプレートは選択できません。');
         }
 
         $validated['customer_id'] = $customer->id;
 
+        $hasAttachment = $request->hasFile('attachment');
+        if ($hasAttachment) {
+            $validated = array_merge($validated, $this->storeConstraintAttachment($request->file('attachment'), $customer->id));
+            $validated['signature_image'] = null;
+        }
+
+        unset($validated['attachment']);
+
         $constraint = CustomerConstraint::create($validated);
+
+        if ($hasAttachment) {
+            return redirect()
+                ->route('admin.customers.show', $customer)
+                ->with('success', '制約書類を登録しました。');
+        }
 
         $query = [
             'template_id' => $validated['constraint_template_id'],
@@ -1184,7 +1406,7 @@ class CustomerController extends Controller
             $query['check_values'] = json_encode($validated['check_values']);
         }
 
-        return redirect()->to(route('admin.customers.constraints.sign', $customer) . '?' . http_build_query(array_filter($query)))
+        return redirect()->to(route('admin.customers.constraints.sign', $customer).'?'.http_build_query(array_filter($query)))
             ->with('success', '保存が完了しました。');
     }
 
@@ -1201,22 +1423,50 @@ class CustomerController extends Controller
             'signed_at' => 'nullable|date',
             'signature_image' => 'nullable|string',
             'explainer_user_id' => 'nullable|exists:users,id',
-            'check_values' => 'nullable|array',
+            'attachment' => 'nullable|file|mimes:jpeg,jpg,png,gif,webp,pdf|max:10240',
+            'return_to' => 'nullable|in:show,sign',
         ]);
 
-        $customerConstraint->update($validated);
+        $checkValues = $request->input('check_values');
+        if (is_string($checkValues)) {
+            $checkValues = json_decode($checkValues, true) ?? [];
+        }
+        if (! is_array($checkValues)) {
+            $checkValues = [];
+        }
+        $validated['check_values'] = $checkValues;
+
+        $returnTo = $validated['return_to'] ?? 'sign';
+        unset($validated['return_to']);
+
+        $payload = Arr::only($validated, ['signed_at', 'signature_image', 'explainer_user_id', 'check_values']);
+
+        if ($request->hasFile('attachment')) {
+            $this->deleteConstraintAttachmentIfAny($customerConstraint);
+            $payload = array_merge($payload, $this->storeConstraintAttachment($request->file('attachment'), $customer->id));
+        }
+
+        unset($validated['attachment']);
+
+        $customerConstraint->update($payload);
+
+        if ($returnTo === 'show') {
+            return redirect()
+                ->route('admin.customers.show', $customer)
+                ->with('success', '制約情報を更新しました。');
+        }
 
         $query = [
             'template_id' => $customerConstraint->constraint_template_id,
             'edit_id' => $customerConstraint->id,
-            'signed_at' => $validated['signed_at'] ?? null,
-            'explainer_user_id' => $validated['explainer_user_id'] ?? null,
+            'signed_at' => $payload['signed_at'] ?? null,
+            'explainer_user_id' => $payload['explainer_user_id'] ?? null,
         ];
-        if (! empty($validated['check_values'])) {
-            $query['check_values'] = json_encode($validated['check_values']);
+        if (! empty($payload['check_values'])) {
+            $query['check_values'] = json_encode($payload['check_values']);
         }
 
-        return redirect()->to(route('admin.customers.constraints.sign', $customer) . '?' . http_build_query(array_filter($query)))
+        return redirect()->to(route('admin.customers.constraints.sign', $customer).'?'.http_build_query(array_filter($query)))
             ->with('success', '保存が完了しました。');
     }
 
@@ -1229,6 +1479,7 @@ class CustomerController extends Controller
             abort(403);
         }
 
+        $this->deleteConstraintAttachmentIfAny($customerConstraint);
         $customerConstraint->delete();
 
         return redirect()

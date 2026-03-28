@@ -11,7 +11,6 @@ use App\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -55,10 +54,6 @@ class AuthenticatedSessionController extends Controller
             })
             ->values()
             ->all();
-
-        // デバッグ: ログイン画面に渡す店舗データ（storage/logs/laravel.log で確認）
-        Log::debug('[Login Debug] create() - shops 件数: ' . count($shops));
-        Log::debug('[Login Debug] create() - shops 内容', ['shops' => $shops]);
 
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),

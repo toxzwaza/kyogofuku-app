@@ -16,6 +16,9 @@ class CustomerConstraint extends Model
         'signature_image',
         'explainer_user_id',
         'check_values',
+        'attachment_path',
+        'attachment_disk',
+        'attachment_original_name',
     ];
 
     protected $casts = [

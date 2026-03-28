@@ -75,6 +75,19 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">勤務属性</label>
+                                    <select
+                                        v-model="form.work_attribute_id"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">未設定</option>
+                                        <option v-for="wa in workAttributes" :key="wa.id" :value="wa.id">{{ wa.name }}</option>
+                                    </select>
+                                    <p class="mt-1 text-sm text-gray-500">給与用のベース勤務時間に使用します</p>
+                                    <div v-if="form.errors.work_attribute_id" class="mt-1 text-sm text-red-600">{{ form.errors.work_attribute_id }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">パスワード <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.password"
@@ -164,6 +177,10 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     shops: Array,
+    workAttributes: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const form = useForm({
@@ -171,6 +188,7 @@ const form = useForm({
     email: '',
     login_id: '',
     theme_color: '',
+    work_attribute_id: '',
     password: '',
     password_confirmation: '',
     shop_ids: [],

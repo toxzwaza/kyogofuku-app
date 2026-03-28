@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\AttendanceBreak;
+use App\Models\AttendancePayrollSetting;
 use App\Models\AttendanceRecord;
 use App\Models\Shop;
+use App\Services\AttendancePayrollTimeService;
 use App\Services\AttendanceScopeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -419,28 +422,35 @@ class AttendanceController extends Controller
 
     /**
      * 勤怠履歴一覧（自分のみ）
+     *
+     * 日付は新しい順。期間未指定時は「前月21日〜今月20日」（締め想定のデフォルト）。
      */
     public function history(Request $request)
     {
         $user = $request->user();
-        $query = AttendanceRecord::where('user_id', $user->id)
-            ->with(['shop:id,name', 'breaks'])
-            ->orderBy('date');
 
-        if ($request->filled('from')) {
-            $query->whereDate('date', '>=', $request->from);
-        }
-        if ($request->filled('to')) {
-            $query->whereDate('date', '<=', $request->to);
-        }
+        $now = Carbon::now();
+        $defaultFrom = $now->copy()->startOfMonth()->subMonth()->setDay(21)->format('Y-m-d');
+        $defaultTo = $now->copy()->startOfMonth()->setDay(20)->format('Y-m-d');
+
+        $from = $request->filled('from') ? $request->input('from') : $defaultFrom;
+        $to = $request->filled('to') ? $request->input('to') : $defaultTo;
+
+        $query = AttendanceRecord::where('user_id', $user->id)
+            ->with(['shop:id,name', 'breaks', 'user:id,name,work_attribute_id'])
+            ->whereDate('date', '>=', $from)
+            ->whereDate('date', '<=', $to)
+            ->orderByDesc('date')
+            ->orderByDesc('id');
 
         $records = $query->paginate(20)->withQueryString();
+        $this->enrichAttendancePaginatorWithShiftAndPayroll($records, true);
 
         return Inertia::render('Attendance/History', [
             'records' => $records,
             'filters' => [
-                'from' => $request->from,
-                'to' => $request->to,
+                'from' => $from,
+                'to' => $to,
             ],
         ]);
     }
@@ -491,9 +501,10 @@ class AttendanceController extends Controller
         }
 
         $query = AttendanceRecord::where('status', AttendanceRecord::STATUS_APPLIED)
-            ->with(['user:id,name', 'shop:id,name', 'breaks']);
+            ->with(['user:id,name,work_attribute_id', 'shop:id,name', 'breaks']);
         $query = AttendanceScopeService::scopeForUser($query, $user);
         $records = $query->orderBy('date')->orderBy('created_at')->paginate(20)->withQueryString();
+        $this->enrichAttendancePaginatorWithShiftAndPayroll($records, false);
 
         return Inertia::render('Attendance/ApprovalIndex', [
             'records' => $records,
@@ -612,6 +623,66 @@ class AttendanceController extends Controller
 
         $message = $count > 0 ? "{$count}件を差し戻しました。" : '差し戻せるレコードがありませんでした。';
         return redirect()->route('attendance.approvals')->with('success', $message);
+    }
+
+    /**
+     * ページネーション済み一覧にシフト診断・残業（payroll）を付与する。
+     *
+     * @param  bool  $omitUserFromRow  true のとき行配列から user を除く（勤怠履歴用）
+     */
+    private function enrichAttendancePaginatorWithShiftAndPayroll(LengthAwarePaginator $paginator, bool $omitUserFromRow = false): void
+    {
+        $collection = $paginator->getCollection();
+        if ($collection->isEmpty()) {
+            return;
+        }
+
+        $payrollTime = app(AttendancePayrollTimeService::class);
+        $payrollSetting = AttendancePayrollSetting::query()->orderBy('id')->firstOrFail();
+
+        $minStr = $collection->min(fn (AttendanceRecord $r) => $r->date->format('Y-m-d'));
+        $maxStr = $collection->max(fn (AttendanceRecord $r) => $r->date->format('Y-m-d'));
+        $patterns = $payrollTime->loadCalendarPatternsBetween($minStr, $maxStr);
+
+        $enriched = $collection->map(function (AttendanceRecord $record) use ($payrollTime, $patterns, $payrollSetting, $omitUserFromRow) {
+            $recordUser = $record->user;
+            $date = $record->date instanceof Carbon ? $record->date->copy()->startOfDay() : Carbon::parse($record->date)->startOfDay();
+
+            if (!$recordUser) {
+                $shift = [
+                    'calendar_pattern' => null,
+                    'start_at' => null,
+                    'end_at' => null,
+                    'available' => false,
+                    'help_reasons' => ['ユーザー情報がありません。'],
+                ];
+                $payrollPayload = [
+                    'overtime_minutes_raw' => null,
+                    'overtime_minutes_rounded' => null,
+                ];
+            } else {
+                $shift = $payrollTime->shiftDiagnostics($recordUser, $date, $patterns);
+                $payrollPayload = $payrollTime->payrollPayloadForRecord($record, $patterns, $payrollSetting);
+            }
+
+            $row = $record->toArray();
+
+            if ($omitUserFromRow) {
+                unset($row['user']);
+            } elseif (isset($row['user']) && is_array($row['user'])) {
+                unset($row['user']['work_attribute_id']);
+            }
+
+            return array_merge($row, [
+                'shift' => $shift,
+                'payroll' => [
+                    'overtime_minutes_raw' => $payrollPayload['overtime_minutes_raw'],
+                    'overtime_minutes_rounded' => $payrollPayload['overtime_minutes_rounded'],
+                ],
+            ]);
+        });
+
+        $paginator->setCollection($enriched);
     }
 
     private function formatRecord(AttendanceRecord $record): array

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Shop;
+use App\Models\WorkAttribute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -23,9 +24,12 @@ class UserController extends Controller
         $defaultShop = $currentUserShops->firstWhere('pivot.main', true) ?? $currentUserShops->first();
         $defaultShopId = $defaultShop ? $defaultShop->id : null;
         
-        $query = User::with(['shops' => function($query) {
-            $query->withPivot('main');
-        }]);
+        $query = User::with([
+            'workAttribute:id,name',
+            'shops' => function ($query) {
+                $query->withPivot('main');
+            },
+        ]);
 
         // 店舗でフィルタリング
         $shopId = $request->filled('shop_id') ? $request->shop_id : $defaultShopId;
@@ -66,9 +70,11 @@ class UserController extends Controller
     public function create()
     {
         $shops = Shop::where('is_active', true)->get();
+        $workAttributes = WorkAttribute::query()->orderBy('sort_order')->orderBy('id')->get(['id', 'name']);
 
         return Inertia::render('Admin/User/Create', [
             'shops' => $shops,
+            'workAttributes' => $workAttributes,
         ]);
     }
 
@@ -86,6 +92,7 @@ class UserController extends Controller
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
+            'work_attribute_id' => 'nullable|exists:work_attributes,id',
         ]);
 
         $user = User::create([
@@ -94,6 +101,7 @@ class UserController extends Controller
             'login_id' => $validated['login_id'] ?? null,
             'password' => Hash::make($validated['password']),
             'theme_color' => $validated['theme_color'] ?? null,
+            'work_attribute_id' => $validated['work_attribute_id'] ?? null,
         ]);
 
         if ($request->has('shop_ids')) {
@@ -121,7 +129,8 @@ class UserController extends Controller
             $query->withPivot('main');
         }]);
         $shops = Shop::where('is_active', true)->get();
-        
+        $workAttributes = WorkAttribute::query()->orderBy('sort_order')->orderBy('id')->get(['id', 'name']);
+
         // メイン店舗のIDを取得
         $mainShop = $user->shops->firstWhere('pivot.main', true);
         $mainShopId = $mainShop ? $mainShop->id : null;
@@ -129,6 +138,7 @@ class UserController extends Controller
         return Inertia::render('Admin/User/Edit', [
             'user' => $user,
             'shops' => $shops,
+            'workAttributes' => $workAttributes,
             'main_shop_id' => $mainShopId,
         ]);
     }
@@ -148,6 +158,7 @@ class UserController extends Controller
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
+            'work_attribute_id' => 'nullable|exists:work_attributes,id',
         ]);
 
         $user->update([
@@ -156,6 +167,7 @@ class UserController extends Controller
             'login_id' => $validated['login_id'] ?? null,
             'theme_color' => $validated['theme_color'] ?? null,
             'attendance_role' => $validated['attendance_role'] ?? null,
+            'work_attribute_id' => $validated['work_attribute_id'] ?? null,
         ]);
 
         if ($request->filled('password')) {

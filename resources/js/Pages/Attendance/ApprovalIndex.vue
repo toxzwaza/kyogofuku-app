@@ -9,12 +9,16 @@
         </template>
 
         <div class="py-12">
-            <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
+            <div class="w-full max-w-7xl 2xl:max-w-[min(100%,96rem)] mx-auto px-4 sm:px-6 lg:px-10 xl:px-12">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
+                    <div class="p-6 sm:p-8">
                         <div v-if="$page.props.flash?.success" class="mb-4 p-3 bg-green-100 text-green-800 rounded-md text-sm">
                             {{ $page.props.flash.success }}
                         </div>
+
+                        <p class="text-xs text-gray-500 mb-4 leading-relaxed max-w-4xl">
+                            <span class="font-medium text-gray-600">残業（丸め後）</span>は終業（残業）の丸め設定に基づきます。出勤の早出・始業丸めは給与計算閾値の始業設定に従います。シフト未取得時は「？」で理由を確認できます。
+                        </p>
 
                         <div v-if="records.data?.length > 0" class="mb-4 flex flex-wrap items-center gap-2">
                             <span class="text-sm text-gray-600">選択中: {{ selectedIds.length }}件</span>
@@ -36,11 +40,11 @@
                             </button>
                         </div>
 
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <div class="overflow-x-auto -mx-2 sm:mx-0 rounded-lg border border-gray-200">
+                            <table class="history-table min-w-[1180px] w-full border-collapse text-sm">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-2 py-2 w-10">
+                                        <th class="th-cell-checkbox w-10 px-2">
                                             <input
                                                 ref="selectAllCheckboxRef"
                                                 type="checkbox"
@@ -49,18 +53,23 @@
                                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                             />
                                         </th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">日付</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">ユーザー</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">店舗</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">出勤</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">退勤</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">申請理由</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">操作</th>
+                                        <th class="th-cell whitespace-nowrap">日付</th>
+                                        <th class="th-cell whitespace-nowrap">ユーザー</th>
+                                        <th class="th-cell whitespace-nowrap">店舗</th>
+                                        <th class="th-cell whitespace-nowrap">シフトパターン</th>
+                                        <th class="th-cell whitespace-nowrap">シフト出勤</th>
+                                        <th class="th-cell whitespace-nowrap">シフト退勤</th>
+                                        <th class="th-cell whitespace-nowrap">打刻出勤</th>
+                                        <th class="th-cell whitespace-nowrap">打刻退勤</th>
+                                        <th class="th-cell whitespace-nowrap" title="シフト退勤以降の実労働から休憩を控除後、給与設定の丸め単位で算出">残業（丸め後）</th>
+                                        <th class="th-cell whitespace-nowrap" title="合計時間。ホバーで各休憩の開始〜終了時刻を表示">休憩（合計）</th>
+                                        <th class="th-cell min-w-[6rem]">申請理由</th>
+                                        <th class="th-cell whitespace-nowrap pr-6 sm:pr-8">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    <tr v-for="r in records.data" :key="r.id" class="hover:bg-gray-50">
-                                        <td class="px-2 py-2 w-10">
+                                <tbody class="bg-white">
+                                    <tr v-for="r in records.data" :key="r.id" class="hover:bg-gray-50/80 transition-colors">
+                                        <td class="td-cell-checkbox px-2 w-10 align-middle">
                                             <input
                                                 type="checkbox"
                                                 :value="r.id"
@@ -68,13 +77,51 @@
                                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                             />
                                         </td>
-                                        <td class="px-4 py-2">{{ formatDateJa(r.date) }}</td>
-                                        <td class="px-4 py-2">{{ r.user?.name ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ r.shop?.name ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ formatTimeJa(r.clock_in_at) }}</td>
-                                        <td class="px-4 py-2">{{ formatTimeJa(r.clock_out_at) }}</td>
-                                        <td class="px-4 py-2 max-w-xs truncate">{{ r.application_reason ?? '-' }}</td>
-                                        <td class="px-4 py-2">
+                                        <td class="td-cell whitespace-nowrap font-medium text-gray-900">{{ formatDateJaWithWeekday(r.date) }}</td>
+                                        <td class="td-cell whitespace-nowrap text-gray-800">{{ r.user?.name ?? '-' }}</td>
+                                        <td class="td-cell whitespace-nowrap text-gray-800">{{ r.shop?.name ?? '-' }}</td>
+                                        <td class="td-cell whitespace-nowrap">
+                                            <span
+                                                v-if="r.shift?.calendar_pattern"
+                                                :class="shiftPatternBadgeClass(r.shift.calendar_pattern)"
+                                                class="inline-flex items-center justify-center min-w-[1.75rem] px-2.5 py-1 rounded-md text-xs font-semibold"
+                                            >
+                                                {{ r.shift.calendar_pattern }}
+                                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </td>
+                                        <td class="td-cell whitespace-nowrap tabular-nums text-gray-800">
+                                            <template v-if="r.shift?.available">
+                                                {{ formatTimeJa(r.shift.start_at) }}
+                                            </template>
+                                            <ShiftUnavailableHint v-else :reasons="r.shift?.help_reasons ?? []" />
+                                        </td>
+                                        <td class="td-cell whitespace-nowrap tabular-nums text-gray-800">
+                                            <template v-if="r.shift?.available">
+                                                {{ formatTimeJa(r.shift.end_at) }}
+                                            </template>
+                                            <ShiftUnavailableHint v-else :reasons="r.shift?.help_reasons ?? []" />
+                                        </td>
+                                        <td class="td-cell whitespace-nowrap tabular-nums text-gray-800">{{ formatTimeJa(r.clock_in_at) }}</td>
+                                        <td class="td-cell whitespace-nowrap tabular-nums text-gray-800">{{ formatTimeJa(r.clock_out_at) }}</td>
+                                        <td
+                                            class="td-cell whitespace-nowrap tabular-nums text-gray-800"
+                                            :title="overtimeTooltip(r.payroll)"
+                                        >
+                                            <span class="cursor-help border-b border-dotted border-gray-400">{{ formatOvertimeRounded(r.payroll) }}</span>
+                                        </td>
+                                        <td
+                                            class="td-cell whitespace-nowrap tabular-nums text-gray-800"
+                                            :title="formatBreaksTooltip(r.breaks)"
+                                        >
+                                            <span
+                                                v-if="breaksHasTooltip(r.breaks)"
+                                                class="cursor-help border-b border-dotted border-gray-400"
+                                            >{{ formatBreakTotalLabel(r.breaks) }}</span>
+                                            <template v-else>{{ formatBreakTotalLabel(r.breaks) }}</template>
+                                        </td>
+                                        <td class="td-cell max-w-[10rem] text-gray-700 text-xs leading-snug align-top">{{ r.application_reason ?? '—' }}</td>
+                                        <td class="td-cell whitespace-nowrap pr-6 sm:pr-8">
                                             <form :action="route('attendance.approvals.approve', r.id)" method="POST" class="inline" @submit.prevent="approve(r.id)">
                                                 <input type="hidden" name="_token" :value="$page.props.auth?.csrf_token ?? ''" />
                                                 <button type="submit" class="text-green-600 hover:text-green-900">承認</button>
@@ -87,7 +134,7 @@
                                         </td>
                                     </tr>
                                     <tr v-if="!records.data || records.data.length === 0">
-                                        <td colspan="8" class="px-4 py-8 text-center text-gray-500">承認待ちの申請はありません</td>
+                                        <td colspan="13" class="px-6 py-12 text-center text-gray-500 text-base">承認待ちの申請はありません</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -117,7 +164,16 @@
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { formatTimeJa, formatDateJa } from '@/utils/dateFormat';
+import { formatTimeJa, formatDateJaWithWeekday } from '@/utils/dateFormat';
+import {
+    shiftPatternBadgeClass,
+    formatOvertimeRounded,
+    overtimeTooltip,
+    formatBreakTotalLabel,
+    breaksHasTooltip,
+    formatBreaksTooltip,
+} from '@/utils/attendanceHistoryDisplay';
+import ShiftUnavailableHint from '@/Components/Attendance/ShiftUnavailableHint.vue';
 
 const props = defineProps({
     records: Object,
@@ -176,3 +232,19 @@ function batchReject() {
     router.post(route('attendance.approvals.batch-reject'), { ids: selectedIds.value });
 }
 </script>
+
+<style scoped>
+.history-table .th-cell,
+.history-table .td-cell {
+    @apply px-4 py-3 text-left text-sm border-b border-gray-100 sm:px-5 sm:py-3.5;
+}
+.history-table thead .th-cell {
+    @apply font-semibold text-gray-700 border-b border-gray-200 bg-gray-50;
+}
+.history-table thead .th-cell-checkbox {
+    @apply w-10 px-2 py-3 text-center align-middle font-semibold text-gray-700 border-b border-gray-200 bg-gray-50;
+}
+.history-table tbody .td-cell-checkbox {
+    @apply w-10 px-2 py-3 text-center align-middle border-b border-gray-100 bg-white;
+}
+</style>

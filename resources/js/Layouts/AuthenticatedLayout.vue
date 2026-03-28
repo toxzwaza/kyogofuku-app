@@ -133,7 +133,9 @@ const menuItems = [
                                         type="button"
                                         :class="[
                                             'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out cursor-pointer',
-                                            route().current('attendance.*') || route().current('admin.attendance.*')
+                                            route().current('attendance.*') ||
+                                            route().current('admin.attendance.*') ||
+                                            route().current('admin.work-attributes.*')
                                                 ? 'theme-active-link'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
                                         ]"
@@ -187,6 +189,46 @@ const menuItems = [
                                                 ]"
                                             >
                                                 勤怠管理一覧
+                                            </Link>
+                                            <Link
+                                                v-if="$page.props.auth?.user?.isAttendanceManager"
+                                                :href="route('admin.work-attributes.index')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('admin.work-attributes.*') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                勤務属性マスタ
+                                            </Link>
+                                            <Link
+                                                v-if="$page.props.auth?.user?.isAttendanceManager"
+                                                :href="route('admin.attendance.company-calendar.index')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('admin.attendance.company-calendar.*') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                会社カレンダー
+                                            </Link>
+                                            <Link
+                                                v-if="$page.props.auth?.user?.isAttendanceManager"
+                                                :href="route('admin.attendance.payroll-settings.edit')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('admin.attendance.payroll-settings.*') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                給与計算閾値
+                                            </Link>
+                                            <Link
+                                                v-if="$page.props.auth?.user?.isAttendanceManager"
+                                                :href="route('admin.attendance.payroll-simulator.index')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('admin.attendance.payroll-simulator.*') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                給与計算シミュレーター
                                             </Link>
                                         </div>
                                     </div>
@@ -361,6 +403,38 @@ const menuItems = [
                         </ResponsiveNavLink>
                         <ResponsiveNavLink v-if="$page.props.auth?.user?.canManageAttendance" :href="route('admin.attendance.index')" :active="route().current('admin.attendance.index')" class="pl-8">
                             勤怠管理一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth?.user?.isAttendanceManager"
+                            :href="route('admin.work-attributes.index')"
+                            :active="route().current('admin.work-attributes.*')"
+                            class="pl-8"
+                        >
+                            勤務属性マスタ
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth?.user?.isAttendanceManager"
+                            :href="route('admin.attendance.company-calendar.index')"
+                            :active="route().current('admin.attendance.company-calendar.*')"
+                            class="pl-8"
+                        >
+                            会社カレンダー
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth?.user?.isAttendanceManager"
+                            :href="route('admin.attendance.payroll-settings.edit')"
+                            :active="route().current('admin.attendance.payroll-settings.*')"
+                            class="pl-8"
+                        >
+                            給与計算閾値
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth?.user?.isAttendanceManager"
+                            :href="route('admin.attendance.payroll-simulator.index')"
+                            :active="route().current('admin.attendance.payroll-simulator.*')"
+                            class="pl-8"
+                        >
+                            給与計算シミュレーター
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*') && !route().current('admin.venues.*') && !route().current('admin.slideshows.*')">
                             イベント管理

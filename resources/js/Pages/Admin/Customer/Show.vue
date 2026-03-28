@@ -213,6 +213,48 @@
                             </div>
                         </div>
 
+                        <!-- 成人式情報セクション -->
+                        <div class="mb-6">
+                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                </svg>
+                                成人式情報
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">仕度会場（推奨）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.seijin_preparation_venue || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">時間（推奨）</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.seijin_preparation_time || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">他店お支度</label>
+                                    <p class="text-base font-medium text-gray-900">{{ customer.other_store_preparation ? 'あり' : 'なし' }}</p>
+                                </div>
+                                <template v-if="customer.other_store_preparation">
+                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">美容室名（推奨）</label>
+                                        <p class="text-base font-medium text-gray-900">{{ customer.other_store_salon_name || '-' }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">住所</label>
+                                        <p class="text-base font-medium text-gray-900">{{ customer.other_store_salon_address || '-' }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">電話番号</label>
+                                        <p class="text-base font-medium text-gray-900">{{ customer.other_store_salon_phone || '-' }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">着物発送日</label>
+                                        <p class="text-base font-medium text-gray-900">{{ customer.kimono_ship_date ? formatDate(customer.kimono_ship_date) : '-' }}</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
                         <!-- 連絡先情報セクション -->
                         <div class="mb-6">
                             <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
@@ -633,15 +675,45 @@
                                 :key="cc.id"
                                 class="border border-gray-200 rounded-lg p-4 bg-gray-50/50"
                             >
-                                <div class="flex justify-between items-start">
-                                    <div>
+                                <div class="flex justify-between items-start gap-3">
+                                    <div class="min-w-0 flex-1">
                                         <p class="font-medium text-gray-900">{{ (cc.constraint_template || cc.constraintTemplate)?.name || '制約' }}</p>
                                         <p class="text-sm text-gray-500 mt-1">
                                             署名日: {{ cc.signed_at ? formatDate(cc.signed_at) : '-' }}
                                             <span v-if="cc.explainer_user || cc.explainerUser" class="ml-3">規約説明者: {{ (cc.explainer_user || cc.explainerUser)?.name }}</span>
                                         </p>
+                                        <div
+                                            v-if="cc.attachment_url"
+                                            class="mt-2 flex flex-wrap items-center gap-3"
+                                        >
+                                            <a
+                                                v-if="isConstraintAttachmentPdf(cc)"
+                                                :href="cc.attachment_url"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                                            >
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                </svg>
+                                                {{ cc.attachment_original_name || 'PDFを開く' }}
+                                            </a>
+                                            <a
+                                                v-else
+                                                :href="cc.attachment_url"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="block"
+                                            >
+                                                <img
+                                                    :src="cc.attachment_url"
+                                                    :alt="cc.attachment_original_name || '添付画像'"
+                                                    class="h-20 max-w-[200px] object-contain border border-gray-200 rounded bg-white"
+                                                />
+                                            </a>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-col items-end gap-2 shrink-0">
                                         <img
                                             v-if="cc.signature_image"
                                             :src="cc.signature_image"
@@ -977,7 +1049,7 @@
                             <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            顧客基本情報編集
+                            顧客情報編集
                         </h3>
                         <button
                             @click="showEditCustomerModal = false"
@@ -993,6 +1065,14 @@
                     <form @submit.prevent="updateCustomer" class="overflow-y-auto flex-1 px-6 py-5">
                         <div class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        基本情報
+                                    </p>
+                                </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         顧客名 <span class="text-red-500">*</span>
@@ -1075,35 +1155,131 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        電話番号
-                                    </label>
-                                    <input
-                                        v-model="customerForm.phone_number"
-                                        type="tel"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                    />
+                                <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                        </svg>
+                                        成人式情報
+                                    </p>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                                仕度会場（推奨）
+                                            </label>
+                                            <input
+                                                v-model="customerForm.seijin_preparation_venue"
+                                                type="text"
+                                                list="seijin-preparation-venue-datalist-customer-show"
+                                                autocomplete="off"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            />
+                                            <datalist id="seijin-preparation-venue-datalist-customer-show">
+                                                <option
+                                                    v-for="v in SEIJIN_PREPARATION_VENUE_OPTIONS"
+                                                    :key="v"
+                                                    :value="v"
+                                                />
+                                            </datalist>
+                                        </div>
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                                時間（推奨）
+                                            </label>
+                                            <input
+                                                v-model="customerForm.seijin_preparation_time"
+                                                type="text"
+                                                placeholder="例) 10:00"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            />
+                                        </div>
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                            <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                                                <input
+                                                    v-model="customerForm.other_store_preparation"
+                                                    type="checkbox"
+                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                他店お支度
+                                            </label>
+                                        </div>
+                                        <div
+                                            class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity"
+                                            :class="{ 'opacity-50': !customerForm.other_store_preparation }"
+                                        >
+                                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                                    美容室名（推奨）
+                                                </label>
+                                                <input
+                                                    v-model="customerForm.other_store_salon_name"
+                                                    type="text"
+                                                    list="other-store-salon-name-datalist-customer-show"
+                                                    autocomplete="off"
+                                                    :disabled="!customerForm.other_store_preparation"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                />
+                                                <datalist id="other-store-salon-name-datalist-customer-show">
+                                                    <option
+                                                        v-for="n in otherStoreSalonNameOptions"
+                                                        :key="n"
+                                                        :value="n"
+                                                    />
+                                                </datalist>
+                                            </div>
+                                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                                    着物発送日
+                                                </label>
+                                                <input
+                                                    v-model="customerForm.kimono_ship_date"
+                                                    type="date"
+                                                    :disabled="!customerForm.other_store_preparation"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        郵便番号
-                                    </label>
-                                    <input
-                                        v-model="customerForm.postal_code"
-                                        type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                    />
-                                </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        住所
-                                    </label>
-                                    <input
-                                        v-model="customerForm.address"
-                                        type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                    />
+                                <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                        連絡先情報
+                                    </p>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                                電話番号
+                                            </label>
+                                            <input
+                                                v-model="customerForm.phone_number"
+                                                type="tel"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            />
+                                        </div>
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                                郵便番号
+                                            </label>
+                                            <input
+                                                v-model="customerForm.postal_code"
+                                                type="text"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            />
+                                        </div>
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                                住所
+                                            </label>
+                                            <input
+                                                v-model="customerForm.address"
+                                                type="text"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -1531,7 +1707,37 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-xs text-gray-500">※「準備完了」をクリックすると、署名用ページに移動します。署名はそちらで行います。</p>
+                                <p v-if="constraintAttachmentFile" class="text-xs text-gray-500">
+                                    ※ファイルを選択した場合は「アップロード」で書面を登録します（署名用ページには進みません）。
+                                </p>
+                                <p v-else class="text-xs text-gray-500">
+                                    ※「準備完了」をクリックすると、署名用ページに移動します。署名はそちらで行います。
+                                </p>
+                            </div>
+
+                            <!-- 添付ファイル（任意・署名準備情報の下） -->
+                            <div class="border-t pt-6 space-y-3">
+                                <h4 class="text-sm font-semibold text-gray-700">添付ファイル（任意）</h4>
+                                <p class="text-xs text-gray-500">
+                                    署名済み書面のスキャン（画像・PDF）をあらかじめお持ちの場合はここで登録できます。
+                                </p>
+                                <input
+                                    ref="constraintAttachmentInputRef"
+                                    type="file"
+                                    accept="image/*,.pdf,application/pdf"
+                                    class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                    @change="onConstraintAttachmentChange"
+                                />
+                                <p v-if="constraintAttachmentFile" class="text-xs text-gray-600">
+                                    選択中: {{ constraintAttachmentFile.name }}
+                                    <button
+                                        type="button"
+                                        class="ml-2 text-indigo-600 hover:underline"
+                                        @click="clearConstraintAttachmentFile"
+                                    >
+                                        クリア
+                                    </button>
+                                </p>
                             </div>
                         </div>
                         <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
@@ -1540,13 +1746,138 @@
                             </button>
                             <button
                                 type="button"
-                                @click="goToConstraintSignPage"
+                                @click="constraintPrimaryAction"
                                 :disabled="!selectedConstraintTemplate"
                                 class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                準備完了
+                                {{ constraintPrimaryButtonLabel }}
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 制約添付の確認・編集モーダル -->
+        <transition name="modal">
+            <div
+                v-if="showConstraintFileEditModal"
+                class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+                @click.self="closeConstraintFileEditModal"
+            >
+                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-gray-900">制約添付の確認・編集</h3>
+                        <button
+                            type="button"
+                            @click="closeConstraintFileEditModal"
+                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div v-if="constraintFileEditTarget" class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+                        <p class="text-sm text-gray-700">
+                            <span class="font-medium">{{ (constraintFileEditTarget.constraint_template || constraintFileEditTarget.constraintTemplate)?.name || '制約' }}</span>
+                        </p>
+                        <div v-if="constraintFileEditTarget.attachment_url" class="rounded-lg border border-gray-200 p-4 bg-gray-50">
+                            <p class="text-xs font-medium text-gray-500 mb-2">現在の添付</p>
+                            <a
+                                v-if="isConstraintAttachmentPdf(constraintFileEditTarget)"
+                                :href="constraintFileEditTarget.attachment_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-sm text-indigo-600 hover:underline"
+                            >
+                                {{ constraintFileEditTarget.attachment_original_name || 'PDFを開く' }}
+                            </a>
+                            <a
+                                v-else
+                                :href="constraintFileEditTarget.attachment_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-block"
+                            >
+                                <img
+                                    :src="constraintFileEditTarget.attachment_url"
+                                    alt="添付"
+                                    class="max-h-40 max-w-full object-contain rounded border bg-white"
+                                />
+                            </a>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">署名日</label>
+                                <input
+                                    v-model="constraintFileEditForm.signed_at"
+                                    type="date"
+                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                />
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者（店舗）</label>
+                                    <select
+                                        v-model="constraintFileEditShopId"
+                                        @change="onConstraintFileEditShopChange"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    >
+                                        <option value="">店舗を選択</option>
+                                        <option v-for="s in constraintFileEditModalShops" :key="s.id" :value="s.id">{{ s.name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者（スタッフ）</label>
+                                    <select
+                                        v-model="constraintFileEditForm.explainer_user_id"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        :disabled="!constraintFileEditShopId"
+                                    >
+                                        <option :value="null">{{ constraintFileEditShopId ? 'スタッフを選択' : 'まず店舗を選択' }}</option>
+                                        <option v-for="u in constraintFileEditStaff" :key="u.id" :value="u.id">{{ u.name }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">添付ファイルを差し替え（任意）</label>
+                            <input
+                                ref="constraintFileEditAttachmentInputRef"
+                                type="file"
+                                accept="image/*,.pdf,application/pdf"
+                                class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700"
+                                @change="onConstraintFileEditAttachmentChange"
+                            />
+                            <p v-if="constraintFileEditNewFile" class="text-xs text-gray-600 mt-1">新規: {{ constraintFileEditNewFile.name }}</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                            <button
+                                type="button"
+                                @click="goToConstraintSignFromFileEdit"
+                                class="px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+                            >
+                                署名ページで編集
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+                        <button
+                            type="button"
+                            @click="closeConstraintFileEditModal"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-white"
+                        >
+                            キャンセル
+                        </button>
+                        <button
+                            type="button"
+                            @click="submitConstraintFileEdit"
+                            :disabled="constraintFileEditSubmitting"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                            {{ constraintFileEditSubmitting ? '更新中…' : '更新' }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2173,6 +2504,7 @@ import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Canvas, FabricImage, PencilBrush } from 'fabric';
 import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue';
+import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 
 const props = defineProps({
     customer: Object,
@@ -2190,6 +2522,10 @@ const props = defineProps({
     userShops: Array,
     customerTags: Array,
     constraintTemplates: Array,
+    otherStoreSalonNameOptions: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const page = usePage();
@@ -2288,11 +2624,28 @@ const customerForm = useForm({
     birth_date: props.customer.birth_date || '',
     coming_of_age_year: props.customer.coming_of_age_year || null,
     ceremony_area_id: props.customer.ceremony_area_id || null,
+    seijin_preparation_venue: props.customer.seijin_preparation_venue || '',
+    seijin_preparation_time: props.customer.seijin_preparation_time || '',
+    other_store_preparation: Boolean(props.customer.other_store_preparation),
+    other_store_salon_name: props.customer.other_store_salon_name || '',
+    kimono_ship_date: props.customer.kimono_ship_date
+        ? String(props.customer.kimono_ship_date).slice(0, 10)
+        : '',
     phone_number: props.customer.phone_number || '',
     postal_code: props.customer.postal_code || '',
     address: props.customer.address || '',
     remarks: props.customer.remarks || '',
 });
+
+watch(
+    () => customerForm.other_store_preparation,
+    (on) => {
+        if (!on) {
+            customerForm.other_store_salon_name = '';
+            customerForm.kimono_ship_date = '';
+        }
+    },
+);
 
 // 制約テンプレート・顧客制約
 const constraintForm = useForm({
@@ -2320,6 +2673,211 @@ const constraintModalShops = computed(() => {
 
 const constraintExplainerShopId = ref('');
 const constraintModalStaff = ref([]);
+
+const constraintAttachmentInputRef = ref(null);
+const constraintAttachmentFile = ref(null);
+const constraintPrimaryButtonLabel = computed(() =>
+    constraintAttachmentFile.value ? 'アップロード' : '準備完了'
+);
+
+const isConstraintAttachmentPdf = (cc) => {
+    const n = (cc?.attachment_original_name || '').toLowerCase();
+    return n.endsWith('.pdf');
+};
+
+const onConstraintAttachmentChange = (e) => {
+    const f = e.target.files?.[0];
+    constraintAttachmentFile.value = f || null;
+};
+
+const clearConstraintAttachmentFile = () => {
+    constraintAttachmentFile.value = null;
+    if (constraintAttachmentInputRef.value) {
+        constraintAttachmentInputRef.value.value = '';
+    }
+};
+
+const submitConstraintWithAttachment = () => {
+    if (!constraintForm.constraint_template_id || !constraintAttachmentFile.value) return;
+    const fd = new FormData();
+    fd.append('constraint_template_id', String(constraintForm.constraint_template_id));
+    fd.append('signed_at', constraintForm.signed_at || '');
+    if (constraintForm.explainer_user_id) {
+        fd.append('explainer_user_id', String(constraintForm.explainer_user_id));
+    }
+    fd.append('check_values', JSON.stringify(constraintForm.check_values || {}));
+    fd.append('attachment', constraintAttachmentFile.value);
+    router.post(route('admin.customers.constraints.store', props.customer.id), fd, {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            closeConstraintModal();
+            clearConstraintAttachmentFile();
+        },
+    });
+};
+
+const constraintPrimaryAction = () => {
+    if (constraintAttachmentFile.value) {
+        submitConstraintWithAttachment();
+    } else {
+        goToConstraintSignPage();
+    }
+};
+
+const showConstraintFileEditModal = ref(false);
+const constraintFileEditTarget = ref(null);
+const constraintFileEditForm = reactive({
+    signed_at: '',
+    explainer_user_id: null,
+});
+const constraintFileEditShopId = ref('');
+const constraintFileEditStaff = ref([]);
+const constraintFileEditNewFile = ref(null);
+const constraintFileEditAttachmentInputRef = ref(null);
+const constraintFileEditSubmitting = ref(false);
+
+const constraintFileEditModalShops = computed(() => {
+    const cc = constraintFileEditTarget.value;
+    if (!cc) return [];
+    const tid = cc.constraint_template_id ?? cc.constraintTemplate?.id;
+    const tpl = constraintTemplatesList.value.find((t) => t.id == tid);
+    return tpl?.shops ?? [];
+});
+
+const loadConstraintFileEditStaff = async (shopId) => {
+    if (!shopId) {
+        constraintFileEditStaff.value = [];
+        constraintFileEditForm.explainer_user_id = null;
+        return;
+    }
+    try {
+        const response = await axios.get(route('admin.schedules.shop-users'), {
+            params: { shop_id: shopId },
+        });
+        constraintFileEditStaff.value = response.data || [];
+        if (
+            constraintFileEditForm.explainer_user_id &&
+            !constraintFileEditStaff.value.some((u) => u.id === constraintFileEditForm.explainer_user_id)
+        ) {
+            constraintFileEditForm.explainer_user_id = null;
+        }
+    } catch {
+        constraintFileEditStaff.value = [];
+        constraintFileEditForm.explainer_user_id = null;
+    }
+};
+
+const onConstraintFileEditShopChange = () => {
+    loadConstraintFileEditStaff(constraintFileEditShopId.value);
+};
+
+const onConstraintFileEditAttachmentChange = (e) => {
+    const f = e.target.files?.[0];
+    constraintFileEditNewFile.value = f || null;
+};
+
+const closeConstraintFileEditModal = () => {
+    showConstraintFileEditModal.value = false;
+    constraintFileEditTarget.value = null;
+    constraintFileEditNewFile.value = null;
+    constraintFileEditShopId.value = '';
+    constraintFileEditStaff.value = [];
+    if (constraintFileEditAttachmentInputRef.value) {
+        constraintFileEditAttachmentInputRef.value.value = '';
+    }
+};
+
+const openConstraintFileEditModal = async (cc) => {
+    constraintFileEditTarget.value = cc;
+    const signedAt = cc.signed_at
+        ? typeof cc.signed_at === 'string'
+            ? cc.signed_at.split('T')[0]
+            : cc.signed_at
+        : getTodayDateString();
+    constraintFileEditForm.signed_at = signedAt;
+    constraintFileEditForm.explainer_user_id = cc.explainer_user_id ?? cc.explainerUserId ?? null;
+    constraintFileEditNewFile.value = null;
+    if (constraintFileEditAttachmentInputRef.value) {
+        constraintFileEditAttachmentInputRef.value.value = '';
+    }
+
+    constraintFileEditShopId.value = '';
+    constraintFileEditStaff.value = [];
+    const explainerId = constraintFileEditForm.explainer_user_id;
+    const shops = constraintFileEditModalShops.value;
+    if (explainerId && shops.length) {
+        for (const s of shops) {
+            await loadConstraintFileEditStaff(s.id);
+            if (constraintFileEditStaff.value.some((u) => u.id === explainerId)) {
+                constraintFileEditShopId.value = s.id;
+                break;
+            }
+        }
+        if (constraintFileEditShopId.value) {
+            await loadConstraintFileEditStaff(constraintFileEditShopId.value);
+        }
+    }
+
+    showConstraintFileEditModal.value = true;
+};
+
+const submitConstraintFileEdit = () => {
+    const cc = constraintFileEditTarget.value;
+    if (!cc?.id) return;
+    constraintFileEditSubmitting.value = true;
+    const fd = new FormData();
+    fd.append('_method', 'PUT');
+    fd.append('signed_at', constraintFileEditForm.signed_at || '');
+    if (constraintFileEditForm.explainer_user_id) {
+        fd.append('explainer_user_id', String(constraintFileEditForm.explainer_user_id));
+    }
+    const cv = cc.check_values ?? cc.checkValues ?? {};
+    fd.append('check_values', JSON.stringify(typeof cv === 'object' && cv !== null ? cv : {}));
+    fd.append('return_to', 'show');
+    if (constraintFileEditNewFile.value) {
+        fd.append('attachment', constraintFileEditNewFile.value);
+    }
+    router.post(
+        route('admin.customers.constraints.update', {
+            customer: props.customer.id,
+            customerConstraint: cc.id,
+        }),
+        fd,
+        {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => {
+                constraintFileEditSubmitting.value = false;
+            },
+            onSuccess: () => {
+                closeConstraintFileEditModal();
+            },
+        }
+    );
+};
+
+const goToConstraintSignFromFileEdit = () => {
+    const cc = constraintFileEditTarget.value;
+    if (!cc) return;
+    const tplId = cc.constraint_template_id ?? cc.constraintTemplate?.id ?? cc.constraintTemplateId;
+    const checkValues = cc.check_values || cc.checkValues || {};
+    const signedAt = cc.signed_at
+        ? typeof cc.signed_at === 'string'
+            ? cc.signed_at.split('T')[0]
+            : cc.signed_at
+        : getTodayDateString();
+    const explainerId = cc.explainer_user_id ?? cc.explainerUserId ?? '';
+    closeConstraintFileEditModal();
+    const params = new URLSearchParams({
+        template_id: tplId,
+        signed_at: signedAt,
+        explainer_user_id: explainerId || '',
+        check_values: JSON.stringify(checkValues),
+        edit_id: cc.id,
+    });
+    router.visit(route('admin.customers.constraints.sign', props.customer.id) + '?' + params.toString());
+};
 
 const loadConstraintExplainerStaff = async (shopId) => {
     if (!shopId) {
@@ -2792,6 +3350,13 @@ const openEditCustomerModal = () => {
     customerForm.birth_date = props.customer.birth_date || '';
     customerForm.coming_of_age_year = props.customer.coming_of_age_year || null;
     customerForm.ceremony_area_id = props.customer.ceremony_area_id || null;
+    customerForm.seijin_preparation_venue = props.customer.seijin_preparation_venue || '';
+    customerForm.seijin_preparation_time = props.customer.seijin_preparation_time || '';
+    customerForm.other_store_preparation = Boolean(props.customer.other_store_preparation);
+    customerForm.other_store_salon_name = props.customer.other_store_salon_name || '';
+    customerForm.kimono_ship_date = props.customer.kimono_ship_date
+        ? String(props.customer.kimono_ship_date).slice(0, 10)
+        : '';
     customerForm.phone_number = props.customer.phone_number || '';
     customerForm.postal_code = props.customer.postal_code || '';
     customerForm.address = props.customer.address || '';
@@ -2839,10 +3404,15 @@ const openAddConstraintModal = () => {
     constraintForm.signature_image = null;
     constraintExplainerShopId.value = '';
     constraintModalStaff.value = [];
+    clearConstraintAttachmentFile();
     showConstraintModal.value = true;
 };
 
 const openEditConstraintModal = (cc) => {
+    if (cc.attachment_url || cc.attachment_path) {
+        openConstraintFileEditModal(cc);
+        return;
+    }
     // 編集時は署名ページへ直接遷移
     const tplId = cc.constraint_template_id ?? cc.constraintTemplateId;
     const checkValues = cc.check_values || cc.checkValues || {};
@@ -2863,6 +3433,7 @@ const openEditConstraintModal = (cc) => {
 const closeConstraintModal = () => {
     showConstraintModal.value = false;
     editingConstraint.value = null;
+    clearConstraintAttachmentFile();
 };
 
 const goToConstraintSignPage = () => {

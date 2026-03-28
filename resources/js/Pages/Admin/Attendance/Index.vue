@@ -104,6 +104,10 @@
                                         <th class="px-4 py-2 text-left font-medium text-gray-700">ステータス</th>
                                         <th class="px-4 py-2 text-left font-medium text-gray-700">出勤</th>
                                         <th class="px-4 py-2 text-left font-medium text-gray-700">退勤</th>
+                                        <th class="px-4 py-2 text-left font-medium text-gray-700">ベース開始</th>
+                                        <th class="px-4 py-2 text-left font-medium text-gray-700">ベース終了</th>
+                                        <th class="px-4 py-2 text-left font-medium text-gray-700">業務開始(給与)</th>
+                                        <th class="px-4 py-2 text-left font-medium text-gray-700">残業(丸め)</th>
                                         <th class="px-4 py-2 text-left font-medium text-gray-700">休憩</th>
                                         <th class="px-4 py-2 text-left font-medium text-gray-700 w-20">操作</th>
                                     </tr>
@@ -118,13 +122,17 @@
                                         </td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.clock_in_at) }}</td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.clock_out_at) }}</td>
+                                        <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_start_at) }}</td>
+                                        <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_end_at) }}</td>
+                                        <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
+                                        <td class="px-4 py-2">{{ formatOvertimeRounded(r.payroll?.overtime_minutes_rounded) }}</td>
                                         <td class="px-4 py-2">{{ formatBreaks(r.breaks) }}</td>
                                         <td class="px-4 py-2">
                                             <button type="button" @click="openEditModal(r)" class="text-indigo-600 hover:text-indigo-800 text-sm">編集</button>
                                         </td>
                                     </tr>
                                     <tr v-if="!records.data || records.data.length === 0">
-                                        <td colspan="8" class="px-4 py-8 text-center text-gray-500">データがありません</td>
+                                        <td colspan="12" class="px-4 py-8 text-center text-gray-500">データがありません</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -157,6 +165,10 @@
                                                     <th class="px-4 py-2 text-left font-medium text-gray-700">ステータス</th>
                                                     <th class="px-4 py-2 text-left font-medium text-gray-700">出勤</th>
                                                     <th class="px-4 py-2 text-left font-medium text-gray-700">退勤</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">ベース開始</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">ベース終了</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">業務開始(給与)</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">残業(丸め)</th>
                                                     <th class="px-4 py-2 text-left font-medium text-gray-700">休憩</th>
                                                     <th class="px-4 py-2 text-left font-medium text-gray-700 w-20">操作</th>
                                                 </tr>
@@ -170,6 +182,10 @@
                                                     </td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.clock_in_at) }}</td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.clock_out_at) }}</td>
+                                                    <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_start_at) }}</td>
+                                                    <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_end_at) }}</td>
+                                                    <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
+                                                    <td class="px-4 py-2">{{ formatOvertimeRounded(r.payroll?.overtime_minutes_rounded) }}</td>
                                                     <td class="px-4 py-2">{{ formatBreaks(r.breaks) }}</td>
                                                     <td class="px-4 py-2">
                                                         <button type="button" @click="openEditModal(r)" class="text-indigo-600 hover:text-indigo-800 text-sm">編集</button>
@@ -239,6 +255,11 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatTimeJa, formatDateJa, formatDateJaWithWeekday } from '@/utils/dateFormat';
+
+function formatOvertimeRounded(val) {
+    if (val === null || val === undefined) return '-';
+    return `${val}分`;
+}
 
 const props = defineProps({
     records: Object,

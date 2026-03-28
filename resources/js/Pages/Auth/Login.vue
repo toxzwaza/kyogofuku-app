@@ -69,7 +69,7 @@
                                 <option
                                     v-for="shop in shops"
                                     :key="shop.id"
-                                    :value="shop.id"
+                                    :value="String(shop.id)"
                                 >
                                     {{ shop.name }}
                                 </option>
@@ -92,7 +92,7 @@
                                 <option
                                     v-for="user in selectedShopUsers"
                                     :key="user.id"
-                                    :value="user.id"
+                                    :value="String(user.id)"
                                 >
                                     {{ user.name }}
                                 </option>
@@ -189,17 +189,6 @@ import { computed, onMounted, watch } from 'vue';
 
 const page = usePage();
 
-// デバッグ: 受け取った props をコンソールに出力
-const debugLog = (label, data) => {
-    console.log('[Login Debug]', label, data);
-};
-if (typeof window !== 'undefined') {
-    debugLog('page.props 全体', JSON.parse(JSON.stringify(page.props)));
-    debugLog('page.props.shops (生)', page.props.shops);
-    debugLog('page.props.shops の型', typeof page.props.shops);
-    debugLog('Array.isArray(page.props.shops)', Array.isArray(page.props.shops));
-}
-
 // Inertia の page.props から取得し、必ず配列に正規化する
 const shops = computed(() => {
     const raw = page.props.shops;
@@ -231,14 +220,6 @@ const selectedShopUsers = computed(() => {
     return [];
 });
 
-// デバッグ: 店舗選択時に selectedShopUsers を出力
-watch(
-    () => form.shop_id,
-    (newShopId) => {
-        debugLog('watch shop_id - 変更後', { shop_id: newShopId, selectedShopUsers: selectedShopUsers.value });
-    }
-);
-
 // 店舗変更時、選択中のユーザーがその店舗にいなければ user_id をクリア
 watch(
     () => form.shop_id,
@@ -255,21 +236,6 @@ watch(
 const STORAGE_KEY = 'kyogofuku_last_login';
 
 onMounted(() => {
-    // デバッグ: 正規化後の shops と選択肢
-    debugLog('onMounted - shops (正規化後)', shops.value);
-    debugLog('onMounted - shops 件数', shops.value.length);
-    shops.value.forEach((shop, i) => {
-        debugLog(`onMounted - shop[${i}]`, {
-            id: shop?.id,
-            name: shop?.name,
-            users: shop?.users,
-            usersIsArray: Array.isArray(shop?.users),
-            usersLength: Array.isArray(shop?.users) ? shop.users.length : '-',
-        });
-    });
-    debugLog('onMounted - form.shop_id', form.shop_id);
-    debugLog('onMounted - selectedShopUsers', selectedShopUsers.value);
-
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
@@ -281,8 +247,8 @@ onMounted(() => {
         const users = shop?.users;
         const userExists = Array.isArray(users) && users.some((u) => Number(u.id) === userId);
         if (shop && userExists) {
-            form.shop_id = shopId;
-            form.user_id = userId;
+            form.shop_id = String(shopId);
+            form.user_id = String(userId);
         }
     } catch {
         // 無効なJSONやデータは無視

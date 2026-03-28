@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
+            WorkAttributeSeeder::class,
             // イベント予約管理関連
             ShopSeeder::class,
             UserSeeder::class,

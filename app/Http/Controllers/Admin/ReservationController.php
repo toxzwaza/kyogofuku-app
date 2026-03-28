@@ -42,7 +42,12 @@ class ReservationController extends Controller
         $endDateStr = $endDate ? $endDate->format('Y-m-d') : null;
 
         // 予約クエリを作成
-        $reservationsQuery = EventReservation::with(['venue', 'statusUpdatedBy', 'schedule.participantUsers'])
+        $reservationsQuery = EventReservation::with([
+            'venue',
+            'statusUpdatedBy',
+            'schedule.participantUsers',
+            'customer.ceremonyArea',
+        ])
             ->where('event_id', $event->id);
 
         // 予約フォームの場合、開始日〜終了日の範囲で枠に紐づく予約のみ表示
@@ -115,6 +120,10 @@ class ReservationController extends Controller
                         ];
                     })->toArray(),
                 ] : null,
+                'admin_assignee' => $reservation->admin_assignee,
+                'entrance_ticket_send_status' => $reservation->entrance_ticket_send_status,
+                'customer_id' => $reservation->customer_id,
+                'ceremony_area_name' => $reservation->customer?->ceremonyArea?->name,
                 'cancel_flg' => $reservation->cancel_flg,
             ];
         });
@@ -183,7 +192,12 @@ class ReservationController extends Controller
             $timeslotsWithReservations = $timeslots->map(function ($timeslot) use ($event, &$totalReserved) {
                 // 予約を取得（会場IDと時間が一致するもののみ、表示用は全件）
                 $timeslotReservationsQuery = $event->reservations()
-                    ->with(['venue', 'statusUpdatedBy', 'schedule.participantUsers'])
+                    ->with([
+                        'venue',
+                        'statusUpdatedBy',
+                        'schedule.participantUsers',
+                        'customer.ceremonyArea',
+                    ])
                     ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
                 
                 // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
@@ -249,6 +263,10 @@ class ReservationController extends Controller
                                     ];
                                 })->toArray(),
                             ] : null,
+                            'admin_assignee' => $reservation->admin_assignee,
+                            'entrance_ticket_send_status' => $reservation->entrance_ticket_send_status,
+                            'customer_id' => $reservation->customer_id,
+                            'ceremony_area_name' => $reservation->customer?->ceremonyArea?->name,
                             'cancel_flg' => $reservation->cancel_flg,
                         ];
                     })->values(),
@@ -423,12 +441,41 @@ class ReservationController extends Controller
             }
         }
 
+        $reservationId = $reservation->id;
+        $noteIds = $reservation->notes()->pluck('id')->all();
+        $activityLogsQuery = ActivityLog::query()
+            ->with('user')
+            ->where(function ($q) use ($reservationId, $noteIds) {
+                $q->where(function ($q2) use ($reservationId) {
+                    $q2->where('resource_type', 'EventReservation')
+                        ->where('resource_id', $reservationId);
+                });
+                if ($noteIds !== []) {
+                    $q->orWhere(function ($q2) use ($noteIds) {
+                        $q2->where('resource_type', 'ReservationNote')
+                            ->whereIn('resource_id', $noteIds);
+                    });
+                }
+            })
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit(200);
+        $activityLogs = $activityLogsQuery->get()->map(function (ActivityLog $log) {
+            return [
+                'id' => $log->id,
+                'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                'description' => $log->description,
+                'operator_name' => $log->user?->name ?? '—',
+            ];
+        });
+
         return Inertia::render('Admin/Reservation/Show', [
             'reservation' => $reservation,
             'event' => $reservation->event,
             'indexFilters' => $indexFilters,
             'venues' => $reservation->event->venues()->where('is_active', true)->get(),
             'notes' => $reservation->notes()->with('user')->orderBy('created_at', 'desc')->get(),
+            'activity_logs' => $activityLogs,
             'schedule' => $reservation->schedule ? [
                 'id' => $reservation->schedule->id,
                 'title' => $reservation->schedule->title,
@@ -465,6 +512,7 @@ class ReservationController extends Controller
                     'name' => $shop->name,
                 ];
             }),
+            'assigneeDatalistOptions' => $this->assigneeDatalistOptionsForEvent($event),
         ]);
     }
 
@@ -780,6 +828,40 @@ class ReservationController extends Controller
     }
 
     /**
+     * 管理画面の担当者（表示名）を更新
+     */
+    public function updateAssignee(Request $request, EventReservation $reservation)
+    {
+        $validated = $request->validate([
+            'admin_assignee' => 'nullable|string|max:255',
+        ]);
+
+        $raw = $validated['admin_assignee'] ?? null;
+        $value = $raw === null ? null : trim($raw);
+        $reservation->update([
+            'admin_assignee' => $value === '' ? null : $value,
+        ]);
+
+        return redirect()->back()->with('success', '担当者を更新しました。');
+    }
+
+    /**
+     * 入場チケット送付ステータスを更新
+     */
+    public function updateEntranceTicketSendStatus(Request $request, EventReservation $reservation)
+    {
+        $validated = $request->validate([
+            'entrance_ticket_send_status' => 'required|in:未送付,送付済み',
+        ]);
+
+        $reservation->update([
+            'entrance_ticket_send_status' => $validated['entrance_ticket_send_status'],
+        ]);
+
+        return redirect()->back()->with('success', '入場チケット送付を更新しました。');
+    }
+
+    /**
      * 予約をスケジュールに追加
      */
     public function addToSchedule(Request $request, EventReservation $reservation)
@@ -1039,6 +1121,36 @@ class ReservationController extends Controller
         $rawEmail .= $textBody;
         
         return $rawEmail;
+    }
+
+    /**
+     * イベント開催店舗に所属するスタッフ名＋固定候補（担当者入力の datalist 用）
+     *
+     * @return list<string>
+     */
+    private function assigneeDatalistOptionsForEvent(Event $event): array
+    {
+        $shopIds = $event->shops()
+            ->where('shops.is_active', true)
+            ->pluck('shops.id')
+            ->all();
+
+        $names = [];
+        if ($shopIds !== []) {
+            $names = User::query()
+                ->whereHas('shops', function ($q) use ($shopIds) {
+                    $q->whereIn('shops.id', $shopIds);
+                })
+                ->orderBy('name')
+                ->pluck('name')
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        $fixed = ['岡F', '城東F', 'EF'];
+
+        return array_values(array_unique(array_merge($names, $fixed)));
     }
 
     /**

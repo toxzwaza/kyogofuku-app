@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceBreak;
+use App\Models\AttendancePayrollSetting;
 use App\Models\AttendanceRecord;
 use App\Models\Shop;
 use App\Models\User;
+use App\Services\AttendancePayrollTimeService;
 use App\Services\AttendanceScopeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -33,7 +35,11 @@ class AttendanceController extends Controller
         $from = $request->filled('from') ? $request->from : $defaultFrom;
         $to = $request->filled('to') ? $request->to : $defaultTo;
 
-        $query = AttendanceRecord::with(['user:id,name', 'shop:id,name', 'breaks']);
+        $query = AttendanceRecord::with([
+            'user:id,name,work_attribute_id',
+            'shop:id,name',
+            'breaks',
+        ]);
         $query = AttendanceScopeService::scopeForUser($query, $user);
 
         if ($request->filled('shop_id')) {
@@ -46,6 +52,17 @@ class AttendanceController extends Controller
         $query->whereDate('date', '<=', $to);
 
         $records = $query->orderBy('date')->orderBy('created_at')->get();
+
+        $payrollService = app(AttendancePayrollTimeService::class);
+        $patterns = $payrollService->loadCalendarPatternsBetween($from, $to);
+        $payrollSetting = AttendancePayrollSetting::query()->orderBy('id')->firstOrFail();
+
+        $enriched = $records->map(function (AttendanceRecord $r) use ($payrollService, $patterns, $payrollSetting) {
+            $arr = $r->toArray();
+            $arr['payroll'] = $payrollService->payrollPayloadForRecord($r, $patterns, $payrollSetting);
+
+            return $arr;
+        });
 
         $shopIds = $user->shops()->pluck('shops.id');
         $shops = $user->isAttendanceManager()
@@ -69,7 +86,7 @@ class AttendanceController extends Controller
         }
 
         return Inertia::render('Admin/Attendance/Index', [
-            'records' => ['data' => $records->values()->all()],
+            'records' => ['data' => $enriched->values()->all()],
             'shops' => $shops,
             'users' => $users,
             'usersByShop' => $usersByShop,
@@ -157,7 +174,11 @@ class AttendanceController extends Controller
         $from = $request->filled('from') ? $request->from : $defaultFrom;
         $to = $request->filled('to') ? $request->to : $defaultTo;
 
-        $query = AttendanceRecord::with(['user:id,name', 'shop:id,name', 'breaks']);
+        $query = AttendanceRecord::with([
+            'user:id,name,work_attribute_id',
+            'shop:id,name',
+            'breaks',
+        ]);
         $query = AttendanceScopeService::scopeForUser($query, $user);
 
         if ($request->filled('shop_id')) {
@@ -179,12 +200,29 @@ class AttendanceController extends Controller
             'approved' => '承認済',
         ];
 
+        $payrollService = app(AttendancePayrollTimeService::class);
+        $patterns = $payrollService->loadCalendarPatternsBetween($from, $to);
+        $payrollSetting = AttendancePayrollSetting::query()->orderBy('id')->firstOrFail();
+
         $filename = 'attendance_' . $now->format('YmdHis') . '.csv';
 
-        return new StreamedResponse(function () use ($records, $statusLabels) {
+        return new StreamedResponse(function () use ($records, $statusLabels, $payrollService, $patterns, $payrollSetting) {
             $stream = fopen('php://output', 'w');
             fprintf($stream, chr(0xEF) . chr(0xBB) . chr(0xBF));
-            fputcsv($stream, ['日付', 'ユーザー名', '店舗', 'ステータス', '出勤', '退勤', '休憩']);
+            fputcsv($stream, [
+                '日付',
+                'ユーザー名',
+                '店舗',
+                'ステータス',
+                '出勤_実打刻',
+                '退勤_実打刻',
+                '業務開始_給与用',
+                '業務終了_実績',
+                'ベース開始',
+                'ベース終了',
+                '残業_分_丸め後',
+                '休憩',
+            ]);
             foreach ($records as $r) {
                 $dateStr = $r->date ? $r->date->format('Y-m-d') : '';
                 $clockIn = $r->clock_in_at ? $r->clock_in_at->format('H:i') : '';
@@ -192,8 +230,22 @@ class AttendanceController extends Controller
                 $breaksStr = $r->breaks->map(function ($b) {
                     $s = $b->start_at ? $b->start_at->format('H:i') : '';
                     $e = $b->end_at ? $b->end_at->format('H:i') : '';
+
                     return $s . '-' . $e;
                 })->filter()->join(', ');
+
+                $pay = $payrollService->payrollPayloadForRecord($r, $patterns, $payrollSetting);
+                $fmt = function (?string $iso) {
+                    if (!$iso) {
+                        return '';
+                    }
+                    try {
+                        return Carbon::parse($iso)->format('H:i');
+                    } catch (\Throwable) {
+                        return '';
+                    }
+                };
+
                 fputcsv($stream, [
                     $dateStr,
                     $r->user->name ?? '',
@@ -201,6 +253,11 @@ class AttendanceController extends Controller
                     $statusLabels[$r->status] ?? $r->status,
                     $clockIn,
                     $clockOut,
+                    $fmt($pay['payroll_clock_in_at'] ?? null),
+                    $clockOut,
+                    $fmt($pay['base_start_at'] ?? null),
+                    $fmt($pay['base_end_at'] ?? null),
+                    $pay['overtime_minutes_rounded'] !== null ? (string) $pay['overtime_minutes_rounded'] : '',
                     $breaksStr,
                 ]);
             }

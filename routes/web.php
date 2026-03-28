@@ -23,6 +23,10 @@ use App\Http\Controllers\Admin\PhotoSlotController as AdminPhotoSlotController;
 use App\Http\Controllers\Admin\PhotoStudioController as AdminPhotoStudioController;
 use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
+use App\Http\Controllers\Admin\AttendancePayrollSettingController as AdminAttendancePayrollSettingController;
+use App\Http\Controllers\Admin\AttendancePayrollSimulatorController as AdminAttendancePayrollSimulatorController;
+use App\Http\Controllers\Admin\CompanyCalendarController as AdminCompanyCalendarController;
+use App\Http\Controllers\Admin\WorkAttributeController as AdminWorkAttributeController;
 use App\Http\Controllers\Admin\ConstraintTemplateController as AdminConstraintTemplateController;
 use App\Http\Controllers\Admin\SlideshowController as AdminSlideshowController;
 use App\Http\Controllers\LineWebhookController;
@@ -186,6 +190,8 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     
     // 予約ステータス管理
     Route::patch('/reservations/{reservation}/status', [AdminReservationController::class, 'updateStatus'])->name('reservations.status.update');
+    Route::patch('/reservations/{reservation}/assignee', [AdminReservationController::class, 'updateAssignee'])->name('reservations.assignee.update');
+    Route::patch('/reservations/{reservation}/entrance-ticket-send-status', [AdminReservationController::class, 'updateEntranceTicketSendStatus'])->name('reservations.entrance-ticket-send-status.update');
     
     // 予約スケジュール管理
     Route::post('/reservations/{reservation}/schedule', [AdminReservationController::class, 'addToSchedule'])->name('reservations.schedule.add');
@@ -224,6 +230,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // 顧客管理
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/search', [AdminCustomerController::class, 'search'])->name('customers.search');
+    Route::get('/customers/filters/seijin-options', [AdminCustomerController::class, 'seijinFilterOptions'])->name('customers.filters.seijin-options');
     Route::post('/customers', [AdminCustomerController::class, 'store'])->name('customers.store');
     Route::post('/customers/{customer}/notes', [AdminCustomerController::class, 'storeNote'])->name('customers.notes.store');
     Route::delete('/customers/notes/{note}', [AdminCustomerController::class, 'destroyNote'])->name('customers.notes.destroy');
@@ -308,7 +315,23 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // 勤怠管理（管理者・勤怠管理者）
     Route::get('/attendance', [AdminAttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/attendance/export-csv', [AdminAttendanceController::class, 'exportCsv'])->name('attendance.export-csv');
+
+    // 勤怠管理者のみ（{record} より前に定義 — さもないと company-calendar が attendance/{record} に吸われ POST が 405 になる）
+    Route::get('/attendance/company-calendar', [AdminCompanyCalendarController::class, 'index'])->name('attendance.company-calendar.index');
+    Route::post('/attendance/company-calendar', [AdminCompanyCalendarController::class, 'update'])->name('attendance.company-calendar.update');
+    Route::get('/attendance/payroll-settings', [AdminAttendancePayrollSettingController::class, 'edit'])->name('attendance.payroll-settings.edit');
+    Route::put('/attendance/payroll-settings', [AdminAttendancePayrollSettingController::class, 'update'])->name('attendance.payroll-settings.update');
+    Route::get('/attendance/payroll-simulator', [AdminAttendancePayrollSimulatorController::class, 'index'])->name('attendance.payroll-simulator.index');
+    Route::post('/attendance/payroll-simulator', [AdminAttendancePayrollSimulatorController::class, 'simulate'])->name('attendance.payroll-simulator.simulate');
+
     Route::put('/attendance/{record}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
+
+    Route::get('/work-attributes', [AdminWorkAttributeController::class, 'index'])->name('work-attributes.index');
+    Route::get('/work-attributes/create', [AdminWorkAttributeController::class, 'create'])->name('work-attributes.create');
+    Route::post('/work-attributes', [AdminWorkAttributeController::class, 'store'])->name('work-attributes.store');
+    Route::get('/work-attributes/{workAttribute}/edit', [AdminWorkAttributeController::class, 'edit'])->name('work-attributes.edit');
+    Route::put('/work-attributes/{workAttribute}', [AdminWorkAttributeController::class, 'update'])->name('work-attributes.update');
+    Route::delete('/work-attributes/{workAttribute}', [AdminWorkAttributeController::class, 'destroy'])->name('work-attributes.destroy');
 
     // 資料管理
     Route::post('/documents', [AdminEventController::class, 'storeDocument'])->name('documents.store');

@@ -76,6 +76,7 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名前</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">メールアドレス</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">テーマカラー</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">勤務属性</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所属店舗</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                     </tr>
@@ -96,6 +97,9 @@
                                             <span v-else class="text-gray-400">未設定</span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ user.work_attribute?.name ?? '—' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <span v-if="user.shops && user.shops.length > 0">
                                                 <span v-for="(shop, index) in user.shops" :key="shop.id">
                                                     {{ shop.name }}<span v-if="index < user.shops.length - 1">, </span>
@@ -111,7 +115,7 @@
                                         </td>
                                     </tr>
                                     <tr v-if="users.data.length === 0">
-                                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                                             スタッフが見つかりませんでした
                                         </td>
                                     </tr>

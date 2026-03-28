@@ -67,10 +67,12 @@
     </div>
 
     <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- 左側: 予約情報 -->
-          <div class="lg:col-span-2 space-y-4">
+      <div class="mx-auto sm:px-6 lg:px-8">
+        <div
+          class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start"
+        >
+          <!-- 左側: 予約情報（メイン・広め） -->
+          <div class="lg:col-span-6 space-y-4 min-w-0">
             <!-- キャンセル登録済みの表示（横いっぱい） -->
             <div
               v-if="reservation.cancel_flg"
@@ -694,8 +696,8 @@
             </div>
           </div>
 
-          <!-- 右側: ステータス・メモ機能 -->
-          <div class="lg:col-span-1">
+          <!-- 中央: ステータス・スケジュール等（右カラムと同幅） -->
+          <div class="lg:col-span-3 min-w-0">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
               <div class="p-6">
                 <!-- ステータス登録 -->
@@ -756,70 +758,110 @@
                   </form>
                 </div>
 
-                <h3 class="text-lg font-semibold mb-4">メモ</h3>
-
-                <!-- メモ登録フォーム -->
-                <form @submit.prevent="submitNote" class="mb-6">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                      >新しいメモ</label
+                <!-- 担当者（管理） -->
+                <div class="mb-6 pb-6 border-b border-gray-200">
+                  <h3 class="text-lg font-semibold mb-4">担当者</h3>
+                  <form @submit.prevent="submitAssignee">
+                    <label
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                      for="reservation-admin-assignee"
+                      >担当者</label
                     >
-                    <textarea
-                      v-model="noteForm.content"
-                      rows="4"
-                      required
+                    <input
+                      id="reservation-admin-assignee"
+                      v-model="assigneeForm.admin_assignee"
+                      type="text"
+                      list="reservation-assignee-options"
+                      autocomplete="off"
                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      placeholder="メモを入力してください"
-                    ></textarea>
+                      placeholder="名前を入力するか一覧から選択"
+                    />
+                    <datalist id="reservation-assignee-options">
+                      <option
+                        v-for="(opt, idx) in assigneeDatalistOptions"
+                        :key="`${opt}-${idx}`"
+                        :value="opt"
+                      />
+                    </datalist>
                     <div
-                      v-if="noteForm.errors.content"
+                      v-if="assigneeForm.errors.admin_assignee"
                       class="mt-1 text-sm text-red-600"
                     >
-                      {{ noteForm.errors.content }}
+                      {{ assigneeForm.errors.admin_assignee }}
                     </div>
-                  </div>
-                  <button
-                    type="submit"
-                    :disabled="noteForm.processing"
-                    class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
-                  >
-                    {{ noteForm.processing ? "登録中..." : "メモを追加" }}
-                  </button>
-                </form>
+                    <button
+                      type="submit"
+                      :disabled="assigneeForm.processing"
+                      class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                    >
+                      {{
+                        assigneeForm.processing
+                          ? "更新中..."
+                          : "保存担当者を更新"
+                      }}
+                    </button>
+                  </form>
+                </div>
 
-                <!-- メモ一覧 -->
-                <div class="space-y-4">
-                  <div
-                    v-for="note in notes"
-                    :key="note.id"
-                    class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
-                  >
-                    <div class="flex justify-between items-start mb-2">
-                      <div>
-                        <p class="text-sm font-medium text-gray-900">
-                          {{ note.user ? note.user.name : "不明" }}
-                        </p>
-                        <p class="text-xs text-gray-500">
-                          {{ formatDateTime(note.created_at) }}
-                        </p>
-                      </div>
-                      <button
-                        @click="deleteNote(note.id)"
-                        class="text-red-600 hover:text-red-900 text-sm"
+                <!-- 入場チケット送付 -->
+                <div class="mb-6 pb-6 border-b border-gray-200">
+                  <h3 class="text-lg font-semibold mb-4">入場チケット送付</h3>
+                  <div class="mb-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-600">現在のステータス:</span>
+                      <span
+                        :class="
+                          getEntranceTicketSendBadgeClass(
+                            reservation.entrance_ticket_send_status
+                          )
+                        "
+                        class="px-2 py-1 text-xs font-medium rounded-full"
                       >
-                        削除
-                      </button>
+                        {{
+                          reservation.entrance_ticket_send_status || "未送付"
+                        }}
+                      </span>
                     </div>
-                    <p class="text-sm text-gray-700 whitespace-pre-wrap">
-                      {{ note.content }}
-                    </p>
                   </div>
-                  <p
-                    v-if="notes.length === 0"
-                    class="text-sm text-gray-500 text-center py-4"
-                  >
-                    メモがありません
-                  </p>
+                  <form @submit.prevent="submitEntranceTicketSendStatus">
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1"
+                        >ステータス</label
+                      >
+                      <select
+                        v-model="entranceTicketSendForm.entrance_ticket_send_status"
+                        required
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="未送付">未送付</option>
+                        <option value="送付済み">送付済み</option>
+                      </select>
+                      <div
+                        v-if="
+                          entranceTicketSendForm.errors
+                            .entrance_ticket_send_status
+                        "
+                        class="mt-1 text-sm text-red-600"
+                      >
+                        {{
+                          entranceTicketSendForm.errors
+                            .entrance_ticket_send_status
+                        }}
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      :disabled="entranceTicketSendForm.processing"
+                      class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                    >
+                      {{
+                        entranceTicketSendForm.processing
+                          ? "更新中..."
+                          : "ステータスを更新"
+                      }}
+                    </button>
+                  </form>
                 </div>
 
                 <!-- スケジュール追加ブロック -->
@@ -1379,6 +1421,152 @@
               </div>
             </div>
           </div>
+
+          <!-- 右側: メモ・操作履歴（中央カラムと同幅） -->
+          <div class="lg:col-span-3 min-w-0">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+              <div class="p-6">
+                <div
+                  class="flex border-b border-gray-200 mb-4 -mt-1 gap-1"
+                  role="tablist"
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    :class="[
+                      'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
+                      rightPanelTab === 'memo'
+                        ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                    ]"
+                    :aria-selected="rightPanelTab === 'memo'"
+                    @click="rightPanelTab = 'memo'"
+                  >
+                    メモ ({{ notes.length }})
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    :class="[
+                      'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
+                      rightPanelTab === 'history'
+                        ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                    ]"
+                    :aria-selected="rightPanelTab === 'history'"
+                    @click="rightPanelTab = 'history'"
+                  >
+                    操作履歴 ({{ activityLogs.length }})
+                  </button>
+                </div>
+
+                <div v-show="rightPanelTab === 'memo'">
+                  <form @submit.prevent="submitNote" class="mb-6">
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1"
+                        >新しいメモ</label
+                      >
+                      <textarea
+                        v-model="noteForm.content"
+                        rows="4"
+                        required
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="メモを入力してください"
+                      ></textarea>
+                      <div
+                        v-if="noteForm.errors.content"
+                        class="mt-1 text-sm text-red-600"
+                      >
+                        {{ noteForm.errors.content }}
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      :disabled="noteForm.processing"
+                      class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                    >
+                      {{ noteForm.processing ? "登録中..." : "メモを追加" }}
+                    </button>
+                  </form>
+
+                  <div class="space-y-4">
+                    <div
+                      v-for="note in notes"
+                      :key="note.id"
+                      class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
+                    >
+                      <div class="flex justify-between items-start mb-2">
+                        <div>
+                          <p class="text-sm font-medium text-gray-900">
+                            {{ note.user ? note.user.name : "不明" }}
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            {{ formatDateTime(note.created_at) }}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          @click="deleteNote(note.id)"
+                          class="text-red-600 hover:text-red-900 text-sm"
+                        >
+                          削除
+                        </button>
+                      </div>
+                      <p class="text-sm text-gray-700 whitespace-pre-wrap">
+                        {{ note.content }}
+                      </p>
+                    </div>
+                    <p
+                      v-if="notes.length === 0"
+                      class="text-sm text-gray-500 text-center py-4"
+                    >
+                      メモがありません
+                    </p>
+                  </div>
+                </div>
+
+                <div v-show="rightPanelTab === 'history'">
+                  <div
+                    v-if="activityLogs.length === 0"
+                    class="text-sm text-gray-500 text-center py-8"
+                  >
+                    操作履歴がありません
+                  </div>
+                  <div v-else class="overflow-x-auto -mx-1">
+                    <table class="min-w-full text-sm">
+                      <thead>
+                        <tr
+                          class="border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wide"
+                        >
+                          <th class="py-2 pr-3 whitespace-nowrap">日時</th>
+                          <th class="py-2 pr-3">操作内容</th>
+                          <th class="py-2 whitespace-nowrap">操作者</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-gray-100">
+                        <tr
+                          v-for="log in activityLogs"
+                          :key="log.id"
+                          class="align-top"
+                        >
+                          <td class="py-2 pr-3 text-gray-600 whitespace-nowrap">
+                            {{ formatDateTime(log.created_at) }}
+                          </td>
+                          <td class="py-2 pr-3 text-gray-800 break-words">
+                            {{ log.description || "—" }}
+                          </td>
+                          <td class="py-2 text-gray-700 whitespace-nowrap">
+                            {{ log.operator_name }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1389,11 +1577,12 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
 import { formatDateTimeJa, formatDateJa } from "@/utils/dateFormat";
 
 const isRestoring = ref(false);
+const rightPanelTab = ref("memo");
 
 // 顧客紐づけ（デフォルト値: 未紐づけ時は予約者名、紐づけ済み時は変更で顧客名をセット）
 const showCustomerLinkSearch = ref(false);
@@ -1483,11 +1672,21 @@ const props = defineProps({
   currentUser: Object,
   userShops: Array,
   eventShops: Array,
+  assigneeDatalistOptions: {
+    type: Array,
+    default: () => [],
+  },
   indexFilters: {
     type: Object,
     default: () => ({}),
   },
+  activity_logs: {
+    type: Array,
+    default: () => [],
+  },
 });
+
+const activityLogs = computed(() => props.activity_logs ?? []);
 
 // 予約一覧への戻りURL（URLのクエリから絞り込みを取得し維持）
 const indexQueryFromUrl = ref("");
@@ -1559,17 +1758,67 @@ const statusForm = useForm({
   status: props.reservation.status || "未対応",
 });
 
+const assigneeForm = useForm({
+  admin_assignee: props.reservation.admin_assignee ?? "",
+});
+
+const entranceTicketSendForm = useForm({
+  entrance_ticket_send_status:
+    props.reservation.entrance_ticket_send_status ?? "未送付",
+});
+
+watch(
+  () => props.reservation?.admin_assignee,
+  (v) => {
+    assigneeForm.admin_assignee = v ?? "";
+  }
+);
+
+watch(
+  () => props.reservation?.entrance_ticket_send_status,
+  (v) => {
+    entranceTicketSendForm.entrance_ticket_send_status = v ?? "未送付";
+  }
+);
+
+const submitAssignee = () => {
+  assigneeForm.patch(
+    route("admin.reservations.assignee.update", props.reservation.id),
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        router.reload({ only: ["reservation", "activity_logs"] });
+      },
+    }
+  );
+};
+
 const updateStatus = () => {
   statusForm.patch(
     route("admin.reservations.status.update", props.reservation.id),
     {
       onSuccess: (page) => {
         // ステータス更新後、ページをリロードして最新の状態を取得
-        router.reload({ only: ["reservation"] });
+        router.reload({ only: ["reservation", "activity_logs"] });
         // 成功メッセージを表示
         if (page.props.success) {
           alert(page.props.success);
         }
+      },
+    }
+  );
+};
+
+const submitEntranceTicketSendStatus = () => {
+  entranceTicketSendForm.patch(
+    route(
+      "admin.reservations.entrance-ticket-send-status.update",
+      props.reservation.id
+    ),
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        router.reload({ only: ["reservation", "activity_logs"] });
       },
     }
   );
@@ -1581,6 +1830,7 @@ const noteForm = useForm({
 
 const submitNote = () => {
   noteForm.post(route("admin.reservations.notes.store", props.reservation.id), {
+    preserveScroll: true,
     onSuccess: () => {
       noteForm.reset();
     },
@@ -1589,7 +1839,9 @@ const submitNote = () => {
 
 const deleteNote = (noteId) => {
   if (confirm("このメモを削除しますか？")) {
-    router.delete(route("admin.reservations.notes.destroy", noteId));
+    router.delete(route("admin.reservations.notes.destroy", noteId), {
+      preserveScroll: true,
+    });
   }
 };
 
@@ -1602,6 +1854,13 @@ const getStatusBadgeClass = (status) => {
     キャンセル済み: "bg-red-100 text-red-800",
   };
   return classes[status] || "bg-gray-100 text-gray-800";
+};
+
+const getEntranceTicketSendBadgeClass = (value) => {
+  if (value === "送付済み") {
+    return "bg-green-100 text-green-800";
+  }
+  return "bg-gray-100 text-gray-800";
 };
 
 // スケジュール関連
@@ -1758,7 +2017,7 @@ function addToSchedule() {
         scheduleForm.user_id = props.currentUser ? props.currentUser.id : "";
         shopUsersForSchedule.value = [];
         addedParticipantsForSchedule.value = [];
-        router.reload({ only: ["schedule"] });
+        router.reload({ only: ["schedule", "activity_logs"] });
       },
       onError: (errors) => {
         scheduleForm.processing = false;
@@ -1813,7 +2072,7 @@ async function updateSchedule() {
       participant_ids: scheduleForm.participant_ids,
     });
     isEditingSchedule.value = false;
-    router.reload({ only: ["schedule"] });
+    router.reload({ only: ["schedule", "activity_logs"] });
   } catch (error) {
     if (error.response?.data?.errors) {
       scheduleForm.errors = error.response.data.errors;
@@ -1841,7 +2100,7 @@ function removeFromSchedule() {
         onSuccess: () => {
           scheduleForm.processing = false;
           isEditingSchedule.value = false;
-          router.reload({ only: ["schedule"] });
+          router.reload({ only: ["schedule", "activity_logs"] });
         },
         onError: () => {
           scheduleForm.processing = false;
@@ -1949,7 +2208,7 @@ const sendReplyEmail = () => {
         // メールスレッドを再読み込み（少し待ってから実行）
         setTimeout(() => {
           router.reload({ 
-            only: ["emailThreads"],
+            only: ["emailThreads", "activity_logs"],
             preserveScroll: true,
             onSuccess: (reloadedPage) => {
               // 新規作成した場合、最新のスレッド（新規作成したもの）を自動選択
