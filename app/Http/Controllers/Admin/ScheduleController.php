@@ -79,7 +79,8 @@ class ScheduleController extends Controller
         $shopId = $request->input('shop_id');
         $userId = $request->input('user_id');
 
-        $query = StaffSchedule::with(['user', 'participantUsers', 'photoSlot.studio', 'photoSlot.shops']);
+        $query = StaffSchedule::with(['user', 'participantUsers', 'photoSlot.studio', 'photoSlot.shops'])
+            ->whereNull('event_reservation_id');
 
         // 日付範囲でフィルタリング
         if ($start && $end) {

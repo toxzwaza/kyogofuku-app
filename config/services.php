@@ -42,6 +42,8 @@ return [
         'calendar_refresh_token' => env('GOOGLE_CALENDAR_REFRESH_TOKEN'),
         // トークン維持エンドポイント用の認証トークン（Python/cron からアクセス時に使用）
         'calendar_keep_token_secret' => env('GOOGLE_CALENDAR_KEEP_TOKEN_SECRET'),
+        // 公開フォームからの予約時に自動作成する staff_schedules.user_id（未設定時は自動作成をスキップ）
+        'calendar_reservation_owner_user_id' => env('GOOGLE_CALENDAR_RESERVATION_OWNER_USER_ID'),
         // ローカル環境で SSL 証明書エラー (cURL error 60) を回避（本番では true 推奨）
         'guzzle' => [
             'verify' => env('APP_ENV') !== 'local',

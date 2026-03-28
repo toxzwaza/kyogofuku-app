@@ -226,18 +226,83 @@ class GoogleCalendarSyncService
         ]);
 
         if ($participants->isEmpty()) {
+            if ($schedule->event_reservation_id) {
+                $schedule->loadMissing('reservation.event');
+                $event = $schedule->reservation?->event;
+                if ($event) {
+                    $hostShops = $event->shops()
+                        ->where('shops.is_active', true)
+                        ->get();
+                    $deduped = $this->dedupeShopsByGoogleCalendarId($hostShops->all());
+                    Log::info('[GoogleCalendar] 予約スケジュール: 担当者0人のためイベント開催店舗で同期（カレンダーID単位で重複除去）', [
+                        'schedule_id' => $schedule->id,
+                        'event_id' => $event->id,
+                        'shop_ids' => collect($deduped)->pluck('id')->toArray(),
+                    ]);
+
+                    return $deduped;
+                }
+            }
             Log::warning('[GoogleCalendar] 担当者が0人（担当者を追加すると同期されます）', ['schedule_id' => $schedule->id]);
+
             return [];
         }
 
         $shopsMap = [];
         foreach ($participants as $user) {
             foreach ($user->shops as $shop) {
+                if (!$shop->is_active) {
+                    continue;
+                }
                 $shopsMap[$shop->id] = $shop;
             }
         }
 
-        return array_values($shopsMap);
+        return $this->dedupeShopsByGoogleCalendarId(array_values($shopsMap));
+    }
+
+    /**
+     * shops.google_calendar_id が同一の店舗は先頭1件のみ残す（同一カレンダーへの二重同期を防ぐ）
+     *
+     * @param  Shop[]  $shops
+     * @return Shop[]
+     */
+    protected function dedupeShopsByGoogleCalendarId(array $shops): array
+    {
+        $seen = [];
+        $out = [];
+        foreach ($shops as $shop) {
+            $key = $this->normalizeShopGoogleCalendarKey($shop);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[] = $shop;
+        }
+
+        return $out;
+    }
+
+    protected function normalizeShopGoogleCalendarKey(Shop $shop): string
+    {
+        $id = $shop->google_calendar_id;
+        if ($id === null || trim((string) $id) === '') {
+            return 'primary';
+        }
+
+        return trim((string) $id);
+    }
+
+    /**
+     * 予約ステータスに対応する Google Calendar イベント colorId（1–11）
+     */
+    protected function calendarColorIdForReservationStatus(?string $status): string
+    {
+        return match ($status) {
+            '確認中', '返信待ち' => '6',
+            '対応完了済み' => '11',
+            default => '8',
+        };
     }
 
     /**
@@ -342,8 +407,14 @@ class GoogleCalendarSyncService
             $descriptionParts[] = '';
         }
 
-        // 予約由来のスケジュールの場合、予約詳細URLを追加
+        // 予約由来のスケジュールの場合、予約詳細URLを追加・ステータスに応じた色
         if ($schedule->event_reservation_id) {
+            $schedule->loadMissing('reservation');
+            $reservation = $schedule->reservation;
+            if ($reservation) {
+                $event->setColorId($this->calendarColorIdForReservationStatus($reservation->status));
+            }
+
             $reservationUrl = URL::route('admin.reservations.show', $schedule->event_reservation_id, ['absolute' => true]);
             $descriptionParts[] = '';
             $descriptionParts[] = '予約詳細: ' . $reservationUrl;

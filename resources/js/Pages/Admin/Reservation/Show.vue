@@ -1869,25 +1869,64 @@ const eventShops = computed(() => props.eventShops || []);
 const shopUsersForSchedule = ref([]);
 const addedParticipantsForSchedule = ref([]);
 
-// デフォルトのタイトルを生成
+function formatSeijinYearForCalendar(reservation) {
+  if (reservation.seijin_year == null || reservation.seijin_year === "") {
+    return "未設定";
+  }
+  return `${reservation.seijin_year}年`;
+}
+
+function formatPlansForCalendar(reservation) {
+  const p = reservation.considering_plans;
+  if (!Array.isArray(p) || p.length === 0) return "未設定";
+  const filtered = p.filter((x) => x != null && x !== "");
+  return filtered.length === 0 ? "未設定" : filtered.join("、");
+}
+
+function formatCeremonyAreaForCalendar(reservation) {
+  const n = reservation.customer?.ceremony_area?.name;
+  if (n == null || String(n).trim() === "") return "未設定";
+  return String(n).trim();
+}
+
+function formatAssigneeForCalendar(reservation) {
+  const a = reservation.admin_assignee;
+  if (a == null || String(a).trim() === "") return "未設定";
+  return String(a).trim();
+}
+
+// デフォルトのタイトルを生成（Googleカレンダー／サーバの EventReservationCalendarPresentationService と同じルール）
 function getDefaultTitle() {
-  return `${props.reservation.name}様の予約`;
+  const r = props.reservation;
+  return [
+    r.name || "",
+    formatSeijinYearForCalendar(r),
+    formatPlansForCalendar(r),
+    formatCeremonyAreaForCalendar(r),
+    formatAssigneeForCalendar(r),
+  ].join("/");
 }
 
 // デフォルトの説明を生成
 function getDefaultDescription() {
-  let description = `予約ID: ${props.reservation.id}\n`;
-  description += `お名前: ${props.reservation.name}\n`;
-  description += `メール: ${props.reservation.email}\n`;
-  description += `電話: ${props.reservation.phone}\n`;
-  if (props.reservation.reservation_datetime) {
-    description += `予約日時: ${props.reservation.reservation_datetime}\n`;
+  const r = props.reservation;
+  let description = `成人年度: ${formatSeijinYearForCalendar(r)}\n`;
+  description += `プラン: ${formatPlansForCalendar(r)}\n`;
+  description += `成人式エリア: ${formatCeremonyAreaForCalendar(r)}\n`;
+  description += `担当: ${formatAssigneeForCalendar(r)}\n`;
+  description += "\n";
+  description += `予約ID: ${r.id}\n`;
+  description += `お名前: ${r.name}\n`;
+  description += `メール: ${r.email}\n`;
+  description += `電話: ${r.phone}\n`;
+  if (r.reservation_datetime) {
+    description += `予約日時: ${r.reservation_datetime}\n`;
   }
-  if (props.reservation.venue) {
-    description += `会場: ${props.reservation.venue.name}\n`;
+  if (r.venue) {
+    description += `会場: ${r.venue.name}\n`;
   }
-  if (props.reservation.inquiry_message) {
-    description += `お問い合わせ内容: ${props.reservation.inquiry_message}`;
+  if (r.inquiry_message) {
+    description += `お問い合わせ内容: ${r.inquiry_message}`;
   }
   return description;
 }

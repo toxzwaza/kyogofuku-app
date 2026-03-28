@@ -8,6 +8,7 @@ use App\Models\EmailThread;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
+use App\Services\EventReservationScheduleBootstrapService;
 use App\Http\Controllers\LineWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -188,8 +189,10 @@ class EventReservationController extends Controller
             'utm_source' => $request->input('utm_source') ?? $request->session()->get('event_utm_sources.' . $event->id),
         ]);
 
-        // リレーションをロード（LINE通知で使用）
-        $reservation->load('venue');
+        // リレーションをロード（LINE通知・スケジュール自動作成で使用）
+        $reservation->load(['event', 'venue']);
+
+        app(EventReservationScheduleBootstrapService::class)->bootstrapIfApplicable($reservation);
 
         // 送信データをセッションに保存（成功ページで表示するため）
         $formData = $request->only([

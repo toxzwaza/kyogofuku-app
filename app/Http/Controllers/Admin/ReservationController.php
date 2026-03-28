@@ -13,6 +13,8 @@ use App\Models\EventTimeslot;
 use App\Models\ReservationNote;
 use App\Models\StaffSchedule;
 use App\Models\User;
+use App\Services\EventReservationScheduleBootstrapService;
+use App\Services\GoogleCalendarSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -344,7 +346,7 @@ class ReservationController extends Controller
         }
 
         // 顧客情報から予約を作成
-        EventReservation::create([
+        $reservation = EventReservation::create([
             'event_id' => $event->id,
             'document_id' => null,
             'name' => $customer->name,
@@ -372,6 +374,8 @@ class ReservationController extends Controller
             'customer_id' => $customer->id,
         ]);
 
+        app(EventReservationScheduleBootstrapService::class)->bootstrapIfApplicable($reservation);
+
         return redirect()
             ->route('admin.events.reservations.index', $event->id)
             ->with('success', '予約を登録しました。');
@@ -382,7 +386,7 @@ class ReservationController extends Controller
      */
     public function show(Request $request, EventReservation $reservation)
     {
-        $reservation->load(['event', 'venue', 'customer', 'notes.user', 'statusUpdatedBy', 'schedule.user', 'schedule.participantUsers', 'emailThreads.emails']);
+        $reservation->load(['event', 'venue', 'customer.ceremonyArea', 'notes.user', 'statusUpdatedBy', 'schedule.user', 'schedule.participantUsers', 'emailThreads.emails']);
 
         $indexFilters = array_filter([
             'venue_id' => $request->query('venue_id'),
@@ -732,6 +736,10 @@ class ReservationController extends Controller
             'status' => '未対応',
         ]);
 
+        $reservation->refresh();
+        $reservation->load(['event', 'venue']);
+        app(EventReservationScheduleBootstrapService::class)->bootstrapIfApplicable($reservation);
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -807,6 +815,15 @@ class ReservationController extends Controller
             ]);
         }
 
+        if ($validated['status'] !== 'キャンセル済み') {
+            $reservation->load('schedule');
+            if ($reservation->schedule && $reservation->schedule->sync_to_google_calendar) {
+                app(GoogleCalendarSyncService::class)->syncScheduleToShopCalendarsOnUpdate(
+                    $reservation->schedule->fresh(['participantUsers.shops'])
+                );
+            }
+        }
+
         // ステータス変更をactivity_logsに記録
         ActivityLog::create([
             'user_id' => auth()->id(),
@@ -877,9 +894,24 @@ class ReservationController extends Controller
             'participant_ids.*' => 'exists:users,id',
         ]);
 
-        // 既にスケジュールが存在する場合はエラー
+        $participantIds = !empty($validated['participant_ids']) ? $validated['participant_ids'] : [];
+
+        $reservation->load('schedule');
+
         if ($reservation->schedule) {
-            return redirect()->back()->with('error', 'この予約は既にスケジュールに追加されています。');
+            $schedule = $reservation->schedule;
+            $schedule->participantUsers()->sync($participantIds);
+            $schedule->update([
+                'user_id' => $validated['user_id'],
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? '',
+                'start_at' => $validated['start_at'],
+                'end_at' => $validated['end_at'],
+                'all_day' => $validated['all_day'] ?? false,
+                'sync_to_google_calendar' => true,
+            ]);
+
+            return redirect()->back()->with('success', 'スケジュールを更新しました。');
         }
 
         // スケジュールを作成（予約からの登録はGoogleカレンダー同期を有効で固定）
@@ -894,14 +926,9 @@ class ReservationController extends Controller
             'sync_to_google_calendar' => true,
         ]);
 
-        // 参加者を設定（user_idは自動で含めない - チェックボックスで選択された場合のみ含める）
-        $participantIds = [];
-        if (!empty($validated['participant_ids'])) {
-            $participantIds = $validated['participant_ids'];
-        }
         $schedule->participantUsers()->sync($participantIds);
 
-        app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
+        app(GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
 
         return redirect()->back()->with('success', 'スケジュールに追加しました。');
     }
