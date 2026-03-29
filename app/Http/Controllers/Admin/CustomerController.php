@@ -3,31 +3,31 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
-use App\Models\CustomerNote;
-use App\Models\EventReservation;
-use App\Models\Contract;
-use App\Models\PhotoSlot;
-use App\Models\CustomerPhoto;
 use App\Models\CeremonyArea;
-use App\Models\Shop;
-use App\Models\Plan;
-use App\Models\User;
+use App\Models\ConstraintTemplate;
+use App\Models\Contract;
+use App\Models\Customer;
+use App\Models\CustomerConstraint;
+use App\Models\CustomerNote;
+use App\Models\CustomerPhoto;
+use App\Models\CustomerTag;
+use App\Models\EventReservation;
+use App\Models\PhotoSlot;
 use App\Models\PhotoStudio;
 use App\Models\PhotoType;
-use App\Models\StaffSchedule;
-use App\Models\CustomerTag;
-use App\Models\ConstraintTemplate;
-use App\Models\CustomerConstraint;
+use App\Models\Plan;
+use App\Models\Shop;
+use App\Models\User;
+use App\Services\Line\ReservationLineContactMigrator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\ImageManager;
 
 class CustomerController extends Controller
 {
@@ -40,7 +40,7 @@ class CustomerController extends Controller
 
         // 顧客情報での検索
         if ($request->filled('name')) {
-            $query->where('name', 'LIKE', '%' . $request->name . '%');
+            $query->where('name', 'LIKE', '%'.$request->name.'%');
         }
 
         if ($request->filled('created_at_from')) {
@@ -53,11 +53,11 @@ class CustomerController extends Controller
 
         // 登録日＋成約情報の店舗で絞り込み（本日登録など）
         if (($request->filled('created_at_from') || $request->filled('created_at_to')) && $request->filled('shop_id')) {
-            $query->whereHas('contracts', fn($q) => $q->where('shop_id', $request->shop_id));
+            $query->whereHas('contracts', fn ($q) => $q->where('shop_id', $request->shop_id));
         }
 
         if ($request->filled('kana')) {
-            $query->where('kana', 'LIKE', '%' . $request->kana . '%');
+            $query->where('kana', 'LIKE', '%'.$request->kana.'%');
         }
 
         if ($request->filled('ceremony_area_id')) {
@@ -65,15 +65,15 @@ class CustomerController extends Controller
         }
 
         if ($request->filled('phone_number')) {
-            $query->where('phone_number', 'LIKE', '%' . $request->phone_number . '%');
+            $query->where('phone_number', 'LIKE', '%'.$request->phone_number.'%');
         }
 
         // 成人式情報（顧客マスタ）
         if ($request->filled('seijin_preparation_venue')) {
-            $query->where('seijin_preparation_venue', 'LIKE', '%' . $request->seijin_preparation_venue . '%');
+            $query->where('seijin_preparation_venue', 'LIKE', '%'.$request->seijin_preparation_venue.'%');
         }
         if ($request->filled('seijin_preparation_time')) {
-            $query->where('seijin_preparation_time', 'LIKE', '%' . $request->seijin_preparation_time . '%');
+            $query->where('seijin_preparation_time', 'LIKE', '%'.$request->seijin_preparation_time.'%');
         }
         if ($request->has('other_store_preparation')) {
             $query->where('other_store_preparation', $request->boolean('other_store_preparation'));
@@ -87,7 +87,7 @@ class CustomerController extends Controller
             });
         }
         if ($salonNameFilled) {
-            $query->where('other_store_salon_name', 'LIKE', '%' . $request->other_store_salon_name . '%');
+            $query->where('other_store_salon_name', 'LIKE', '%'.$request->other_store_salon_name.'%');
         }
         if ($request->filled('kimono_ship_date')) {
             $query->whereDate('kimono_ship_date', $request->kimono_ship_date);
@@ -128,7 +128,7 @@ class CustomerController extends Controller
                     $q->where('user_id', $request->user_id);
                 }
                 if ($request->filled('preparation_venue')) {
-                    $q->where('preparation_venue', 'LIKE', '%' . $request->preparation_venue . '%');
+                    $q->where('preparation_venue', 'LIKE', '%'.$request->preparation_venue.'%');
                 }
                 if ($request->filled('preparation_date')) {
                     $q->where('preparation_date', $request->preparation_date);
@@ -174,24 +174,24 @@ class CustomerController extends Controller
                     $query->whereHas('photoSlots', function ($q) use ($request) {
                         $q->where('details_undecided', true);
                         if ($request->filled('photo_slot_shop_id')) {
-                            $q->whereHas('shops', fn($sq) => $sq->where('shops.id', $request->photo_slot_shop_id));
+                            $q->whereHas('shops', fn ($sq) => $sq->where('shops.id', $request->photo_slot_shop_id));
                         }
                     });
                 } else {
                     // 詳細未決定の前撮りを持たない顧客（詳細確定のみ、または前撮りなし）
-                    $query->whereDoesntHave('photoSlots', fn($q) => $q->where('details_undecided', true));
+                    $query->whereDoesntHave('photoSlots', fn ($q) => $q->where('details_undecided', true));
                 }
             } elseif ($request->filled('photo_slot_shop_id')) {
                 // 前撮り担当店舗のみで絞り込み
-                $query->whereHas('photoSlots', fn($q) => $q->whereHas('shops', fn($sq) => $sq->where('shops.id', $request->photo_slot_shop_id)));
+                $query->whereHas('photoSlots', fn ($q) => $q->whereHas('shops', fn ($sq) => $sq->where('shops.id', $request->photo_slot_shop_id)));
             }
         }
 
         $customers = $query->with([
-            'photos' => function($q) {
+            'photos' => function ($q) {
                 $q->where('photo_type_id', 1)->orderBy('created_at', 'desc')->limit(1);
             },
-            'tags'
+            'tags',
         ])->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         // サムネイル用写真に表示用URLを付与（S3の場合は署名付き一時URL）
@@ -202,11 +202,13 @@ class CustomerController extends Controller
                     $path = str_replace('\\', '/', $photo->file_path);
                     $item['url'] = Storage::disk('s3_private')->temporaryUrl($path, now()->addMinutes(60));
                 } else {
-                    $item['url'] = '/storage/' . ($photo->file_path ?? '');
+                    $item['url'] = '/storage/'.($photo->file_path ?? '');
                 }
+
                 return $item;
             });
             $customer->setRelation('photos', $photosWithUrl);
+
             return $customer;
         });
 
@@ -288,7 +290,7 @@ class CustomerController extends Controller
         if (strlen($nameNormalized) > 0) {
             $customers = Customer::query()
                 ->with('ceremonyArea')
-                ->whereRaw("REPLACE(REPLACE(name, ' ', ''), '\t', '') LIKE ?", ['%' . $nameNormalized . '%'])
+                ->whereRaw("REPLACE(REPLACE(name, ' ', ''), '\t', '') LIKE ?", ['%'.$nameNormalized.'%'])
                 ->select('id', 'name', 'phone_number', 'email', 'ceremony_area_id')
                 ->orderBy('name')
                 ->limit(20)
@@ -303,6 +305,7 @@ class CustomerController extends Controller
                     ];
                 });
         }
+
         return response()->json(['customers' => $customers]);
     }
 
@@ -318,6 +321,7 @@ class CustomerController extends Controller
             'birth_date' => 'nullable|date',
             'coming_of_age_year' => 'nullable|integer',
             'ceremony_area_id' => 'nullable|exists:ceremony_areas,id',
+            'shop_id' => 'nullable|exists:shops,id',
             'phone_number' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
@@ -344,7 +348,14 @@ class CustomerController extends Controller
             $eventReservation = EventReservation::find($eventReservationId);
             if ($eventReservation) {
                 $eventReservation->update(['customer_id' => $customer->id]);
+                $migrated = app(ReservationLineContactMigrator::class)->migrateReservationContactsToCustomer($eventReservation, $customer);
+                if (! $migrated['ok']) {
+                    return redirect()->route('admin.customers.show', $customer)
+                        ->with('success', '顧客を登録し、予約に紐づけました。')
+                        ->with('error', $migrated['message'] ?? 'LINE の引き継ぎに失敗しました。');
+                }
             }
+
             return redirect()->route('admin.customers.show', $customer)
                 ->with('success', '顧客を登録し、予約に紐づけました。');
         }
@@ -359,7 +370,9 @@ class CustomerController extends Controller
     public function show(Customer $customer)
     {
         $customer->load([
+            'shop',
             'ceremonyArea',
+            'lineContacts',
             'contracts' => function ($q) {
                 $q->withTrashed()->orderBy('contract_date', 'desc');
             },
@@ -391,8 +404,8 @@ class CustomerController extends Controller
         ])->values();
 
         // デバッグ: 前撮り情報の取得確認
-        Log::info('Customer photoSlots count: ' . $customer->photoSlots->count());
-        Log::info('Customer photoSlots data: ' . json_encode($customer->photoSlots->toArray()));
+        Log::info('Customer photoSlots count: '.$customer->photoSlots->count());
+        Log::info('Customer photoSlots data: '.json_encode($customer->photoSlots->toArray()));
 
         // フォーム用のマスターデータを取得
         $ceremonyAreas = CeremonyArea::orderBy('name')->get();
@@ -423,9 +436,9 @@ class CustomerController extends Controller
         // 制約テンプレート一覧（有効、ログインユーザー所属店舗に紐づくもののみ、店舗・スタッフ付き）
         $userShopIds = $userShops->pluck('id')->toArray();
         $constraintTemplatesQuery = ConstraintTemplate::where('is_active', true)
-            ->with(['shops' => fn($q) => $q->where('is_active', true)->orderBy('name')]);
-        if (!empty($userShopIds)) {
-            $constraintTemplatesQuery->whereHas('shops', fn($q) => $q->whereIn('shops.id', $userShopIds));
+            ->with(['shops' => fn ($q) => $q->where('is_active', true)->orderBy('name')]);
+        if (! empty($userShopIds)) {
+            $constraintTemplatesQuery->whereHas('shops', fn ($q) => $q->whereIn('shops.id', $userShopIds));
         } else {
             $constraintTemplatesQuery->whereRaw('0 = 1');
         }
@@ -434,28 +447,31 @@ class CustomerController extends Controller
             ->get()
             ->map(function ($t) {
                 $shopIds = $t->shops->pluck('id')->toArray();
-                $staff = User::whereHas('shops', fn($q) => $q->whereIn('shops.id', $shopIds))
+                $staff = User::whereHas('shops', fn ($q) => $q->whereIn('shops.id', $shopIds))
                     ->orderBy('name')
                     ->get(['id', 'name']);
+
                 return [
                     'id' => $t->id,
                     'name' => $t->name,
                     'body' => $t->body,
-                    'shops' => $t->shops->map(fn($s) => ['id' => $s->id, 'name' => $s->name]),
-                    'staff' => $staff->map(fn($u) => ['id' => $u->id, 'name' => $u->name]),
+                    'shops' => $t->shops->map(fn ($s) => ['id' => $s->id, 'name' => $s->name]),
+                    'staff' => $staff->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]),
                 ];
             });
 
         // 顧客写真に表示用 URL を付与（s3=署名URL、public=ローカルURL）
         $customerForInertia = $customer->toArray();
+        unset($customerForInertia['line_contacts']);
         $customerForInertia['photos'] = $customer->photos->map(function ($photo) {
             $item = $photo->toArray();
             if (($photo->storage_disk ?? 'public') === 's3') {
                 $path = str_replace('\\', '/', $photo->file_path); // S3 キーは常に /
                 $item['url'] = Storage::disk('s3_private')->temporaryUrl($path, now()->addMinutes(60));
             } else {
-                $item['url'] = '/storage/' . $photo->file_path;
+                $item['url'] = '/storage/'.$photo->file_path;
             }
+
             return $item;
         })->values()->all();
 
@@ -476,6 +492,17 @@ class CustomerController extends Controller
             return $item;
         })->values()->all();
 
+        $customerForInertia['line_contacts'] = $customer->lineContacts->map(function ($c) {
+            $uid = $c->line_user_id;
+
+            return [
+                'id' => $c->id,
+                'label' => $c->label,
+                'line_user_id_masked' => strlen($uid) > 8 ? substr($uid, 0, 4).'…'.substr($uid, -4) : '****',
+                'shop_id' => $c->shop_id,
+            ];
+        })->values()->all();
+
         return Inertia::render('Admin/Customer/Show', [
             'customer' => $customerForInertia,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
@@ -487,7 +514,7 @@ class CustomerController extends Controller
             'photoTypes' => $photoTypes,
             'availablePhotoSlots' => $availablePhotoSlots,
             'customerTags' => $customerTags,
-            'userShops' => $userShops->map(function($shop) {
+            'userShops' => $userShops->map(function ($shop) {
                 return [
                     'id' => $shop->id,
                     'name' => $shop->name,
@@ -539,6 +566,7 @@ class CustomerController extends Controller
     {
         $initial = $this->buildAdditionalInfoInitial($customer);
         $initial['staff_name'] = auth()->user()?->name ?? '';
+
         return Inertia::render('Admin/Customer/AdditionalInfo', [
             'customer' => $customer->only('id', 'name', 'kana'),
             'initial' => $initial,
@@ -641,11 +669,12 @@ class CustomerController extends Controller
         $reasons = [];
         foreach ($visitReasons as $reason) {
             if ($reason === 'その他' && $visitReasonOther !== null && $visitReasonOther !== '') {
-                $reasons[] = 'その他(' . $visitReasonOther . ')';
+                $reasons[] = 'その他('.$visitReasonOther.')';
             } else {
                 $reasons[] = $reason;
             }
         }
+
         return array_values(array_filter($reasons));
     }
 
@@ -662,6 +691,7 @@ class CustomerController extends Controller
                 return $m[1];
             }
         }
+
         return '';
     }
 
@@ -688,6 +718,7 @@ class CustomerController extends Controller
                 $reasons[] = $r;
             }
         }
+
         return $reasons;
     }
 
@@ -746,6 +777,7 @@ class CustomerController extends Controller
         $additionalInfoOnly = array_intersect_key($payload, array_fill_keys($onlyAdditionalInfoKeys, true));
 
         $customer->update(array_merge($customerUpdate, ['additional_info' => $additionalInfoOnly]));
+
         return redirect()->route('admin.customers.additional-info.thanks', $customer)
             ->with('success', '追加情報を保存しました。');
     }
@@ -801,6 +833,7 @@ class CustomerController extends Controller
             'coming_of_age_year' => 'nullable|integer',
             'ceremony_area_id' => 'nullable|exists:ceremony_areas,id',
             'phone_number' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
             'postal_code' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
@@ -812,6 +845,23 @@ class CustomerController extends Controller
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '顧客情報を更新しました。');
+    }
+
+    /**
+     * 担当店舗のみ更新（LINE 連携・Messaging 用）
+     */
+    public function updateResponsibleShop(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'shop_id' => 'nullable|exists:shops,id',
+        ]);
+
+        $customer->update([
+            'shop_id' => $validated['shop_id'] ?? null,
+        ]);
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '担当店舗を更新しました。');
     }
 
     /**
@@ -872,7 +922,7 @@ class CustomerController extends Controller
         ]);
 
         $validated['customer_id'] = $customer->id;
-        $validated['warranty_flag'] = $request->has('warranty_flag') ? (bool)$request->warranty_flag : false;
+        $validated['warranty_flag'] = $request->has('warranty_flag') ? (bool) $request->warranty_flag : false;
 
         Contract::create($validated);
 
@@ -903,7 +953,7 @@ class CustomerController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
-        $validated['warranty_flag'] = $request->has('warranty_flag') ? (bool)$request->warranty_flag : false;
+        $validated['warranty_flag'] = $request->has('warranty_flag') ? (bool) $request->warranty_flag : false;
 
         if ($contractModel->trashed()) {
             $contractModel->restore();
@@ -925,6 +975,7 @@ class CustomerController extends Controller
 
         if ($contractModel->trashed()) {
             $contractModel->forceDelete();
+
             return redirect()->route('admin.customers.show', $customer)
                 ->with('success', '成約情報を完全に削除しました。');
         }
@@ -991,7 +1042,7 @@ class CustomerController extends Controller
                 'remarks' => $validated['remarks'] ?? null,
             ]);
 
-            if (!empty($validated['shop_id'])) {
+            if (! empty($validated['shop_id'])) {
                 $photoSlot->shops()->sync([$validated['shop_id']]);
             } else {
                 $photoSlot->shops()->detach();
@@ -1022,7 +1073,7 @@ class CustomerController extends Controller
             'remarks' => 'nullable|string',
         ];
 
-        if (!$detailsUndecided) {
+        if (! $detailsUndecided) {
             $rules['photo_slot_id'] = 'required|exists:photo_slots,id';
         }
 
@@ -1166,24 +1217,26 @@ class CustomerController extends Controller
     {
         if (extension_loaded('gd') && function_exists('imagecreatetruecolor')) {
             try {
-                return new ImageManager(new GdDriver());
+                return new ImageManager(new GdDriver);
             } catch (\Exception $e) {
-                Log::warning('GDドライバーの初期化に失敗: ' . $e->getMessage());
+                Log::warning('GDドライバーの初期化に失敗: '.$e->getMessage());
             }
         }
         if (extension_loaded('imagick')) {
             try {
-                return new ImageManager(new ImagickDriver());
+                return new ImageManager(new ImagickDriver);
             } catch (\Exception $e) {
-                Log::warning('Imagickドライバーの初期化に失敗: ' . $e->getMessage());
+                Log::warning('Imagickドライバーの初期化に失敗: '.$e->getMessage());
             }
         }
         Log::warning('画像処理ドライバー（GD/Imagick）が利用できません。');
+
         return null;
     }
 
     /**
      * アップロードファイルを WebP に変換して S3（s3_private）に保存
+     *
      * @return string|null 保存した WebP のパス（customers/{id}/{unique}.webp）、失敗時は null
      */
     private function convertUploadToWebpAndPutS3Private($uploadedFile, int $customerId, $manager)
@@ -1192,16 +1245,18 @@ class CustomerController extends Controller
             return null;
         }
         try {
-            $webpPath = 'customers/' . $customerId . '/' . Str::random(40) . '.webp';
+            $webpPath = 'customers/'.$customerId.'/'.Str::random(40).'.webp';
             $image = $manager->read($uploadedFile->getRealPath());
             $tmpPath = tempnam(sys_get_temp_dir(), 'webp');
             $image->toWebp(80)->save($tmpPath);
             $content = file_get_contents($tmpPath);
             @unlink($tmpPath);
             Storage::disk('s3_private')->put($webpPath, $content);
+
             return $webpPath;
         } catch (\Exception $e) {
-            Log::error('WebP変換エラー (S3 customers/' . $customerId . '): ' . $e->getMessage());
+            Log::error('WebP変換エラー (S3 customers/'.$customerId.'): '.$e->getMessage());
+
             return null;
         }
     }
@@ -1293,14 +1348,14 @@ class CustomerController extends Controller
         $userShopIds = auth()->user()
             ? auth()->user()->shops()->where('shops.is_active', true)->pluck('shops.id')->toArray()
             : [];
-        $template = ConstraintTemplate::with(['shops' => fn($q) => $q->where('is_active', true)])
+        $template = ConstraintTemplate::with(['shops' => fn ($q) => $q->where('is_active', true)])
             ->where('is_active', true)
-            ->whereHas('shops', fn($q) => $q->whereIn('shops.id', $userShopIds))
+            ->whereHas('shops', fn ($q) => $q->whereIn('shops.id', $userShopIds))
             ->findOrFail($templateId);
 
         // テンプレートに紐づく店舗のスタッフを取得
         $shopIds = $template->shops->pluck('id')->toArray();
-        $staff = User::whereHas('shops', fn($q) => $q->whereIn('shops.id', $shopIds))
+        $staff = User::whereHas('shops', fn ($q) => $q->whereIn('shops.id', $shopIds))
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -1335,7 +1390,7 @@ class CustomerController extends Controller
                 'body' => $template->body,
                 'display_settings' => $template->getDisplaySettings(),
             ],
-            'staff' => $staff->map(fn($u) => ['id' => $u->id, 'name' => $u->name]),
+            'staff' => $staff->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]),
             'signedAt' => $request->query('signed_at', date('Y-m-d')),
             'explainerUserId' => $explainerId,
             'explainerName' => $explainer?->name,
@@ -1507,4 +1562,3 @@ class CustomerController extends Controller
             ->with('success', '顧客情報を削除しました。');
     }
 }
-

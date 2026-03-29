@@ -6,7 +6,6 @@ const page = usePage();
 
 const flashSuccess = computed(() => page.props.flash?.success);
 const flashError = computed(() => page.props.flash?.error);
-
 const showSuccess = ref(false);
 const showError = ref(false);
 
@@ -48,7 +47,10 @@ if (flashError.value) {
 </script>
 
 <template>
-    <div v-if="(showSuccess && flashSuccess) || (showError && flashError)" class="fixed top-4 right-4 z-50 max-w-md w-full">
+    <div
+        v-if="(showSuccess && flashSuccess) || (showError && flashError)"
+        class="fixed top-4 right-4 z-50 max-w-md w-full space-y-3"
+    >
         <!-- 成功メッセージ -->
         <transition
             enter-active-class="transition ease-out duration-300"

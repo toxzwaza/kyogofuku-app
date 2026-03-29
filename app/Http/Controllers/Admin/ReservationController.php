@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ReservationReplyMail;
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Email;
 use App\Models\EmailThread;
@@ -15,12 +16,13 @@ use App\Models\StaffSchedule;
 use App\Models\User;
 use App\Services\EventReservationScheduleBootstrapService;
 use App\Services\GoogleCalendarSyncService;
+use App\Services\Line\EventLineShopResolver;
+use App\Services\Line\ReservationLineContactMigrator;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
-use App\Models\ActivityLog;
-use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
@@ -31,7 +33,7 @@ class ReservationController extends Controller
     {
         // 会場リストを取得（会場ID昇順）
         $venues = $event->venues()->where('venues.is_active', true)->orderBy('id')->get();
-        
+
         // 表示する開始日・終了日（予約フォームの場合のみ）。開始日デフォルトは本日、終了日は未指定で上限なし
         $today = Carbon::today();
         $startDate = $request->filled('start_date')
@@ -59,12 +61,12 @@ class ReservationController extends Controller
                 $reservationsQuery->whereDate('reservation_datetime', '<=', $endDateStr);
             }
         }
-        
+
         // 会場で絞り込み
         if ($request->filled('venue_id')) {
             $reservationsQuery->where('venue_id', $request->venue_id);
         }
-        
+
         // 時間で絞り込み（予約フォームの場合のみ）
         if ($event->form_type === 'reservation' && $request->filled('reservation_datetime')) {
             $datetime = $request->reservation_datetime;
@@ -76,60 +78,60 @@ class ReservationController extends Controller
                 $reservationsQuery->where('reservation_datetime', $datetime);
             }
         }
-        
+
         $reservations = $reservationsQuery
             ->orderBy('cancel_flg', 'asc')
             ->orderBy('reservation_datetime', 'desc')
             ->orderBy('created_at', 'desc')
             ->get()->map(function ($reservation) {
-            return [
-                'id' => $reservation->id,
-                'name' => $reservation->name,
-                'email' => $reservation->email,
-                'phone' => $reservation->phone,
-                'venue' => $reservation->venue ? [
-                    'id' => $reservation->venue->id,
-                    'name' => $reservation->venue->name,
-                ] : null,
-                'furigana' => $reservation->furigana,
-                'has_visited_before' => $reservation->has_visited_before,
-                'address' => $reservation->address,
-                'birth_date' => $reservation->birth_date,
-                'seijin_year' => $reservation->seijin_year,
-                'school_name' => $reservation->school_name,
-                'parking_usage' => $reservation->parking_usage,
-                'parking_car_count' => $reservation->parking_car_count,
-                'considering_plans' => $reservation->considering_plans,
-                'referred_by_name' => $reservation->referred_by_name,
-                'inquiry_message' => $reservation->inquiry_message,
-                'status' => $reservation->status,
-                'status_updated_by' => $reservation->statusUpdatedBy ? [
-                    'id' => $reservation->statusUpdatedBy->id,
-                    'name' => $reservation->statusUpdatedBy->name,
-                ] : null,
-                'reservation_datetime' => $reservation->reservation_datetime,
-                'request_method' => $reservation->request_method,
-                'postal_code' => $reservation->postal_code,
-                'privacy_agreed' => $reservation->privacy_agreed,
-                'heard_from' => $reservation->heard_from,
-                'created_at' => $reservation->created_at->format('Y-m-d H:i:s'),
-                'schedule' => $reservation->schedule ? [
-                    'id' => $reservation->schedule->id,
-                    'participantUsers' => $reservation->schedule->participantUsers->map(function ($user) {
-                        return [
-                            'id' => $user->id,
-                            'name' => $user->name,
-                        ];
-                    })->toArray(),
-                ] : null,
-                'admin_assignee' => $reservation->admin_assignee,
-                'entrance_ticket_send_status' => $reservation->entrance_ticket_send_status,
-                'customer_id' => $reservation->customer_id,
-                'ceremony_area_name' => $reservation->customer?->ceremonyArea?->name,
-                'cancel_flg' => $reservation->cancel_flg,
-            ];
-        });
-        
+                return [
+                    'id' => $reservation->id,
+                    'name' => $reservation->name,
+                    'email' => $reservation->email,
+                    'phone' => $reservation->phone,
+                    'venue' => $reservation->venue ? [
+                        'id' => $reservation->venue->id,
+                        'name' => $reservation->venue->name,
+                    ] : null,
+                    'furigana' => $reservation->furigana,
+                    'has_visited_before' => $reservation->has_visited_before,
+                    'address' => $reservation->address,
+                    'birth_date' => $reservation->birth_date,
+                    'seijin_year' => $reservation->seijin_year,
+                    'school_name' => $reservation->school_name,
+                    'parking_usage' => $reservation->parking_usage,
+                    'parking_car_count' => $reservation->parking_car_count,
+                    'considering_plans' => $reservation->considering_plans,
+                    'referred_by_name' => $reservation->referred_by_name,
+                    'inquiry_message' => $reservation->inquiry_message,
+                    'status' => $reservation->status,
+                    'status_updated_by' => $reservation->statusUpdatedBy ? [
+                        'id' => $reservation->statusUpdatedBy->id,
+                        'name' => $reservation->statusUpdatedBy->name,
+                    ] : null,
+                    'reservation_datetime' => $reservation->reservation_datetime,
+                    'request_method' => $reservation->request_method,
+                    'postal_code' => $reservation->postal_code,
+                    'privacy_agreed' => $reservation->privacy_agreed,
+                    'heard_from' => $reservation->heard_from,
+                    'created_at' => $reservation->created_at->format('Y-m-d H:i:s'),
+                    'schedule' => $reservation->schedule ? [
+                        'id' => $reservation->schedule->id,
+                        'participantUsers' => $reservation->schedule->participantUsers->map(function ($user) {
+                            return [
+                                'id' => $user->id,
+                                'name' => $user->name,
+                            ];
+                        })->toArray(),
+                    ] : null,
+                    'admin_assignee' => $reservation->admin_assignee,
+                    'entrance_ticket_send_status' => $reservation->entrance_ticket_send_status,
+                    'customer_id' => $reservation->customer_id,
+                    'ceremony_area_name' => $reservation->customer?->ceremonyArea?->name,
+                    'cancel_flg' => $reservation->cancel_flg,
+                ];
+            });
+
         // 時間リストを取得（予約フォームの場合のみ、フィルター用）
         $filterTimeslots = [];
         if ($event->form_type === 'reservation') {
@@ -140,12 +142,12 @@ class ReservationController extends Controller
             if ($endDateStr !== null) {
                 $timeslotsQuery->whereDate('start_at', '<=', $endDateStr);
             }
-            
+
             // 会場が選択されている場合、その会場の時間のみ取得
             if ($request->filled('venue_id')) {
                 $timeslotsQuery->where('venue_id', $request->venue_id);
             }
-            
+
             $filterTimeslots = $timeslotsQuery->orderBy('start_at', 'asc')->get()
                 ->map(function ($timeslot) {
                     return [
@@ -159,7 +161,7 @@ class ReservationController extends Controller
         // 予約枠の統計情報と日付別グループ化（予約フォームの場合のみ）
         $timeslotStats = null;
         $timeslotsWithReservations = null;
-        
+
         if ($event->form_type === 'reservation') {
             $timeslotsQuery = $event->timeslots()->with('venue')->where('is_active', true);
 
@@ -168,12 +170,12 @@ class ReservationController extends Controller
             if ($endDateStr !== null) {
                 $timeslotsQuery->whereDate('start_at', '<=', $endDateStr);
             }
-            
+
             // 会場で絞り込み
             if ($request->filled('venue_id')) {
                 $timeslotsQuery->where('venue_id', $request->venue_id);
             }
-            
+
             // 時間で絞り込み
             if ($request->filled('reservation_datetime')) {
                 $datetime = $request->reservation_datetime;
@@ -185,11 +187,11 @@ class ReservationController extends Controller
                     $timeslotsQuery->where('start_at', $datetime);
                 }
             }
-            
+
             $timeslots = $timeslotsQuery->orderBy('start_at', 'asc')->get();
             $totalCapacity = $timeslots->sum('capacity');
             $totalReserved = 0;
-            
+
             // 各予約枠に予約情報を紐付け
             $timeslotsWithReservations = $timeslots->map(function ($timeslot) use ($event, &$totalReserved) {
                 // 予約を取得（会場IDと時間が一致するもののみ、表示用は全件）
@@ -201,7 +203,7 @@ class ReservationController extends Controller
                         'customer.ceremonyArea',
                     ])
                     ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
-                
+
                 // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
                 if ($timeslot->venue_id) {
                     $timeslotReservationsQuery->where('venue_id', $timeslot->venue_id);
@@ -209,16 +211,16 @@ class ReservationController extends Controller
                     // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
                     $timeslotReservationsQuery->whereNull('venue_id');
                 }
-                
+
                 $timeslotReservations = (clone $timeslotReservationsQuery)
                     ->orderBy('cancel_flg', 'asc')
                     ->orderBy('created_at', 'asc')
                     ->get();
-                
+
                 // 枠数計算はキャンセルされていない予約のみ
                 $reservedCount = (clone $timeslotReservationsQuery)->where('cancel_flg', false)->count();
                 $totalReserved += $reservedCount;
-                
+
                 return [
                     'id' => $timeslot->id,
                     'venue_id' => $timeslot->venue_id,
@@ -274,7 +276,7 @@ class ReservationController extends Controller
                     })->values(),
                 ];
             })->values();
-            
+
             $timeslotStats = [
                 'total_capacity' => $totalCapacity,
                 'total_reserved' => $totalReserved,
@@ -321,7 +323,7 @@ class ReservationController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$timeslot) {
+        if (! $timeslot) {
             return redirect()
                 ->route('admin.events.reservations.index', $event->id)
                 ->with('error', '選択された予約枠が見つかりません。');
@@ -392,7 +394,7 @@ class ReservationController extends Controller
             'venue_id' => $request->query('venue_id'),
             'reservation_datetime' => $request->query('reservation_datetime'),
         ]);
-        
+
         $currentUser = auth()->user();
         $userShops = $currentUser ? $currentUser->shops()
             ->where('shops.is_active', true)
@@ -402,7 +404,7 @@ class ReservationController extends Controller
 
         // メールスレッドとメールを取得
         $emailThreads = $reservation->emailThreads()
-            ->with(['emails' => function($query) {
+            ->with(['emails' => function ($query) {
                 $query->orderBy('created_at', 'asc');
             }])
             ->orderBy('created_at', 'desc')
@@ -473,6 +475,50 @@ class ReservationController extends Controller
             ];
         });
 
+        $eventLineShopResolver = app(EventLineShopResolver::class);
+        $canIssueLineLink = $eventLineShopResolver->resolveShopIdForEvent($event) !== null;
+
+        $userShopsMapped = $userShops->map(function ($shop) {
+            return [
+                'id' => $shop->id,
+                'name' => $shop->name,
+            ];
+        })->values()->all();
+
+        $mapLineContact = static function ($c) {
+            $uid = $c->line_user_id;
+
+            return [
+                'id' => $c->id,
+                'label' => $c->label,
+                'line_user_id_masked' => strlen($uid) > 8 ? substr($uid, 0, 4).'…'.substr($uid, -4) : '****',
+                'shop_id' => $c->shop_id,
+            ];
+        };
+
+        if ($reservation->customer_id) {
+            $reservation->loadMissing(['customer.lineContacts']);
+            $cust = $reservation->customer;
+            $lineSection = [
+                'context' => 'customer',
+                'customer_id' => $cust->id,
+                'reservation_id' => $reservation->id,
+                'shops' => $userShopsMapped,
+                'can_issue_line_link' => true,
+                'line_contacts' => $cust ? $cust->lineContacts->map($mapLineContact)->values()->all() : [],
+            ];
+        } else {
+            $reservation->loadMissing(['lineContacts']);
+            $lineSection = [
+                'context' => 'reservation',
+                'customer_id' => null,
+                'reservation_id' => $reservation->id,
+                'shops' => [],
+                'can_issue_line_link' => $canIssueLineLink,
+                'line_contacts' => $reservation->lineContacts->map($mapLineContact)->values()->all(),
+            ];
+        }
+
         return Inertia::render('Admin/Reservation/Show', [
             'reservation' => $reservation,
             'event' => $reservation->event,
@@ -504,19 +550,20 @@ class ReservationController extends Controller
                 'id' => $currentUser->id,
                 'name' => $currentUser->name,
             ] : null,
-            'userShops' => $userShops->map(function($shop) {
+            'userShops' => $userShops->map(function ($shop) {
                 return [
                     'id' => $shop->id,
                     'name' => $shop->name,
                 ];
             }),
-            'eventShops' => $eventShops->map(function($shop) {
+            'eventShops' => $eventShops->map(function ($shop) {
                 return [
                     'id' => $shop->id,
                     'name' => $shop->name,
                 ];
             }),
             'assigneeDatalistOptions' => $this->assigneeDatalistOptionsForEvent($event),
+            'line_section' => $lineSection,
         ]);
     }
 
@@ -544,6 +591,7 @@ class ReservationController extends Controller
                         ->where('id', '!=', $reservation->id) // 現在編集中の予約を除外
                         ->count();
                     $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
+
                     return $timeslot;
                 });
             // 会場を予約枠の最終日が直近の順でソート（公開ページと同様）
@@ -554,6 +602,7 @@ class ReservationController extends Controller
                 ->map(fn ($slots) => $slots->max('start_at'));
             $venues = $venues->sortBy(function ($venue) use ($lastSlotDatesByVenue) {
                 $last = $lastSlotDatesByVenue->get($venue->id);
+
                 return $last ?? Carbon::createFromDate(9999, 12, 31);
             })->values();
         }
@@ -573,21 +622,21 @@ class ReservationController extends Controller
     {
         $reservation->load('event');
         $event = $reservation->event;
-        
+
         // フォーム種別に応じたバリデーション
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:255',
         ];
-        
+
         // 資料請求フォームの場合
         if ($event->form_type === 'document') {
             $rules['request_method'] = 'required|in:郵送,デジタルカタログ';
             $rules['postal_code'] = 'nullable|string|max:10';
             $rules['privacy_agreed'] = 'nullable|boolean';
         }
-        
+
         // 予約フォームの場合
         if ($event->form_type === 'reservation') {
             $rules['postal_code'] = 'nullable|string|max:10';
@@ -606,13 +655,13 @@ class ReservationController extends Controller
             $rules['considering_plans'] = 'nullable|array';
             $rules['considering_plans.*'] = 'in:振袖レンタルプラン,振袖購入プラン,ママ振りフォトプラン,フォトレンタルプラン';
         }
-        
+
         // 共通項目
         $rules['furigana'] = 'nullable|string|max:255';
         $rules['birth_date'] = 'nullable|date';
         $rules['address'] = 'nullable|string|max:255';
         $rules['inquiry_message'] = 'nullable|string';
-        
+
         // heard_fromのバリデーション（フォーム種別によって異なる）
         if ($event->form_type === 'contact') {
             // お問い合わせフォームの場合、「メール」「電話」のみ許可
@@ -621,7 +670,7 @@ class ReservationController extends Controller
             // その他のフォームの場合
             $rules['heard_from'] = 'nullable|string|max:255';
         }
-        
+
         $validated = $request->validate($rules);
 
         // 来店動機を処理（「その他」の場合はテキスト入力も含める）
@@ -674,7 +723,7 @@ class ReservationController extends Controller
      */
     public function forceDestroy(EventReservation $reservation)
     {
-        if (!$reservation->cancel_flg) {
+        if (! $reservation->cancel_flg) {
             return redirect()->back()
                 ->with('error', 'キャンセル済みの予約のみ削除できます。');
         }
@@ -725,6 +774,7 @@ class ReservationController extends Controller
                             'message' => '枠がいっぱいです。先に枠を増やしてください。',
                         ], 422);
                     }
+
                     return redirect()->back()
                         ->with('error', '枠がいっぱいです。先に枠を増やしてください。');
                 }
@@ -834,7 +884,7 @@ class ReservationController extends Controller
             'route_name' => $request->route() ? $request->route()->getName() : null,
             'url' => $request->fullUrl(),
             'method' => $request->method(),
-            'description' => '予約ID:' . $reservation->id . ' ステータスを ' . ($oldStatus ?? '-') . '→' . $validated['status'] . ' に変更',
+            'description' => '予約ID:'.$reservation->id.' ステータスを '.($oldStatus ?? '-').'→'.$validated['status'].' に変更',
             'old_values' => ['status' => $oldStatus],
             'new_values' => ['status' => $validated['status']],
             'ip_address' => $request->ip(),
@@ -894,7 +944,7 @@ class ReservationController extends Controller
             'participant_ids.*' => 'exists:users,id',
         ]);
 
-        $participantIds = !empty($validated['participant_ids']) ? $validated['participant_ids'] : [];
+        $participantIds = ! empty($validated['participant_ids']) ? $validated['participant_ids'] : [];
 
         $reservation->load('schedule');
 
@@ -938,7 +988,7 @@ class ReservationController extends Controller
      */
     public function removeFromSchedule(EventReservation $reservation)
     {
-        if (!$reservation->schedule) {
+        if (! $reservation->schedule) {
             return redirect()->back()->with('error', 'この予約はスケジュールに追加されていません。');
         }
 
@@ -956,7 +1006,13 @@ class ReservationController extends Controller
             'customer_id' => 'required|exists:customers,id',
         ]);
 
-        $reservation->update(['customer_id' => $validated['customer_id']]);
+        $customer = Customer::findOrFail($validated['customer_id']);
+        $reservation->update(['customer_id' => $customer->id]);
+
+        $migrated = app(ReservationLineContactMigrator::class)->migrateReservationContactsToCustomer($reservation, $customer);
+        if (! $migrated['ok']) {
+            return redirect()->back()->with('error', $migrated['message'] ?? 'LINE の引き継ぎに失敗しました。');
+        }
 
         return redirect()->back()->with('success', '顧客を紐づけました。');
     }
@@ -992,19 +1048,19 @@ class ReservationController extends Controller
         $validated = $request->validate($rules);
 
         // 新規スレッド作成または既存スレッド取得
-        if (!isset($validated['email_thread_id']) || $validated['email_thread_id'] === null) {
+        if (! isset($validated['email_thread_id']) || $validated['email_thread_id'] === null) {
             // 新規スレッドを作成
             $emailThread = EmailThread::create([
                 'event_reservation_id' => $reservation->id,
                 'subject' => $validated['subject'],
             ]);
-            
+
             $inReplyTo = null;
             $references = null;
         } else {
             // 既存スレッドを取得
             $emailThread = EmailThread::with('emails')->findOrFail($validated['email_thread_id']);
-            
+
             // スレッドがこの予約に紐づいているか確認
             if ($emailThread->event_reservation_id !== $reservation->id) {
                 return redirect()->back()->with('error', 'このスレッドはこの予約に紐づいていません。');
@@ -1015,12 +1071,12 @@ class ReservationController extends Controller
                 ->where('from', $reservation->email)
                 ->orderBy('created_at', 'desc')
                 ->first();
-            
+
             // In-Reply-To：最新の受信メールのMessage-IDを使用（そのまま使用、修正しない）
-            $inReplyTo = $latestReceivedEmail && $latestReceivedEmail->message_id 
-                ? $latestReceivedEmail->message_id 
+            $inReplyTo = $latestReceivedEmail && $latestReceivedEmail->message_id
+                ? $latestReceivedEmail->message_id
                 : null;
-            
+
             // スレッド内のすべてのメールのMessage-IDを取得（References用：古い順）
             // message_idはそのまま使用（修正しない）
             $allMessageIds = $emailThread->emails()
@@ -1028,10 +1084,10 @@ class ReservationController extends Controller
                 ->pluck('message_id')
                 ->filter()
                 ->values();
-            
+
             // References：スレッド内のすべてのMessage-IDを古い順にスペース区切りで結合
             $references = $allMessageIds->implode(' ');
-            
+
             // デバッグ用ログ：返信メール送信準備
             Log::info('返信メール送信準備 - ヘッダー情報確認', [
                 'email_thread_id' => $emailThread->id,
@@ -1047,7 +1103,7 @@ class ReservationController extends Controller
 
         // メールを送信
         $mailable = new ReservationReplyMail($emailThread, $reservation->email, $validated['message'], $inReplyTo, $references);
-        
+
         // In-Reply-ToとReferencesヘッダーを設定（返信の場合のみ）
         // envelope()とcontent()を使う場合、withSwiftMessageはコントローラー側で呼ぶ必要がある
         if ($inReplyTo || $references) {
@@ -1060,9 +1116,9 @@ class ReservationController extends Controller
                 }
             });
         }
-        
+
         Mail::to($reservation->email)->send($mailable);
-        
+
         // デバッグ用：実際に送信されたメールのヘッダーを確認
         Log::info('返信メール送信 - ヘッダー確認', [
             'email_thread_id' => $emailThread->id,
@@ -1073,18 +1129,18 @@ class ReservationController extends Controller
         ]);
 
         // Message-IDを生成（RFC 5322形式）
-        $messageId = '<reservation-reply-' . $reservation->id . '-' . now()->timestamp . '@' . parse_url(config('app.url'), PHP_URL_HOST) . '>';
+        $messageId = '<reservation-reply-'.$reservation->id.'-'.now()->timestamp.'@'.parse_url(config('app.url'), PHP_URL_HOST).'>';
 
         // 送信したメールをデータベースに保存
         $rawEmail = $this->buildRawEmail($mailable, $reservation->email, $emailThread, $validated['message'], $messageId, $inReplyTo, $references);
-        
+
         // デバッグ用：実際に送信されたメールの生データをログに記録
         Log::info('返信メール送信 - raw_email', [
             'reservation_id' => $reservation->id,
             'email_thread_id' => $emailThread->id,
             'raw_email' => $rawEmail,
         ]);
-        
+
         Email::create([
             'message_id' => $messageId,
             'from' => config('mail.from.address'),
@@ -1108,6 +1164,7 @@ class ReservationController extends Controller
         ]);
 
         $successMessage = isset($validated['email_thread_id']) ? '返信メールを送信しました。' : 'メールを送信しました。';
+
         return redirect()->back()->with('success', $successMessage);
     }
 
@@ -1117,22 +1174,22 @@ class ReservationController extends Controller
     private function buildRawEmail($mailable, $to, $emailThread, $messageText, $messageId, $inReplyTo = null, $references = null)
     {
         $envelope = $mailable->envelope();
-        
+
         $subject = $envelope->subject;
         $from = config('mail.from.address');
         $fromName = config('mail.from.name');
-        
+
         $textBody = view('mail.reservation_reply_plain', [
             'emailThread' => $emailThread,
             'replyMessage' => $messageText,
         ])->render();
-        
+
         $rawEmail = "Message-ID: {$messageId}\r\n";
         $rawEmail .= "From: {$fromName} <{$from}>\r\n";
         $rawEmail .= "To: {$to}\r\n";
         $rawEmail .= "Subject: {$subject}\r\n";
         $rawEmail .= "Reply-To: reply@reply.kyogofuku-hirata.jp\r\n";
-        
+
         // 返信メールのヘッダーを追加
         if ($inReplyTo) {
             $rawEmail .= "In-Reply-To: {$inReplyTo}\r\n";
@@ -1140,13 +1197,13 @@ class ReservationController extends Controller
         if ($references) {
             $rawEmail .= "References: {$references}\r\n";
         }
-        
-        $rawEmail .= "Date: " . now()->format('r') . "\r\n";
+
+        $rawEmail .= 'Date: '.now()->format('r')."\r\n";
         $rawEmail .= "MIME-Version: 1.0\r\n";
         $rawEmail .= "Content-Type: text/plain; charset=UTF-8\r\n";
         $rawEmail .= "\r\n";
         $rawEmail .= $textBody;
-        
+
         return $rawEmail;
     }
 
@@ -1185,20 +1242,19 @@ class ReservationController extends Controller
      */
     private function processVisitReasons($visitReasons, $visitReasonOther)
     {
-        if (!$visitReasons || !is_array($visitReasons)) {
+        if (! $visitReasons || ! is_array($visitReasons)) {
             return null;
         }
 
         $reasons = [];
         foreach ($visitReasons as $reason) {
             if ($reason === 'その他' && $visitReasonOther) {
-                $reasons[] = 'その他(' . $visitReasonOther . ')';
+                $reasons[] = 'その他('.$visitReasonOther.')';
             } else {
                 $reasons[] = $reason;
             }
         }
 
-        return !empty($reasons) ? $reasons : null;
+        return ! empty($reasons) ? $reasons : null;
     }
 }
-

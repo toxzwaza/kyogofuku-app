@@ -13,18 +13,18 @@
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="mx-auto sm:px-6 lg:px-8">
                 <div
                     v-if="$page.props.success"
                     class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200"
                 >
                     {{ $page.props.success }}
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- 左側: 既存コンテンツ -->
-                    <div class="lg:col-span-2 space-y-6">
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+                    <!-- 左: 顧客タグ・基本情報 -->
+                    <div class="lg:col-span-3 space-y-4 min-w-0">
                 <!-- 顧客タグ（overflow-visible でツールチップが途切れないようにする） -->
-                <div class="bg-white overflow-visible shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white overflow-visible shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">顧客タグ</h3>
@@ -95,7 +95,7 @@
                 </div>
 
                 <!-- 顧客基本情報（overflow-visible でツールチップが途切れないようにする） -->
-                <div class="bg-white overflow-visible shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white overflow-visible shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -278,6 +278,15 @@
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
+                                        メールアドレス
+                                    </label>
+                                    <p class="text-base font-medium text-gray-900 break-all">{{ customer.email || '-' }}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
                                         郵便番号
                                     </label>
                                     <p class="text-base font-medium text-gray-900">{{ formatPostalCode(customer.postal_code) }}</p>
@@ -337,9 +346,15 @@
                                 <p class="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{{ customer.remarks }}</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+                    </div>
 
+                    <!-- 中央: 追加情報・参加イベント・成約・制約・前撮り・顧客写真 -->
+                    <div class="lg:col-span-6 space-y-4 min-w-0">
                         <!-- 追加情報セクション（振袖アンケート）※customerの項目はcustomerから、それ以外はadditional_infoから表示 -->
-                        <div v-if="hasAdditionalInfo" class="mb-6">
+                        <div v-if="hasAdditionalInfo" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                            <div class="p-6">
                             <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -493,12 +508,11 @@
                                     <p class="text-base font-medium text-gray-900">{{ customer.staff_name || '-' }}</p>
                                 </div>
                             </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
                 <!-- 参加イベント -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">参加イベント</h3>
@@ -561,7 +575,7 @@
                 </div>
 
                 <!-- 成約情報 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">成約情報</h3>
@@ -657,7 +671,7 @@
                 </div>
 
                 <!-- 制約情報 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">制約情報</h3>
@@ -738,7 +752,7 @@
                 </div>
 
                 <!-- 前撮り情報 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">前撮り情報</h3>
@@ -964,11 +978,12 @@
                 </div>
                     </div>
 
-                    <!-- 右側: メモ -->
-                    <div class="lg:col-span-1">
+                    <!-- 右: LINE 連携・メッセージ・メモ -->
+                    <div class="lg:col-span-3 space-y-4 min-w-0">
+                        <CustomerLineSection :customer="customer" :shops="shops" />
                         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
-                                <h3 class="text-lg font-semibold mb-4">メモ</h3>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">メモ</h3>
 
                                 <!-- メモ登録フォーム -->
                                 <form @submit.prevent="submitNote" class="mb-6">
@@ -1256,6 +1271,17 @@
                                             <input
                                                 v-model="customerForm.phone_number"
                                                 type="tel"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            />
+                                        </div>
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                                メールアドレス
+                                            </label>
+                                            <input
+                                                v-model="customerForm.email"
+                                                type="email"
+                                                autocomplete="email"
                                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             />
                                         </div>
@@ -2504,6 +2530,7 @@ import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Canvas, FabricImage, PencilBrush } from 'fabric';
 import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue';
+import CustomerLineSection from '@/Components/Admin/CustomerLineSection.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 
 const props = defineProps({
@@ -2632,6 +2659,7 @@ const customerForm = useForm({
         ? String(props.customer.kimono_ship_date).slice(0, 10)
         : '',
     phone_number: props.customer.phone_number || '',
+    email: props.customer.email || '',
     postal_code: props.customer.postal_code || '',
     address: props.customer.address || '',
     remarks: props.customer.remarks || '',
@@ -3358,6 +3386,7 @@ const openEditCustomerModal = () => {
         ? String(props.customer.kimono_ship_date).slice(0, 10)
         : '';
     customerForm.phone_number = props.customer.phone_number || '';
+    customerForm.email = props.customer.email || '';
     customerForm.postal_code = props.customer.postal_code || '';
     customerForm.address = props.customer.address || '';
     customerForm.remarks = props.customer.remarks || '';

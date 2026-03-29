@@ -464,236 +464,6 @@
                   </div>
               </div>
             </div>
-
-            <!-- メールやり取りブロック -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6">
-              <div class="p-6">
-                <h3 class="text-lg font-semibold mb-4">メールやり取り</h3>
-                
-                <!-- 返信メール送信エリア -->
-                <div class="mb-6 pb-6 border-b border-gray-200">
-                  <form @submit.prevent="sendReplyEmail">
-                    <div class="space-y-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                          スレッド選択
-                        </label>
-                        <select
-                          v-model="replyForm.email_thread_id"
-                          @change="onThreadChange"
-                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          :required="!isNewEmail"
-                        >
-                          <option value="">スレッドを選択してください</option>
-                          <option value="new">新規メール作成</option>
-                          <option
-                            v-for="thread in sortedEmailThreads"
-                            :key="thread.id"
-                            :value="thread.id"
-                          >
-                            {{ thread.subject }} ({{ thread.emails ? thread.emails.length : 0 }}件)
-                          </option>
-                        </select>
-                      </div>
-
-                      <!-- 新規メール作成時の件名入力フィールド -->
-                      <div v-if="isNewEmail">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                          件名 <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                          v-model="replyForm.subject"
-                          type="text"
-                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          placeholder="メールの件名を入力してください"
-                          required
-                        />
-                        <div
-                          v-if="replyForm.errors.subject"
-                          class="mt-1 text-sm text-red-600"
-                        >
-                          {{ replyForm.errors.subject }}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                          メッセージ
-                        </label>
-                        <textarea
-                          v-model="replyForm.message"
-                          rows="8"
-                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          :placeholder="isNewEmail ? 'メッセージを入力してください' : '返信メッセージを入力してください'"
-                          required
-                        ></textarea>
-                      </div>
-
-                      <div>
-                        <button
-                          type="submit"
-                          :disabled="replyForm.processing || isSendingEmail"
-                          class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150"
-                        >
-                          {{ (replyForm.processing || isSendingEmail) ? "送信中..." : (isNewEmail ? "メールを送信" : "返信メールを送信") }}
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-                
-                <!-- メールやり取り表示エリア -->
-                <div v-if="filteredEmailThreads && filteredEmailThreads.length > 0" class="space-y-6">
-                  <div
-                    v-for="thread in filteredEmailThreads"
-                    :key="thread.id"
-                    class="border border-gray-200 rounded-lg p-4"
-                  >
-                    <div class="mb-3">
-                      <h4 class="font-medium text-gray-900">{{ thread.subject }}</h4>
-                      <p class="text-xs text-gray-500 mt-1">
-                        作成日時: {{ formatDateTime(thread.created_at) }}
-                      </p>
-                    </div>
-                    
-                    <div class="space-y-4">
-                      <div
-                        v-for="email in thread.emails"
-                        :key="email.id"
-                        :class="[
-                          'flex items-start gap-3',
-                          email.from === reservation.email ? 'justify-start' : 'justify-end'
-                        ]"
-                      >
-                        <!-- お客様側のアイコン（左側） -->
-                        <div
-                          v-if="email.from === reservation.email"
-                          class="flex-shrink-0 w-12 h-12 rounded-full bg-gray-200 border-2 border-gray-300 overflow-hidden flex items-center justify-center"
-                        >
-                          <svg class="w-7 h-7 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                        
-                        <div
-                          :class="[
-                            'relative max-w-[80%] rounded-lg px-4 py-3 shadow-sm',
-                            email.from === reservation.email 
-                              ? 'bg-blue-50 border border-blue-200 chat-bubble-left' 
-                              : 'bg-green-50 border border-green-200 chat-bubble-right'
-                          ]"
-                        >
-                          <!-- 吹き出しの尾（三角形） - お客様（左側） -->
-                          <template v-if="email.from === reservation.email">
-                            <div
-                              class="absolute left-0 top-4 -ml-2 w-0 h-0 border-t-[8px] border-t-transparent border-r-[8px] border-r-blue-200 border-b-[8px] border-b-transparent"
-                            ></div>
-                            <div
-                              class="absolute left-0 top-4 -ml-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-r-[6px] border-r-blue-50 border-b-[6px] border-b-transparent"
-                            ></div>
-                          </template>
-                          <!-- 吹き出しの尾（三角形） - 当店（右側） -->
-                          <template v-else>
-                            <div
-                              class="absolute right-0 top-4 -mr-2 w-0 h-0 border-t-[8px] border-t-transparent border-l-[8px] border-l-green-200 border-b-[8px] border-b-transparent"
-                            ></div>
-                            <div
-                              class="absolute right-0 top-4 -mr-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-l-[6px] border-l-green-50 border-b-[6px] border-b-transparent"
-                            ></div>
-                          </template>
-                          
-                          <div class="mb-2">
-                            <div class="flex justify-between items-start gap-3">
-                              <div>
-                                <p 
-                                  :class="[
-                                    'text-sm font-medium',
-                                    email.from === reservation.email ? 'text-blue-900' : 'text-green-900'
-                                  ]"
-                                >
-                                  {{ email.from === reservation.email ? 'お客様' : '当店' }}
-                                </p>
-                                <p 
-                                  :class="[
-                                    'text-xs mt-0.5',
-                                    email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
-                                  ]"
-                                >
-                                  {{ email.from === reservation.email ? email.from : email.to }}
-                                </p>
-                              </div>
-                              <p 
-                                :class="[
-                                  'text-xs whitespace-nowrap',
-                                  email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
-                                ]"
-                              >
-                                {{ formatDateTime(email.created_at) }}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <p 
-                            :class="[
-                              'text-sm font-medium mb-2',
-                              email.from === reservation.email ? 'text-blue-900' : 'text-green-900'
-                            ]"
-                          >
-                            {{ email.subject }}
-                          </p>
-                          
-                          <div 
-                            :class="[
-                              'text-sm whitespace-pre-wrap',
-                              email.from === reservation.email ? 'text-blue-800' : 'text-green-800'
-                            ]"
-                          >
-                            {{ email.text_body || email.html_body || '-' }}
-                          </div>
-                          
-                          <div v-if="email.attachments && email.attachments.length > 0" class="mt-3 pt-3 border-t" :class="email.from === reservation.email ? 'border-blue-200' : 'border-green-200'">
-                            <p 
-                              :class="[
-                                'text-xs mb-1',
-                                email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
-                              ]"
-                            >
-                              添付ファイル:
-                            </p>
-                            <ul 
-                              :class="[
-                                'text-xs space-y-1',
-                                email.from === reservation.email ? 'text-blue-700' : 'text-green-700'
-                              ]"
-                            >
-                              <li v-for="attachment in email.attachments" :key="attachment.id">
-                                • {{ attachment.filename }}
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                        
-                        <!-- 当店側のアイコン（右側） -->
-                        <div
-                          v-if="email.from !== reservation.email"
-                          class="flex-shrink-0 w-12 h-12 rounded-full bg-white border-2 border-green-300 overflow-hidden flex items-center justify-center shadow-sm"
-                        >
-                          <img
-                            src="/storage/logo/logo_b.png"
-                            alt="店舗ロゴ"
-                            class="w-full h-full object-contain p-1"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div v-else class="text-sm text-gray-500 text-center py-8">
-                  メールのやり取りはありません
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- 中央: ステータス・スケジュール等（右カラムと同幅） -->
@@ -864,8 +634,8 @@
                   </form>
                 </div>
 
-                <!-- スケジュール追加ブロック -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
+                <!-- スケジュール（予約詳細では非表示・処理はバックエンドのまま利用可能） -->
+                <div v-if="false" class="mt-6 pt-6 border-t border-gray-200">
                   <h3 class="text-lg font-semibold mb-4">スケジュール</h3>
 
                   <!-- スケジュール追加済みの場合：詳細表示 -->
@@ -1422,13 +1192,282 @@
             </div>
           </div>
 
-          <!-- 右側: メモ・操作履歴（中央カラムと同幅） -->
-          <div class="lg:col-span-3 min-w-0">
+          <!-- 右側: 連絡（LINE・メール）＋ メモ・操作履歴 -->
+          <div class="lg:col-span-3 min-w-0 space-y-4">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+              <div
+                class="flex border-b border-gray-200 gap-1 px-1 pt-1"
+                role="tablist"
+                aria-label="連絡"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  :class="[
+                    'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
+                    communicationTab === 'line'
+                      ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                  ]"
+                  :aria-selected="communicationTab === 'line'"
+                  @click="communicationTab = 'line'"
+                >
+                  LINE
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  :class="[
+                    'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
+                    communicationTab === 'email'
+                      ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                  ]"
+                  :aria-selected="communicationTab === 'email'"
+                  @click="communicationTab = 'email'"
+                >
+                  メール
+                </button>
+              </div>
+              <div class="p-6">
+                <div v-show="communicationTab === 'line'" class="min-w-0">
+                  <CustomerLineSection
+                    v-if="line_section"
+                    variant="embedded"
+                    :customer="lineCustomerForLineSection"
+                    :shops="line_section.shops"
+                    :line-api="line_section.context === 'reservation' ? line_section : null"
+                  />
+                  <p v-else class="text-sm text-gray-500 text-center py-6">
+                    LINE 連携情報がありません。
+                  </p>
+                </div>
+                <div v-show="communicationTab === 'email'" class="min-w-0">
+                  <div class="mb-6 pb-6 border-b border-gray-200">
+                    <form @submit.prevent="sendReplyEmail">
+                      <div class="space-y-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">
+                            スレッド選択
+                          </label>
+                          <select
+                            v-model="replyForm.email_thread_id"
+                            @change="onThreadChange"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            :required="!isNewEmail"
+                          >
+                            <option value="">スレッドを選択してください</option>
+                            <option value="new">新規メール作成</option>
+                            <option
+                              v-for="thread in sortedEmailThreads"
+                              :key="thread.id"
+                              :value="thread.id"
+                            >
+                              {{ thread.subject }} ({{ thread.emails ? thread.emails.length : 0 }}件)
+                            </option>
+                          </select>
+                        </div>
+
+                        <div v-if="isNewEmail">
+                          <label class="block text-sm font-medium text-gray-700 mb-1">
+                            件名 <span class="text-red-500">*</span>
+                          </label>
+                          <input
+                            v-model="replyForm.subject"
+                            type="text"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            placeholder="メールの件名を入力してください"
+                            required
+                          />
+                          <div
+                            v-if="replyForm.errors.subject"
+                            class="mt-1 text-sm text-red-600"
+                          >
+                            {{ replyForm.errors.subject }}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">
+                            メッセージ
+                          </label>
+                          <textarea
+                            v-model="replyForm.message"
+                            rows="8"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            :placeholder="isNewEmail ? 'メッセージを入力してください' : '返信メッセージを入力してください'"
+                            required
+                          ></textarea>
+                        </div>
+
+                        <div>
+                          <button
+                            type="submit"
+                            :disabled="replyForm.processing || isSendingEmail"
+                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150"
+                          >
+                            {{ (replyForm.processing || isSendingEmail) ? "送信中..." : (isNewEmail ? "メールを送信" : "返信メールを送信") }}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div v-if="filteredEmailThreads && filteredEmailThreads.length > 0" class="space-y-6">
+                    <div
+                      v-for="thread in filteredEmailThreads"
+                      :key="thread.id"
+                      class="border border-gray-200 rounded-lg p-4"
+                    >
+                      <div class="mb-3">
+                        <h4 class="font-medium text-gray-900">{{ thread.subject }}</h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                          作成日時: {{ formatDateTime(thread.created_at) }}
+                        </p>
+                      </div>
+
+                      <div class="space-y-4">
+                        <div
+                          v-for="email in thread.emails"
+                          :key="email.id"
+                          :class="[
+                            'flex items-start gap-3',
+                            email.from === reservation.email ? 'justify-start' : 'justify-end'
+                          ]"
+                        >
+                          <div
+                            v-if="email.from === reservation.email"
+                            class="flex-shrink-0 w-12 h-12 rounded-full bg-gray-200 border-2 border-gray-300 overflow-hidden flex items-center justify-center"
+                          >
+                            <svg class="w-7 h-7 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
+
+                          <div
+                            :class="[
+                              'relative max-w-[80%] rounded-lg px-4 py-3 shadow-sm',
+                              email.from === reservation.email
+                                ? 'bg-blue-50 border border-blue-200 chat-bubble-left'
+                                : 'bg-green-50 border border-green-200 chat-bubble-right'
+                            ]"
+                          >
+                            <template v-if="email.from === reservation.email">
+                              <div
+                                class="absolute left-0 top-4 -ml-2 w-0 h-0 border-t-[8px] border-t-transparent border-r-[8px] border-r-blue-200 border-b-[8px] border-b-transparent"
+                              ></div>
+                              <div
+                                class="absolute left-0 top-4 -ml-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-r-[6px] border-r-blue-50 border-b-[6px] border-b-transparent"
+                              ></div>
+                            </template>
+                            <template v-else>
+                              <div
+                                class="absolute right-0 top-4 -mr-2 w-0 h-0 border-t-[8px] border-t-transparent border-l-[8px] border-l-green-200 border-b-[8px] border-b-transparent"
+                              ></div>
+                              <div
+                                class="absolute right-0 top-4 -mr-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-l-[6px] border-l-green-50 border-b-[6px] border-b-transparent"
+                              ></div>
+                            </template>
+
+                            <div class="mb-2">
+                              <div class="flex justify-between items-start gap-3">
+                                <div>
+                                  <p
+                                    :class="[
+                                      'text-sm font-medium',
+                                      email.from === reservation.email ? 'text-blue-900' : 'text-green-900'
+                                    ]"
+                                  >
+                                    {{ email.from === reservation.email ? 'お客様' : '当店' }}
+                                  </p>
+                                  <p
+                                    :class="[
+                                      'text-xs mt-0.5',
+                                      email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
+                                    ]"
+                                  >
+                                    {{ email.from === reservation.email ? email.from : email.to }}
+                                  </p>
+                                </div>
+                                <p
+                                  :class="[
+                                    'text-xs whitespace-nowrap',
+                                    email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
+                                  ]"
+                                >
+                                  {{ formatDateTime(email.created_at) }}
+                                </p>
+                              </div>
+                            </div>
+
+                            <p
+                              :class="[
+                                'text-sm font-medium mb-2',
+                                email.from === reservation.email ? 'text-blue-900' : 'text-green-900'
+                              ]"
+                            >
+                              {{ email.subject }}
+                            </p>
+
+                            <div
+                              :class="[
+                                'text-sm whitespace-pre-wrap',
+                                email.from === reservation.email ? 'text-blue-800' : 'text-green-800'
+                              ]"
+                            >
+                              {{ email.text_body || email.html_body || '-' }}
+                            </div>
+
+                            <div v-if="email.attachments && email.attachments.length > 0" class="mt-3 pt-3 border-t" :class="email.from === reservation.email ? 'border-blue-200' : 'border-green-200'">
+                              <p
+                                :class="[
+                                  'text-xs mb-1',
+                                  email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
+                                ]"
+                              >
+                                添付ファイル:
+                              </p>
+                              <ul
+                                :class="[
+                                  'text-xs space-y-1',
+                                  email.from === reservation.email ? 'text-blue-700' : 'text-green-700'
+                                ]"
+                              >
+                                <li v-for="attachment in email.attachments" :key="attachment.id">
+                                  • {{ attachment.filename }}
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+
+                          <div
+                            v-if="email.from !== reservation.email"
+                            class="flex-shrink-0 w-12 h-12 rounded-full bg-white border-2 border-green-300 overflow-hidden flex items-center justify-center shadow-sm"
+                          >
+                            <img
+                              src="/storage/logo/logo_b.png"
+                              alt="店舗ロゴ"
+                              class="w-full h-full object-contain p-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-else class="text-sm text-gray-500 text-center py-8">
+                    メールのやり取りはありません
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
               <div class="p-6">
                 <div
                   class="flex border-b border-gray-200 mb-4 -mt-1 gap-1"
                   role="tablist"
+                  aria-label="メモと操作履歴"
                 >
                   <button
                     type="button"
@@ -1576,12 +1615,14 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import ActionButton from "@/Components/ActionButton.vue";
+import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
 import { formatDateTimeJa, formatDateJa } from "@/utils/dateFormat";
 
 const isRestoring = ref(false);
+const communicationTab = ref("line");
 const rightPanelTab = ref("memo");
 
 // 顧客紐づけ（デフォルト値: 未紐づけ時は予約者名、紐づけ済み時は変更で顧客名をセット）
@@ -1684,6 +1725,25 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  line_section: {
+    type: Object,
+    default: null,
+  },
+});
+
+const lineCustomerForLineSection = computed(() => {
+  if (!props.line_section || props.line_section.context !== "customer") {
+    return null;
+  }
+  const c = props.reservation?.customer;
+  if (!c) {
+    return null;
+  }
+  return {
+    id: c.id,
+    shop_id: c.shop_id ?? null,
+    line_contacts: props.line_section.line_contacts ?? [],
+  };
 });
 
 const activityLogs = computed(() => props.activity_logs ?? []);

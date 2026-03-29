@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AttendanceRecord;
+use App\Models\Contract;
+use App\Models\Customer;
+use App\Models\CustomerLineMessage;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
+use App\Models\PhotoSlot;
 use App\Models\ReservationNote;
 use App\Models\Shop;
 use App\Models\User;
-use App\Models\AttendanceRecord;
-use App\Models\Customer;
-use App\Models\Contract;
-use App\Models\PhotoSlot;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
@@ -39,13 +40,13 @@ class DashboardController extends Controller
 
         // フォームタイプ別の予約数（キャンセル済みは除外）
         $formTypeStats = [
-            'reservation' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+            'reservation' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                 $query->where('form_type', 'reservation');
             })->count(),
-            'document' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+            'document' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                 $query->where('form_type', 'document');
             })->count(),
-            'contact' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+            'contact' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                 $query->where('form_type', 'contact');
             })->count(),
         ];
@@ -54,14 +55,14 @@ class DashboardController extends Controller
         $timeslots = EventTimeslot::where('is_active', true)->get();
         $totalCapacity = $timeslots->sum('capacity');
         $totalReserved = 0;
-        
+
         foreach ($timeslots as $timeslot) {
             $reserved = EventReservation::where('cancel_flg', false)
                 ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'))
                 ->count();
             $totalReserved += $reserved;
         }
-        
+
         $occupancyRate = $totalCapacity > 0 ? round(($totalReserved / $totalCapacity) * 100, 1) : 0;
 
         // 過去7日間の予約トレンド
@@ -71,13 +72,13 @@ class DashboardController extends Controller
             $trend7Days[] = [
                 'date' => $date->format('Y-m-d'),
                 'label' => $date->format('m/d'),
-                'reservation' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+                'reservation' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'reservation');
                 })->whereDate('created_at', $date)->count(),
-                'document' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+                'document' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'document');
                 })->whereDate('created_at', $date)->count(),
-                'contact' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+                'contact' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'contact');
                 })->whereDate('created_at', $date)->count(),
             ];
@@ -125,11 +126,11 @@ class DashboardController extends Controller
             ->where('is_public', true)
             ->where('form_type', 'reservation')
             ->get()
-            ->map(function($event) {
+            ->map(function ($event) {
                 $timeslots = $event->timeslots()->where('is_active', true)->get();
                 $totalCapacity = $timeslots->sum('capacity');
                 $totalReserved = 0;
-                
+
                 foreach ($timeslots as $timeslot) {
                     $reserved = EventReservation::where('event_id', $event->id)
                         ->where('cancel_flg', false)
@@ -137,9 +138,9 @@ class DashboardController extends Controller
                         ->count();
                     $totalReserved += $reserved;
                 }
-                
+
                 $occupancyRate = $totalCapacity > 0 ? ($totalReserved / $totalCapacity) * 100 : 0;
-                
+
                 return [
                     'event' => $event,
                     'occupancy_rate' => round($occupancyRate, 1),
@@ -147,7 +148,7 @@ class DashboardController extends Controller
                     'total_reserved' => $totalReserved,
                 ];
             })
-            ->filter(function($item) {
+            ->filter(function ($item) {
                 return $item['occupancy_rate'] >= 80 && $item['total_capacity'] > 0;
             })
             ->sortByDesc('occupancy_rate')
@@ -175,68 +176,68 @@ class DashboardController extends Controller
         $formTypeDetails = [
             'reservation' => [
                 'total' => $formTypeStats['reservation'],
-                'by_venue' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+                'by_venue' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'reservation');
                 })
-                ->whereNotNull('venue_id')
-                ->with('venue')
-                ->get()
-                ->groupBy('venue_id')
-                ->map(function($reservations) {
-                    return [
-                        'venue_name' => $reservations->first()->venue->name ?? '不明',
-                        'count' => $reservations->count(),
-                    ];
-                })
-                ->values(),
+                    ->whereNotNull('venue_id')
+                    ->with('venue')
+                    ->get()
+                    ->groupBy('venue_id')
+                    ->map(function ($reservations) {
+                        return [
+                            'venue_name' => $reservations->first()->venue->name ?? '不明',
+                            'count' => $reservations->count(),
+                        ];
+                    })
+                    ->values(),
             ],
             'document' => [
                 'total' => $formTypeStats['document'],
-                'by_method' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+                'by_method' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'document');
                 })
-                ->whereNotNull('request_method')
-                ->select('request_method', DB::raw('count(*) as count'))
-                ->groupBy('request_method')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'method' => $item->request_method,
-                        'count' => $item->count,
-                    ];
-                }),
+                    ->whereNotNull('request_method')
+                    ->select('request_method', DB::raw('count(*) as count'))
+                    ->groupBy('request_method')
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'method' => $item->request_method,
+                            'count' => $item->count,
+                        ];
+                    }),
             ],
             'contact' => [
                 'total' => $formTypeStats['contact'],
-                'by_response_method' => EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+                'by_response_method' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'contact');
                 })
-                ->whereNotNull('heard_from')
-                ->select('heard_from', DB::raw('count(*) as count'))
-                ->groupBy('heard_from')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'method' => $item->heard_from,
-                        'count' => $item->count,
-                    ];
-                }),
+                    ->whereNotNull('heard_from')
+                    ->select('heard_from', DB::raw('count(*) as count'))
+                    ->groupBy('heard_from')
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'method' => $item->heard_from,
+                            'count' => $item->count,
+                        ];
+                    }),
             ],
         ];
 
         // 店舗別の予約数
         $shopStats = Shop::where('is_active', true)
             ->get()
-            ->map(function($shop) {
+            ->map(function ($shop) {
                 $eventIds = $shop->events()->pluck('events.id');
                 $reservationCount = EventReservation::where('cancel_flg', false)->whereIn('event_id', $eventIds)->count();
-                
+
                 return [
                     'shop' => $shop,
                     'reservation_count' => $reservationCount,
                 ];
             })
-            ->filter(function($item) {
+            ->filter(function ($item) {
                 return $item['reservation_count'] > 0;
             })
             ->sortByDesc('reservation_count')
@@ -248,7 +249,7 @@ class DashboardController extends Controller
             ->orderBy('reservation_notes_count', 'desc')
             ->limit(10)
             ->get()
-            ->map(function($user) {
+            ->map(function ($user) {
                 return [
                     'user' => $user,
                     'note_count' => $user->reservation_notes_count,
@@ -256,40 +257,48 @@ class DashboardController extends Controller
             });
 
         // 今週の予約（予約日時が今週、キャンセル済みは除外）
-        $thisWeekReservations = EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+        $thisWeekReservations = EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
             $query->where('form_type', 'reservation');
         })
-        ->whereNotNull('reservation_datetime')
-        ->get()
-        ->filter(function($reservation) use ($weekStart, $weekEnd) {
-            if (!$reservation->reservation_datetime) return false;
-            $reservationDate = Carbon::parse($reservation->reservation_datetime)->startOfDay();
-            return $reservationDate >= $weekStart && $reservationDate <= $weekEnd;
-        })
-        ->map(function($reservation) {
-            $reservation->load('event');
-            return $reservation;
-        })
-        ->sortBy('reservation_datetime')
-        ->values();
+            ->whereNotNull('reservation_datetime')
+            ->get()
+            ->filter(function ($reservation) use ($weekStart, $weekEnd) {
+                if (! $reservation->reservation_datetime) {
+                    return false;
+                }
+                $reservationDate = Carbon::parse($reservation->reservation_datetime)->startOfDay();
+
+                return $reservationDate >= $weekStart && $reservationDate <= $weekEnd;
+            })
+            ->map(function ($reservation) {
+                $reservation->load('event');
+
+                return $reservation;
+            })
+            ->sortBy('reservation_datetime')
+            ->values();
 
         // 来週の予約（予約日時が来週、キャンセル済みは除外）
-        $nextWeekReservations = EventReservation::where('cancel_flg', false)->whereHas('event', function($query) {
+        $nextWeekReservations = EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
             $query->where('form_type', 'reservation');
         })
-        ->whereNotNull('reservation_datetime')
-        ->get()
-        ->filter(function($reservation) use ($nextWeekStart, $nextWeekEnd) {
-            if (!$reservation->reservation_datetime) return false;
-            $reservationDate = Carbon::parse($reservation->reservation_datetime)->startOfDay();
-            return $reservationDate >= $nextWeekStart && $reservationDate <= $nextWeekEnd;
-        })
-        ->map(function($reservation) {
-            $reservation->load('event');
-            return $reservation;
-        })
-        ->sortBy('reservation_datetime')
-        ->values();
+            ->whereNotNull('reservation_datetime')
+            ->get()
+            ->filter(function ($reservation) use ($nextWeekStart, $nextWeekEnd) {
+                if (! $reservation->reservation_datetime) {
+                    return false;
+                }
+                $reservationDate = Carbon::parse($reservation->reservation_datetime)->startOfDay();
+
+                return $reservationDate >= $nextWeekStart && $reservationDate <= $nextWeekEnd;
+            })
+            ->map(function ($reservation) {
+                $reservation->load('event');
+
+                return $reservation;
+            })
+            ->sortBy('reservation_datetime')
+            ->values();
 
         // 流入経路（utm_source）分析データ（event_reservations ベース）
         $bySource = EventReservation::where('cancel_flg', false)
@@ -297,7 +306,7 @@ class DashboardController extends Controller
             ->groupBy(DB::raw('COALESCE(utm_source, \'（未計測）\')'))
             ->orderByDesc('count')
             ->get()
-            ->map(fn($item) => ['source' => $item->source, 'count' => (int) $item->count])
+            ->map(fn ($item) => ['source' => $item->source, 'count' => (int) $item->count])
             ->values()
             ->toArray();
 
@@ -309,7 +318,7 @@ class DashboardController extends Controller
                 ->groupBy(DB::raw('COALESCE(utm_source, \'（未計測）\')'))
                 ->orderByDesc('count')
                 ->get()
-                ->map(fn($item) => ['source' => $item->source, 'count' => (int) $item->count])
+                ->map(fn ($item) => ['source' => $item->source, 'count' => (int) $item->count])
                 ->values()
                 ->toArray();
             $totalCount = array_sum(array_column($sources, 'count'));
@@ -320,7 +329,7 @@ class DashboardController extends Controller
                 'sources' => $sources,
                 'total_count' => $totalCount,
             ];
-        })->filter(fn($item) => $item['total_count'] > 0)->values()->toArray();
+        })->filter(fn ($item) => $item['total_count'] > 0)->values()->toArray();
 
         $utmStats = [
             'total_conversion' => EventReservation::where('cancel_flg', false)->count(),
@@ -341,14 +350,56 @@ class DashboardController extends Controller
 
         // ログインユーザー所属店舗の成約「保留」数・前撮り「詳細未決定」数
         $userShopIds = $userShops->pluck('id')->toArray();
-        $pendingContractsCount = !empty($userShopIds)
+        $pendingContractsCount = ! empty($userShopIds)
             ? Contract::where('status', '保留')->whereIn('shop_id', $userShopIds)->count()
             : 0;
-        $undecidedPhotoSlotsCount = !empty($userShopIds)
+        $undecidedPhotoSlotsCount = ! empty($userShopIds)
             ? PhotoSlot::where('details_undecided', true)
-                ->whereHas('shops', fn($q) => $q->whereIn('shops.id', $userShopIds))
+                ->whereHas('shops', fn ($q) => $q->whereIn('shops.id', $userShopIds))
                 ->count()
             : 0;
+
+        $lineInboundUnreadCount = 0;
+        $lineInboundRecentItems = [];
+        if (! empty($userShopIds)) {
+            $lineInboundUnreadCount = CustomerLineMessage::query()
+                ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
+                ->whereNull('admin_read_at')
+                ->whereHas('contact', fn ($q) => $q->whereIn('shop_id', $userShopIds))
+                ->count();
+
+            $lineInboundRecentItems = CustomerLineMessage::query()
+                ->with(['contact' => fn ($q) => $q->select('id', 'customer_id', 'event_reservation_id', 'label', 'shop_id')])
+                ->with(['contact.customer' => fn ($q) => $q->select('id', 'name')])
+                ->with(['contact.eventReservation' => fn ($q) => $q->select('id', 'name')])
+                ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
+                ->whereHas('contact', fn ($q) => $q->whereIn('shop_id', $userShopIds))
+                ->orderByDesc('id')
+                ->limit(25)
+                ->get()
+                ->map(function (CustomerLineMessage $m) {
+                    $contact = $m->contact;
+                    $isReservation = $contact->customer_id === null && $contact->event_reservation_id !== null;
+                    $displayName = $isReservation
+                        ? ($contact->eventReservation?->name ?? '予約者')
+                        : ($contact->customer?->name ?? '顧客');
+
+                    return [
+                        'id' => $m->id,
+                        'text' => (string) ($m->text ?? ''),
+                        'preview' => mb_substr((string) ($m->text ?? ''), 0, 240),
+                        'created_at' => $m->created_at?->toIso8601String(),
+                        'customer_id' => $contact->customer_id,
+                        'reservation_id' => $contact->event_reservation_id,
+                        'link_kind' => $isReservation ? 'reservation' : 'customer',
+                        'customer_name' => $displayName,
+                        'contact_label' => $contact->label ?? 'お客様',
+                        'is_unread' => $m->admin_read_at === null,
+                    ];
+                })
+                ->values()
+                ->all();
+        }
 
         // 勤怠状態（今日の出勤・休憩中判定）
         $attendanceStatus = [
@@ -390,6 +441,8 @@ class DashboardController extends Controller
             'stats' => $stats,
             'pendingContractsCount' => $pendingContractsCount,
             'undecidedPhotoSlotsCount' => $undecidedPhotoSlotsCount,
+            'lineInboundUnreadCount' => $lineInboundUnreadCount,
+            'lineInboundRecentItems' => $lineInboundRecentItems,
             'formTypeStats' => $formTypeStats,
             'occupancyRate' => $occupancyRate,
             'trend7Days' => $trend7Days,
@@ -437,6 +490,7 @@ class DashboardController extends Controller
         if ($completedBreak) {
             return 'break_end'; // 休憩終了を取り消す（最後の休憩）
         }
+
         return 'clock_in'; // 出勤を取り消す
     }
 
@@ -464,6 +518,7 @@ class DashboardController extends Controller
 
         return response()->json($items->map(function ($r) {
             $schedule = $r->schedule;
+
             return [
                 'id' => $r->id,
                 'name' => $r->name,
@@ -530,6 +585,7 @@ class DashboardController extends Controller
                     ] : null,
                 ];
             }
+
             return [
                 'id' => $n->id,
                 'content' => $n->content,
@@ -540,4 +596,3 @@ class DashboardController extends Controller
         }));
     }
 }
-

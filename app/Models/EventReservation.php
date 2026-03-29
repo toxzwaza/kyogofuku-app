@@ -133,5 +133,12 @@ class EventReservation extends Model
     {
         return $this->hasOne(EventUtmTracking::class);
     }
-}
 
+    /**
+     * 未顧客のときの LINE 連絡先（1 予約 1 件想定）
+     */
+    public function lineContacts()
+    {
+        return $this->hasMany(CustomerLineContact::class, 'event_reservation_id');
+    }
+}

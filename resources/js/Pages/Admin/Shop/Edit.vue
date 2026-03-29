@@ -94,6 +94,18 @@
                                     <div v-if="form.errors.line_group_id" class="mt-1 text-sm text-red-600">{{ form.errors.line_group_id }}</div>
                                 </div>
 
+                                <div class="border-t border-gray-200 pt-4 space-y-2">
+                                    <p class="text-sm font-semibold text-gray-800">LINE Messaging API（顧客1:1・共通）</p>
+                                    <p class="text-xs text-gray-500">
+                                        Messaging・LIFF（LINEログイン）の設定は全店舗共通で <code class="bg-gray-100 px-1 rounded">.env</code> に記載します（<code class="bg-gray-100 px-1 rounded">docs/LINE_MESSAGING_SETUP.md</code>）。
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Webhook URL:
+                                        <code class="block mt-1 p-2 bg-gray-100 rounded text-xs break-all">{{ line_messaging_webhook_url }}</code>
+                                    </p>
+                                    <p class="text-xs text-gray-500">LIFF Endpoint: {{ app_url }}/line/liff/link</p>
+                                </div>
+
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">GoogleカレンダーID</label>
                                     <input
@@ -149,6 +161,8 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     shop: Object,
+    app_url: String,
+    line_messaging_webhook_url: String,
 });
 
 const fileInput = ref(null);

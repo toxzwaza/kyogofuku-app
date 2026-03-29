@@ -1105,8 +1105,10 @@ const filteredGroupedSlots = computed(() => {
         return aShopId - bShopId;
       }
 
-      // 同じ店舗の場合は時間順
-      return a.shoot_time.localeCompare(b.shoot_time);
+      // 同じ店舗の場合は時間順（shoot_time が null の枠は先頭に寄せる）
+      const ta = a.shoot_time ?? "";
+      const tb = b.shoot_time ?? "";
+      return ta.localeCompare(tb);
     });
   });
   return groups;
@@ -1317,7 +1319,9 @@ const availableEditTimeSlots = computed(() => {
       slots.push(currentSlot);
     }
   }
-  return slots.sort((a, b) => a.shoot_time.localeCompare(b.shoot_time));
+  return slots.sort((a, b) =>
+    (a.shoot_time ?? "").localeCompare(b.shoot_time ?? "")
+  );
 });
 
 // 編集フォームの店舗変更時の処理

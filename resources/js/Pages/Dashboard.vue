@@ -223,6 +223,99 @@
                     />
                 </div>
 
+                <!-- LINE 新着メッセージ（スケジュール管理の直上） -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                            <h3 class="text-lg font-semibold text-gray-800 flex flex-wrap items-center gap-2">
+                                LINE 新着メッセージ
+                                <span
+                                    v-if="(lineInboundUnreadCount ?? 0) > 0"
+                                    class="inline-flex items-center justify-center min-w-[1.75rem] px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800"
+                                >
+                                    未読 {{ lineInboundUnreadCount }}
+                                </span>
+                            </h3>
+                            <Link
+                                :href="route('admin.customers.index')"
+                                class="text-sm text-indigo-600 hover:text-indigo-800 shrink-0"
+                            >
+                                顧客一覧へ
+                            </Link>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">
+                            お客様から届いた LINE テキストメッセージです。行をクリックすると顧客詳細へ移動します。顧客詳細でスレッドを開くと既読になります。
+                        </p>
+                        <div
+                            v-if="!lineInboundRecentItems?.length"
+                            class="rounded-lg border border-dashed border-gray-200 bg-gray-50/80 px-4 py-8 text-center text-sm text-gray-500"
+                        >
+                            {{ userShops?.length ? '新着メッセージはありません。' : '所属店舗がないため、ここには表示されません。' }}
+                        </div>
+                        <ul
+                            v-else
+                            class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden"
+                        >
+                            <li v-for="row in lineInboundRecentItems" :key="row.id" class="p-0">
+                                <Link
+                                    :href="
+                                        row.link_kind === 'reservation' && row.reservation_id
+                                            ? route('admin.reservations.show', row.reservation_id)
+                                            : route('admin.customers.show', row.customer_id)
+                                    "
+                                    class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 py-3 px-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+                                    :class="
+                                        row.is_unread
+                                            ? 'bg-white hover:bg-green-50/50 border-l-4 border-l-green-500 -ml-px pl-[calc(1rem-3px)] sm:pl-[calc(1rem-3px)]'
+                                            : 'bg-gray-100/90 text-gray-500 hover:bg-gray-100'
+                                    "
+                                >
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span
+                                                class="font-medium"
+                                                :class="row.is_unread ? 'text-gray-900' : 'text-gray-600'"
+                                            >
+                                                {{ row.customer_name }}
+                                            </span>
+                                            <span
+                                                class="text-sm"
+                                                :class="row.is_unread ? 'text-gray-600' : 'text-gray-500'"
+                                            >
+                                                （{{ row.contact_label }}）
+                                            </span>
+                                            <span
+                                                v-if="row.is_unread"
+                                                class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-green-100 text-green-800"
+                                            >
+                                                未読
+                                            </span>
+                                            <span
+                                                v-else
+                                                class="text-[10px] font-medium text-gray-400"
+                                            >
+                                                既読
+                                            </span>
+                                        </div>
+                                        <p
+                                            class="text-sm mt-1.5 whitespace-pre-wrap break-words line-clamp-4"
+                                            :class="row.is_unread ? 'text-gray-800' : 'text-gray-500'"
+                                        >
+                                            {{ row.text?.trim() ? row.text : '（テキスト以外）' }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="text-xs shrink-0 sm:pt-0.5 tabular-nums"
+                                        :class="row.is_unread ? 'text-gray-500' : 'text-gray-400'"
+                                    >
+                                        {{ row.created_at ? formatDateTimeJa(row.created_at) : '' }}
+                                    </span>
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
         <!-- スケジュール管理 -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
@@ -2244,6 +2337,8 @@ const props = defineProps({
     stats: Object,
     pendingContractsCount: Number,
     undecidedPhotoSlotsCount: Number,
+    lineInboundUnreadCount: { type: Number, default: 0 },
+    lineInboundRecentItems: { type: Array, default: () => [] },
     formTypeStats: Object,
     occupancyRate: Number,
     trend7Days: Array,
@@ -2291,6 +2386,12 @@ const defaultShopId = computed(() => {
 
 const statCards = computed(() => {
     const shopId = defaultShopId.value;
+    const firstUnreadLineInbound = (props.lineInboundRecentItems || []).find((r) => r.is_unread);
+    const firstUnreadLineHref =
+        firstUnreadLineInbound &&
+        (firstUnreadLineInbound.link_kind === 'reservation' && firstUnreadLineInbound.reservation_id
+            ? route('admin.reservations.show', firstUnreadLineInbound.reservation_id)
+            : route('admin.customers.show', firstUnreadLineInbound.customer_id));
     return [
         {
             key: "pending_contracts",
@@ -2325,6 +2426,14 @@ const statCards = computed(() => {
                 created_at_from: todayStr(),
                 created_at_to: todayStr(),
             }),
+        },
+        {
+            key: "line_inbound_unread",
+            title: "LINE 未読（お客様から）",
+            value: props.lineInboundUnreadCount ?? 0,
+            icon: "chat",
+            color: "green",
+            link: firstUnreadLineInbound && firstUnreadLineHref ? firstUnreadLineHref : route("admin.customers.index"),
         },
     ];
 });

@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Models\EventReservation;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -15,17 +14,27 @@ class ReservationConfirmationMail extends Mailable
     use Queueable, SerializesModels;
 
     public $reservation;
+
     public $emailThreadId;
+
+    public ?string $lineLiffUrl = null;
+
+    public string $lineAddFriendUrl = '';
+
+    public bool $reservationEmailIncludeAddFriendUrl = true;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct(EventReservation $reservation, $emailThreadId = null)
+    public function __construct(EventReservation $reservation, $emailThreadId = null, ?string $lineLiffUrl = null)
     {
         $this->reservation = $reservation;
         $this->emailThreadId = $emailThreadId;
+        $this->lineLiffUrl = $lineLiffUrl;
+        $this->lineAddFriendUrl = (string) config('line.line_official_add_friend_url', '');
+        $this->reservationEmailIncludeAddFriendUrl = (bool) config('line.reservation_email_include_add_friend_url', true);
     }
 
     /**
@@ -37,12 +46,12 @@ class ReservationConfirmationMail extends Mailable
     {
         $eventTitle = $this->reservation->event->title ?? 'イベント';
         $baseSubject = "【{$eventTitle}】ご予約ありがとうございます";
-        
+
         // スレッド番号を件名に追加
-        $subject = $this->emailThreadId 
+        $subject = $this->emailThreadId
             ? "[{$this->emailThreadId}] {$baseSubject}"
             : $baseSubject;
-        
+
         return new Envelope(
             subject: $subject,
             replyTo: 'reply@reply.kyogofuku-hirata.jp',

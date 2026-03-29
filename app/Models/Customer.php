@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class Customer extends Model
 {
     use HasEagerLimit;
+
     protected $fillable = [
+        'shop_id',
         'name', 'kana', 'guardian_name', 'guardian_name_kana', 'birth_date', 'coming_of_age_year',
         'ceremony_area_id',
         'seijin_preparation_venue', 'seijin_preparation_time', 'other_store_preparation',
@@ -31,6 +32,16 @@ class Customer extends Model
     public function ceremonyArea()
     {
         return $this->belongsTo(CeremonyArea::class);
+    }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
+    }
+
+    public function lineContacts()
+    {
+        return $this->hasMany(CustomerLineContact::class);
     }
 
     public function contracts()

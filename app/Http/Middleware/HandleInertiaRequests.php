@@ -19,7 +19,7 @@ class HandleInertiaRequests extends Middleware
     /**
      * Determine the current asset version.
      */
-    public function version(Request $request): string|null
+    public function version(Request $request): ?string
     {
         return parent::version($request);
     }
@@ -47,6 +47,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'line_liff_link_url' => $request->session()->get('line_liff_link_url'),
             ],
         ]);
 
@@ -65,14 +66,14 @@ class HandleInertiaRequests extends Middleware
     protected function getGtmIdForRoute(Request $request): ?string
     {
         $route = $request->route();
-        if (!$route) {
+        if (! $route) {
             return null;
         }
 
         $routeName = $route->getName();
-        
+
         // 対象ルートのみ処理
-        if (!in_array($routeName, ['event.show', 'event.reserve', 'event.reserve.success'])) {
+        if (! in_array($routeName, ['event.show', 'event.reserve', 'event.reserve.success'])) {
             return null;
         }
 
@@ -90,9 +91,9 @@ class HandleInertiaRequests extends Middleware
             } else {
                 // eventパラメータからイベントを取得（Route Model Binding）
                 $event = $route->parameter('event');
-                
+
                 // Route Model Bindingがまだ実行されていない場合、IDから取得
-                if (!$event instanceof Event) {
+                if (! $event instanceof Event) {
                     $eventId = $route->parameter('event');
                     if ($eventId) {
                         $event = Event::where('id', $eventId)

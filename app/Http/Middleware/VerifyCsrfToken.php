@@ -14,6 +14,8 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         //
         'webhook/line',
+        'webhook/line/*',
+        'line/liff/complete',
         '/inbound-mail',
     ];
 }

@@ -27,7 +27,10 @@ class ShopController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Shop/Create');
+        return Inertia::render('Admin/Shop/Create', [
+            'app_url' => rtrim(config('app.url'), '/'),
+            'line_messaging_webhook_url' => url('/webhook/line/messaging'),
+        ]);
     }
 
     /**
@@ -64,6 +67,8 @@ class ShopController extends Controller
     {
         return Inertia::render('Admin/Shop/Edit', [
             'shop' => $shop,
+            'app_url' => rtrim(config('app.url'), '/'),
+            'line_messaging_webhook_url' => url('/webhook/line/messaging'),
         ]);
     }
 
@@ -121,4 +126,3 @@ class ShopController extends Controller
             ->with('success', '店舗を削除しました。');
     }
 }
-
