@@ -857,6 +857,30 @@
                                     />
                                 </div>
                                 <!-- イベント予約由来の項目 -->
+                                <div
+                                    v-if="prefillFromReservation"
+                                    class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2"
+                                >
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        担当店舗（LINE 等）
+                                    </label>
+                                    <select
+                                        v-model="customerForm.shop_id"
+                                        class="w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    >
+                                        <option :value="null">選択してください</option>
+                                        <option
+                                            v-for="shop in reservationAddShopSelectOptions"
+                                            :key="shop.id"
+                                            :value="shop.id"
+                                        >
+                                            {{ shop.name }}
+                                        </option>
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        イベントの開催店舗から選べます。未設定のイベントは全店舗から選択できます。
+                                    </p>
+                                </div>
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                         紹介者名
@@ -1141,6 +1165,20 @@ const visitReasonOptions = [
     { value: 'SNS・WEB広告', label: 'SNS・WEB広告' },
     { value: 'その他', label: 'その他(テキスト入力)' },
 ];
+
+/** 予約からの顧客追加時：開催店舗があればその一覧、なければ全店舗 */
+const reservationAddShopSelectOptions = computed(() => {
+    const p = props.prefillFromReservation;
+    if (!p) {
+        return [];
+    }
+    const eventShops = p.event_shops;
+    if (Array.isArray(eventShops) && eventShops.length > 0) {
+        return eventShops;
+    }
+    return props.shops || [];
+});
+
 const availablePlans = [
     '振袖レンタルプラン',
     '振袖購入プラン',
@@ -1172,6 +1210,7 @@ const customerForm = useForm({
     visit_reasons: [],
     considering_plans: [],
     event_reservation_id: null,
+    shop_id: null,
 });
 
 watch(
@@ -1256,6 +1295,13 @@ const applyPrefillFromReservation = () => {
     customerForm.staff_name = p.staff_name ?? '';
     customerForm.visit_reasons = normalizeVisitReasonsForForm(p.visit_reasons ?? []);
     customerForm.considering_plans = Array.isArray(p.considering_plans) ? [...p.considering_plans] : [];
+    const defaultShop =
+        p.default_shop_id != null && p.default_shop_id !== ''
+            ? Number(p.default_shop_id)
+            : null;
+    const firstEventShopId =
+        Array.isArray(p.event_shops) && p.event_shops.length > 0 ? Number(p.event_shops[0].id) : null;
+    customerForm.shop_id = defaultShop ?? firstEventShopId ?? null;
 };
 
 // モーダルを閉じてフォームをリセット

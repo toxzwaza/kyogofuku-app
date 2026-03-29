@@ -222,8 +222,16 @@ class CustomerController extends Controller
         // 予約詳細から顧客追加の場合、予約者情報をプリフィル用に渡す
         $prefillFromReservation = null;
         if ($request->filled('add_from_reservation')) {
-            $reservation = EventReservation::find($request->add_from_reservation);
-            if ($reservation) {
+            $reservation = EventReservation::query()
+                ->whereKey($request->add_from_reservation)
+                ->with([
+                    'event.shops' => function ($q) {
+                        $q->where('shops.is_active', true)->orderBy('shops.name');
+                    },
+                ])
+                ->first();
+            if ($reservation && $reservation->event) {
+                $eventShops = $reservation->event->shops;
                 $prefillFromReservation = [
                     'id' => $reservation->id,
                     'name' => $reservation->name,
@@ -240,6 +248,11 @@ class CustomerController extends Controller
                     'staff_name' => $reservation->staff_name,
                     'visit_reasons' => $reservation->visit_reasons ?? [],
                     'considering_plans' => $reservation->considering_plans ?? [],
+                    'event_shops' => $eventShops->map(fn ($s) => [
+                        'id' => $s->id,
+                        'name' => $s->name,
+                    ])->values()->all(),
+                    'default_shop_id' => $eventShops->first()?->id,
                 ];
             }
         }
