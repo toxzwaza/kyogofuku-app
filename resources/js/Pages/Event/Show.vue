@@ -426,7 +426,7 @@
 import { ref, computed, defineAsyncComponent, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Slideshow from '@/Components/Slideshow.vue';
-import '@lp_design/reserve.css';
+import '../../../lp_design/reserve.css';
 import './event-show-pastel.css';
 import './Lp/pastel-reserve-inertia.css';
 

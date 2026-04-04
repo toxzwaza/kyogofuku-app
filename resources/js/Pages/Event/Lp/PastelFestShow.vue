@@ -431,7 +431,7 @@
         </main>
 
         <footer class="footer">
-            <p class="footer-brand">京呉服平田 / edel</p>
+            <p class="footer-brand">京呉服平田 </p>
             <p class="footer-copy">&copy; {{ year }} 京呉服平田</p>
         </footer>
 
@@ -456,6 +456,8 @@
 import '@lp_design/style.css';
 import { computed, ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
+import planMamaSrc from '../../../../lp_design/mama.png';
+import planRentalSrc from '../../../../lp_design/rental.png';
 import { LP_GALLERY_IMAGES } from './lpGalleryImages';
 import { usePastelFestLp } from './usePastelFestLp';
 
@@ -486,10 +488,8 @@ const themeStyle = computed(() => props.lpThemeCssVars || {});
 const galleryImages = LP_GALLERY_IMAGES;
 const year = new Date().getFullYear();
 
-const planRentalImg =
-    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/ztKBeNGBBNcRNpWkfnk3sGpnxvwVCKYJoqG9DX5M.webp';
-const planMamaImg =
-    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/LLzVrmnYgMcihiHfHpf5HnZSj3AyEfkeY0HfnJ71.webp';
+const planRentalImg = planRentalSrc;
+const planMamaImg = planMamaSrc;
 
 const primaryPhone = computed(() => props.shops?.[0]?.phone || '0120-041-529');
 

@@ -87,7 +87,7 @@
         </main>
 
         <footer class="footer" style="margin-bottom: 0">
-            <p class="footer-brand">京呉服平田 / edel</p>
+            <p class="footer-brand">京呉服平田 </p>
             <p class="footer-copy">&copy; 2026 京呉服平田</p>
         </footer>
     </div>
