@@ -48,7 +48,8 @@
                                         required
                                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     >
-                                        <option value="reservation">予約</option>
+                                        <option value="reservation">振袖予約</option>
+                                        <option value="reservation_hakama">袴予約（岡山）</option>
                                         <option value="document">資料請求</option>
                                         <option value="contact">問い合わせ</option>
                                     </select>
@@ -180,8 +181,8 @@
                                     <div v-if="form.errors.shop_ids" class="mt-1 text-sm text-red-600">{{ form.errors.shop_ids }}</div>
                                 </div>
 
-                                <!-- 会場（予約フォームの場合のみ） -->
-                                <div v-if="form.form_type === 'reservation'">
+                                <!-- 会場（タイムスロット型予約の場合のみ） -->
+                                <div v-if="form.form_type === 'reservation' || form.form_type === 'reservation_hakama'">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">会場</label>
                                     <div class="space-y-4">
                                         <!-- 既存会場の選択 -->
@@ -497,6 +498,7 @@ const generateRandomString = (length = 10) => {
 const generateDefaultSlug = () => {
     const formTypeMap = {
         'reservation': 'reservation',
+        'reservation_hakama': 'reservation_hakama',
         'document': 'document',
         'contact': 'contact',
     };
@@ -512,7 +514,7 @@ if (!props.copySourceEvent) {
 
 // form_typeが変更されたときにslugを再生成
 watch(() => form.form_type, () => {
-    if (!form.slug || form.slug.match(/^(reservation|document|contact)_[a-zA-Z0-9]{10}$/)) {
+    if (!form.slug || form.slug.match(/^(reservation|reservation_hakama|document|contact)_[a-zA-Z0-9]{10}$/)) {
         form.slug = generateDefaultSlug();
         slugError.value = '';
     }

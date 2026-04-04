@@ -55,28 +55,6 @@
                         <p class="text-gray-900 font-medium text-base sm:text-lg pl-9 sm:pl-10 break-words">{{ formatDateTime(formData.reservation_datetime) }}</p>
                     </div>
 
-                    <!-- 予約日時 -->
-                    <div class="group">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
-                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">予約日時</label>
-                        </div>
-                        <div v-if="selectedVenueName" class="mb-2 pl-9 sm:pl-10">
-                            <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-pink-100 text-pink-800">
-                                <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <span class="truncate">{{ selectedVenueName }}</span>
-                            </span>
-                        </div>
-                        <p class="text-gray-900 font-medium text-base sm:text-lg pl-9 sm:pl-10 break-words">{{ formatDateTime(formData.reservation_datetime) }}</p>
-                    </div>
-
                     <!-- お名前 -->
                     <div class="group">
                         <div class="flex items-center space-x-2 mb-2">
@@ -187,8 +165,8 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.address || '-' }}</p>
                     </div>
 
-                    <!-- 生年月日 -->
-                    <div class="group">
+                    <!-- 生年月日（振袖のみ） -->
+                    <div v-if="event.form_type === 'reservation'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,11 +175,11 @@
                             </div>
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">生年月日</label>
                         </div>
-                        <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.birth_date ? formatDate(formData.birth_date) : '-' }}</p>
+                        <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.birth_date ? formatDateJa(formData.birth_date) : '-' }}</p>
                     </div>
 
-                    <!-- 成人式予定年月 -->
-                    <div class="group">
+                    <!-- 成人式予定年月（振袖のみ） -->
+                    <div v-if="event.form_type === 'reservation'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,8 +191,8 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.seijin_year ? formData.seijin_year + '年' : '-' }}</p>
                     </div>
 
-                    <!-- 学校名（非表示） -->
-                    <div v-if="false" class="group">
+                    <!-- 学校名（袴のみ） -->
+                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,8 +204,51 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.school_name || '-' }}</p>
                     </div>
 
-                    <!-- 担当者名（非表示） -->
-                    <div v-if="false" class="group">
+                    <!-- 好一での振袖利用（袴のみ） -->
+                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">好一での振袖利用</label>
+                        </div>
+                        <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">
+                            {{ formData.koichi_furisode_used === true ? 'あり' : formData.koichi_furisode_used === false ? 'なし' : '-' }}
+                        </p>
+                    </div>
+
+                    <!-- 卒業式（袴のみ） -->
+                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">卒業式</label>
+                        </div>
+                        <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">
+                            {{ formatGraduationCeremonyDisplay(formData) }}
+                        </p>
+                    </div>
+
+                    <!-- 来店人数（袴のみ） -->
+                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">来店人数</label>
+                        </div>
+                        <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.visitor_count != null ? formData.visitor_count + '名' : '-' }}</p>
+                    </div>
+
+                    <!-- 担当者名（振袖のみ） -->
+                    <div v-if="event.form_type === 'reservation'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,28 +281,27 @@
                         </p>
                     </div>
 
-                    <!-- 駐車場利用（非表示） -->
-                    <div v-if="false" class="group">
+                    <!-- お車で来店（袴のみ） -->
+                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                 </svg>
                             </div>
-                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">駐車場利用</label>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">お車で来店</label>
                         </div>
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.parking_usage || '-' }}</p>
                     </div>
 
-                    <!-- 駐車台数（非表示） -->
-                    <div v-if="false && formData.parking_usage === 'あり'" class="group">
+                    <div v-if="event.form_type === 'reservation_hakama' && formData.parking_usage === 'あり'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                 </svg>
                             </div>
-                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">駐車台数</label>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">台数</label>
                         </div>
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.parking_car_count || '-' }}台</p>
                     </div>
@@ -307,8 +327,8 @@
                         </p>
                     </div>
 
-                    <!-- ご紹介者様お名前 -->
-                    <div class="group">
+                    <!-- ご紹介者様お名前（振袖・袴） -->
+                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,8 +340,8 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.referred_by_name || '-' }}</p>
                     </div>
 
-                    <!-- お問い合わせ内容 -->
-                    <div class="md:col-span-2 group">
+                    <!-- お問い合わせ内容（振袖・袴） -->
+                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'" class="md:col-span-2 group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,6 +390,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { formatDateJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     event: Object,
@@ -403,22 +424,22 @@ const formatDateTime = (datetime) => {
     });
 };
 
-const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-};
-
 // 郵便番号を XXX-XXXX 形式で表示
 const formatPostalCode = (val) => {
     if (!val) return '-';
     const digits = String(val).replace(/-/g, '').replace(/\D/g, '').slice(0, 7);
     if (digits.length === 7) return digits.slice(0, 3) + '-' + digits.slice(3, 7);
     return digits || '-';
+};
+
+const formatGraduationCeremonyDisplay = (fd) => {
+    if (fd.graduation_ceremony_date) {
+        return formatDateJa(fd.graduation_ceremony_date);
+    }
+    if (fd.graduation_ceremony_year != null && fd.graduation_ceremony_month != null) {
+        return `${fd.graduation_ceremony_year}年${fd.graduation_ceremony_month}月`;
+    }
+    return '-';
 };
 
 const submit = () => {

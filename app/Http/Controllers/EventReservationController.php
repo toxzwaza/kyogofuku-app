@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -40,30 +41,54 @@ class EventReservationController extends Controller
             $rules['document_id'] = 'required|exists:documents,id';
         }
 
-        // 予約フォームの場合
-        if ($event->form_type === 'reservation') {
-            $rules['postal_code'] = 'required|string|max:10';
+        // 振袖・袴（タイムスロット型）予約フォーム
+        if ($event->usesTimeslotReservation()) {
+            $rules['postal_code'] = $event->form_type === 'reservation_hakama'
+                ? 'nullable|string|max:10'
+                : 'required|string|max:10';
             $rules['reservation_datetime'] = 'nullable|string';
             $rules['venue_id'] = 'nullable|exists:venues,id';
             $rules['timeslot_id'] = 'nullable|exists:event_timeslots,id';
+            $rules['visit_reasons'] = 'nullable|array';
+            $rules['visit_reasons.*'] = 'string|max:255';
+            $rules['visit_reason_other'] = 'nullable|string|max:255';
+            $rules['parking_usage'] = $event->form_type === 'reservation_hakama'
+                ? 'required|in:なし,あり'
+                : 'nullable|string|max:255';
+            $rules['parking_car_count'] = 'nullable|integer';
+            $rules['considering_plans'] = 'nullable|array';
+            $rules['considering_plans.*'] = Rule::in($event->consideringPlanOptions());
+        }
+
+        // 振袖予約のみ
+        if ($event->form_type === 'reservation') {
             $rules['has_visited_before'] = 'boolean';
             $rules['seijin_year'] = 'nullable|integer|min:2000|max:2100';
             $rules['referred_by_name'] = 'nullable|string|max:255';
             $rules['school_name'] = 'nullable|string|max:255';
             $rules['staff_name'] = 'nullable|string|max:255';
-            $rules['visit_reasons'] = 'nullable|array';
-            $rules['visit_reasons.*'] = 'string|max:255';
-            $rules['visit_reason_other'] = 'nullable|string|max:255';
-            $rules['parking_usage'] = 'nullable|string|max:255';
-            $rules['parking_car_count'] = 'nullable|integer';
-            $rules['considering_plans'] = 'nullable|array';
-            $rules['considering_plans.*'] = 'in:振袖レンタルプラン,振袖購入プラン,ママ振りフォトプラン,フォトレンタルプラン';
+        }
+
+        // 袴予約（岡山）のみ
+        if ($event->form_type === 'reservation_hakama') {
+            $rules['furigana'] = 'required|string|max:255';
+            $rules['address'] = 'required|string|max:255';
+            $rules['koichi_furisode_used'] = 'required|boolean';
+            $rules['school_name'] = 'required|string|max:255';
+            $rules['graduation_ceremony_date'] = 'required|date';
+            $rules['visitor_count'] = 'required|integer|min:1|max:500';
+            $rules['parking_car_count'] = 'nullable|integer|min:1|required_if:parking_usage,あり';
+            $rules['referred_by_name'] = 'nullable|string|max:255';
         }
 
         // 共通項目
-        $rules['furigana'] = 'nullable|string|max:255';
-        $rules['birth_date'] = 'nullable|date';
-        $rules['address'] = 'nullable|string|max:255';
+        if ($event->form_type !== 'reservation_hakama') {
+            $rules['furigana'] = 'nullable|string|max:255';
+            $rules['birth_date'] = 'nullable|date';
+            $rules['address'] = 'nullable|string|max:255';
+        } else {
+            $rules['birth_date'] = 'nullable|date';
+        }
         $rules['inquiry_message'] = 'nullable|string';
 
         // heard_fromのバリデーション（フォーム種別によって異なる）
@@ -86,7 +111,7 @@ class EventReservationController extends Controller
         $venueId = null;
         $reservationDatetime = null;
 
-        if ($event->form_type === 'reservation') {
+        if ($event->usesTimeslotReservation()) {
             if ($request->timeslot_id) {
                 // 予約枠IDが指定されている場合、そのIDで直接取得
                 $timeslot = EventTimeslot::where('event_id', $event->id)
@@ -172,18 +197,25 @@ class EventReservationController extends Controller
             'postal_code' => $request->postal_code,
             'reservation_datetime' => $reservationDatetime,
             'venue_id' => $venueId,
-            'has_visited_before' => $request->has('has_visited_before') ? $request->has_visited_before : false,
+            'has_visited_before' => $event->form_type === 'reservation' && $request->has('has_visited_before') ? $request->has_visited_before : false,
             'address' => $request->address,
             'birth_date' => $request->birth_date,
-            'seijin_year' => $request->seijin_year,
-            'referred_by_name' => $request->referred_by_name,
+            'seijin_year' => $event->form_type === 'reservation' ? $request->seijin_year : null,
+            'referred_by_name' => in_array($event->form_type, ['reservation', 'reservation_hakama'], true) ? $request->referred_by_name : null,
             'furigana' => $request->furigana,
             'school_name' => $request->school_name,
-            'staff_name' => $request->staff_name,
-            'visit_reasons' => $this->processVisitReasons($request->visit_reasons, $request->visit_reason_other),
+            'staff_name' => $event->form_type === 'reservation' ? $request->staff_name : null,
+            'koichi_furisode_used' => $event->form_type === 'reservation_hakama' ? $request->boolean('koichi_furisode_used') : null,
+            'graduation_ceremony_year' => null,
+            'graduation_ceremony_month' => null,
+            'graduation_ceremony_date' => $event->form_type === 'reservation_hakama' ? $request->graduation_ceremony_date : null,
+            'visitor_count' => $event->form_type === 'reservation_hakama' ? $request->visitor_count : null,
+            'visit_reasons' => $event->usesTimeslotReservation()
+                ? $this->processVisitReasons($request->visit_reasons, $request->visit_reason_other)
+                : null,
             'parking_usage' => $request->parking_usage,
             'parking_car_count' => $request->parking_car_count,
-            'considering_plans' => $request->considering_plans,
+            'considering_plans' => $event->usesTimeslotReservation() ? $request->considering_plans : null,
             'heard_from' => $request->heard_from,
             'inquiry_message' => $request->inquiry_message,
             'privacy_agreed' => $request->has('privacy_agreed') ? $request->privacy_agreed : false,
@@ -203,6 +235,7 @@ class EventReservationController extends Controller
             'furigana', 'school_name', 'staff_name', 'visit_reasons', 'visit_reason_other',
             'parking_usage', 'parking_car_count',
             'considering_plans', 'heard_from', 'inquiry_message', 'privacy_agreed',
+            'koichi_furisode_used', 'graduation_ceremony_date', 'visitor_count',
         ]);
         // visit_reasonsを処理済みの値に置き換え
         $formData['visit_reasons'] = $this->processVisitReasons($request->visit_reasons, $request->visit_reason_other);
@@ -286,7 +319,7 @@ class EventReservationController extends Controller
 
         // 会場情報（予約フォームの場合のみ）
         $venues = [];
-        if ($event->form_type === 'reservation') {
+        if ($event->usesTimeslotReservation()) {
             $venues = $event->venues->where('is_active', true)->map(function ($venue) {
                 return [
                     'id' => $venue->id,
@@ -414,7 +447,8 @@ class EventReservationController extends Controller
     {
         // フォーム種別の日本語表示名を取得
         $formTypeNames = [
-            'reservation' => '予約フォーム',
+            'reservation' => '振袖予約フォーム',
+            'reservation_hakama' => '袴予約（岡山）フォーム',
             'document' => '資料請求フォーム',
             'contact' => 'お問い合わせフォーム',
         ];
@@ -501,6 +535,59 @@ class EventReservationController extends Controller
 
             if ($reservation->parking_car_count) {
                 $message .= "駐車台数: {$reservation->parking_car_count}台\n";
+            }
+
+            if ($reservation->considering_plans && count($reservation->considering_plans) > 0) {
+                $plans = implode('、', $reservation->considering_plans);
+                $message .= "検討プラン: {$plans}\n";
+            }
+        } elseif ($event->form_type === 'reservation_hakama') {
+            $message .= "\n━━━━━━━━━━━━━━━━\n";
+            $message .= "📅 袴予約情報\n";
+            $message .= "━━━━━━━━━━━━━━━━\n";
+
+            if ($reservation->reservation_datetime) {
+                $datetime = \Carbon\Carbon::parse($reservation->reservation_datetime);
+                $message .= "予約日時: {$datetime->format('Y年m月d日 H:i')}\n";
+            }
+
+            if ($reservation->venue_id) {
+                $venue = $reservation->venue;
+                if ($venue) {
+                    $message .= "会場: {$venue->name}\n";
+                }
+            }
+
+            if ($reservation->school_name) {
+                $message .= "学校名: {$reservation->school_name}\n";
+            }
+
+            $gradDate = $reservation->graduation_ceremony_date;
+            if ($gradDate) {
+                $d = \Carbon\Carbon::parse($gradDate);
+                $message .= '卒業式: '.$d->format('Y年n月j日')."\n";
+            }
+
+            if ($reservation->visitor_count !== null) {
+                $message .= "来店人数: {$reservation->visitor_count}名\n";
+            }
+
+            if ($reservation->koichi_furisode_used !== null) {
+                $k = $reservation->koichi_furisode_used ? 'あり' : 'なし';
+                $message .= "好一での振袖利用: {$k}\n";
+            }
+
+            if ($reservation->visit_reasons && count($reservation->visit_reasons) > 0) {
+                $reasons = implode('、', $reservation->visit_reasons);
+                $message .= "来店動機: {$reasons}\n";
+            }
+
+            if ($reservation->parking_usage) {
+                $message .= "お車で来店: {$reservation->parking_usage}\n";
+            }
+
+            if ($reservation->parking_car_count) {
+                $message .= "台数: {$reservation->parking_car_count}台\n";
             }
 
             if ($reservation->considering_plans && count($reservation->considering_plans) > 0) {

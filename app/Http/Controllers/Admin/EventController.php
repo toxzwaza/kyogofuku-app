@@ -183,7 +183,7 @@ class EventController extends Controller
                 },
             ],
             'description' => 'nullable|string',
-            'form_type' => 'required|in:reservation,document,contact',
+            'form_type' => 'required|in:reservation,reservation_hakama,document,contact',
             'start_at' => 'nullable|date',
             'end_at' => 'nullable|date|after_or_equal:start_at',
             'is_public' => 'boolean',
@@ -239,12 +239,12 @@ class EventController extends Controller
         }
 
         // 予約フォームの場合、会場を関連付け
-        if ($event->form_type === 'reservation') {
+        if ($event->usesTimeslotReservation()) {
             // 既存の会場を関連付け
             if ($request->has('venue_ids')) {
                 $event->venues()->attach($request->venue_ids);
             }
-            
+
             // 新規会場を作成して関連付け
             if ($request->has('new_venue_name') && $request->new_venue_name) {
                 $venue = Venue::create([
@@ -384,7 +384,7 @@ class EventController extends Controller
                 },
             ],
             'description' => 'nullable|string',
-            'form_type' => 'required|in:reservation,document,contact',
+            'form_type' => 'required|in:reservation,reservation_hakama,document,contact',
             'start_at' => 'nullable|date',
             'end_at' => 'nullable|date|after_or_equal:start_at',
             'is_public' => 'boolean',

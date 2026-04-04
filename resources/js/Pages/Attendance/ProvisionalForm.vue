@@ -93,6 +93,7 @@
 import { ref, reactive } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     record: Object,
@@ -108,7 +109,9 @@ function isoToTime(iso) {
 }
 
 const form = reactive({
-    date: props.record?.date ?? new Date().toISOString().slice(0, 10),
+    date: props.record?.date != null && props.record.date !== ''
+        ? formatDateInputValueJa(props.record.date)
+        : formatDateInputValueJa(new Date().toISOString()),
     shop_id: props.record?.shop_id ?? (props.userShops?.[0]?.id ?? ''),
     clock_in_time: isoToTime(props.record?.clock_in_at),
     clock_out_time: isoToTime(props.record?.clock_out_at),

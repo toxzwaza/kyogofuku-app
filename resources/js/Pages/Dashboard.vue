@@ -1719,11 +1719,17 @@
             <h3 class="text-lg font-semibold text-gray-800 mb-4">
               フォームタイプ別の予約数
             </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                             <div class="bg-blue-50 p-4 rounded-lg">
-                                <p class="text-sm text-gray-600">予約フォーム</p>
+                                <p class="text-sm text-gray-600">振袖予約フォーム</p>
                 <p class="text-2xl font-bold text-blue-600">
                   {{ formTypeStats?.reservation || 0 }}
+                </p>
+                            </div>
+                            <div class="bg-sky-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600">袴予約（岡山）フォーム</p>
+                <p class="text-2xl font-bold text-sky-600">
+                  {{ formTypeStats?.reservation_hakama || 0 }}
                 </p>
                             </div>
                             <div class="bg-green-50 p-4 rounded-lg">
@@ -2149,10 +2155,10 @@
             <h3 class="text-lg font-semibold text-gray-800 mb-4">
               フォームタイプ別の詳細統計
             </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <!-- 予約フォーム -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                            <!-- 振袖予約フォーム -->
                             <div>
-                                <h4 class="font-medium text-gray-700 mb-3">予約フォーム</h4>
+                                <h4 class="font-medium text-gray-700 mb-3">振袖予約フォーム</h4>
                 <p class="text-2xl font-bold text-blue-600 mb-3">
                   {{ props.formTypeDetails?.reservation?.total || 0 }}
                 </p>
@@ -2166,6 +2172,31 @@
                                     <div class="space-y-1">
                                         <div
                                             v-for="item in props.formTypeDetails.reservation.by_venue"
+                                            :key="item.venue_name"
+                                            class="text-sm text-gray-600"
+                                        >
+                                            {{ item.venue_name }}: {{ item.count }}件
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 袴予約（岡山）フォーム -->
+                            <div>
+                                <h4 class="font-medium text-gray-700 mb-3">袴予約（岡山）フォーム</h4>
+                <p class="text-2xl font-bold text-sky-600 mb-3">
+                  {{ props.formTypeDetails?.reservation_hakama?.total || 0 }}
+                </p>
+                <div
+                  v-if="
+                    props.formTypeDetails?.reservation_hakama?.by_venue &&
+                    props.formTypeDetails.reservation_hakama.by_venue.length > 0
+                  "
+                >
+                                    <p class="text-sm font-medium text-gray-600 mb-2">会場別:</p>
+                                    <div class="space-y-1">
+                                        <div
+                                            v-for="item in props.formTypeDetails.reservation_hakama.by_venue"
                                             :key="item.venue_name"
                                             class="text-sm text-gray-600"
                                         >
@@ -2330,7 +2361,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import jaLocale from "@fullcalendar/core/locales/ja";
 import axios from "axios";
-import { formatDateTimeJa, formatDateJa } from "@/utils/dateFormat";
+import { formatDateTimeJa, formatDateJa, formatDateInputValueJa } from "@/utils/dateFormat";
 
 const props = defineProps({
     attendanceStatus: Object,
@@ -2364,7 +2395,7 @@ const props = defineProps({
   attendanceManualUrlManager: String,
 });
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => formatDateInputValueJa(new Date().toISOString());
 
 // 勤怠権限に応じたマニュアルURL・表示文言
 const attendanceManualLinkUrl = computed(() => {
@@ -3263,22 +3294,15 @@ function generateInvoiceData() {
     };
   });
   
-  // 日付をフォーマット
-  const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}年${month}月${day}日`;
-  };
-  
-  // 支払期限を計算（発行日の翌月末日）
-  const today = new Date();
-  const dueDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-  const formatDueDate = `${dueDate.getFullYear()}年${String(dueDate.getMonth() + 1).padStart(2, '0')}月${String(dueDate.getDate()).padStart(2, '0')}日`;
-  
+  // 支払期限を計算（発行日の翌月末日）— 暦日は日本（Asia/Tokyo）基準
+  const issueYmd = formatDateInputValueJa(new Date().toISOString());
+  const [iy, im, id] = issueYmd.split('-').map((n) => parseInt(n, 10));
+  // 発行日の翌月末（im は 1〜12）
+  const dueInstant = new Date(Date.UTC(iy, im + 1, 0));
+  const formatDueDate = formatDateJa(dueInstant.toISOString());
+
   // 請求書番号を生成（YYYYMMDD形式）
-  const invoiceNumber = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}-001`;
+  const invoiceNumber = `${String(iy)}${String(im).padStart(2, '0')}${String(id).padStart(2, '0')}-001`;
   
   return {
     client: {
@@ -3295,7 +3319,7 @@ function generateInvoiceData() {
       person: '村上 飛羽', // TODO: 実際の担当者名に置き換え
     },
     invoice: {
-      issueDate: formatDate(today.toISOString().split('T')[0]),
+      issueDate: formatDateJa(new Date().toISOString()),
       number: invoiceNumber,
       dueDate: formatDueDate,
       title: `ITサポート業務（${attendanceStartDate.value} ～ ${attendanceEndDate.value}）`,

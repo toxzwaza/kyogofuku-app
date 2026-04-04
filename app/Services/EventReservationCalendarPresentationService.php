@@ -9,7 +9,17 @@ class EventReservationCalendarPresentationService
 {
     public function buildTitle(EventReservation $reservation): string
     {
-        $reservation->loadMissing(['customer.ceremonyArea']);
+        $reservation->loadMissing(['customer.ceremonyArea', 'event']);
+
+        if ($reservation->event?->form_type === 'reservation_hakama') {
+            return implode('/', [
+                (string) ($reservation->name ?? ''),
+                $this->formatGraduationCeremonyLabel($reservation),
+                $this->formatPlansLabel($reservation->considering_plans),
+                $this->formatCeremonyAreaLabel($reservation),
+                $this->formatAssigneeLabel($reservation->admin_assignee),
+            ]);
+        }
 
         return implode('/', [
             (string) ($reservation->name ?? ''),
@@ -22,19 +32,36 @@ class EventReservationCalendarPresentationService
 
     public function buildDescription(EventReservation $reservation): string
     {
-        $reservation->loadMissing(['customer.ceremonyArea', 'venue']);
+        $reservation->loadMissing(['customer.ceremonyArea', 'venue', 'event']);
 
-        $lines = [
-            '成人年度: ' . $this->formatSeijinYearLabel($reservation->seijin_year),
-            'プラン: ' . $this->formatPlansLabel($reservation->considering_plans),
-            '成人式エリア: ' . $this->formatCeremonyAreaLabel($reservation),
-            '担当: ' . $this->formatAssigneeLabel($reservation->admin_assignee),
-            '',
-            '予約ID: ' . $reservation->id,
-            'お名前: ' . $reservation->name,
-            'メール: ' . $reservation->email,
-            '電話: ' . $reservation->phone,
-        ];
+        if ($reservation->event?->form_type === 'reservation_hakama') {
+            $lines = [
+                '卒業式: ' . $this->formatGraduationCeremonyLabel($reservation),
+                '来店人数: ' . ($reservation->visitor_count !== null ? $reservation->visitor_count . '名' : '未設定'),
+                '好一振袖利用: ' . $this->formatKoichiFurisodeLabel($reservation->koichi_furisode_used),
+                'プラン: ' . $this->formatPlansLabel($reservation->considering_plans),
+                '来店動機: ' . $this->formatVisitReasonsLabel($reservation->visit_reasons),
+                '成人式エリア: ' . $this->formatCeremonyAreaLabel($reservation),
+                '担当: ' . $this->formatAssigneeLabel($reservation->admin_assignee),
+                '',
+                '予約ID: ' . $reservation->id,
+                'お名前: ' . $reservation->name,
+                'メール: ' . $reservation->email,
+                '電話: ' . $reservation->phone,
+            ];
+        } else {
+            $lines = [
+                '成人年度: ' . $this->formatSeijinYearLabel($reservation->seijin_year),
+                'プラン: ' . $this->formatPlansLabel($reservation->considering_plans),
+                '成人式エリア: ' . $this->formatCeremonyAreaLabel($reservation),
+                '担当: ' . $this->formatAssigneeLabel($reservation->admin_assignee),
+                '',
+                '予約ID: ' . $reservation->id,
+                'お名前: ' . $reservation->name,
+                'メール: ' . $reservation->email,
+                '電話: ' . $reservation->phone,
+            ];
+        }
 
         if ($reservation->reservation_datetime) {
             $lines[] = '予約日時: ' . $reservation->reservation_datetime;
@@ -58,7 +85,7 @@ class EventReservationCalendarPresentationService
     {
         $reservation->loadMissing(['event', 'customer.ceremonyArea']);
 
-        if ($reservation->event?->form_type !== 'reservation') {
+        if (! $reservation->event?->usesTimeslotReservation()) {
             return;
         }
 
@@ -124,5 +151,41 @@ class EventReservationCalendarPresentationService
         }
 
         return trim($assignee);
+    }
+
+    protected function formatGraduationCeremonyLabel(EventReservation $reservation): string
+    {
+        if ($reservation->graduation_ceremony_date) {
+            return $reservation->graduation_ceremony_date->format('Y年n月j日');
+        }
+
+        $y = $reservation->graduation_ceremony_year;
+        $m = $reservation->graduation_ceremony_month;
+        if ($y === null || $m === null) {
+            return '未設定';
+        }
+
+        return $y.'年'.((int) $m).'月';
+    }
+
+    protected function formatKoichiFurisodeLabel(?bool $used): string
+    {
+        if ($used === null) {
+            return '未設定';
+        }
+
+        return $used ? 'あり' : 'なし';
+    }
+
+    /**
+     * @param  array<int, string>|null  $reasons
+     */
+    protected function formatVisitReasonsLabel(?array $reasons): string
+    {
+        if ($reasons === null || $reasons === []) {
+            return '未設定';
+        }
+
+        return implode('、', $reasons);
     }
 }

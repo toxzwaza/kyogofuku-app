@@ -43,6 +43,9 @@ class DashboardController extends Controller
             'reservation' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                 $query->where('form_type', 'reservation');
             })->count(),
+            'reservation_hakama' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
+                $query->where('form_type', 'reservation_hakama');
+            })->count(),
             'document' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                 $query->where('form_type', 'document');
             })->count(),
@@ -74,6 +77,9 @@ class DashboardController extends Controller
                 'label' => $date->format('m/d'),
                 'reservation' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'reservation');
+                })->whereDate('created_at', $date)->count(),
+                'reservation_hakama' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
+                    $query->where('form_type', 'reservation_hakama');
                 })->whereDate('created_at', $date)->count(),
                 'document' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'document');
@@ -124,7 +130,7 @@ class DashboardController extends Controller
         // 予約枠が満席に近いイベント（残り枠が20%以下）
         $eventsWithLowCapacity = Event::with(['timeslots', 'reservations'])
             ->where('is_public', true)
-            ->where('form_type', 'reservation')
+            ->whereIn('form_type', Event::TIMESLOT_RESERVATION_FORM_TYPES)
             ->get()
             ->map(function ($event) {
                 $timeslots = $event->timeslots()->where('is_active', true)->get();
@@ -178,6 +184,23 @@ class DashboardController extends Controller
                 'total' => $formTypeStats['reservation'],
                 'by_venue' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
                     $query->where('form_type', 'reservation');
+                })
+                    ->whereNotNull('venue_id')
+                    ->with('venue')
+                    ->get()
+                    ->groupBy('venue_id')
+                    ->map(function ($reservations) {
+                        return [
+                            'venue_name' => $reservations->first()->venue->name ?? '不明',
+                            'count' => $reservations->count(),
+                        ];
+                    })
+                    ->values(),
+            ],
+            'reservation_hakama' => [
+                'total' => $formTypeStats['reservation_hakama'],
+                'by_venue' => EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
+                    $query->where('form_type', 'reservation_hakama');
                 })
                     ->whereNotNull('venue_id')
                     ->with('venue')
@@ -258,7 +281,7 @@ class DashboardController extends Controller
 
         // 今週の予約（予約日時が今週、キャンセル済みは除外）
         $thisWeekReservations = EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
-            $query->where('form_type', 'reservation');
+            $query->whereIn('form_type', Event::TIMESLOT_RESERVATION_FORM_TYPES);
         })
             ->whereNotNull('reservation_datetime')
             ->get()
@@ -280,7 +303,7 @@ class DashboardController extends Controller
 
         // 来週の予約（予約日時が来週、キャンセル済みは除外）
         $nextWeekReservations = EventReservation::where('cancel_flg', false)->whereHas('event', function ($query) {
-            $query->where('form_type', 'reservation');
+            $query->whereIn('form_type', Event::TIMESLOT_RESERVATION_FORM_TYPES);
         })
             ->whereNotNull('reservation_datetime')
             ->get()

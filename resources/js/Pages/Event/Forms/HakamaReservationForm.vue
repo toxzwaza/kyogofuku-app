@@ -314,11 +314,11 @@
             </div>
 
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">過去当店のご来店はありますか</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-3">好一での振袖利用 <span class="text-red-500 ml-1">*</span></label>
                 <div class="flex space-x-6">
                     <label class="flex items-center cursor-pointer group">
                         <input
-                            v-model="form.has_visited_before"
+                            v-model="form.koichi_furisode_used"
                             type="radio"
                             :value="false"
                             class="w-5 h-5 rounded-full border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
@@ -327,7 +327,7 @@
                     </label>
                     <label class="flex items-center cursor-pointer group">
                         <input
-                            v-model="form.has_visited_before"
+                            v-model="form.koichi_furisode_used"
                             type="radio"
                             :value="true"
                             class="w-5 h-5 rounded-full border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
@@ -343,12 +343,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    郵便番号 <span class="text-red-500 ml-1">*</span>
+                    郵便番号（任意）
                 </label>
                 <input
                     v-model="form.postal_code"
                     type="text"
-                    required
                     placeholder="例: 700-0012"
                     @blur="searchAddress"
                     class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
@@ -379,69 +378,52 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        生年月日 <span class="text-red-500 ml-1">*</span>
-                    </label>
-                    <input
-                        v-model="form.birth_date"
-                        type="text"
-                        required
-                        placeholder="例: 20000101 または 2000-01-01"
-                        maxlength="10"
-                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
-                    />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        成人式予定年月
-                    </label>
-                    <input
-                        v-model="form.seijin_year"
-                        type="text"
-                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
-                        placeholder="例: 2021年度"
-                    />
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    学校名 <span class="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                    v-model="form.school_name"
+                    type="text"
+                    required
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                />
             </div>
 
-            <div v-if="false" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                        学校名
-                    </label>
-                    <input
-                        v-model="form.school_name"
-                        type="text"
-                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
-                    />
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    卒業式（日付） <span class="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                    v-model="form.graduation_ceremony_date"
+                    type="date"
+                    required
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4 bg-white"
+                />
+            </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                        <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        担当者指名
-                    </label>
-                    <input
-                        v-model="form.staff_name"
-                        type="text"
-                        class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
-                        placeholder="担当者名"
-                    />
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    来店人数 <span class="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                    v-model.number="form.visitor_count"
+                    type="number"
+                    min="1"
+                    max="500"
+                    required
+                    class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
+                    placeholder="例: 2"
+                />
             </div>
 
             <div>
@@ -476,12 +458,12 @@
                 </div>
             </div>
 
-            <div v-if="false">
+            <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
                     <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    駐車場利用
+                    お車で来店 <span class="text-red-500 ml-1">*</span>
                 </label>
                 <div class="flex space-x-6">
                     <label class="flex items-center cursor-pointer group">
@@ -505,15 +487,15 @@
                 </div>
             </div>
 
-            <div v-if="false && form.parking_usage === 'あり'">
+            <div v-if="form.parking_usage === 'あり'">
                 <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                     <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
-                    駐車台数
+                    台数 <span class="text-red-500 ml-1">*</span>
                 </label>
                 <input
-                    v-model="form.parking_car_count"
+                    v-model.number="form.parking_car_count"
                     type="number"
                     min="1"
                     class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
@@ -558,6 +540,7 @@
                     class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4"
                     placeholder="紹介者様のお名前"
                 />
+                <div v-if="form.errors.referred_by_name" class="mt-1 text-sm text-red-600">{{ form.errors.referred_by_name }}</div>
             </div>
 
             <div>
@@ -573,6 +556,7 @@
                     class="w-full rounded-lg border-2 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200 py-3 px-4 resize-none"
                     placeholder="お問い合わせ内容をご記入ください"
                 ></textarea>
+                <div v-if="form.errors.inquiry_message" class="mt-1 text-sm text-red-600">{{ form.errors.inquiry_message }}</div>
             </div>
 
             <div class="pt-6 border-t border-gray-200">
@@ -796,99 +780,30 @@ const getUrlParamArray = (key, defaultValue = []) => {
     return defaultValue;
 };
 
-// 生年月日から「成人式の年度（開催年）」を返す
-// 仕様：その人が「20歳になる年」の翌年（1月開催）を成人式年度とみなす
-// 例: 2000-08-19 -> 2021, 2000-03-09 -> 2020（早生まれ）
-const getSeijinshikiYear = (birthdate) => {
-    const d = birthdate instanceof Date ? new Date(birthdate) : new Date(String(birthdate));
-    if (Number.isNaN(d.getTime())) {
-        return null;
-    }
-    const y = d.getFullYear();
-    const m = d.getMonth() + 1;
-    const day = d.getDate();
-    const turning20 = y + 20;
-    const isEarly = (m < 4) || (m === 4 && day === 1);
-    return isEarly ? turning20 : turning20 + 1;
-};
-
-// 生年月日を YYYY-MM-DD に正規化（数字8桁の場合はハイフンを補完）
-const normalizeBirthDate = (value) => {
-    if (!value || typeof value !== 'string') return value;
-    const digits = value.replace(/\D/g, '');
-    if (digits.length === 8) {
-        return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
-    }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return value.trim();
-    return value;
-};
-
-// seijin_yearをサーバー送信用に正規化（"2021年度" → 2021、空はnull）
-const normalizeSeijinYearForSubmit = (value) => {
-    if (value === null || value === undefined || value === '') return null;
-    if (typeof value === 'number' && Number.isInteger(value) && value >= 2000 && value <= 2100) return value;
-    const str = String(value).trim();
-    const match = str.match(/^(\d{4})年度?$/);
-    if (match) return parseInt(match[1], 10);
-    const num = parseInt(str.replace(/\D/g, ''), 10);
-    if (!isNaN(num) && num >= 2000 && num <= 2100) return num;
-    return null;
-};
-
-// URLパラメータから生年月日と成人式予定年を取得
-const urlBirthDate = getUrlParam('birth_date', '');
-const urlSeijinYear = urlParams.has('seijin_year') ? parseInt(urlParams.get('seijin_year'), 10) : null;
-
-// URLパラメータから成人式予定年が取得できない場合、生年月日から計算
-let initialSeijinYear = urlSeijinYear !== null ? `${urlSeijinYear}年度` : '';
-if (!initialSeijinYear && urlBirthDate) {
-    const calculated = getSeijinshikiYear(normalizeBirthDate(urlBirthDate));
-    if (calculated !== null) initialSeijinYear = `${calculated}年度`;
-}
-
-console.log('[デバッグ] URLパラメータから取得:', {
-    urlBirthDate,
-    urlSeijinYear,
-    initialSeijinYear,
-    calculatedFromBirthDate: !urlSeijinYear && urlBirthDate
-});
-
 const form = useForm({
     name: getUrlParam('name', ''),
     email: getUrlParam('email', ''),
     phone: getUrlParam('phone', ''),
     reservation_datetime: '',
     venue_id: null,
-    has_visited_before: urlParams.has('has_visited_before') ? urlParams.get('has_visited_before') === 'true' : false,
     postal_code: getUrlParam('postal_code', ''),
     address: getUrlParam('address', ''),
-    birth_date: urlBirthDate,
-    seijin_year: initialSeijinYear,
-    referred_by_name: getUrlParam('referred_by_name', ''),
     furigana: getUrlParam('furigana', ''),
     school_name: '',
-    staff_name: '',
+    koichi_furisode_used: null,
+    graduation_ceremony_date: '',
+    visitor_count: null,
     visit_reasons: [],
     visit_reason_other: '',
     parking_usage: '',
     parking_car_count: null,
     considering_plans: getUrlParamArray('considering_plans', []),
-    heard_from: '',
+    referred_by_name: getUrlParam('referred_by_name', ''),
     inquiry_message: getUrlParam('inquiry_message', ''),
 });
 
-console.log('[デバッグ] フォーム初期値:', {
-    birth_date: form.birth_date,
-    seijin_year: form.seijin_year
-});
-
-// 検討中のプランの選択肢
-const availablePlans = [
-    '振袖レンタルプラン',
-    '振袖購入プラン',
-    'ママ振りフォトプラン',
-    'フォトレンタルプラン',
-];
+// 検討中のプラン（袴フォームは2択）
+const availablePlans = ['上下フルセットプラン', '袴のみレンタルプラン'];
 
 // 来店動機の選択肢
 const visitReasonOptions = [
@@ -897,17 +812,6 @@ const visitReasonOptions = [
     { value: 'SNS・WEB広告', label: 'SNS・WEB広告' },
     { value: 'その他', label: 'その他(テキスト入力)' },
 ];
-
-// 生年月日の変更を監視して、成人式予定年を自動計算して入力
-watch(() => form.birth_date, (newBirthDate) => {
-    if (newBirthDate) {
-        const normalized = normalizeBirthDate(newBirthDate);
-        const calculatedYear = getSeijinshikiYear(normalized);
-        if (calculatedYear !== null) {
-            form.seijin_year = `${calculatedYear}年度`;
-        }
-    }
-});
 
 // 会場が一つしかない場合はデフォルトで選択
 watch(() => eventVenues.value, (newVenues) => {
@@ -994,17 +898,24 @@ const submit = () => {
         alert('予約日時を選択してください。');
         return;
     }
+    if (form.koichi_furisode_used !== true && form.koichi_furisode_used !== false) {
+        alert('「好一での振袖利用」を選択してください。');
+        return;
+    }
+    if (form.parking_usage === 'あり' && (!form.parking_car_count || form.parking_car_count < 1)) {
+        alert('お車で来店が「あり」の場合は台数を入力してください。');
+        return;
+    }
+    if (!form.graduation_ceremony_date) {
+        alert('卒業式の日付を選択してください。');
+        return;
+    }
 
-    // 送信前に生年月日を YYYY-MM-DD に正規化
-    form.birth_date = normalizeBirthDate(form.birth_date);
-
-    // 確認ページに遷移（seijin_yearはサーバーが期待する整数形式に変換）
     emit('confirm', {
         ...form.data(),
         reservation_datetime: form.reservation_datetime,
-        timeslot_id: internalSelectedTimeslot.value.id, // 予約枠IDを追加
+        timeslot_id: internalSelectedTimeslot.value.id,
         from_admin: props.fromAdmin,
-        seijin_year: normalizeSeijinYearForSubmit(form.seijin_year),
     });
 };
 </script>

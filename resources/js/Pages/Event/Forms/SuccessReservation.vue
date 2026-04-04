@@ -99,6 +99,59 @@
                                 <p class="text-gray-900 font-semibold text-base sm:text-lg break-words">{{ formData.phone }}</p>
                             </div>
                         </div>
+
+                        <template v-if="event?.form_type === 'reservation'">
+                            <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex-1 min-w-0 space-y-3 text-sm sm:text-base text-left">
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">ご紹介者様お名前</p>
+                                        <p class="text-gray-900 font-semibold break-words">{{ formData.referred_by_name?.trim() ? formData.referred_by_name : '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">お問い合わせ内容</p>
+                                        <p class="text-gray-900 whitespace-pre-wrap leading-relaxed">{{ formData.inquiry_message?.trim() ? formData.inquiry_message : '—' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template v-if="event?.form_type === 'reservation_hakama'">
+                            <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">フリガナ</p>
+                                    <p class="text-gray-900 font-semibold text-sm sm:text-base break-words">{{ formData.furigana || '—' }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">住所</p>
+                                    <p class="text-gray-900 font-semibold text-sm sm:text-base break-words">{{ formData.address || '—' }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex-1 min-w-0 space-y-2 text-sm sm:text-base">
+                                    <p><span class="text-gray-500 font-semibold">学校名</span>　{{ formData.school_name || '—' }}</p>
+                                    <p><span class="text-gray-500 font-semibold">卒業式</span>　{{ formatGraduationCeremonyDate(formData) }}</p>
+                                    <p><span class="text-gray-500 font-semibold">来店人数</span>　{{ formData.visitor_count != null ? formData.visitor_count + '名' : '—' }}</p>
+                                    <p><span class="text-gray-500 font-semibold">好一での振袖利用</span>　{{ formData.koichi_furisode_used === true ? 'あり' : formData.koichi_furisode_used === false ? 'なし' : '—' }}</p>
+                                    <p v-if="formData.visit_reasons && formData.visit_reasons.length"><span class="text-gray-500 font-semibold">来店動機</span>　{{ formData.visit_reasons.join('、') }}</p>
+                                    <p v-if="formData.considering_plans && formData.considering_plans.length"><span class="text-gray-500 font-semibold">検討中のプラン</span>　{{ formData.considering_plans.join('、') }}</p>
+                                    <p><span class="text-gray-500 font-semibold">お車で来店</span>　{{ formData.parking_usage || '—' }}<template v-if="formData.parking_usage === 'あり' && formData.parking_car_count">（{{ formData.parking_car_count }}台）</template></p>
+                                    <p><span class="text-gray-500 font-semibold">ご紹介者様お名前</span>　{{ formData.referred_by_name?.trim() ? formData.referred_by_name : '—' }}</p>
+                                    <p class="whitespace-pre-wrap"><span class="text-gray-500 font-semibold">お問い合わせ内容</span>　{{ formData.inquiry_message?.trim() ? formData.inquiry_message : '—' }}</p>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
@@ -119,14 +172,29 @@
 
 <script setup>
 import { onMounted, computed } from 'vue';
+import { formatDateJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     formData: Object,
+    event: {
+        type: Object,
+        default: null,
+    },
     venues: {
         type: Array,
         default: () => [],
     },
 });
+
+const formatGraduationCeremonyDate = (fd) => {
+    if (fd.graduation_ceremony_date) {
+        return formatDateJa(fd.graduation_ceremony_date);
+    }
+    if (fd.graduation_ceremony_year != null && fd.graduation_ceremony_month != null) {
+        return `${fd.graduation_ceremony_year}年${fd.graduation_ceremony_month}月`;
+    }
+    return '—';
+};
 
 const emit = defineEmits(['close']);
 

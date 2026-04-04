@@ -82,7 +82,7 @@
                             </div>
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">生年月日</label>
                         </div>
-                        <p class="text-gray-900 font-medium pl-10">{{ formData.birth_date ? formatDate(formData.birth_date) : '-' }}</p>
+                        <p class="text-gray-900 font-medium pl-10">{{ formData.birth_date ? formatDateJa(formData.birth_date) : '-' }}</p>
                     </div>
 
                     <!-- メールアドレス -->
@@ -189,6 +189,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { formatDateJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     event: Object,
@@ -198,16 +199,6 @@ const props = defineProps({
 const emit = defineEmits(['back']);
 
 const processing = ref(false);
-
-const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-};
 
 // 郵便番号を XXX-XXXX 形式で表示
 const formatPostalCode = (val) => {

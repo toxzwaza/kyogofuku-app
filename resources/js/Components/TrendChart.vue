@@ -55,10 +55,19 @@ const chartData = computed(() => {
         labels: props.data.map(item => item.label),
         datasets: [
             {
-                label: '予約',
+                label: '振袖予約',
                 data: props.data.map(item => item.reservation),
                 backgroundColor: 'rgba(59, 130, 246, 0.6)',
                 borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: props.type === 'line',
+            },
+            {
+                label: '袴予約（岡山）',
+                data: props.data.map(item => item.reservation_hakama ?? 0),
+                backgroundColor: 'rgba(14, 165, 233, 0.6)',
+                borderColor: 'rgba(14, 165, 233, 1)',
                 borderWidth: 2,
                 tension: 0.4,
                 fill: props.type === 'line',

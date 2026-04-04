@@ -103,7 +103,7 @@
 
         <!-- 予約枠統計情報（予約フォームの場合のみ） -->
         <div
-          v-if="event.form_type === 'reservation' && displayTimeslotStats"
+          v-if="usesTimeslotReservation && displayTimeslotStats"
           class="mb-6"
         >
           <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -170,7 +170,7 @@
           <div class="p-6">
             <!-- タブ（予約フォームの場合は日付表示とテーブル、それ以外はカードとテーブル） -->
             <div
-              v-if="event.form_type !== 'reservation'"
+              v-if="!usesTimeslotReservation"
               class="border-b border-gray-200 mb-6"
             >
               <nav class="-mb-px flex space-x-8">
@@ -288,9 +288,7 @@
 
             <!-- 日付表示（予約フォームの場合のみ） -->
             <div
-              v-if="
-                event.form_type === 'reservation' && activeTab === 'schedule'
-              "
+              v-if="usesTimeslotReservation && activeTab === 'schedule'"
               class="space-y-6"
             >
               <!-- 絞り込みUI -->
@@ -1005,7 +1003,7 @@
 
             <!-- カード表示（資料請求・お問い合わせの場合のみ） -->
             <div
-              v-if="event.form_type !== 'reservation' && activeTab === 'cards'"
+              v-if="!usesTimeslotReservation && activeTab === 'cards'"
               class="space-y-4"
             >
               <div
@@ -1240,7 +1238,7 @@
 
                 <!-- 並べ替えと絞り込み（予約フォームの場合のみ） -->
                 <div
-                  v-if="event.form_type === 'reservation'"
+                  v-if="usesTimeslotReservation"
                   class="grid grid-cols-1 md:grid-cols-2 gap-4"
                 >
                   <!-- 並べ替えUI -->
@@ -1438,7 +1436,7 @@
                       </th>
 
                       <!-- 予約フォームの場合 -->
-                      <template v-if="event.form_type === 'reservation'">
+                      <template v-if="usesTimeslotReservation">
                         <th
                           class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
@@ -1463,7 +1461,7 @@
                       </th>
 
                       <!-- 予約フォームの場合 -->
-                      <template v-if="event.form_type === 'reservation'">
+                      <template v-if="usesTimeslotReservation">
                         <th
                           class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
@@ -1618,7 +1616,7 @@
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
                     <!-- 予約フォームの場合：日付ごとにテーブルを分ける -->
-                    <template v-if="event.form_type === 'reservation'">
+                    <template v-if="usesTimeslotReservation">
                       <template v-for="group in groupedReservationsByDate" :key="group.date || 'no-date'">
                         <!-- 日付ヘッダー行 -->
                         <tr class="bg-gray-100">
@@ -2333,10 +2331,13 @@ const props = defineProps({
   success: String,
 });
 
-// 予約フォームの場合は日付表示をデフォルト、それ以外はカード表示をデフォルト
-const activeTab = ref(
-  props.event.form_type === "reservation" ? "schedule" : "cards"
-);
+const usesTimeslotReservation = computed(() => {
+  const t = props.event?.form_type;
+  return t === "reservation" || t === "reservation_hakama";
+});
+
+// タイムスロット型予約の場合は日付表示をデフォルト、それ以外はカード表示をデフォルト
+const activeTab = ref(usesTimeslotReservation.value ? "schedule" : "cards");
 const adjustingTimeslotId = ref(null);
 const localSuccessMessage = ref("");
 const localErrorMessage = ref("");
@@ -3063,7 +3064,8 @@ function scrollToScheduleAnchor(anchorId) {
 
 const getFormTypeLabel = (formType) => {
   const labels = {
-    reservation: "予約",
+    reservation: "振袖予約",
+    reservation_hakama: "袴予約（岡山）",
     document: "資料請求",
     contact: "問い合わせ",
   };
@@ -3073,6 +3075,7 @@ const getFormTypeLabel = (formType) => {
 const getFormTypeBadgeClass = (formType) => {
   const classes = {
     reservation: "bg-blue-100 text-blue-800",
+    reservation_hakama: "bg-cyan-100 text-cyan-900",
     document: "bg-green-100 text-green-800",
     contact: "bg-purple-100 text-purple-800",
   };

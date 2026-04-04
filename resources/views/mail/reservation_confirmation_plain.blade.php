@@ -37,6 +37,42 @@ LINE連携ページ:
 @if($reservation->venue)
 会場: {{ $reservation->venue->name ?? $reservation->venue }}
 @endif
+@if($reservation->event->usesTimeslotReservation())
+@if($reservation->furigana)
+フリガナ: {{ $reservation->furigana }}
+@endif
+@if($reservation->postal_code)
+郵便番号: {{ $reservation->postal_code }}
+@endif
+@if($reservation->address)
+住所: {{ $reservation->address }}
+@endif
+@if($reservation->event->form_type === 'reservation_hakama')
+@if($reservation->school_name)
+学校名: {{ $reservation->school_name }}
+@endif
+@if($reservation->graduation_ceremony_date)
+卒業式: {{ $reservation->graduation_ceremony_date->format('Y年n月j日') }}
+@elseif($reservation->graduation_ceremony_year && $reservation->graduation_ceremony_month)
+卒業式: {{ $reservation->graduation_ceremony_year }}年{{ $reservation->graduation_ceremony_month }}月
+@endif
+@if($reservation->visitor_count !== null)
+来店人数: {{ $reservation->visitor_count }}名
+@endif
+@if($reservation->koichi_furisode_used !== null)
+好一での振袖利用: {{ $reservation->koichi_furisode_used ? 'あり' : 'なし' }}
+@endif
+@endif
+@if($reservation->visit_reasons && count($reservation->visit_reasons) > 0)
+来店動機: {{ implode('、', $reservation->visit_reasons) }}
+@endif
+@if($reservation->considering_plans && count($reservation->considering_plans) > 0)
+検討中のプラン: {{ implode('、', $reservation->considering_plans) }}
+@endif
+@if($reservation->parking_usage)
+お車で来店: {{ $reservation->parking_usage }}@if($reservation->parking_usage === 'あり' && $reservation->parking_car_count)（{{ $reservation->parking_car_count }}台）@endif
+@endif
+@endif
 @if($reservation->event->form_type === 'document' && $reservation->request_method)
 希望方法: {{ $reservation->request_method }}
 @endif

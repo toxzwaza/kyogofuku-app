@@ -56,7 +56,7 @@
                             <div class="grid grid-cols-2 gap-6 mb-6 print:gap-2 print:mb-2">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1" :style="dsFontStyle">日付</label>
-                                    <p class="text-gray-900 font-semibold" :style="dsFontStyle">{{ formatDate(form.signed_at) }}</p>
+                                    <p class="text-gray-900 font-semibold" :style="dsFontStyle">{{ formatDateJa(form.signed_at) }}</p>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1" :style="dsFontStyle">規約説明者</label>
@@ -176,6 +176,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/vue3';
 import { Canvas, PencilBrush } from 'fabric';
 import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue';
+import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     customer: Object,
@@ -235,7 +236,7 @@ const hasSignature = computed(() => form.signature_image || hasDrawnSignature.va
 
 const form = useForm({
     constraint_template_id: props.template.id,
-    signed_at: props.signedAt || new Date().toISOString().split('T')[0],
+    signed_at: props.signedAt || formatDateInputValueJa(new Date().toISOString()),
     signature_image: props.existingSignature || null,
     explainer_user_id: props.explainerUserId || null,
     check_values: props.checkValues || {},
@@ -252,12 +253,6 @@ const explainerDisplayName = computed(() => {
     const user = props.staff.find(u => u.id == form.explainer_user_id);
     return user?.name || null;
 });
-
-const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-};
 
 const initSignatureCanvas = () => {
     disposeSignatureCanvas();

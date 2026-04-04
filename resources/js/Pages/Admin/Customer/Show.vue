@@ -249,7 +249,7 @@
                                     </div>
                                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">着物発送日</label>
-                                        <p class="text-base font-medium text-gray-900">{{ customer.kimono_ship_date ? formatDate(customer.kimono_ship_date) : '-' }}</p>
+                                        <p class="text-base font-medium text-gray-900">{{ customer.kimono_ship_date ? formatDateJa(customer.kimono_ship_date) : '-' }}</p>
                                     </div>
                                 </template>
                             </div>
@@ -693,7 +693,7 @@
                                     <div class="min-w-0 flex-1">
                                         <p class="font-medium text-gray-900">{{ (cc.constraint_template || cc.constraintTemplate)?.name || '制約' }}</p>
                                         <p class="text-sm text-gray-500 mt-1">
-                                            署名日: {{ cc.signed_at ? formatDate(cc.signed_at) : '-' }}
+                                            署名日: {{ cc.signed_at ? formatDateJa(cc.signed_at) : '-' }}
                                             <span v-if="cc.explainer_user || cc.explainerUser" class="ml-3">規約説明者: {{ (cc.explainer_user || cc.explainerUser)?.name }}</span>
                                         </p>
                                         <div
@@ -789,7 +789,7 @@
                                             <span v-else class="text-gray-500">-</span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : (photoSlot.studio?.name || '-') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : formatDate(photoSlot.shoot_date) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : formatDateJa(photoSlot.shoot_date) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : formatTime(photoSlot.shoot_time) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <span v-if="photoSlot.shops && photoSlot.shops.length > 0">
@@ -2008,7 +2008,7 @@
                                             :key="date" 
                                             :value="date"
                                         >
-                                            {{ formatDate(date) }}
+                                            {{ formatDateJa(date) }}
                                         </option>
                                     </select>
                                     <p v-if="!photoSlotForm.selected_studio_id" class="mt-1 text-xs text-gray-500">まず担当店舗と会場を選択してください</p>
@@ -2182,7 +2182,7 @@
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">撮影日 <span class="text-red-500">*</span></label>
                                     <select v-model="editPhotoSlotForm.selected_date" required :disabled="!editPhotoSlotForm.selected_studio_id" @change="onEditPhotoSlotDateChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
                                         <option value="">選択してください</option>
-                                        <option v-for="date in editAvailableDates" :key="date" :value="date">{{ formatDate(date) }}</option>
+                                        <option v-for="date in editAvailableDates" :key="date" :value="date">{{ formatDateJa(date) }}</option>
                                     </select>
                                 </div>
                                 <div v-if="!editPhotoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -2532,6 +2532,7 @@ import { Canvas, FabricImage, PencilBrush } from 'fabric';
 import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue';
 import CustomerLineSection from '@/Components/Admin/CustomerLineSection.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
+import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     customer: Object,
@@ -3382,9 +3383,7 @@ const openEditCustomerModal = () => {
     customerForm.seijin_preparation_time = props.customer.seijin_preparation_time || '';
     customerForm.other_store_preparation = Boolean(props.customer.other_store_preparation);
     customerForm.other_store_salon_name = props.customer.other_store_salon_name || '';
-    customerForm.kimono_ship_date = props.customer.kimono_ship_date
-        ? String(props.customer.kimono_ship_date).slice(0, 10)
-        : '';
+    customerForm.kimono_ship_date = formatDateInputValueJa(props.customer.kimono_ship_date);
     customerForm.phone_number = props.customer.phone_number || '';
     customerForm.email = props.customer.email || '';
     customerForm.postal_code = props.customer.postal_code || '';
@@ -3419,10 +3418,7 @@ const storeContract = () => {
 };
 
 // 制約モーダル
-const getTodayDateString = () => {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-};
+const getTodayDateString = () => formatDateInputValueJa(new Date().toISOString());
 
 const openAddConstraintModal = () => {
     editingConstraint.value = null;
@@ -3701,17 +3697,6 @@ const formatDateTime = (dateTimeString) => {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-    });
-};
-
-// 日付をフォーマット（例: 2024年1月1日）
-const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
     });
 };
 

@@ -109,7 +109,7 @@
         </div>
 
         <!-- 開催会場（予約フォームの場合のみ） -->
-        <div v-if="event.form_type === 'reservation' && venues && venues.length > 0 && !showSuccess" :class="['max-w-4xl mx-auto px-4 py-8', !isEnded && !showSuccess ? 'pb-32' : '']">
+        <div v-if="isTimeslotReservationForm && venues && venues.length > 0 && !showSuccess" :class="['max-w-4xl mx-auto px-4 py-8', !isEnded && !showSuccess ? 'pb-32' : '']">
             <div class="mb-6">
                 <h2 class="text-xl font-semibold mb-4">開催会場</h2>
                 <div class="space-y-6">
@@ -205,7 +205,7 @@
         </div>
 
         <!-- イベント情報（予約フォーム以外の場合、または成功ページ表示時） -->
-        <div v-if="event.form_type !== 'reservation' || showSuccess" class="max-w-4xl mx-auto px-4 py-8">
+        <div v-if="!isTimeslotReservationForm || showSuccess" class="max-w-4xl mx-auto px-4 py-8">
             <h1 v-if="!showSuccess" class="text-3xl font-bold mb-4">{{ event.title }}</h1>
             <div v-if="event.description && !showSuccess" class="text-gray-700 mb-8" v-html="event.description"></div>
 
@@ -277,7 +277,7 @@
 
         <!-- 固定ボタン（予約フォームの場合のみ、かつ終了していない場合、かつ成功ページ表示時ではない場合） -->
         <div
-            v-if="event.form_type === 'reservation' && !isEnded && !showSuccess && !isLoading"
+            v-if="isTimeslotReservationForm && !isEnded && !showSuccess && !isLoading"
             class="fixed bottom-0 left-0 right-0 z-50 p-4"
             :style="event.cta_background_url
                 ? { backgroundImage: `url(${event.cta_background_url})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }
@@ -309,7 +309,7 @@
 
         <!-- 予約フォームモーダル（終了していない場合、かつ成功ページ表示時ではない場合のみ） -->
         <div
-            v-if="showReservationForm && event.form_type === 'reservation' && !isEnded && !showSuccess"
+            v-if="showReservationForm && isTimeslotReservationForm && !isEnded && !showSuccess"
             class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-3"
             style="background-color: rgba(0, 0, 0, 0.5);"
             @click.self="closeForm"
@@ -414,6 +414,12 @@ const props = defineProps({
     },
 });
 
+/** 振袖予約・袴予約（岡山）＝タイムスロット型の公開フォーム */
+const isTimeslotReservationForm = computed(() => {
+    const t = props.event?.form_type;
+    return t === 'reservation' || t === 'reservation_hakama';
+});
+
 const selectedTimeslot = ref(null);
 const showReservationForm = ref(false);
 const currentStep = ref(props.showSuccess ? 'success' : 'form'); // 'form', 'confirm', 'success'
@@ -500,7 +506,7 @@ const fromAdmin = urlParams.get('from_admin') === '1';
 const urlTimeslotId = urlParams.get('timeslot_id');
 
 // 管理画面からのアクセスの場合、予約フォームを自動的に開く（成功ページ表示時は開かない）
-if (fromAdmin && props.event.form_type === 'reservation' && !props.isEnded && !props.showSuccess) {
+if (fromAdmin && isTimeslotReservationForm.value && !props.isEnded && !props.showSuccess) {
     showReservationForm.value = true;
     
     // URLパラメータから予約枠を取得して選択
@@ -521,6 +527,8 @@ const formComponent = computed(() => {
     const formType = props.event.form_type;
     if (formType === 'reservation') {
         return defineAsyncComponent(() => import('./Forms/ReservationForm.vue'));
+    } else if (formType === 'reservation_hakama') {
+        return defineAsyncComponent(() => import('./Forms/HakamaReservationForm.vue'));
     } else if (formType === 'document') {
         return defineAsyncComponent(() => import('./Forms/DocumentForm.vue'));
     } else if (formType === 'contact') {
@@ -531,7 +539,7 @@ const formComponent = computed(() => {
 
 const confirmComponent = computed(() => {
     const formType = props.event.form_type;
-    if (formType === 'reservation') {
+    if (formType === 'reservation' || formType === 'reservation_hakama') {
         return defineAsyncComponent(() => import('./Forms/ConfirmReservation.vue'));
     } else if (formType === 'document') {
         return defineAsyncComponent(() => import('./Forms/ConfirmDocument.vue'));
@@ -543,7 +551,7 @@ const confirmComponent = computed(() => {
 
 const successComponent = computed(() => {
     const formType = props.event.form_type;
-    if (formType === 'reservation') {
+    if (formType === 'reservation' || formType === 'reservation_hakama') {
         return defineAsyncComponent(() => import('./Forms/SuccessReservation.vue'));
     } else if (formType === 'document') {
         return defineAsyncComponent(() => import('./Forms/SuccessDocument.vue'));
@@ -594,9 +602,9 @@ const closeForm = () => {
     confirmFormData.value = null;
 };
 
-// CTAボタンを表示するか（予約フォームかつ終了前かつ成功画面でない）
+// CTAボタンを表示するか（タイムスロット型予約かつ終了前かつ成功画面でない）
 const showCtaButtons = computed(() => (
-    props.event?.form_type === 'reservation' && !props.isEnded && !props.showSuccess
+    isTimeslotReservationForm.value && !props.isEnded && !props.showSuccess
 ));
 
 // 画像とスライドショーとCTAボタンを順序付けして配列化

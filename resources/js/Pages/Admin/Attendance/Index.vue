@@ -254,7 +254,7 @@
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { formatTimeJa, formatDateJa, formatDateJaWithWeekday } from '@/utils/dateFormat';
+import { formatTimeJa, formatDateJa, formatDateJaWithWeekday, formatDateInputValueJa } from '@/utils/dateFormat';
 
 function formatOvertimeRounded(val) {
     if (val === null || val === undefined) return '-';
@@ -290,7 +290,7 @@ function isoToTime(iso) {
 }
 
 function openEditModal(r) {
-    const dateStr = typeof r.date === 'string' ? r.date.slice(0, 10) : '';
+    const dateStr = r.date ? formatDateInputValueJa(r.date) : '';
     editRecord.value = r;
     editForm.value = {
         clock_in_time: isoToTime(r.clock_in_at),
@@ -313,7 +313,7 @@ function buildDatetime(dateStr, timeStr) {
 function submitEdit() {
     if (!editRecord.value) return;
     const r = editRecord.value;
-    const dateStr = typeof r.date === 'string' ? r.date.slice(0, 10) : '';
+    const dateStr = r.date ? formatDateInputValueJa(r.date) : '';
     const clockInAt = buildDatetime(dateStr, editForm.value.clock_in_time);
     const clockOutAt = buildDatetime(dateStr, editForm.value.clock_out_time);
     const breaks = editForm.value.breaks

@@ -167,5 +167,37 @@ class Event extends Model
     {
         return $this->hasMany(EventUtmTracking::class);
     }
+
+    /** @var list<string> */
+    public const TIMESLOT_RESERVATION_FORM_TYPES = ['reservation', 'reservation_hakama'];
+
+    /** @var list<string> */
+    public const FURISODE_CONSIDERING_PLAN_OPTIONS = [
+        '振袖レンタルプラン',
+        '振袖購入プラン',
+        'ママ振りフォトプラン',
+        'フォトレンタルプラン',
+    ];
+
+    /** @var list<string> */
+    public const HAKAMA_CONSIDERING_PLAN_OPTIONS = [
+        '上下フルセットプラン',
+        '袴のみレンタルプラン',
+    ];
+
+    public function usesTimeslotReservation(): bool
+    {
+        return in_array($this->form_type, self::TIMESLOT_RESERVATION_FORM_TYPES, true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function consideringPlanOptions(): array
+    {
+        return $this->form_type === 'reservation_hakama'
+            ? self::HAKAMA_CONSIDERING_PLAN_OPTIONS
+            : self::FURISODE_CONSIDERING_PLAN_OPTIONS;
+    }
 }
 

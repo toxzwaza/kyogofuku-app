@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
  * サンクスメール HTML のブラウザ確認用（本番でも管理者のみ）。
  *
  * クエリ例:
+ * - form_type=reservation_hakama … 袴予約向けブロック表示
  * - form_type=document & request_method=デジタルカタログ … カタログブロック表示
  * - no_line=1 … LINE 案内なし
  * - no_inquiry=1 … お問い合わせ内容なし
@@ -22,7 +23,7 @@ class ReservationConfirmationMailPreviewController extends Controller
     public function __invoke(Request $request)
     {
         $formType = $request->query('form_type', 'reservation');
-        if (! in_array($formType, ['reservation', 'document', 'contact'], true)) {
+        if (! in_array($formType, ['reservation', 'reservation_hakama', 'document', 'contact'], true)) {
             $formType = 'reservation';
         }
 
@@ -46,6 +47,17 @@ class ReservationConfirmationMailPreviewController extends Controller
             'email' => $request->query('email', 'guest@example.com'),
             'phone' => $request->query('phone', '090-1234-5678'),
             'reservation_datetime' => $request->query('datetime', now()->addDays(14)->format('Y-m-d 14:00:00')),
+            'postal_code' => $formType === 'reservation_hakama' ? null : '7000821',
+            'furigana' => $formType === 'reservation_hakama' ? 'ヤマダ ハナコ' : null,
+            'address' => $formType === 'reservation_hakama' ? '岡山県岡山市北区表町1-1' : null,
+            'school_name' => $formType === 'reservation_hakama' ? 'サンプル高等学校' : null,
+            'graduation_ceremony_date' => $formType === 'reservation_hakama' ? now()->addMonths(2)->format('Y-m-d') : null,
+            'visitor_count' => $formType === 'reservation_hakama' ? 3 : null,
+            'koichi_furisode_used' => $formType === 'reservation_hakama' ? false : null,
+            'visit_reasons' => $formType === 'reservation_hakama' ? ['紹介', 'SNS・WEB広告'] : null,
+            'considering_plans' => $formType === 'reservation_hakama' ? ['上下フルセットプラン'] : null,
+            'parking_usage' => $formType === 'reservation_hakama' ? 'あり' : null,
+            'parking_car_count' => $formType === 'reservation_hakama' ? 1 : null,
             'inquiry_message' => $request->boolean('no_inquiry')
                 ? null
                 : $request->query('inquiry', "試着のご相談をしたく予約しました。\nよろしくお願いいたします。"),

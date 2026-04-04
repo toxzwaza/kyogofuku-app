@@ -137,7 +137,7 @@
                       </label>
                       <p class="text-lg font-semibold text-gray-900">{{ reservation.name }}</p>
                     </div>
-                    <div v-if="event.form_type === 'reservation' || event.form_type === 'document'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama' || event.form_type === 'document'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -340,6 +340,93 @@
                           ご紹介者様お名前
                         </label>
                         <p class="text-base font-medium text-gray-900">{{ reservation.referred_by_name || "-" }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- 袴予約（岡山） -->
+                <template v-if="event.form_type === 'reservation_hakama'">
+                  <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      予約情報
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">予約日時</label>
+                        <p class="text-base font-semibold text-gray-900">{{ reservation.reservation_datetime || "—" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ご来店会場</label>
+                        <p class="text-base font-semibold text-gray-900">{{ reservation.venue ? reservation.venue.name : "—" }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      お客様情報
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">郵便番号</label>
+                        <p class="text-base font-medium text-gray-900">{{ formatPostalCode(reservation.postal_code) }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">住所</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.address || "—" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">学校名</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.school_name || "—" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">好一での振袖利用</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.koichi_furisode_used === true ? "あり" : reservation.koichi_furisode_used === false ? "なし" : "—" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">卒業式</label>
+                        <p class="text-base font-medium text-gray-900">
+                          {{ formatGraduationCeremonyDisplay(reservation) }}
+                        </p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">来店人数</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.visitor_count != null ? reservation.visitor_count + "名" : "—" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">来店動機</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.visit_reasons && reservation.visit_reasons.length > 0 ? reservation.visit_reasons.join("、") : "—" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">流入経路</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.utm_source || "—" }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">その他情報</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お車で来店</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.parking_usage || "—" }}</p>
+                      </div>
+                      <div v-if="reservation.parking_usage === 'あり'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">台数</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.parking_car_count || "—" }}台</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">検討中のプラン</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.considering_plans && reservation.considering_plans.length > 0 ? reservation.considering_plans.join("、") : "—" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ご紹介者様お名前</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.referred_by_name || "—" }}</p>
                       </div>
                     </div>
                   </div>
@@ -1760,6 +1847,17 @@ const formatDateTime = (datetime) => formatDateTimeJa(datetime);
 const formatDate = (dateString) => formatDateJa(dateString);
 
 // 郵便番号を XXX-XXXX 形式で表示
+const formatGraduationCeremonyDisplay = (r) => {
+  if (r.graduation_ceremony_date) {
+    // ISO（例: JST 4/4 深夜 → UTC 4/3）を slice すると暦日がずれるため、そのまま formatDateJa に渡す
+    return formatDateJa(r.graduation_ceremony_date);
+  }
+  if (r.graduation_ceremony_year != null && r.graduation_ceremony_month != null) {
+    return `${r.graduation_ceremony_year}年${r.graduation_ceremony_month}月`;
+  }
+  return "—";
+};
+
 const formatPostalCode = (val) => {
   if (!val) return "-";
   const digits = String(val).replace(/-/g, "").replace(/\D/g, "").slice(0, 7);

@@ -54,8 +54,8 @@
                                     <div v-if="form.errors.phone" class="mt-1 text-sm text-red-600">{{ form.errors.phone }}</div>
                                 </div>
 
-                                <!-- 予約フォーム (reservation) -->
-                                <template v-if="event.form_type === 'reservation'">
+                                <!-- 振袖・袴（タイムスロット型）予約 -->
+                                <template v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'">
                                     <!-- ご来店会場（会場を先に選択） -->
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">ご来店会場 <span class="text-red-500">*</span></label>
@@ -90,7 +90,7 @@
                                                     :key="date"
                                                     class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
                                                 >
-                                                    <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ formatDate(date) }}</h3>
+                                                    <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ formatDateJaWithWeekday(date) }}</h3>
                                                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                                         <button
                                                             type="button"
@@ -163,16 +163,17 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.furigana"
                                             type="text"
+                                            :required="event.form_type === 'reservation_hakama'"
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         />
                                         <div v-if="form.errors.furigana" class="mt-1 text-sm text-red-600">{{ form.errors.furigana }}</div>
                                     </div>
 
-                                    <div>
+                                    <div v-if="event.form_type === 'reservation'">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">過去当店のご来店はありますか</label>
                                         <div class="flex space-x-4">
                                             <label class="flex items-center">
@@ -198,7 +199,7 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">郵便番号</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">郵便番号 <span v-if="event.form_type === 'reservation_hakama'" class="text-gray-400 text-xs font-normal">（任意）</span></label>
                                         <input
                                             v-model="form.postal_code"
                                             type="text"
@@ -209,16 +210,32 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">住所</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">住所 <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.address"
                                             type="text"
+                                            :required="event.form_type === 'reservation_hakama'"
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         />
                                         <div v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</div>
                                     </div>
 
-                                    <div>
+                                    <div v-if="event.form_type === 'reservation_hakama'">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">好一での振袖利用 <span class="text-red-500">*</span></label>
+                                        <div class="flex space-x-4">
+                                            <label class="flex items-center">
+                                                <input v-model="form.koichi_furisode_used" type="radio" :value="false" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                                                <span class="ml-2 text-sm text-gray-700">なし</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input v-model="form.koichi_furisode_used" type="radio" :value="true" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                                                <span class="ml-2 text-sm text-gray-700">あり</span>
+                                            </label>
+                                        </div>
+                                        <div v-if="form.errors.koichi_furisode_used" class="mt-1 text-sm text-red-600">{{ form.errors.koichi_furisode_used }}</div>
+                                    </div>
+
+                                    <div v-if="event.form_type === 'reservation'">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">生年月日</label>
                                         <input
                                             v-model="form.birth_date"
@@ -228,7 +245,7 @@
                                         <div v-if="form.errors.birth_date" class="mt-1 text-sm text-red-600">{{ form.errors.birth_date }}</div>
                                     </div>
 
-                                    <div>
+                                    <div v-if="event.form_type === 'reservation'">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">成人式予定年月</label>
                                         <select
                                             v-model="form.seijin_year"
@@ -243,16 +260,35 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">学校名</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">学校名 <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.school_name"
                                             type="text"
+                                            :required="event.form_type === 'reservation_hakama'"
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         />
                                         <div v-if="form.errors.school_name" class="mt-1 text-sm text-red-600">{{ form.errors.school_name }}</div>
                                     </div>
 
-                                    <div>
+                                    <div v-if="event.form_type === 'reservation_hakama'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">卒業式の日（予定） <span class="text-red-500">*</span></label>
+                                            <input
+                                                v-model="form.graduation_ceremony_date"
+                                                type="date"
+                                                required
+                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            />
+                                            <div v-if="form.errors.graduation_ceremony_date" class="mt-1 text-sm text-red-600">{{ form.errors.graduation_ceremony_date }}</div>
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">来店人数 <span class="text-red-500">*</span></label>
+                                            <input v-model.number="form.visitor_count" type="number" min="1" max="500" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                                            <div v-if="form.errors.visitor_count" class="mt-1 text-sm text-red-600">{{ form.errors.visitor_count }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div v-if="event.form_type === 'reservation'">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">担当者指名</label>
                                         <input
                                             v-model="form.staff_name"
@@ -291,7 +327,7 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">駐車場利用</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ event.form_type === 'reservation_hakama' ? 'お車で来店' : '駐車場利用' }} <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <div class="flex space-x-4">
                                             <label class="flex items-center">
                                                 <input
@@ -316,9 +352,9 @@
                                     </div>
 
                                     <div v-if="form.parking_usage === 'あり'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">駐車台数</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ event.form_type === 'reservation_hakama' ? '台数' : '駐車台数' }} <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <input
-                                            v-model="form.parking_car_count"
+                                            v-model.number="form.parking_car_count"
                                             type="number"
                                             min="1"
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -346,7 +382,7 @@
                                         <div v-if="form.errors.considering_plans" class="mt-1 text-sm text-red-600">{{ form.errors.considering_plans }}</div>
                                     </div>
 
-                                    <div>
+                                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">ご紹介者様お名前</label>
                                         <input
                                             v-model="form.referred_by_name"
@@ -482,6 +518,7 @@
 import { ref, computed, watch } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { formatDateJaWithWeekday } from '@/utils/dateFormat';
 
 const props = defineProps({
     reservation: Object,
@@ -545,16 +582,6 @@ const selectTimeslot = (timeslot) => {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
     form.reservation_datetime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-
-const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'short',
-    });
 };
 
 const formatTime = (datetime) => {
@@ -728,6 +755,9 @@ const form = useForm({
     parking_car_count: props.reservation.parking_car_count || null,
     considering_plans: props.reservation.considering_plans || [],
     referred_by_name: props.reservation.referred_by_name || '',
+    koichi_furisode_used: props.reservation.koichi_furisode_used ?? null,
+    graduation_ceremony_date: initialGraduationCeremonyDate,
+    visitor_count: props.reservation.visitor_count ?? null,
     // 資料請求フォーム用
     request_method: props.reservation.request_method || '',
     postal_code: props.reservation.postal_code || '',
@@ -738,15 +768,20 @@ const form = useForm({
     inquiry_message: props.reservation.inquiry_message || '',
 });
 
-// 検討中のプランの選択肢（予約フォーム用）
-const availablePlans = [
-    '振袖レンタルプラン',
-    '振袖購入プラン',
-    'ママ振りフォトプラン',
-    'フォトレンタルプラン',
-];
+// 検討中のプランの選択肢（フォーム種別で切替）
+const availablePlans = computed(() => {
+    if (props.event.form_type === 'reservation_hakama') {
+        return ['上下フルセットプラン', '袴のみレンタルプラン'];
+    }
+    return [
+        '振袖レンタルプラン',
+        '振袖購入プラン',
+        'ママ振りフォトプラン',
+        'フォトレンタルプラン',
+    ];
+});
 
-// 成人式予定年の選択肢（現在年から10年後まで）
+// 成人式予定年・卒業式「年」の選択肢（現在年から10年後まで）
 const currentYear = new Date().getFullYear();
 const seijinYears = Array.from({ length: 11 }, (_, i) => currentYear + i);
 

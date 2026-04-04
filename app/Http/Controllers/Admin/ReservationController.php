@@ -21,6 +21,7 @@ use App\Services\Line\ReservationLineContactMigrator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
@@ -55,7 +56,7 @@ class ReservationController extends Controller
             ->where('event_id', $event->id);
 
         // 予約フォームの場合、開始日〜終了日の範囲で枠に紐づく予約のみ表示
-        if ($event->form_type === 'reservation') {
+        if ($event->usesTimeslotReservation()) {
             $reservationsQuery->whereDate('reservation_datetime', '>=', $startDateStr);
             if ($endDateStr !== null) {
                 $reservationsQuery->whereDate('reservation_datetime', '<=', $endDateStr);
@@ -68,7 +69,7 @@ class ReservationController extends Controller
         }
 
         // 時間で絞り込み（予約フォームの場合のみ）
-        if ($event->form_type === 'reservation' && $request->filled('reservation_datetime')) {
+        if ($event->usesTimeslotReservation() && $request->filled('reservation_datetime')) {
             $datetime = $request->reservation_datetime;
             // 日付のみ（YYYY-MM-DD形式）の場合は、その日のすべての予約を取得
             if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $datetime)) {
@@ -96,7 +97,6 @@ class ReservationController extends Controller
                     'furigana' => $reservation->furigana,
                     'has_visited_before' => $reservation->has_visited_before,
                     'address' => $reservation->address,
-                    'birth_date' => $reservation->birth_date,
                     'seijin_year' => $reservation->seijin_year,
                     'school_name' => $reservation->school_name,
                     'parking_usage' => $reservation->parking_usage,
@@ -104,6 +104,12 @@ class ReservationController extends Controller
                     'considering_plans' => $reservation->considering_plans,
                     'referred_by_name' => $reservation->referred_by_name,
                     'inquiry_message' => $reservation->inquiry_message,
+                    'koichi_furisode_used' => $reservation->koichi_furisode_used,
+                    'graduation_ceremony_year' => $reservation->graduation_ceremony_year,
+                    'graduation_ceremony_month' => $reservation->graduation_ceremony_month,
+                    'graduation_ceremony_date' => $reservation->graduation_ceremony_date?->format('Y-m-d'),
+                    'birth_date' => $reservation->birth_date?->format('Y-m-d'),
+                    'visitor_count' => $reservation->visitor_count,
                     'status' => $reservation->status,
                     'status_updated_by' => $reservation->statusUpdatedBy ? [
                         'id' => $reservation->statusUpdatedBy->id,
@@ -134,7 +140,7 @@ class ReservationController extends Controller
 
         // 時間リストを取得（予約フォームの場合のみ、フィルター用）
         $filterTimeslots = [];
-        if ($event->form_type === 'reservation') {
+        if ($event->usesTimeslotReservation()) {
             $timeslotsQuery = $event->timeslots()->with('venue')->where('is_active', true);
 
             // 開始日〜終了日の範囲の枠のみ
@@ -162,7 +168,7 @@ class ReservationController extends Controller
         $timeslotStats = null;
         $timeslotsWithReservations = null;
 
-        if ($event->form_type === 'reservation') {
+        if ($event->usesTimeslotReservation()) {
             $timeslotsQuery = $event->timeslots()->with('venue')->where('is_active', true);
 
             // 開始日〜終了日の範囲の枠のみ
@@ -374,6 +380,11 @@ class ReservationController extends Controller
             'inquiry_message' => null,
             'privacy_agreed' => false,
             'customer_id' => $customer->id,
+            'koichi_furisode_used' => null,
+            'graduation_ceremony_year' => null,
+            'graduation_ceremony_month' => null,
+            'graduation_ceremony_date' => null,
+            'visitor_count' => null,
         ]);
 
         app(EventReservationScheduleBootstrapService::class)->bootstrapIfApplicable($reservation);
@@ -420,7 +431,7 @@ class ReservationController extends Controller
 
         // キャンセル解除可能か（枠に空きがあるか）
         $canRestore = true;
-        if ($reservation->cancel_flg && $event->form_type === 'reservation' && $reservation->reservation_datetime) {
+        if ($reservation->cancel_flg && $event->usesTimeslotReservation() && $reservation->reservation_datetime) {
             $datetimeStr = Carbon::parse($reservation->reservation_datetime)->format('Y-m-d H:i:s');
             $timeslot = $event->timeslots()
                 ->where('start_at', $datetimeStr)
@@ -578,7 +589,7 @@ class ReservationController extends Controller
         // 予約フォームの場合、利用可能な予約枠を取得（本日以降のみ・公開ページと同様）
         $timeslots = [];
         $venues = $event->venues()->where('venues.is_active', true)->get();
-        if ($event->form_type === 'reservation') {
+        if ($event->usesTimeslotReservation()) {
             $timeslots = $event->timeslots()
                 ->where('is_active', true)
                 ->whereDate('start_at', '>=', Carbon::today())
@@ -637,29 +648,51 @@ class ReservationController extends Controller
             $rules['privacy_agreed'] = 'nullable|boolean';
         }
 
-        // 予約フォームの場合
-        if ($event->form_type === 'reservation') {
-            $rules['postal_code'] = 'nullable|string|max:10';
+        // 振袖・袴（タイムスロット型）予約フォーム
+        if ($event->usesTimeslotReservation()) {
+            $rules['postal_code'] = $event->form_type === 'reservation_hakama'
+                ? 'nullable|string|max:10'
+                : 'nullable|string|max:10';
             $rules['reservation_datetime'] = 'nullable|string';
             $rules['venue_id'] = 'nullable|exists:venues,id';
+            $rules['visit_reasons'] = 'nullable|array';
+            $rules['visit_reasons.*'] = 'string|max:255';
+            $rules['visit_reason_other'] = 'nullable|string|max:255';
+            $rules['parking_usage'] = $event->form_type === 'reservation_hakama'
+                ? 'required|in:なし,あり'
+                : 'nullable|string|max:255';
+            $rules['parking_car_count'] = 'nullable|integer';
+            $rules['considering_plans'] = 'nullable|array';
+            $rules['considering_plans.*'] = Rule::in($event->consideringPlanOptions());
+        }
+
+        if ($event->form_type === 'reservation') {
             $rules['has_visited_before'] = 'boolean';
             $rules['seijin_year'] = 'nullable|integer|min:2000|max:2100';
             $rules['referred_by_name'] = 'nullable|string|max:255';
             $rules['school_name'] = 'nullable|string|max:255';
             $rules['staff_name'] = 'nullable|string|max:255';
-            $rules['visit_reasons'] = 'nullable|array';
-            $rules['visit_reasons.*'] = 'string|max:255';
-            $rules['visit_reason_other'] = 'nullable|string|max:255';
-            $rules['parking_usage'] = 'nullable|string|max:255';
-            $rules['parking_car_count'] = 'nullable|integer';
-            $rules['considering_plans'] = 'nullable|array';
-            $rules['considering_plans.*'] = 'in:振袖レンタルプラン,振袖購入プラン,ママ振りフォトプラン,フォトレンタルプラン';
+        }
+
+        if ($event->form_type === 'reservation_hakama') {
+            $rules['furigana'] = 'required|string|max:255';
+            $rules['address'] = 'required|string|max:255';
+            $rules['koichi_furisode_used'] = 'required|boolean';
+            $rules['school_name'] = 'required|string|max:255';
+            $rules['graduation_ceremony_date'] = 'required|date';
+            $rules['visitor_count'] = 'required|integer|min:1|max:500';
+            $rules['parking_car_count'] = 'nullable|integer|min:1|required_if:parking_usage,あり';
+            $rules['referred_by_name'] = 'nullable|string|max:255';
         }
 
         // 共通項目
-        $rules['furigana'] = 'nullable|string|max:255';
-        $rules['birth_date'] = 'nullable|date';
-        $rules['address'] = 'nullable|string|max:255';
+        if ($event->form_type !== 'reservation_hakama') {
+            $rules['furigana'] = 'nullable|string|max:255';
+            $rules['birth_date'] = 'nullable|date';
+            $rules['address'] = 'nullable|string|max:255';
+        } else {
+            $rules['birth_date'] = 'nullable|date';
+        }
         $rules['inquiry_message'] = 'nullable|string';
 
         // heard_fromのバリデーション（フォーム種別によって異なる）
@@ -674,8 +707,13 @@ class ReservationController extends Controller
         $validated = $request->validate($rules);
 
         // 来店動機を処理（「その他」の場合はテキスト入力も含める）
-        if ($event->form_type === 'reservation' && isset($validated['visit_reasons'])) {
+        if ($event->usesTimeslotReservation() && isset($validated['visit_reasons'])) {
             $validated['visit_reasons'] = $this->processVisitReasons($validated['visit_reasons'], $request->visit_reason_other);
+        }
+
+        if ($event->form_type === 'reservation_hakama') {
+            $validated['graduation_ceremony_year'] = null;
+            $validated['graduation_ceremony_month'] = null;
         }
 
         $reservation->update($validated);
@@ -744,7 +782,7 @@ class ReservationController extends Controller
         $event = $reservation->event;
 
         // 予約フォームで予約日時がある場合、枠の空きをチェック
-        if ($event->form_type === 'reservation' && $reservation->reservation_datetime) {
+        if ($event->usesTimeslotReservation() && $reservation->reservation_datetime) {
             $datetimeStr = Carbon::parse($reservation->reservation_datetime)->format('Y-m-d H:i:s');
             $timeslot = $event->timeslots()
                 ->where('start_at', $datetimeStr)

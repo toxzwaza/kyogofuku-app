@@ -81,6 +81,7 @@
                                             <dd class="mt-1">
                                                 <span class="px-2 py-1 text-xs rounded-full" :class="{
                                                     'bg-blue-100 text-blue-800': event.form_type === 'reservation',
+                                                    'bg-cyan-100 text-cyan-900': event.form_type === 'reservation_hakama',
                                                     'bg-green-100 text-green-800': event.form_type === 'document',
                                                     'bg-purple-100 text-purple-800': event.form_type === 'contact',
                                                 }">
@@ -207,7 +208,8 @@
                                                         required
                                                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                                     >
-                                                        <option value="reservation">予約</option>
+                                                        <option value="reservation">振袖予約</option>
+                                                        <option value="reservation_hakama">袴予約（岡山）</option>
                                                         <option value="document">資料請求</option>
                                                         <option value="contact">問い合わせ</option>
                                                     </select>
@@ -713,7 +715,7 @@
                             </div>
 
                             <!-- 会場管理（予約フォームの場合のみ） -->
-                            <div v-if="event.form_type === 'reservation'" class="border-t border-gray-200 pt-6">
+                            <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'" class="border-t border-gray-200 pt-6">
                                 <div class="flex justify-between items-center mb-4">
                                     <h3 class="text-lg font-semibold">会場管理</h3>
                                     <button
@@ -1074,7 +1076,7 @@ import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { formatDateJa } from '@/utils/dateFormat';
+import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     event: Object,
@@ -1177,8 +1179,8 @@ const editForm = useForm({
     slug_aliases: Array.isArray(props.event.slug_aliases) ? [...props.event.slug_aliases] : [],
     description: props.event.description || '',
     form_type: props.event.form_type,
-    start_at: props.event.start_at ? new Date(props.event.start_at).toISOString().split('T')[0] : '',
-    end_at: props.event.end_at ? new Date(props.event.end_at).toISOString().split('T')[0] : '',
+    start_at: formatDateInputValueJa(props.event.start_at),
+    end_at: formatDateInputValueJa(props.event.end_at),
     is_public: props.event.is_public,
     utm_analytics_enabled: props.event.utm_analytics_enabled ?? false,
     shop_ids: props.event.shops ? props.event.shops.map(shop => shop.id) : [],
@@ -1267,8 +1269,8 @@ const startEdit = () => {
     editForm.slug_aliases = Array.isArray(props.event.slug_aliases) ? [...props.event.slug_aliases] : [];
     editForm.description = props.event.description || '';
     editForm.form_type = props.event.form_type;
-    editForm.start_at = props.event.start_at ? new Date(props.event.start_at).toISOString().split('T')[0] : '';
-    editForm.end_at = props.event.end_at ? new Date(props.event.end_at).toISOString().split('T')[0] : '';
+    editForm.start_at = formatDateInputValueJa(props.event.start_at);
+    editForm.end_at = formatDateInputValueJa(props.event.end_at);
     editForm.is_public = props.event.is_public;
     editForm.utm_analytics_enabled = props.event.utm_analytics_enabled ?? false;
     editForm.shop_ids = props.event.shops ? props.event.shops.map(shop => shop.id) : [];
@@ -1366,7 +1368,8 @@ const updateEvent = () => {
 
 const getFormTypeLabel = (formType) => {
     const labels = {
-        reservation: '予約',
+        reservation: '振袖予約',
+        reservation_hakama: '袴予約（岡山）',
         document: '資料請求',
         contact: '問い合わせ',
     };

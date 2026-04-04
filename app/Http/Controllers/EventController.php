@@ -162,7 +162,7 @@ class EventController extends Controller
 
         // 会場情報（予約フォームの場合のみ・各会場の予約枠の最終日が直近のものから昇順）
         $venues = [];
-        if ($event->form_type === 'reservation') {
+        if ($event->usesTimeslotReservation()) {
             $lastSlotDatesByVenue = $event->timeslots
                 ->where('is_active', true)
                 ->groupBy('venue_id')

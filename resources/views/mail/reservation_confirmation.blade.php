@@ -404,6 +404,75 @@
                             <div class="info-value">{{ $reservation->venue->name ?? $reservation->venue }}</div>
                         </div>
                         @endif
+                        @if($reservation->event->usesTimeslotReservation())
+                        @if($reservation->furigana)
+                        <div class="info-row">
+                            <div class="info-label">フリガナ</div>
+                            <div class="info-value">{{ $reservation->furigana }}</div>
+                        </div>
+                        @endif
+                        @if($reservation->postal_code)
+                        <div class="info-row">
+                            <div class="info-label">郵便番号</div>
+                            <div class="info-value">{{ $reservation->postal_code }}</div>
+                        </div>
+                        @endif
+                        @if($reservation->address)
+                        <div class="info-row">
+                            <div class="info-label">住所</div>
+                            <div class="info-value">{{ $reservation->address }}</div>
+                        </div>
+                        @endif
+                        @if($reservation->event->form_type === 'reservation_hakama')
+                        @if($reservation->school_name)
+                        <div class="info-row">
+                            <div class="info-label">学校名</div>
+                            <div class="info-value">{{ $reservation->school_name }}</div>
+                        </div>
+                        @endif
+                        @if($reservation->graduation_ceremony_date)
+                        <div class="info-row">
+                            <div class="info-label">卒業式</div>
+                            <div class="info-value">{{ $reservation->graduation_ceremony_date->format('Y年n月j日') }}</div>
+                        </div>
+                        @elseif($reservation->graduation_ceremony_year && $reservation->graduation_ceremony_month)
+                        <div class="info-row">
+                            <div class="info-label">卒業式</div>
+                            <div class="info-value">{{ $reservation->graduation_ceremony_year }}年{{ $reservation->graduation_ceremony_month }}月</div>
+                        </div>
+                        @endif
+                        @if($reservation->visitor_count !== null)
+                        <div class="info-row">
+                            <div class="info-label">来店人数</div>
+                            <div class="info-value">{{ $reservation->visitor_count }}名</div>
+                        </div>
+                        @endif
+                        @if($reservation->koichi_furisode_used !== null)
+                        <div class="info-row">
+                            <div class="info-label">好一での振袖利用</div>
+                            <div class="info-value">{{ $reservation->koichi_furisode_used ? 'あり' : 'なし' }}</div>
+                        </div>
+                        @endif
+                        @endif
+                        @if($reservation->visit_reasons && count($reservation->visit_reasons) > 0)
+                        <div class="info-row">
+                            <div class="info-label">来店動機</div>
+                            <div class="info-value">{{ implode('、', $reservation->visit_reasons) }}</div>
+                        </div>
+                        @endif
+                        @if($reservation->considering_plans && count($reservation->considering_plans) > 0)
+                        <div class="info-row">
+                            <div class="info-label">検討中のプラン</div>
+                            <div class="info-value">{{ implode('、', $reservation->considering_plans) }}</div>
+                        </div>
+                        @endif
+                        @if($reservation->parking_usage)
+                        <div class="info-row">
+                            <div class="info-label">お車で来店</div>
+                            <div class="info-value">{{ $reservation->parking_usage }}@if($reservation->parking_usage === 'あり' && $reservation->parking_car_count)（{{ $reservation->parking_car_count }}台）@endif</div>
+                        </div>
+                        @endif
+                        @endif
                         @if($reservation->event->form_type === 'document' && $reservation->request_method)
                         <div class="info-row">
                             <div class="info-label">希望方法</div>

@@ -157,7 +157,7 @@
                       />
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-800">
-                      {{ formatDateHeader(date) }}
+                      {{ formatDateJaWithWeekday(date) }}
                     </h3>
                     <span class="text-sm text-gray-600"
                       >（{{ dateGroup.length }}件）</span
@@ -580,7 +580,7 @@
                       :key="date"
                       :value="date"
                     >
-                      {{ formatDate(date) }}
+                      {{ formatDateJa(date) }}
                     </option>
                   </select>
                   <p
@@ -981,6 +981,7 @@ import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import axios from "axios";
+import { formatDateJa, formatDateJaWithWeekday } from "@/utils/dateFormat";
 
 const props = defineProps({
   photoSlots: Array,
@@ -1173,28 +1174,6 @@ const resetFilters = () => {
     start_date: "",
     end_date: "",
   };
-};
-
-const formatDate = (date) => {
-  if (!date) {
-    return "-";
-  }
-  const d = new Date(date);
-  return d.toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
-const formatDateHeader = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "long",
-  });
 };
 
 const formatTime = (time) => {

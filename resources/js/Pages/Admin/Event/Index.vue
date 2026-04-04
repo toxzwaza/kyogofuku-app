@@ -29,7 +29,8 @@
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                 >
                                     <option value="">すべて</option>
-                                    <option value="reservation">予約</option>
+                                    <option value="reservation">振袖予約</option>
+                                    <option value="reservation_hakama">袴予約（岡山）</option>
                                     <option value="document">資料請求</option>
                                     <option value="contact">問い合わせ</option>
                                 </select>
@@ -95,6 +96,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <span class="px-2 py-1 text-xs rounded-full" :class="{
                                                 'bg-blue-100 text-blue-800': event.form_type === 'reservation',
+                                                'bg-cyan-100 text-cyan-900': event.form_type === 'reservation_hakama',
                                                 'bg-green-100 text-green-800': event.form_type === 'document',
                                                 'bg-purple-100 text-purple-800': event.form_type === 'contact',
                                             }">
@@ -162,6 +164,7 @@ import { reactive } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     events: Object,
@@ -200,7 +203,8 @@ const resetFilters = () => {
 
 const getFormTypeLabel = (formType) => {
     const labels = {
-        reservation: '予約',
+        reservation: '振袖予約',
+        reservation_hakama: '袴予約（岡山）',
         document: '資料請求',
         contact: '問い合わせ',
     };
@@ -211,12 +215,7 @@ const formatDate = (date) => {
     if (!date) {
         return '常時受付中';
     }
-    const d = new Date(date);
-    return d.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
+    return formatDateJa(date);
 };
 
 const getPublicStatusLabel = (event) => {
@@ -224,11 +223,9 @@ const getPublicStatusLabel = (event) => {
         return '非公開';
     }
     if (event.end_at) {
-        const endDate = new Date(event.end_at);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        endDate.setHours(0, 0, 0, 0);
-        if (endDate < today) {
+        const todayTokyo = formatDateInputValueJa(new Date().toISOString());
+        const endTokyo = formatDateInputValueJa(event.end_at);
+        if (endTokyo && todayTokyo && endTokyo < todayTokyo) {
             return '受付終了';
         }
     }
@@ -240,11 +237,9 @@ const getPublicStatusClass = (event) => {
         return 'bg-gray-100 text-gray-800';
     }
     if (event.end_at) {
-        const endDate = new Date(event.end_at);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        endDate.setHours(0, 0, 0, 0);
-        if (endDate < today) {
+        const todayTokyo = formatDateInputValueJa(new Date().toISOString());
+        const endTokyo = formatDateInputValueJa(event.end_at);
+        if (endTokyo && todayTokyo && endTokyo < todayTokyo) {
             return 'bg-orange-100 text-orange-800';
         }
     }

@@ -22,7 +22,7 @@ class EventReservationScheduleBootstrapService
     {
         $reservation->loadMissing(['event', 'venue']);
 
-        if ($reservation->event?->form_type !== 'reservation') {
+        if (! $reservation->event?->usesTimeslotReservation()) {
             return;
         }
 

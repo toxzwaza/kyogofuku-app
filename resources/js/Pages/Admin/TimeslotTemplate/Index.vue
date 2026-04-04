@@ -94,6 +94,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, router } from '@inertiajs/vue3';
+import { formatDateJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     templates: Array,
@@ -101,7 +102,7 @@ const props = defineProps({
 
 const formatDate = (date) => {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('ja-JP');
+    return formatDateJa(date);
 };
 
 const deleteTemplate = (id) => {
