@@ -1,0 +1,122 @@
+/**
+ * SuccessReservation — lp / 来場予約フォームと同じトークン・構成感
+ */
+.success-reservation-root {
+    --pink: #e8729a;
+    --pink-soft: #f2a0b8;
+    --pink-pale: #fce4ec;
+    --pink-mist: #fff0f3;
+    --text: #5c4a5a;
+    --text-light: #9b8a96;
+    --white: #fff;
+    --serif: 'Zen Old Mincho', 'Noto Serif JP', serif;
+    --sans: 'Noto Sans JP', sans-serif;
+    --radius-soft: 20px;
+    --shadow-soft: 0 4px 28px rgba(232, 114, 154, 0.1);
+}
+
+.success-reservation-root {
+    font-family: var(--sans);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+.success-reservation-steps {
+    margin-bottom: 20px;
+}
+
+.success-reservation-panel {
+    text-align: left;
+}
+
+/* 確認パネルと同じ下線タイトル直下にメッセージブロック */
+.success-reservation-celebrate {
+    text-align: center;
+    padding: 8px 0 28px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--pink-pale);
+}
+
+.success-reservation-kicker {
+    font-size: 10px;
+    letter-spacing: 0.45em;
+    color: var(--pink-soft);
+    margin-bottom: 12px;
+}
+
+.success-reservation-icon-wrap {
+    color: var(--pink);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.success-reservation-check-svg {
+    display: block;
+}
+
+.success-reservation-thanks {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--pink);
+    line-height: 1.45;
+    margin: 0 0 14px;
+}
+
+@media (min-width: 640px) {
+    .success-reservation-thanks {
+        font-size: 24px;
+    }
+}
+
+.success-reservation-lead {
+    font-size: 14px;
+    color: var(--text-light);
+    line-height: 1.9;
+    margin: 0;
+    max-width: 26rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* フォーム内 h3 見出しに寄せる */
+.success-reservation-subheading {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    border-bottom: 2px solid var(--pink-pale);
+    padding-bottom: 12px;
+    margin: 0 0 8px;
+}
+
+.success-reservation-dl {
+    margin-bottom: 8px;
+}
+
+.success-reservation-root .rv-confirm-row dd {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* フォーム下の rv-nav と同じ：単一ボタンは中央 */
+.success-reservation-nav {
+    justify-content: center;
+    margin-top: 28px;
+}
+
+.success-reservation-nav .rv-btn-next {
+    margin-left: 0;
+    width: 100%;
+    max-width: 320px;
+}
+
+@media (min-width: 480px) {
+    .success-reservation-nav .rv-btn-next {
+        width: auto;
+    }
+}

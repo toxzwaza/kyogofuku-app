@@ -1,0 +1,21 @@
+/** lp_design/index.html ギャラリートラックと同一画像URL */
+export const LP_GALLERY_IMAGES = [
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/ztKBeNGBBNcRNpWkfnk3sGpnxvwVCKYJoqG9DX5M.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/LLzVrmnYgMcihiHfHpf5HnZSj3AyEfkeY0HfnJ71.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/h5dr3cEsVc3bRQPzAxdzqRMEAmcvagfvdfB0vwRk.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/sIWKcvdCfhjWLGv1VC5Peeg7deAz5hEkAcSI86ss.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/eXQT3lbTC0Tu1y4iO5lYK0LoLTQXzy6nNlK7Vv82.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/FkhJ6pymZwlwSTCac3PePfmLnbqW63R5Zd45jESA.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/ID36wKYh6CGzOYubcxNfOvFaGw60pLkA3hHJYZKK.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/oAliV2m3MWVApM6Z5ZIJWnF9vvCBWV0F98F77LHh.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/Pcj7P4DA9s7qDiDlFQygyRkC22gc558vaw13eyQi.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/Urk0ueAvWVQdlxCTn0nDg6VBh52JtxQitNGOM2Xy.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/aTvHzIIZ52XIXIiClDluJ6rFEgOxq8IEyzmnRnuV.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/2JdVHyeZopVTsxGEeUvJYOuOym6hpTpArlxK9tDh.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/frM9RsssBc1BEzgFvcJgMkjJgG4ov4FRvRXMGtgK.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/Q9jpI3zzdFpiBNndgHExIAZ2dX1WBXAGJC0JCRla.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/G5mlbpxBFUwe0gT5vgD7SL7GYSDC0EIeXwMKcUR6.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/uC46dahur77nTSA5eZhxedolK8II0aYOR87t0kW9.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/BHnJS3cOL38mTUGNhcbEgrO2uhfLPjiVOUho0s3G.webp',
+    'https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/slideshows/12/0byI3faZiMTfPwCYreKe1BkOpDnBSSUAQU28yiUT.webp',
+];

@@ -62,6 +62,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, 'resources/js'),
+            '@lp_design': path.resolve(__dirname, 'resources/lp_design'),
         },
     },
 });

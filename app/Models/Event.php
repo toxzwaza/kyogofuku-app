@@ -34,6 +34,8 @@ class Event extends Model
         'background_image_path',
         'background_image_storage_disk',
         'cta_color_type',
+        'lp_design_slug',
+        'lp_theme_tokens',
     ];
 
     protected $casts = [
@@ -43,6 +45,7 @@ class Event extends Model
         'utm_analytics_enabled' => 'boolean',
         'background_image_enabled' => 'boolean',
         'slug_aliases' => 'array',
+        'lp_theme_tokens' => 'array',
     ];
 
     protected $appends = [
@@ -188,6 +191,29 @@ class Event extends Model
     public function usesTimeslotReservation(): bool
     {
         return in_array($this->form_type, self::TIMESLOT_RESERVATION_FORM_TYPES, true);
+    }
+
+    /**
+     * 有効な LP テンプレ slug（未設定・無効・フォーム種別不一致は null）
+     */
+    public function activeLpDesignSlug(): ?string
+    {
+        $slug = $this->lp_design_slug;
+        if (!$slug || !$this->usesTimeslotReservation()) {
+            return null;
+        }
+
+        $cfg = config('lp_designs.templates.'.$slug);
+        if (!is_array($cfg)) {
+            return null;
+        }
+
+        $allowedTypes = $cfg['allowed_form_types'] ?? null;
+        if (is_array($allowedTypes) && $allowedTypes !== [] && !in_array($this->form_type, $allowedTypes, true)) {
+            return null;
+        }
+
+        return $slug;
     }
 
     /**

@@ -107,6 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Public Routes
 Route::get('/event/{slug}', [EventController::class, 'show'])->name('event.show');
+Route::get('/event/{slug}/reserve', [EventController::class, 'reserve'])->name('event.reserve.page');
 Route::post('/event/{event}/reserve', [EventReservationController::class, 'store'])->name('event.reserve');
 Route::get('/event/{event}/reserve/success/{text?}', [EventReservationController::class, 'success'])->name('event.reserve.success');
 Route::get('/api/postal-code/search', [PostalCodeController::class, 'search'])->name('api.postal-code.search');

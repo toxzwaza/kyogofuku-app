@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WEB予約 | 振袖フェス in 岡山 | 京呉服平田</title>
+  <meta name="description" content="振袖フェス in 岡山のWEB予約フォーム。岡山プラザホテル（4/25・26）・CONVEX岡山（5/2〜4）の会場・日時を選んで簡単予約。来場特典あり。">
+
+  <!-- OGP -->
+  <meta property="og:title" content="WEB予約 | 振袖フェス in 岡山">
+  <meta property="og:description" content="振袖フェス in 岡山のWEB予約。会場・日時を選んで簡単予約。来場特典あり。">
+  <meta property="og:image" content="https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/events/25/3LiZWGHf0e5RHcJ2vKpDViDpVlygV6SYjtCB6BQV.webp">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="京呉服平田">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Zen+Old+Mincho:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="reserve.css">
+</head>
+<body class="reserve-page">
+
+  <!-- ヘッダー -->
+  <header class="rv-header">
+    <a href="index.html" class="rv-back">&larr; イベントページに戻る</a>
+    <p class="rv-header-title">ゴールデンウィーク 振袖フェス in 岡山</p>
+  </header>
+
+  <!-- メイン -->
+  <main class="rv-main">
+    <div class="rv-container">
+
+      <!-- タイトル -->
+      <div class="rv-title-area">
+        <p class="rv-title-en">RESERVATION</p>
+        <h1 class="rv-title">来場予約フォーム</h1>
+        <p class="rv-title-note">ご予約は各回先着順です。お早めにお申し込みください。</p>
+      </div>
+
+      <!-- ステップインジケーター -->
+      <div class="rv-steps">
+        <div class="rv-step active" data-step="1">
+          <span class="rv-step-num">1</span>
+          <span class="rv-step-label">会場・日時</span>
+        </div>
+        <div class="rv-step-line"></div>
+        <div class="rv-step" data-step="2">
+          <span class="rv-step-num">2</span>
+          <span class="rv-step-label">お客様情報</span>
+        </div>
+        <div class="rv-step-line"></div>
+        <div class="rv-step" data-step="3">
+          <span class="rv-step-num">3</span>
+          <span class="rv-step-label">確認</span>
+        </div>
+      </div>
+
+      <form id="reserveForm" novalidate>
+
+        <!-- ==================== STEP 1 ==================== -->
+        <div class="rv-panel" id="step1">
+          <h2 class="rv-panel-title">会場・日時を選択</h2>
+
+          <!-- 会場選択 -->
+          <fieldset class="rv-fieldset">
+            <legend class="rv-legend">会場 <span class="rv-req">必須</span></legend>
+            <div class="rv-venue-cards">
+              <label class="rv-venue-card">
+                <input type="radio" name="venue" value="4" required>
+                <div class="rv-venue-inner">
+                  <img src="https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/venues/4/kS0DLIuGaf6OZjaqd779siRP0GuOntvzERk9YBm5.webp" alt="岡山プラザホテル">
+                  <div class="rv-venue-info">
+                    <strong>岡山プラザホテル</strong>
+                    <span>4F 烏城の間</span>
+                    <span class="rv-venue-dates">4/25(金)・26(土)</span>
+                  </div>
+                </div>
+              </label>
+              <label class="rv-venue-card">
+                <input type="radio" name="venue" value="12" required>
+                <div class="rv-venue-inner">
+                  <img src="https://to-murakami-amzn-s3.s3.ap-northeast-1.amazonaws.com/public/venues/12/6l0JcoELHxv8R7uLdJev9I0y0rLvDxjMQIPhQkhN.webp" alt="CONVEX岡山">
+                  <div class="rv-venue-info">
+                    <strong>CONVEX岡山</strong>
+                    <span>2F 国際会議場</span>
+                    <span class="rv-venue-dates">5/2(金)〜4(日)</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- 日付選択 -->
+          <fieldset class="rv-fieldset" id="dateField" style="display:none;">
+            <legend class="rv-legend">来場日 <span class="rv-req">必須</span></legend>
+            <div class="rv-date-btns" id="dateButtons"></div>
+          </fieldset>
+
+          <!-- 時間選択 -->
+          <fieldset class="rv-fieldset" id="timeField" style="display:none;">
+            <legend class="rv-legend">来場時間 <span class="rv-req">必須</span></legend>
+            <div class="rv-time-grid" id="timeButtons"></div>
+          </fieldset>
+
+          <div class="rv-nav">
+            <button type="button" class="rv-btn rv-btn-next" id="toStep2" disabled>次へ &rarr;</button>
+          </div>
+        </div>
+
+        <!-- ==================== STEP 2 ==================== -->
+        <div class="rv-panel" id="step2" style="display:none;">
+          <h2 class="rv-panel-title">お客様情報</h2>
+
+          <div class="rv-form-grid">
+            <!-- 成人式の年 -->
+            <div class="rv-field rv-field-full">
+              <label class="rv-label">成人式の年度 <span class="rv-req">必須</span></label>
+              <select name="ceremony_year" class="rv-select" required>
+                <option value="">選択してください</option>
+                <option value="2027">2027年（令和9年）</option>
+                <option value="2028">2028年（令和10年）</option>
+                <option value="2029">2029年（令和11年）</option>
+                <option value="2030">2030年（令和12年）</option>
+                <option value="other">それ以降 / 未定</option>
+              </select>
+            </div>
+
+            <!-- お嬢様名 -->
+            <div class="rv-field">
+              <label class="rv-label">お嬢様のお名前 <span class="rv-req">必須</span></label>
+              <input type="text" name="daughter_name" class="rv-input" placeholder="山田 花子" required>
+            </div>
+
+            <!-- フリガナ -->
+            <div class="rv-field">
+              <label class="rv-label">フリガナ <span class="rv-req">必須</span></label>
+              <input type="text" name="daughter_kana" class="rv-input" placeholder="ヤマダ ハナコ" required>
+            </div>
+
+            <!-- 電話番号 -->
+            <div class="rv-field">
+              <label class="rv-label">電話番号 <span class="rv-req">必須</span></label>
+              <input type="tel" name="phone" class="rv-input" placeholder="090-1234-5678" required>
+            </div>
+
+            <!-- メール -->
+            <div class="rv-field">
+              <label class="rv-label">メールアドレス</label>
+              <input type="email" name="email" class="rv-input" placeholder="example@mail.com">
+            </div>
+
+            <!-- ご予約者名（保護者） -->
+            <div class="rv-field">
+              <label class="rv-label">ご予約者名（保護者様）</label>
+              <input type="text" name="parent_name" class="rv-input" placeholder="山田 太郎">
+            </div>
+
+            <!-- 来場人数 -->
+            <div class="rv-field">
+              <label class="rv-label">来場人数 <span class="rv-req">必須</span></label>
+              <select name="party_size" class="rv-select" required>
+                <option value="">選択してください</option>
+                <option value="1">1名</option>
+                <option value="2" selected>2名</option>
+                <option value="3">3名</option>
+                <option value="4">4名</option>
+                <option value="5">5名以上</option>
+              </select>
+            </div>
+
+            <!-- 興味のあるプラン -->
+            <div class="rv-field">
+              <label class="rv-label">興味のあるプラン</label>
+              <div class="rv-checks">
+                <label class="rv-check"><input type="checkbox" name="plans[]" value="purchase"><span>購入プラン</span></label>
+                <label class="rv-check"><input type="checkbox" name="plans[]" value="rental"><span>レンタルプラン</span></label>
+                <label class="rv-check"><input type="checkbox" name="plans[]" value="mama"><span>ママ振袖プラン</span></label>
+                <label class="rv-check"><input type="checkbox" name="plans[]" value="undecided"><span>まだ決めていない</span></label>
+              </div>
+            </div>
+
+            <!-- このイベントを知ったきっかけ -->
+            <div class="rv-field rv-field-full">
+              <label class="rv-label">このイベントを知ったきっかけ</label>
+              <div class="rv-checks">
+                <label class="rv-check"><input type="checkbox" name="source[]" value="instagram"><span>Instagram</span></label>
+                <label class="rv-check"><input type="checkbox" name="source[]" value="tiktok"><span>TikTok</span></label>
+                <label class="rv-check"><input type="checkbox" name="source[]" value="google"><span>Google検索</span></label>
+                <label class="rv-check"><input type="checkbox" name="source[]" value="dm"><span>DM・チラシ</span></label>
+                <label class="rv-check"><input type="checkbox" name="source[]" value="friend"><span>友人・知人</span></label>
+                <label class="rv-check"><input type="checkbox" name="source[]" value="other"><span>その他</span></label>
+              </div>
+            </div>
+
+            <!-- ご要望 -->
+            <div class="rv-field rv-field-full">
+              <label class="rv-label">ご要望・ご質問など</label>
+              <textarea name="notes" class="rv-textarea" rows="4" placeholder="ご自由にご記入ください"></textarea>
+            </div>
+          </div>
+
+          <div class="rv-nav">
+            <button type="button" class="rv-btn rv-btn-back" id="backToStep1">&larr; 戻る</button>
+            <button type="button" class="rv-btn rv-btn-next" id="toStep3">確認へ &rarr;</button>
+          </div>
+        </div>
+
+        <!-- ==================== STEP 3 ==================== -->
+        <div class="rv-panel" id="step3" style="display:none;">
+          <h2 class="rv-panel-title">ご予約内容の確認</h2>
+          <div class="rv-confirm" id="confirmContent"></div>
+          <div class="rv-privacy">
+            <label class="rv-check">
+              <input type="checkbox" id="agreePrivacy" required>
+              <span><a href="#" target="_blank">プライバシーポリシー</a>に同意する</span>
+            </label>
+          </div>
+          <div class="rv-nav">
+            <button type="button" class="rv-btn rv-btn-back" id="backToStep2">&larr; 戻る</button>
+            <button type="submit" class="rv-btn rv-btn-submit" id="submitBtn" disabled>予約を確定する</button>
+          </div>
+        </div>
+
+        <!-- ==================== STEP 4 (完了) ==================== -->
+        <div class="rv-panel rv-complete" id="step4" style="display:none;">
+          <div class="rv-complete-icon">
+            <svg viewBox="0 0 52 52" width="64" height="64"><circle cx="26" cy="26" r="25" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M14 27l7 7 16-16" class="rv-check-mark"/></svg>
+          </div>
+          <h2 class="rv-complete-title">ご予約ありがとうございます</h2>
+          <p class="rv-complete-text">ご予約内容をメールでお送りしました。<br>当日のご来場をお待ちしております。</p>
+          <a href="index.html" class="rv-btn rv-btn-next">イベントページへ戻る</a>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <!-- フッター -->
+  <footer class="footer" style="margin-bottom:0;">
+    <p class="footer-brand">京呉服平田 / edel</p>
+    <p class="footer-copy">&copy; 2026 京呉服平田</p>
+  </footer>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ===== タイムスロットデータ =====
+    const timeslots = {
+      "4": {
+        name: "岡山プラザホテル 4F烏城の間",
+        dates: {
+          "2026-04-25": ["12:00","12:30","14:00","14:30","16:00","16:30"],
+          "2026-04-26": ["10:00","12:00","12:30","14:00","14:30","16:00"]
+        }
+      },
+      "12": {
+        name: "CONVEX岡山 2F国際会議場",
+        dates: {
+          "2026-05-02": ["12:00","12:30","14:00","14:30","16:00","16:30"],
+          "2026-05-03": ["10:00","12:00","12:30","14:00","14:30","16:00","16:30"],
+          "2026-05-04": ["10:00","12:00","12:30","14:00","14:30","16:00"]
+        }
+      }
+    };
+
+    const dayNames = ['日','月','火','水','木','金','土'];
+
+    let selected = { venue: null, date: null, time: null };
+
+    const form = document.getElementById('reserveForm');
+    const steps = document.querySelectorAll('.rv-step');
+    const panels = { 1: document.getElementById('step1'), 2: document.getElementById('step2'), 3: document.getElementById('step3'), 4: document.getElementById('step4') };
+
+    // ===== 会場選択 =====
+    document.querySelectorAll('input[name="venue"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        selected.venue = radio.value;
+        selected.date = null;
+        selected.time = null;
+        renderDates();
+        document.getElementById('timeField').style.display = 'none';
+        updateStep1Btn();
+      });
+    });
+
+    function renderDates() {
+      const field = document.getElementById('dateField');
+      const container = document.getElementById('dateButtons');
+      const data = timeslots[selected.venue];
+      if (!data) return;
+      field.style.display = '';
+      container.innerHTML = '';
+      Object.keys(data.dates).forEach(dateStr => {
+        const d = new Date(dateStr + 'T00:00:00+09:00');
+        const label = `${d.getMonth()+1}/${d.getDate()}(${dayNames[d.getDay()]})`;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'rv-date-btn';
+        btn.textContent = label;
+        btn.dataset.date = dateStr;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.rv-date-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selected.date = dateStr;
+          selected.time = null;
+          renderTimes();
+          updateStep1Btn();
+        });
+        container.appendChild(btn);
+      });
+      // スクロール
+      field.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function renderTimes() {
+      const field = document.getElementById('timeField');
+      const container = document.getElementById('timeButtons');
+      const data = timeslots[selected.venue];
+      if (!data || !selected.date) return;
+      const times = data.dates[selected.date] || [];
+      field.style.display = '';
+      container.innerHTML = '';
+      times.forEach(t => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'rv-time-btn';
+        btn.textContent = t;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.rv-time-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selected.time = t;
+          updateStep1Btn();
+        });
+        container.appendChild(btn);
+      });
+      field.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function updateStep1Btn() {
+      document.getElementById('toStep2').disabled = !(selected.venue && selected.date && selected.time);
+    }
+
+    // ===== ステップ遷移 =====
+    function goToStep(n) {
+      Object.values(panels).forEach(p => p.style.display = 'none');
+      panels[n].style.display = '';
+      steps.forEach(s => {
+        const sn = parseInt(s.dataset.step);
+        s.classList.toggle('active', sn === n);
+        s.classList.toggle('done', sn < n);
+      });
+      // ステップライン
+      document.querySelectorAll('.rv-step-line').forEach((line, i) => {
+        line.classList.toggle('done', i + 1 < n);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('toStep2').addEventListener('click', () => {
+      goToStep(2);
+    });
+    document.getElementById('backToStep1').addEventListener('click', () => goToStep(1));
+    document.getElementById('toStep3').addEventListener('click', () => {
+      // バリデーション
+      const requiredFields = panels[2].querySelectorAll('[required]');
+      let valid = true;
+      requiredFields.forEach(f => {
+        const parent = f.closest('.rv-field');
+        if (!f.value.trim()) {
+          valid = false;
+          if (parent) parent.classList.add('rv-error');
+          f.classList.add('rv-input-error');
+        } else {
+          if (parent) parent.classList.remove('rv-error');
+          f.classList.remove('rv-input-error');
+        }
+      });
+      if (!valid) return;
+      buildConfirm();
+      goToStep(3);
+    });
+    document.getElementById('backToStep2').addEventListener('click', () => goToStep(2));
+
+    // ===== 確認画面構築 =====
+    function buildConfirm() {
+      const data = timeslots[selected.venue];
+      const d = new Date(selected.date + 'T00:00:00+09:00');
+      const dateLabel = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${dayNames[d.getDay()]})`;
+
+      const rows = [
+        ['会場', data.name],
+        ['来場日', dateLabel],
+        ['来場時間', selected.time],
+        ['成人式の年度', form.ceremony_year.value ? form.ceremony_year.selectedOptions[0].text : '—'],
+        ['お嬢様のお名前', form.daughter_name.value],
+        ['フリガナ', form.daughter_kana.value],
+        ['電話番号', form.phone.value],
+        ['メールアドレス', form.email.value || '—'],
+        ['ご予約者名', form.parent_name.value || '—'],
+        ['来場人数', form.party_size.value ? form.party_size.value + '名' : '—'],
+      ];
+
+      // チェックボックス
+      const plans = Array.from(form.querySelectorAll('input[name="plans[]"]:checked')).map(c => c.parentElement.querySelector('span').textContent);
+      if (plans.length) rows.push(['興味のあるプラン', plans.join('、')]);
+
+      const sources = Array.from(form.querySelectorAll('input[name="source[]"]:checked')).map(c => c.parentElement.querySelector('span').textContent);
+      if (sources.length) rows.push(['きっかけ', sources.join('、')]);
+
+      if (form.notes.value.trim()) rows.push(['ご要望・ご質問', form.notes.value]);
+
+      const container = document.getElementById('confirmContent');
+      container.innerHTML = rows.map(([label, val]) =>
+        `<div class="rv-confirm-row"><dt>${label}</dt><dd>${val}</dd></div>`
+      ).join('');
+    }
+
+    // ===== プライバシー同意 =====
+    document.getElementById('agreePrivacy').addEventListener('change', function() {
+      document.getElementById('submitBtn').disabled = !this.checked;
+    });
+
+    // ===== 送信 =====
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = '送信中...';
+      // デモ：2秒後に完了表示
+      setTimeout(() => {
+        goToStep(4);
+        // チェックマークアニメーション
+        document.querySelector('.rv-check-mark').style.animation = 'checkDraw .5s ease forwards';
+      }, 1500);
+    });
+
+  })();
+  </script>
+</body>
+</html>

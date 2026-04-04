@@ -19,8 +19,18 @@ class EventLpSettingsController extends Controller
      */
     public function edit(Event $event)
     {
+        $templates = collect(config('lp_designs.templates', []))
+            ->map(fn (array $cfg, string $key) => [
+                'slug' => $key,
+                'label' => $cfg['label'] ?? $key,
+                'allowed_form_types' => $cfg['allowed_form_types'] ?? [],
+            ])
+            ->values()
+            ->all();
+
         return Inertia::render('Admin/Event/LpSettings/Edit', [
             'event' => $event,
+            'lpTemplates' => $templates,
         ]);
     }
 
@@ -29,19 +39,48 @@ class EventLpSettingsController extends Controller
      */
     public function update(Request $request, Event $event)
     {
-        $request->validate([
+        $rules = [
             'background_color' => 'nullable|string|max:50',
             'content_background_color' => 'nullable|string|max:50',
             'background_image_enabled' => 'nullable|boolean',
             'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'remove_background_image' => 'nullable|boolean',
-        ]);
+            'include_lp_design' => 'nullable|boolean',
+        ];
+        if ($request->boolean('include_lp_design')) {
+            $rules['lp_design_slug'] = 'nullable|string|max:100';
+            $rules['lp_theme_tokens_json'] = 'nullable|string|max:20000';
+        }
+        $request->validate($rules);
 
         $updates = [
             'background_color' => $request->input('background_color') ?: null,
             'content_background_color' => $request->input('content_background_color') ?: null,
             'background_image_enabled' => $request->boolean('background_image_enabled'),
         ];
+
+        if ($request->boolean('include_lp_design')) {
+            $slug = $request->input('lp_design_slug');
+            if ($slug === null || $slug === '') {
+                $updates['lp_design_slug'] = null;
+                $updates['lp_theme_tokens'] = null;
+            } else {
+                $tpl = config('lp_designs.templates.'.$slug);
+                if (!is_array($tpl)) {
+                    return redirect()->back()
+                        ->withErrors(['lp_design_slug' => '無効なテンプレートです。'])
+                        ->withInput();
+                }
+                $allowedTypes = $tpl['allowed_form_types'] ?? [];
+                if (is_array($allowedTypes) && $allowedTypes !== [] && !in_array($event->form_type, $allowedTypes, true)) {
+                    return redirect()->back()
+                        ->withErrors(['lp_design_slug' => 'このフォーム種別では利用できないテンプレートです。'])
+                        ->withInput();
+                }
+                $updates['lp_design_slug'] = $slug;
+                $updates['lp_theme_tokens'] = $this->parseLpThemeTokens($request->input('lp_theme_tokens_json'));
+            }
+        }
 
         // 背景画像の削除または差し替え
         if ($request->boolean('remove_background_image') || $request->hasFile('background_image')) {
@@ -113,5 +152,32 @@ class EventLpSettingsController extends Controller
         if (Storage::disk($disk)->exists($path)) {
             Storage::disk($disk)->delete($path);
         }
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    private function parseLpThemeTokens(?string $json): ?array
+    {
+        if ($json === null || trim($json) === '') {
+            return null;
+        }
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) {
+            return null;
+        }
+        $allowed = array_flip(config('lp_designs.allowed_token_keys', []));
+        $out = [];
+        foreach ($decoded as $key => $value) {
+            if (!is_string($key) || !isset($allowed[$key])) {
+                continue;
+            }
+            if (!is_scalar($value) || $value === '') {
+                continue;
+            }
+            $out[$key] = (string) $value;
+        }
+
+        return $out === [] ? null : $out;
     }
 }

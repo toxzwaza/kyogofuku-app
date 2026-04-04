@@ -1,7 +1,13 @@
 <template>
-    <form @submit.prevent="submit" class="space-y-6 sm:space-y-8">
-        <!-- イベント情報 -->
-        <div class="mb-6 sm:mb-8">
+    <form
+        @submit.prevent="submit"
+        :class="[
+            embedPastelReserve ? 'pastel-reserve-embed' : '',
+            embedPastelReserve ? 'space-y-6' : 'space-y-6 sm:space-y-8',
+        ]"
+    >
+        <!-- イベント情報（LP 予約ページでは非表示・reserve.html と二重にならないように） -->
+        <div v-if="!embedPastelReserve" class="mb-6 sm:mb-8">
             <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6 border border-pink-100">
                 <h1 class="text-3xl font-bold mb-4 text-gray-800">{{ event.title }}</h1>
                 <div v-if="event.description" class="text-gray-700 leading-relaxed" v-html="event.description"></div>
@@ -224,7 +230,14 @@
             </div>
         </div>
 
-        <div ref="customerInfoSection" class="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 border border-gray-200 shadow-sm space-y-4 sm:space-y-6">
+        <div
+            ref="customerInfoSection"
+            :class="[
+                embedPastelReserve
+                    ? 'pastel-customer-flat space-y-4 sm:space-y-6'
+                    : 'bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 border border-gray-200 shadow-sm space-y-4 sm:space-y-6',
+            ]"
+        >
             <h3 class="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-gray-800 flex items-center border-b border-gray-200 pb-3 sm:pb-4">
                 <svg class="w-6 h-6 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -604,6 +617,11 @@ const props = defineProps({
     timeslots: Array,
     selectedTimeslot: Object,
     fromAdmin: {
+        type: Boolean,
+        default: false,
+    },
+    /** Event/Lp/PastelFestReserve 用（reserve.html デザインに合わせる） */
+    embedPastelReserve: {
         type: Boolean,
         default: false,
     },

@@ -1,0 +1,495 @@
+/* =============================================
+   予約フォーム — reserve.css
+   パステル × ふわかわ テイスト統一
+   ============================================= */
+
+.lp-pastel-root.lp-reserve-page {
+  padding-bottom: 0;
+  background: linear-gradient(180deg, var(--pink-mist) 0%, var(--blush) 30%, var(--white) 100%);
+  min-height: 100vh;
+}
+
+/* ---- ヘッダー ---- */
+.rv-header {
+  padding: 16px 24px;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--pink-pale);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.rv-back {
+  font-size: 13px;
+  color: var(--pink);
+  font-weight: 500;
+  letter-spacing: .04em;
+  transition: opacity .2s;
+}
+.rv-back:hover { opacity: .7; }
+.rv-header-title {
+  font-size: 11px;
+  color: var(--text-light);
+  letter-spacing: .1em;
+  margin-top: 4px;
+}
+
+/* ---- メイン ---- */
+.rv-main {
+  padding: 32px 0 64px;
+}
+.rv-container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ---- タイトル ---- */
+.rv-title-area {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.rv-title-en {
+  font-size: 10px;
+  letter-spacing: .45em;
+  color: var(--pink-soft);
+  margin-bottom: 6px;
+}
+.rv-title {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  margin-bottom: 10px;
+}
+.rv-title-note {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+/* ---- ステップインジケーター ---- */
+.rv-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 36px;
+}
+.rv-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.rv-step-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--white);
+  color: var(--text-light);
+  border: 2px solid var(--pink-pale);
+  transition: all .4s ease;
+}
+.rv-step.active .rv-step-num {
+  background: linear-gradient(135deg, var(--pink), #d4608a);
+  color: var(--white);
+  border-color: var(--pink);
+  box-shadow: 0 3px 14px rgba(232,114,154,.3);
+}
+.rv-step.done .rv-step-num {
+  background: var(--pink-pale);
+  color: var(--pink);
+  border-color: var(--pink-soft);
+}
+.rv-step-label {
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+.rv-step.active .rv-step-label {
+  color: var(--pink);
+  font-weight: 600;
+}
+.rv-step-line {
+  width: 48px;
+  height: 2px;
+  background: var(--pink-pale);
+  margin: 0 8px;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  transition: background .4s;
+}
+.rv-step-line.done {
+  background: var(--pink-soft);
+}
+
+/* ---- パネル ---- */
+.rv-panel {
+  background: var(--white);
+  border-radius: var(--radius-soft);
+  padding: 32px 24px;
+  box-shadow: var(--shadow-soft);
+  animation: panelIn .4s ease;
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+.rv-panel-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  margin-bottom: 28px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--pink-pale);
+}
+
+/* ---- フィールドセット ---- */
+.rv-fieldset {
+  border: none;
+  margin-bottom: 28px;
+}
+.rv-legend {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rv-req {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--white);
+  background: var(--pink);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: .08em;
+}
+
+/* ---- 会場カード ---- */
+.rv-venue-cards {
+  display: grid;
+  gap: 12px;
+}
+.rv-venue-card {
+  cursor: pointer;
+}
+.rv-venue-card input { display: none; }
+.rv-venue-inner {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  border: 2px solid var(--pink-pale);
+  border-radius: 14px;
+  transition: all .3s ease;
+  background: var(--white);
+}
+.rv-venue-card input:checked + .rv-venue-inner {
+  border-color: var(--pink);
+  background: var(--pink-mist);
+  box-shadow: 0 4px 20px rgba(232,114,154,.15);
+}
+.rv-venue-card:hover .rv-venue-inner {
+  border-color: var(--pink-soft);
+}
+.rv-venue-inner img {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.rv-venue-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rv-venue-info strong {
+  font-size: 15px;
+  letter-spacing: .04em;
+}
+.rv-venue-info span {
+  font-size: 12px;
+  color: var(--text-light);
+}
+.rv-venue-dates {
+  color: var(--pink) !important;
+  font-weight: 600;
+}
+
+/* ---- 日付ボタン ---- */
+.rv-date-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rv-date-btn {
+  padding: 10px 18px;
+  border: 2px solid var(--pink-pale);
+  border-radius: 12px;
+  background: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all .25s ease;
+  font-family: inherit;
+}
+.rv-date-btn:hover {
+  border-color: var(--pink-soft);
+  background: var(--pink-mist);
+}
+.rv-date-btn.active {
+  border-color: var(--pink);
+  background: var(--pink);
+  color: var(--white);
+  box-shadow: 0 3px 14px rgba(232,114,154,.25);
+}
+
+/* ---- 時間ボタン ---- */
+.rv-time-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+}
+.rv-time-btn {
+  padding: 10px;
+  border: 2px solid var(--pink-pale);
+  border-radius: 10px;
+  background: var(--white);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all .25s ease;
+  text-align: center;
+  font-family: inherit;
+}
+.rv-time-btn:hover {
+  border-color: var(--pink-soft);
+  background: var(--pink-mist);
+}
+.rv-time-btn.active {
+  border-color: var(--pink);
+  background: var(--pink);
+  color: var(--white);
+  box-shadow: 0 3px 14px rgba(232,114,154,.25);
+}
+
+/* ---- フォーム要素 ---- */
+.rv-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 16px;
+}
+.rv-field-full {
+  grid-column: 1 / -1;
+}
+.rv-field { display: flex; flex-direction: column; gap: 6px; }
+
+.rv-label {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rv-input, .rv-select, .rv-textarea {
+  padding: 12px 14px;
+  border: 2px solid var(--pink-pale);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--white);
+  transition: border-color .25s, box-shadow .25s;
+  outline: none;
+  width: 100%;
+}
+.rv-input:focus, .rv-select:focus, .rv-textarea:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(232,114,154,.12);
+}
+.rv-input-error {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 3px rgba(231,76,60,.1) !important;
+}
+.rv-textarea { resize: vertical; }
+.rv-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239b8a96' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* チェックボックス */
+.rv-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rv-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.rv-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--pink);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.rv-check span { line-height: 1.4; }
+.rv-check a {
+  color: var(--pink);
+  text-decoration: underline;
+}
+
+/* ---- ナビゲーション ---- */
+.rv-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 32px;
+}
+.rv-btn {
+  padding: 14px 28px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: .1em;
+  cursor: pointer;
+  transition: all .3s ease;
+}
+.rv-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.rv-btn-next {
+  background: linear-gradient(135deg, var(--pink), #d4608a);
+  color: var(--white);
+  box-shadow: 0 4px 18px rgba(232,114,154,.25);
+  margin-left: auto;
+}
+.rv-btn-next:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(232,114,154,.35);
+}
+.rv-btn-back {
+  background: var(--white);
+  color: var(--text-light);
+  border: 1px solid var(--pink-pale);
+}
+.rv-btn-back:hover {
+  background: var(--pink-mist);
+}
+.rv-btn-submit {
+  background: linear-gradient(135deg, var(--pink), #d4608a);
+  color: var(--white);
+  box-shadow: 0 4px 18px rgba(232,114,154,.25);
+  flex: 1;
+}
+.rv-btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(232,114,154,.35);
+}
+
+/* ---- 確認画面 ---- */
+.rv-confirm {
+  margin-bottom: 24px;
+}
+.rv-confirm-row {
+  display: flex;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--pink-pale);
+  gap: 8px;
+}
+.rv-confirm-row dt {
+  flex: 0 0 130px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.rv-confirm-row dd {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rv-privacy {
+  background: var(--pink-mist);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+/* ---- 完了画面 ---- */
+.rv-complete {
+  text-align: center;
+  padding: 56px 24px;
+}
+.rv-complete-icon {
+  color: var(--pink);
+  margin-bottom: 24px;
+}
+@keyframes checkDraw {
+  from { stroke-dasharray: 50; stroke-dashoffset: 50; }
+  to { stroke-dasharray: 50; stroke-dashoffset: 0; }
+}
+.rv-check-mark {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+}
+.rv-complete-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  margin-bottom: 16px;
+  color: var(--pink);
+}
+.rv-complete-text {
+  font-size: 14px;
+  color: var(--text-light);
+  line-height: 1.9;
+  margin-bottom: 32px;
+}
+
+/* ---- レスポンシブ ---- */
+@media (max-width: 600px) {
+  .rv-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .rv-field-full {
+    grid-column: 1;
+  }
+  .rv-confirm-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .rv-confirm-row dt {
+    flex: none;
+    font-size: 11px;
+  }
+  .rv-panel {
+    padding: 24px 18px;
+  }
+  .rv-step-line { width: 28px; margin: 0 4px; }
+}

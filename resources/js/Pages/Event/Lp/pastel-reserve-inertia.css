@@ -1,0 +1,191 @@
+/**
+ * PastelFestReserve: Inertia 内フォームを reserve.css のトーンに合わせる
+ */
+
+.lp-pastel-root.lp-reserve-page .pastel-secondary-active .rv-step-num {
+    background: linear-gradient(135deg, var(--pink), #d4608a);
+    color: var(--white);
+    border-color: var(--pink);
+    box-shadow: 0 3px 14px rgba(232, 114, 154, 0.3);
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-secondary-active .rv-step-label {
+    color: var(--pink);
+    font-weight: 600;
+}
+
+/* ReservationForm.embedPastelReserve */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed h2.text-xl {
+    font-family: var(--serif);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed h2.text-xl svg {
+    color: var(--pink);
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed h3.text-lg {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    border-bottom: 2px solid var(--pink-pale);
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed h3.text-lg svg {
+    color: var(--pink);
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .pastel-customer-flat {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .pastel-customer-flat h3.border-b {
+    border-color: var(--pink-pale) !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='text'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='email'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='tel'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='number'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='date'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed select,
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed textarea {
+    border: 2px solid var(--pink-pale) !important;
+    border-radius: 10px !important;
+    font-family: inherit !important;
+    color: var(--text) !important;
+    box-shadow: none !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input:focus,
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed select:focus,
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed textarea:focus {
+    border-color: var(--pink) !important;
+    box-shadow: 0 0 0 3px rgba(232, 114, 154, 0.12) !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed label.block.text-sm {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .grid button[type='button'].p-4 {
+    border: 2px solid var(--pink-pale) !important;
+    border-radius: 10px !important;
+    background: var(--white) !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .grid button[type='button'].p-4:hover:not(:disabled) {
+    border-color: var(--pink-soft) !important;
+    background: var(--pink-mist) !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .grid button[type='button'].border-pink-500 {
+    border-color: var(--pink) !important;
+    background: var(--pink) !important;
+    color: var(--white) !important;
+    box-shadow: 0 3px 14px rgba(232, 114, 154, 0.25) !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed button[type='submit'] {
+    width: 100%;
+    padding: 14px 28px !important;
+    border: none !important;
+    border-radius: var(--radius-pill) !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    font-family: inherit !important;
+    letter-spacing: 0.1em !important;
+    background: linear-gradient(135deg, var(--pink), #d4608a) !important;
+    color: var(--white) !important;
+    box-shadow: 0 4px 18px rgba(232, 114, 154, 0.25) !important;
+    transform: none !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed button[type='submit']:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 28px rgba(232, 114, 154, 0.35) !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .border-b.border-gray-200 {
+    border-color: var(--pink-pale) !important;
+}
+
+/* 確認ブロック全体が親（rv-panel）内で縮み、子グリッドの 1fr が効くようにする */
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* 確認画面：行レイアウトを rv-confirm-row に近づける（2列グリッドで値列を minmax(0,1fr) にしはみ出し防止） */
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group {
+    display: grid;
+    grid-template-columns: minmax(0, 130px) minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 8px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--pink-pale);
+    align-items: start;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group > .flex.items-center.space-x-2 {
+    grid-column: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 0 !important;
+    min-width: 0;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group > :not(.flex.items-center.space-x-2) {
+    grid-column: 2;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--text-light) !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group .rounded-lg.flex.items-center.justify-center.flex-shrink-0 {
+    display: none !important;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group p,
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group > div.flex-1 {
+    padding-left: 0 !important;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group .inline-flex {
+    max-width: 100%;
+}

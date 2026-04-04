@@ -1,7 +1,12 @@
 <template>
-    <div class="w-full px-2 sm:px-4 py-3 sm:py-4 animate-fade-in">
+    <div
+        :class="[
+            'w-full',
+            embedPastelReserve ? 'pastel-confirm-embed' : 'px-2 sm:px-4 py-3 sm:py-4 animate-fade-in',
+        ]"
+    >
         <!-- ヘッダーセクション -->
-        <div class="mb-4 sm:mb-6 text-center">
+        <div v-if="!embedPastelReserve" class="mb-4 sm:mb-6 text-center">
             <div class="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full mb-2 sm:mb-3 shadow-lg">
                 <svg class="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -14,9 +19,15 @@
         </div>
         
         <!-- メインカード -->
-        <div class="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-4 sm:mb-6 lg:mb-8 transform transition-all duration-300 hover:shadow-2xl">
+        <div
+            :class="
+                embedPastelReserve
+                    ? 'w-full'
+                    : 'bg-white rounded-lg sm:rounded-xl lg:rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-4 sm:mb-6 lg:mb-8 transform transition-all duration-300 hover:shadow-2xl'
+            "
+        >
             <!-- カードヘッダー -->
-            <div class="bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 p-3 sm:p-4 lg:p-6">
+            <div v-if="!embedPastelReserve" class="bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 p-3 sm:p-4 lg:p-6">
                 <div class="flex items-center space-x-2 sm:space-x-3">
                     <div class="bg-white/20 backdrop-blur-sm rounded-lg p-1.5 sm:p-2">
                         <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,8 +42,14 @@
             </div>
 
             <!-- カードボディ -->
-            <div class="p-3 sm:p-4 lg:p-6 xl:p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+            <div :class="embedPastelReserve ? 'p-0' : 'p-3 sm:p-4 lg:p-6 xl:p-8'">
+                <div
+                    :class="
+                        embedPastelReserve
+                            ? 'pastel-confirm-body'
+                            : 'grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6'
+                    "
+                >
                     <!-- 予約日時 -->
                     <div class="group">
                         <div class="flex items-center space-x-2 mb-2">
@@ -43,16 +60,31 @@
                             </div>
                             <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">予約日時</label>
                         </div>
-                        <div v-if="selectedVenueName" class="mb-2 pl-9 sm:pl-10">
-                            <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-pink-100 text-pink-800">
+                        <div
+                            v-if="selectedVenueName"
+                            :class="['mb-2', 'sm:pl-10', embedPastelReserve && 'min-w-0 max-w-full']"
+                        >
+                            <span
+                                :class="[
+                                    'inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-pink-100 text-pink-800',
+                                    embedPastelReserve && 'max-w-full',
+                                ]"
+                            >
                                 <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                <span class="truncate">{{ selectedVenueName }}</span>
+                                <span :class="embedPastelReserve ? 'min-w-0 break-words' : 'truncate'">{{ selectedVenueName }}</span>
                             </span>
                         </div>
-                        <p class="text-gray-900 font-medium text-base sm:text-lg pl-9 sm:pl-10 break-words">{{ formatDateTime(formData.reservation_datetime) }}</p>
+                        <p
+                            :class="[
+                                'text-gray-900 font-medium text-base sm:text-lg pl-9 sm:pl-10 break-words',
+                                embedPastelReserve && 'min-w-0 max-w-full',
+                            ]"
+                        >
+                            {{ formatDateTime(formData.reservation_datetime) }}
+                        </p>
                     </div>
 
                     <!-- お名前 -->
@@ -359,10 +391,15 @@
         </div>
 
         <!-- ボタンセクション -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+        <div :class="embedPastelReserve ? 'rv-nav' : 'flex flex-col sm:flex-row justify-end gap-3 sm:gap-4'">
             <button
                 @click="$emit('back')"
-                class="px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-2 text-sm sm:text-base"
+                type="button"
+                :class="
+                    embedPastelReserve
+                        ? 'rv-btn rv-btn-back flex items-center justify-center gap-2'
+                        : 'px-6 sm:px-8 py-3 sm:py-3.5 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-2 text-sm sm:text-base'
+                "
             >
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -370,9 +407,14 @@
                 <span>戻る</span>
             </button>
             <button
+                type="button"
                 @click="submit"
                 :disabled="processing"
-                class="px-6 sm:px-8 py-3 sm:py-3.5 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-xl font-semibold hover:from-pink-700 hover:to-rose-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-sm sm:text-base"
+                :class="
+                    embedPastelReserve
+                        ? 'rv-btn rv-btn-submit flex items-center justify-center gap-2'
+                        : 'px-6 sm:px-8 py-3 sm:py-3.5 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-xl font-semibold hover:from-pink-700 hover:to-rose-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 text-sm sm:text-base'
+                "
             >
                 <svg v-if="!processing" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -400,6 +442,10 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    embedPastelReserve: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['back']);
@@ -407,8 +453,9 @@ const emit = defineEmits(['back']);
 const processing = ref(false);
 
 const selectedVenueName = computed(() => {
-    if (!props.formData.venue_id || !props.venues) return null;
-    const venue = props.venues.find(v => v.id === props.formData.venue_id);
+    const fd = props.formData;
+    if (!fd?.venue_id || !props.venues) return null;
+    const venue = props.venues.find((v) => v.id === fd.venue_id);
     return venue ? venue.name : null;
 });
 
@@ -443,6 +490,9 @@ const formatGraduationCeremonyDisplay = (fd) => {
 };
 
 const submit = () => {
+    if (!props.formData) {
+        return;
+    }
     processing.value = true;
     const form = useForm({
         ...props.formData,

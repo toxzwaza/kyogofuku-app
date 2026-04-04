@@ -23,6 +23,58 @@
                     </div>
                 </div>
 
+                <!-- LPテンプレート（デザイン） -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">LPテンプレート</h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            タイムスロット型の公開フォームで利用可能なデザインテンプレートを選べます。未選択のときは従来の公開ページのままです。
+                        </p>
+                        <form @submit.prevent="submitLpDesign" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">テンプレート</label>
+                                <select
+                                    v-model="lpDesignForm.lp_design_slug"
+                                    class="block w-full max-w-md rounded-md border-gray-300 shadow-sm"
+                                >
+                                    <option value="">なし（従来）</option>
+                                    <option
+                                        v-for="t in lpTemplatesForEvent"
+                                        :key="t.slug"
+                                        :value="t.slug"
+                                    >
+                                        {{ t.label }}
+                                    </option>
+                                </select>
+                                <p v-if="lpTemplatesForEvent.length === 0" class="mt-2 text-sm text-amber-700">
+                                    このイベントのフォーム種別では利用できるテンプレートがありません。
+                                </p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    デザイントークン（JSON・任意）
+                                </label>
+                                <p class="text-xs text-gray-500 mb-2">
+                                    色・角丸など CSS 変数を上書きします。キーは設定で許可されたもののみ有効です。
+                                </p>
+                                <textarea
+                                    v-model="lpDesignForm.lp_theme_tokens_json"
+                                    rows="8"
+                                    class="block w-full font-mono text-sm rounded-md border-gray-300 shadow-sm"
+                                    placeholder='例: { "--pink": "#e8729a", "--radius-soft": "24px" }'
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                :disabled="lpDesignForm.processing"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                                {{ lpDesignForm.processing ? '保存中...' : 'テンプレート設定を保存' }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- 背景設定 -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
@@ -179,7 +231,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
@@ -187,6 +239,15 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     event: { type: Object, required: true },
+    lpTemplates: { type: Array, default: () => [] },
+});
+
+const lpTemplatesForEvent = computed(() => {
+    const ft = props.event.form_type;
+    return (props.lpTemplates || []).filter((t) => {
+        const a = t.allowed_form_types || [];
+        return !a.length || a.includes(ft);
+    });
 });
 
 const defaultHex = '#e9e2dc';
@@ -201,11 +262,20 @@ function normalizeHex(value, defaultVal) {
 }
 
 const backgroundForm = useForm({
+    include_lp_design: false,
     background_color: normalizeHex(props.event.background_color, defaultHex),
     content_background_color: normalizeHex(props.event.content_background_color, defaultContentHex),
     background_image_enabled: Boolean(props.event.background_image_enabled),
     background_image: null,
     remove_background_image: false,
+});
+
+const lpDesignForm = useForm({
+    include_lp_design: true,
+    lp_design_slug: props.event.lp_design_slug || '',
+    lp_theme_tokens_json: props.event.lp_theme_tokens
+        ? JSON.stringify(props.event.lp_theme_tokens, null, 2)
+        : '',
 });
 
 function onBackgroundImageChange(event) {
@@ -235,6 +305,7 @@ function toColorValue(hex, defaultVal) {
 
 function getPayload() {
     return {
+        include_lp_design: false,
         background_color: toColorValue(backgroundForm.background_color, defaultHex),
         content_background_color: toColorValue(backgroundForm.content_background_color, defaultContentHex),
         background_image_enabled: backgroundForm.background_image_enabled,
@@ -247,6 +318,10 @@ function submitBackground() {
     backgroundForm.transform(getPayload).post(route('admin.events.lp-settings.update', props.event.id), {
         forceFormData: true,
     });
+}
+
+function submitLpDesign() {
+    lpDesignForm.post(route('admin.events.lp-settings.update', props.event.id));
 }
 
 function resetBackground() {

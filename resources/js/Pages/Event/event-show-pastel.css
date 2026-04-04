@@ -1,0 +1,143 @@
+/**
+ * Event/Show — PastelFestReserve / lp_design と揃えたトークン・余白
+ * （style.css のグローバルリセットは読み込まない）
+ */
+.event-show-page-title {
+    font-family: var(--serif);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text);
+}
+
+.event-show-pastel-root {
+    --pink: #e8729a;
+    --pink-soft: #f2a0b8;
+    --pink-pale: #fce4ec;
+    --pink-mist: #fff0f3;
+    --blush: #fff7f9;
+    --text: #5c4a5a;
+    --text-light: #9b8a96;
+    --white: #fff;
+    --serif: 'Zen Old Mincho', 'Noto Serif JP', serif;
+    --sans: 'Noto Sans JP', sans-serif;
+    --radius-soft: 20px;
+    --shadow-soft: 0 4px 28px rgba(232, 114, 154, 0.1);
+    --shadow-dreamy: 0 8px 40px rgba(232, 114, 154, 0.12);
+
+    font-family: var(--sans);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+.event-show-pastel-root .event-content-column {
+    border-radius: var(--radius-soft);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+
+.event-show-section-heading {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--pink-pale);
+}
+
+.event-show-venue-card {
+    background: var(--white);
+    border-radius: var(--radius-soft);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+
+.event-show-venue-card .text-indigo-600 {
+    color: var(--pink) !important;
+}
+
+.event-show-venue-card a.text-indigo-600 {
+    color: var(--pink) !important;
+}
+
+.event-show-venue-card .border-rose-100 {
+    border-color: var(--pink-pale) !important;
+}
+
+.event-show-venue-card .bg-rose-50\/80 {
+    background: var(--pink-mist) !important;
+}
+
+.event-show-venue-card .text-rose-500,
+.event-show-venue-card .text-rose-600,
+.event-show-venue-card .text-rose-700,
+.event-show-venue-card .text-rose-400 {
+    color: var(--pink) !important;
+}
+
+/* 予約モーダル：reserve.css の lp-reserve-page 全高をオーバーライド */
+.event-show-pastel-root .event-show-reserve-modal.lp-pastel-root.lp-reserve-page {
+    min-height: 0 !important;
+    max-height: min(95vh, 900px);
+    padding-bottom: 0;
+}
+
+.event-show-modal-heading {
+    font-family: var(--serif);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    line-height: 1.45;
+}
+
+.event-show-modal-kicker {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--pink-soft);
+    margin-top: 6px;
+}
+
+/* 固定 CTA バー（画像ボタンはそのまま、帯だけパステルに） */
+.event-show-fixed-cta {
+    border-top: 1px solid var(--pink-pale);
+    box-shadow: 0 -4px 20px rgba(232, 114, 154, 0.12);
+    backdrop-filter: blur(10px);
+}
+
+.event-show-fixed-cta--pastel-fallback {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), var(--pink-mist)) !important;
+}
+
+/* インラインフォーム（ドキュメント・お問い合わせ等） */
+.event-show-inline-form-panel {
+    background: var(--white);
+    border-radius: var(--radius-soft);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--pink-pale);
+}
+
+/* 完了画面（SuccessReservation embed）：内側の .rv-panel のみカードにする */
+.event-show-success-pastel {
+    max-width: 28rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1.5rem 1rem 2.5rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+    .event-show-success-pastel {
+        max-width: 32rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+/* モーダル内 rv-main の余白をコンパクトに */
+.event-show-pastel-root .event-show-reserve-modal .rv-main {
+    padding-top: 8px;
+    padding-bottom: 24px;
+}

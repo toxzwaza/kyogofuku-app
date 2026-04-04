@@ -1,178 +1,142 @@
 <template>
-    <div class="w-full px-2 sm:px-4 py-3 sm:py-4 text-center animate-success-fade-in">
-        <!-- 成功アニメーション背景 -->
-        <div class="absolute inset-0 bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 opacity-50 -z-10"></div>
-        
-        <!-- メインカード -->
-        <div class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 overflow-hidden relative">
-            <!-- 装飾的なグラデーション背景 -->
-            <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-400 via-rose-500 to-pink-500"></div>
-            
-            <div class="p-4 sm:p-6 lg:p-8 xl:p-12">
-                <!-- 成功アイコン -->
-                <div class="mb-4 sm:mb-6 lg:mb-8 relative">
-                    <div class="mx-auto w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-pink-400 to-rose-600 rounded-full flex items-center justify-center shadow-2xl transform transition-all duration-500 animate-success-bounce">
-                        <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <!-- パーティクルエフェクト -->
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-pink-400 rounded-full opacity-20 animate-ping"></div>
-                    </div>
-                </div>
+    <div class="success-reservation-root w-full">
+        <!-- 親に rv-steps が無いときだけ（Event/Show インライン完了など）フローと同じステップ表示 -->
+        <div v-if="!omitStepIndicator" class="rv-steps success-reservation-steps">
+            <div class="rv-step done">
+                <span class="rv-step-num">1</span>
+                <span class="rv-step-label">会場・日時</span>
+            </div>
+            <div class="rv-step-line done"></div>
+            <div class="rv-step done">
+                <span class="rv-step-num">2</span>
+                <span class="rv-step-label">お客様情報</span>
+            </div>
+            <div class="rv-step-line done"></div>
+            <div class="rv-step done">
+                <span class="rv-step-num">3</span>
+                <span class="rv-step-label">確認</span>
+            </div>
+        </div>
 
-                <!-- タイトル -->
-                <h2 class="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent mb-2 sm:mb-3 lg:mb-4">
-                    予約が完了しました
-                </h2>
-                <p class="text-gray-600 text-xs sm:text-sm lg:text-base xl:text-lg mb-4 sm:mb-6 lg:mb-8 leading-relaxed px-2">
-                    ご予約ありがとうございます。<br>
-                    <span class="text-gray-500 text-xs sm:text-sm lg:text-base">予約内容を確認の上、ご来店をお待ちしております。</span>
+        <div class="rv-panel success-reservation-panel">
+            <h2 class="rv-panel-title">予約完了</h2>
+
+            <div class="success-reservation-celebrate">
+                <p class="success-reservation-kicker">COMPLETE</p>
+
+                <p class="success-reservation-thanks">ご予約ありがとうございます</p>
+                <p class="success-reservation-lead">
+                    ご予約内容をメールでお送りしました。<br />
+                    当日のご来場をお待ちしております。
                 </p>
+            </div>
 
-                <!-- 予約内容カード -->
-                <div class="bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 xl:p-8 mb-4 sm:mb-6 lg:mb-8 text-left border border-pink-200 shadow-inner">
-                    <div class="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4 lg:mb-6">
-                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
-                            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-gray-900">予約内容</h3>
-                    </div>
-                    
-                    <div class="space-y-3 sm:space-y-4">
-                        <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">予約日時</p>
-                                <div v-if="selectedVenueName" class="mb-2">
-                                    <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-pink-100 text-pink-800">
-                                        <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <span class="truncate">{{ selectedVenueName }}</span>
-                                    </span>
-                                </div>
-                                <p class="text-gray-900 font-semibold text-base sm:text-lg break-words">{{ formatDateTime(formData.reservation_datetime) }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">お名前</p>
-                                <p class="text-gray-900 font-semibold text-base sm:text-lg break-words">{{ formData.name }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">メールアドレス</p>
-                                <p class="text-gray-900 font-semibold text-sm sm:text-base break-all">{{ formData.email }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">電話番号</p>
-                                <p class="text-gray-900 font-semibold text-base sm:text-lg break-words">{{ formData.phone }}</p>
-                            </div>
-                        </div>
-
-                        <template v-if="event?.form_type === 'reservation'">
-                            <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex-1 min-w-0 space-y-3 text-sm sm:text-base text-left">
-                                    <div>
-                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">ご紹介者様お名前</p>
-                                        <p class="text-gray-900 font-semibold break-words">{{ formData.referred_by_name?.trim() ? formData.referred_by_name : '—' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">お問い合わせ内容</p>
-                                        <p class="text-gray-900 whitespace-pre-wrap leading-relaxed">{{ formData.inquiry_message?.trim() ? formData.inquiry_message : '—' }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-
-                        <template v-if="event?.form_type === 'reservation_hakama'">
-                            <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                    </svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">フリガナ</p>
-                                    <p class="text-gray-900 font-semibold text-sm sm:text-base break-words">{{ formData.furigana || '—' }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    </svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">住所</p>
-                                    <p class="text-gray-900 font-semibold text-sm sm:text-base break-words">{{ formData.address || '—' }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex-1 min-w-0 space-y-2 text-sm sm:text-base">
-                                    <p><span class="text-gray-500 font-semibold">学校名</span>　{{ formData.school_name || '—' }}</p>
-                                    <p><span class="text-gray-500 font-semibold">卒業式</span>　{{ formatGraduationCeremonyDate(formData) }}</p>
-                                    <p><span class="text-gray-500 font-semibold">来店人数</span>　{{ formData.visitor_count != null ? formData.visitor_count + '名' : '—' }}</p>
-                                    <p><span class="text-gray-500 font-semibold">好一での振袖利用</span>　{{ formData.koichi_furisode_used === true ? 'あり' : formData.koichi_furisode_used === false ? 'なし' : '—' }}</p>
-                                    <p v-if="formData.visit_reasons && formData.visit_reasons.length"><span class="text-gray-500 font-semibold">来店動機</span>　{{ formData.visit_reasons.join('、') }}</p>
-                                    <p v-if="formData.considering_plans && formData.considering_plans.length"><span class="text-gray-500 font-semibold">検討中のプラン</span>　{{ formData.considering_plans.join('、') }}</p>
-                                    <p><span class="text-gray-500 font-semibold">お車で来店</span>　{{ formData.parking_usage || '—' }}<template v-if="formData.parking_usage === 'あり' && formData.parking_car_count">（{{ formData.parking_car_count }}台）</template></p>
-                                    <p><span class="text-gray-500 font-semibold">ご紹介者様お名前</span>　{{ formData.referred_by_name?.trim() ? formData.referred_by_name : '—' }}</p>
-                                    <p class="whitespace-pre-wrap"><span class="text-gray-500 font-semibold">お問い合わせ内容</span>　{{ formData.inquiry_message?.trim() ? formData.inquiry_message : '—' }}</p>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
+            <h3 class="success-reservation-subheading">ご予約内容</h3>
+            <dl class="rv-confirm success-reservation-dl w-full max-w-lg mx-auto box-border">
+                <div class="rv-confirm-row">
+                    <dt>予約日時</dt>
+                    <dd>
+                        <template v-if="selectedVenueName">{{ selectedVenueName }} / </template>
+                        {{ formatDateTime(formData?.reservation_datetime) }}
+                    </dd>
+                </div>
+                <div class="rv-confirm-row">
+                    <dt>お名前</dt>
+                    <dd>{{ formData?.name ?? '—' }}</dd>
+                </div>
+                <div class="rv-confirm-row">
+                    <dt>メールアドレス</dt>
+                    <dd class="break-all">{{ formData?.email ?? '—' }}</dd>
+                </div>
+                <div class="rv-confirm-row">
+                    <dt>電話番号</dt>
+                    <dd>{{ formData?.phone ?? '—' }}</dd>
                 </div>
 
-                <!-- 閉じるボタン -->
-                <button
-                    @click="$emit('close')"
-                    class="px-6 sm:px-8 lg:px-10 py-3 sm:py-3.5 lg:py-4 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-xl font-semibold hover:from-pink-700 hover:to-rose-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 mx-auto text-sm sm:text-base"
-                >
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    <span>閉じる</span>
-                </button>
+                <template v-if="event?.form_type === 'reservation_hakama'">
+                    <div v-if="formData?.furigana" class="rv-confirm-row">
+                        <dt>フリガナ</dt>
+                        <dd>{{ formData.furigana }}</dd>
+                    </div>
+                    <div v-if="formData?.address" class="rv-confirm-row">
+                        <dt>住所</dt>
+                        <dd>{{ formData.address }}</dd>
+                    </div>
+                    <div v-if="formData?.school_name" class="rv-confirm-row">
+                        <dt>学校名</dt>
+                        <dd>{{ formData.school_name }}</dd>
+                    </div>
+                    <div class="rv-confirm-row">
+                        <dt>卒業式</dt>
+                        <dd>{{ formatGraduationCeremonyDate(formData) }}</dd>
+                    </div>
+                    <div class="rv-confirm-row">
+                        <dt>来店人数</dt>
+                        <dd>{{ formData?.visitor_count != null ? formData.visitor_count + '名' : '—' }}</dd>
+                    </div>
+                    <div class="rv-confirm-row">
+                        <dt>お車で来店</dt>
+                        <dd>
+                            {{ formData?.parking_usage || '—' }}
+                            <template v-if="formData?.parking_usage === 'あり' && formData?.parking_car_count">
+                                （{{ formData.parking_car_count }}台）
+                            </template>
+                        </dd>
+                    </div>
+                    <div v-if="formData?.visit_reasons?.length" class="rv-confirm-row">
+                        <dt>来店動機</dt>
+                        <dd>{{ formData.visit_reasons.join('、') }}</dd>
+                    </div>
+                    <div v-if="formData?.considering_plans?.length" class="rv-confirm-row">
+                        <dt>検討中のプラン</dt>
+                        <dd>{{ formData.considering_plans.join('、') }}</dd>
+                    </div>
+                    <div class="rv-confirm-row">
+                        <dt>好一での振袖利用</dt>
+                        <dd>
+                            {{
+                                formData?.koichi_furisode_used === true
+                                    ? 'あり'
+                                    : formData?.koichi_furisode_used === false
+                                      ? 'なし'
+                                      : '—'
+                            }}
+                        </dd>
+                    </div>
+                    <div class="rv-confirm-row">
+                        <dt>ご紹介者様お名前</dt>
+                        <dd>{{ formData?.referred_by_name?.trim() ? formData.referred_by_name : '—' }}</dd>
+                    </div>
+                    <div class="rv-confirm-row">
+                        <dt>お問い合わせ内容</dt>
+                        <dd class="whitespace-pre-wrap">{{ formData?.inquiry_message?.trim() ? formData.inquiry_message : '—' }}</dd>
+                    </div>
+                </template>
+
+                <template v-if="event?.form_type === 'reservation'">
+                    <div class="rv-confirm-row">
+                        <dt>ご紹介者様お名前</dt>
+                        <dd>{{ formData?.referred_by_name?.trim() ? formData.referred_by_name : '—' }}</dd>
+                    </div>
+                    <div class="rv-confirm-row">
+                        <dt>お問い合わせ内容</dt>
+                        <dd class="whitespace-pre-wrap">{{ formData?.inquiry_message?.trim() ? formData.inquiry_message : '—' }}</dd>
+                    </div>
+                </template>
+            </dl>
+
+            <div class="rv-nav success-reservation-nav">
+                <button type="button" class="rv-btn rv-btn-next" @click="$emit('close')">イベントページへ戻る</button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue';
+import { computed } from 'vue';
 import { formatDateJa } from '@/utils/dateFormat';
+import '@lp_design/reserve.css';
+import './success-reservation.css';
 
 const props = defineProps({
     formData: Object,
@@ -184,9 +148,22 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    /** 後方互換 */
+    embedPastelReserve: {
+        type: Boolean,
+        default: false,
+    },
+    /**
+     * true のとき、直上の親ですでに rv-steps を出している（PastelFestReserve / Show モーダル）
+     */
+    omitStepIndicator: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const formatGraduationCeremonyDate = (fd) => {
+    if (!fd) return '—';
     if (fd.graduation_ceremony_date) {
         return formatDateJa(fd.graduation_ceremony_date);
     }
@@ -196,11 +173,11 @@ const formatGraduationCeremonyDate = (fd) => {
     return '—';
 };
 
-const emit = defineEmits(['close']);
+defineEmits(['close']);
 
 const selectedVenueName = computed(() => {
     if (!props.formData?.venue_id || !props.venues) return null;
-    const venue = props.venues.find(v => v.id === props.formData.venue_id);
+    const venue = props.venues.find((v) => v.id === props.formData.venue_id);
     return venue ? venue.name : null;
 });
 
@@ -215,40 +192,4 @@ const formatDateTime = (datetime) => {
         minute: '2-digit',
     });
 };
-
-onMounted(() => {
-    // 成功アニメーション用のスタイルを追加
-    if (!document.getElementById('success-reservation-styles')) {
-        const style = document.createElement('style');
-        style.id = 'success-reservation-styles';
-        style.textContent = `
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px) scale(0.95);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0) scale(1);
-                }
-            }
-            @keyframes bounce {
-                0%, 100% {
-                    transform: translateY(0) scale(1);
-                }
-                50% {
-                    transform: translateY(-10px) scale(1.05);
-                }
-            }
-            .animate-success-fade-in {
-                animation: fadeIn 0.6s ease-out;
-            }
-            .animate-success-bounce {
-                animation: bounce 1s ease-in-out;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-});
 </script>
-

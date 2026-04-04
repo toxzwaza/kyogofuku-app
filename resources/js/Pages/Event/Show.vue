@@ -1,7 +1,17 @@
 <template>
-    <Head :title="event.title" />
+    <Head :title="event.title">
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Zen+Old+Mincho:wght@400;700;900&display=swap"
+            rel="stylesheet"
+        />
+    </Head>
 
-    <div class="min-h-screen relative" :style="{ backgroundColor: event.background_color || 'rgb(233, 226, 220)' }">
+    <div
+        class="min-h-screen relative event-show-pastel-root"
+        :style="{ backgroundColor: event.background_color || 'rgb(233, 226, 220)' }"
+    >
         <!-- 背景画像（LP設定で有効かつアップロード済みの場合のみ表示） -->
         <div
             v-if="event.background_image_enabled && event.background_image_url"
@@ -111,9 +121,9 @@
         <!-- 開催会場（予約フォームの場合のみ） -->
         <div v-if="isTimeslotReservationForm && venues && venues.length > 0 && !showSuccess" :class="['max-w-4xl mx-auto px-4 py-8', !isEnded && !showSuccess ? 'pb-32' : '']">
             <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4">開催会場</h2>
+                <h2 class="event-show-section-heading">開催会場</h2>
                 <div class="space-y-6">
-                    <div v-for="venue in venues" :key="venue.id" class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <div v-for="venue in venues" :key="venue.id" class="event-show-venue-card">
                         <!-- 画像とテキストのグリッドレイアウト -->
                         <div class="md:flex">
                             <!-- テキスト情報（左側または上側） -->
@@ -206,7 +216,7 @@
 
         <!-- イベント情報（予約フォーム以外の場合、または成功ページ表示時） -->
         <div v-if="!isTimeslotReservationForm || showSuccess" class="max-w-4xl mx-auto px-4 py-8">
-            <h1 v-if="!showSuccess" class="text-3xl font-bold mb-4">{{ event.title }}</h1>
+            <h1 v-if="!showSuccess" class="event-show-page-title text-3xl font-bold mb-4">{{ event.title }}</h1>
             <div v-if="event.description && !showSuccess" class="text-gray-700 mb-8" v-html="event.description"></div>
 
             <!-- 店舗情報 -->
@@ -231,7 +241,7 @@
             </div> -->
 
             <!-- フォーム表示 -->
-            <div v-if="currentStep === 'form' && !showSuccess" class="bg-white p-6 rounded-lg shadow">
+            <div v-if="currentStep === 'form' && !showSuccess" class="event-show-inline-form-panel p-6 sm:p-8">
                 <component
                     :is="formComponent"
                     :event="event"
@@ -243,7 +253,7 @@
             </div>
 
             <!-- 確認ページ表示 -->
-            <div v-if="currentStep === 'confirm' && !showSuccess" class="bg-white p-6 rounded-lg shadow">
+            <div v-if="currentStep === 'confirm' && confirmFormData && !showSuccess" class="event-show-inline-form-panel p-6 sm:p-8">
                 <component
                     :is="confirmComponent"
                     :event="event"
@@ -253,11 +263,14 @@
                 />
             </div>
 
-            <!-- 送信完了ページ表示（通常ページとして表示） -->
-            <div v-if="currentStep === 'success' || showSuccess" class="bg-white p-6 rounded-lg shadow">
+            <!-- 送信完了（PastelFestReserve 同系の rv-complete は embed で表示。二重カードにならないようラッパーを分岐） -->
+            <div
+                v-if="(currentStep === 'success' || showSuccess) && successPayload"
+                :class="embedPastelReserveUi ? 'event-show-success-pastel' : 'event-show-inline-form-panel p-6 sm:p-8'"
+            >
                 <component
                     :is="successComponent"
-                    :form-data="confirmFormData || successFormData"
+                    :form-data="successPayload"
                     :event="event"
                     :venues="venues"
                     @close="handleSuccessClose"
@@ -278,10 +291,13 @@
         <!-- 固定ボタン（予約フォームの場合のみ、かつ終了していない場合、かつ成功ページ表示時ではない場合） -->
         <div
             v-if="isTimeslotReservationForm && !isEnded && !showSuccess && !isLoading"
-            class="fixed bottom-0 left-0 right-0 z-50 p-4"
+            :class="[
+                'event-show-fixed-cta fixed bottom-0 left-0 right-0 z-50 p-4',
+                !event.cta_background_url && 'event-show-fixed-cta--pastel-fallback',
+            ]"
             :style="event.cta_background_url
                 ? { backgroundImage: `url(${event.cta_background_url})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }
-                : { backgroundColor: 'rgb(137 13 13 / 90%)' }"
+                : undefined"
         >
             <div class="max-w-4xl md:max-w-xl mx-auto flex gap-4">
                 <button
@@ -307,67 +323,96 @@
             </div>
         </div>
 
-        <!-- 予約フォームモーダル（終了していない場合、かつ成功ページ表示時ではない場合のみ） -->
+        <!-- 予約フォームモーダル（PastelFestReserve と同系の rv-header / ステップ / rv-panel） -->
         <div
             v-if="showReservationForm && isTimeslotReservationForm && !isEnded && !showSuccess"
             class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-3"
-            style="background-color: rgba(0, 0, 0, 0.5);"
+            style="background-color: rgba(92, 74, 90, 0.45);"
             @click.self="closeForm"
         >
-            <div class="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[95vh] overflow-y-auto relative" style="background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('/storage/background_img/2.png'); background-size: cover; background-position: right; background-repeat: no-repeat;">
-                <div class="sticky top-0 bg-gradient-to-r from-pink-50 to-rose-50 border-b-2 border-pink-200 px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center z-10 shadow-sm">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        予約フォーム
-                    </h2>
-                    <button
-                        @click="closeForm"
-                        class="text-gray-500 hover:text-pink-600 hover:bg-pink-100 rounded-full p-2 transition-all duration-200"
-                    >
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="p-4 sm:p-5 lg:p-6 relative">
-                    <!-- フォーム表示 -->
-                    <div v-if="currentStep === 'form'">
-                        <component
-                            :is="formComponent"
-                            :event="event"
-                            :shops="shops"
-                            :venues="venues"
-                            :timeslots="timeslots"
-                            :selected-timeslot="selectedTimeslot"
-                            :from-admin="fromAdmin"
-                            @confirm="handleConfirm"
-                            @timeslot-selected="selectTimeslot"
-                        />
+            <div
+                class="event-show-reserve-modal lp-pastel-root lp-reserve-page flex flex-col w-full max-w-lg sm:max-w-xl md:max-w-2xl overflow-hidden border border-[var(--pink-pale)] shadow-2xl"
+                style="border-radius: var(--radius-soft, 20px)"
+                @click.stop
+            >
+                <header class="rv-header shrink-0">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <p class="event-show-modal-heading">{{ event.title }}</p>
+                            <p class="event-show-modal-kicker">WEB予約</p>
+                        </div>
+                        <button
+                            type="button"
+                            class="shrink-0 -mt-1 -mr-1 p-2 rounded-full transition-colors text-[var(--text-light)] hover:text-[var(--pink)] hover:bg-[var(--pink-mist)]"
+                            aria-label="閉じる"
+                            @click="closeForm"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
+                </header>
 
-                    <!-- 確認ページ表示 -->
-                    <div v-if="currentStep === 'confirm'" class="relative z-0">
-                        <component
-                            :is="confirmComponent"
-                            :event="event"
-                            :form-data="confirmFormData"
-                            :venues="venues"
-                            :from-admin="fromAdmin"
-                            @back="currentStep = 'form'"
-                        />
-                    </div>
+                <div class="rv-main min-h-0 flex-1 overflow-y-auto">
+                    <div class="rv-container">
+                        <div class="rv-steps">
+                            <div :class="step1Class">
+                                <span class="rv-step-num">1</span>
+                                <span class="rv-step-label">会場・日時</span>
+                            </div>
+                            <div class="rv-step-line" :class="{ done: line12Done }"></div>
+                            <div :class="step2Class">
+                                <span class="rv-step-num">2</span>
+                                <span class="rv-step-label">お客様情報</span>
+                            </div>
+                            <div class="rv-step-line" :class="{ done: line23Done }"></div>
+                            <div :class="step3Class">
+                                <span class="rv-step-num">3</span>
+                                <span class="rv-step-label">確認</span>
+                            </div>
+                        </div>
 
-                    <!-- 送信完了ページ表示 -->
-                    <div v-if="currentStep === 'success'">
-                        <component
-                            :is="successComponent"
-                            :form-data="confirmFormData || successFormData"
-                            :event="event"
-                            :venues="venues"
-                            @close="handleSuccessClose"
-                        />
+                        <div id="reserveForm" class="mt-4">
+                            <div v-show="currentStep === 'form'" class="rv-panel">
+                                <component
+                                    :is="formComponent"
+                                    :event="event"
+                                    :shops="shops"
+                                    :venues="venues"
+                                    :timeslots="timeslots"
+                                    :selected-timeslot="selectedTimeslot"
+                                    :from-admin="fromAdmin"
+                                    :embed-pastel-reserve="embedPastelReserveUi"
+                                    @confirm="handleConfirm"
+                                    @timeslot-selected="selectTimeslot"
+                                />
+                            </div>
+
+                            <div v-if="currentStep === 'confirm' && confirmFormData" class="rv-panel">
+                                <h2 class="rv-panel-title">ご予約内容の確認</h2>
+                                <component
+                                    :is="confirmComponent"
+                                    :event="event"
+                                    :form-data="confirmFormData"
+                                    :venues="venues"
+                                    :from-admin="fromAdmin"
+                                    :embed-pastel-reserve="embedPastelReserveUi"
+                                    @back="currentStep = 'form'"
+                                />
+                            </div>
+
+                            <div v-if="currentStep === 'success' && successPayload">
+                                <component
+                                    :is="successComponent"
+                                    :form-data="successPayload"
+                                    :event="event"
+                                    :venues="venues"
+                                    omit-step-indicator
+                                    @close="handleSuccessClose"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -381,6 +426,9 @@
 import { ref, computed, defineAsyncComponent, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Slideshow from '@/Components/Slideshow.vue';
+import '@lp_design/reserve.css';
+import './event-show-pastel.css';
+import './Lp/pastel-reserve-inertia.css';
 
 const props = defineProps({
     event: Object,
@@ -420,11 +468,37 @@ const isTimeslotReservationForm = computed(() => {
     return t === 'reservation' || t === 'reservation_hakama';
 });
 
+const embedPastelReserveUi = computed(() => isTimeslotReservationForm.value);
+
 const selectedTimeslot = ref(null);
 const showReservationForm = ref(false);
 const currentStep = ref(props.showSuccess ? 'success' : 'form'); // 'form', 'confirm', 'success'
 const confirmFormData = ref(props.successFormData || null);
 const isLoading = ref(false);
+
+const successPayload = computed(() => confirmFormData.value ?? props.successFormData ?? null);
+
+const line12Done = computed(() => currentStep.value !== 'form');
+const line23Done = computed(() => currentStep.value === 'confirm' || currentStep.value === 'success');
+
+const step1Class = computed(() => {
+    const base = 'rv-step';
+    if (currentStep.value === 'form') return `${base} active`;
+    return `${base} done`;
+});
+
+const step2Class = computed(() => {
+    const base = 'rv-step';
+    if (currentStep.value === 'form') return `${base} pastel-secondary-active`;
+    return `${base} done`;
+});
+
+const step3Class = computed(() => {
+    const base = 'rv-step';
+    if (currentStep.value === 'confirm') return `${base} active`;
+    if (currentStep.value === 'success') return `${base} done`;
+    return base;
+});
 
 /** Google Maps Embed API キー（開催会場マップ用） */
 const googleMapsEmbedApiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_API_KEY || '';
@@ -674,7 +748,7 @@ const displayItems = computed(() => {
 <style scoped>
 /* 公開ページのコンテンツカラム（画像・スライドショー等のラッパー） */
 .event-content-column {
-    box-shadow: 0px 0px 5px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-soft, 0 4px 28px rgba(232, 114, 154, 0.1));
 }
 
 /* LP全体の星キラキラ（低頻度）・画像・スライドショーの上に表示 */
