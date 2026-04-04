@@ -518,7 +518,7 @@
 import { ref, computed, watch } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { formatDateJaWithWeekday } from '@/utils/dateFormat';
+import { formatDateJaWithWeekday, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     reservation: Object,
@@ -723,6 +723,19 @@ const initialBirthDate = normalizeBirthDate(props.reservation.birth_date);
 const initialStaffName = props.reservation.staff_name || '';
 const initialVisitReasons = getVisitReasonsWithoutOther(props.reservation.visit_reasons);
 const initialVisitReasonOther = extractVisitReasonOther(props.reservation.visit_reasons);
+
+const initialGraduationCeremonyDate = (() => {
+    const r = props.reservation;
+    if (r.graduation_ceremony_date) {
+        return formatDateInputValueJa(r.graduation_ceremony_date);
+    }
+    if (r.graduation_ceremony_year != null && r.graduation_ceremony_month != null) {
+        const y = r.graduation_ceremony_year;
+        const m = String(r.graduation_ceremony_month).padStart(2, '0');
+        return `${y}-${m}-01`;
+    }
+    return '';
+})();
 
 // デバッグ用（開発時のみ）
 if (process.env.NODE_ENV === 'development') {
