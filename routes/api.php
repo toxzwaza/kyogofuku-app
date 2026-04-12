@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\NaturalLanguageController;
 use App\Http\Controllers\GoogleCalendarKeepTokenController;
 use App\Http\Controllers\UtmAnalyticsApiController;
 use Illuminate\Http\Request;
@@ -25,3 +26,6 @@ Route::get('/google-calendar/keep-token', GoogleCalendarKeepTokenController::cla
 
 // UTM 流入経路分析 API（GAS 等から計測・分析用。X-Api-Key または token で認証）
 Route::get('/utm-analytics', UtmAnalyticsApiController::class);
+
+// 自然言語 API（Claude API tool_use で操作。Bearer トークン認証）
+Route::post('/nl/chat', [NaturalLanguageController::class, 'chat']);
