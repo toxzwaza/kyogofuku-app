@@ -309,7 +309,7 @@ class SesInboundMailController extends Controller
     }
     
     /**
-     * メール受信時にLINE通知を送信
+     * メール受信時にLINE通知を送信（Flex Message リッチUI版）
      */
     private function sendLineNotificationForEmail(Email $email, $eventReservationId, $from, $subject, $textBody, $attachmentFilenames)
     {
@@ -321,9 +321,9 @@ class SesInboundMailController extends Controller
             ]);
             return;
         }
-        
+
         $event = $reservation->event;
-        
+
         // イベントに紐づく店舗を取得
         $shops = $event->shops;
         if ($shops->isEmpty()) {
@@ -332,47 +332,20 @@ class SesInboundMailController extends Controller
             ]);
             return;
         }
-        
-        // メッセージを構築
-        $message = "━━━━━━━━━━━━━━━━\n";
-        $message .= "📧 メール受信通知\n";
-        $message .= "━━━━━━━━━━━━━━━━\n\n";
-        
-        $message .= "🎯 イベント名: {$event->title}\n";
-        $message .= "👤 お客様名: {$reservation->name}\n\n";
-        
-        $message .= "━━━━━━━━━━━━━━━━\n";
-        $message .= "📨 メール情報\n";
-        $message .= "━━━━━━━━━━━━━━━━\n";
-        $message .= "送信者: {$from}\n";
-        $message .= "件名: {$subject}\n";
-        
-        // 本文の最初の200文字を表示（改行を削除）
-        $bodyPreview = mb_substr(str_replace(["\r\n", "\r", "\n"], ' ', $textBody), 0, 200);
-        if (mb_strlen($textBody) > 200) {
-            $bodyPreview .= '...';
-        }
-        $message .= "本文: {$bodyPreview}\n";
-        
-        // 添付ファイルがある場合
-        if (!empty($attachmentFilenames)) {
-            $message .= "添付ファイル: " . implode('、', $attachmentFilenames) . "\n";
-        }
-        
-        $message .= "\n━━━━━━━━━━━━━━━━\n";
-        $message .= "予約ID: #{$reservation->id}\n";
-        $message .= "メールID: #{$email->id}\n";
-        $message .= "━━━━━━━━━━━━━━━━";
-        
+
+        // Flex Message を構築
+        $flexContents = $this->buildEmailNotificationFlex($email, $reservation, $event, $subject, $textBody, $attachmentFilenames);
+
+        // altText（プッシュ通知・トークリスト用の要約）
+        $cleanSubject = $this->cleanEmailSubject($subject);
+        $altText = "📧 {$reservation->name} 様からメール受信: {$cleanSubject}";
+
         // 各店舗のLINEグループに通知を送信
         $lineController = new LineWebhookController();
-        
-        // 送信済みのline_group_idを記録する配列
         $sentGroupIds = [];
-        
+
         foreach ($shops as $shop) {
             if (!empty($shop->line_group_id)) {
-                // 同じline_group_idに既に送信済みの場合はスキップ
                 if (in_array($shop->line_group_id, $sentGroupIds)) {
                     Log::info('同じLINEグループIDに既に通知を送信済みのためスキップ', [
                         'email_id' => $email->id,
@@ -382,10 +355,9 @@ class SesInboundMailController extends Controller
                     ]);
                     continue;
                 }
-                
+
                 try {
-                    $lineController->pushToLineGroup($message, $shop->line_group_id);
-                    // 送信済みのline_group_idを記録
+                    $lineController->pushFlexMessage($flexContents, $altText, $shop->line_group_id);
                     $sentGroupIds[] = $shop->line_group_id;
                     Log::info('LINE notification sent for email', [
                         'email_id' => $email->id,
@@ -401,7 +373,6 @@ class SesInboundMailController extends Controller
                         'line_group_id' => $shop->line_group_id,
                         'error' => $e->getMessage(),
                     ]);
-                    // エラーが発生しても他の店舗への送信は続行
                 }
             } else {
                 Log::info('Shop does not have line_group_id, skipping LINE notification', [
@@ -410,5 +381,217 @@ class SesInboundMailController extends Controller
                 ]);
             }
         }
+    }
+
+    /**
+     * 件名から不要なプレフィックスを除去
+     *  - [123] のようなスレッド番号
+     */
+    private function cleanEmailSubject(?string $subject): string
+    {
+        if (empty($subject)) {
+            return '(件名なし)';
+        }
+
+        // [数字] 形式のプレフィックスを除去
+        $cleaned = preg_replace('/\[\d+\]\s*/u', '', $subject);
+
+        return trim($cleaned) !== '' ? trim($cleaned) : '(件名なし)';
+    }
+
+    /**
+     * メール本文を通知用にクリーニング
+     *  - 引用行（> で始まる行）を除去
+     *  - 署名区切り（-- 以降）を除去
+     *  - 連続した空行を2行までに圧縮
+     *  - 先頭 $maxLength 文字に切り詰め
+     */
+    private function cleanEmailBody(?string $textBody, int $maxLength = 300): string
+    {
+        if (empty($textBody)) {
+            return '(本文なし)';
+        }
+
+        // 改行コードを統一
+        $body = str_replace(["\r\n", "\r"], "\n", $textBody);
+
+        // 引用行（先頭に > がある行）を除去
+        $lines = explode("\n", $body);
+        $filtered = array_filter($lines, function ($line) {
+            return ! preg_match('/^\s*>/', $line);
+        }, ARRAY_FILTER_USE_BOTH);
+        $body = implode("\n", $filtered);
+
+        // 署名区切り（行頭が "-- "）以降を除去
+        $body = preg_replace('/\n-- ?\n[\s\S]*$/', '', $body);
+
+        // 3つ以上の連続した改行を2つに圧縮
+        $body = preg_replace("/\n{3,}/", "\n\n", $body);
+
+        // 前後の空白をトリム
+        $body = trim($body);
+
+        if ($body === '') {
+            return '(本文なし)';
+        }
+
+        // 先頭 $maxLength 文字に切り詰め
+        if (mb_strlen($body) > $maxLength) {
+            $body = mb_substr($body, 0, $maxLength) . '…';
+        }
+
+        return $body;
+    }
+
+    /**
+     * メール受信通知用の Flex Message contents を構築
+     */
+    private function buildEmailNotificationFlex(Email $email, EventReservation $reservation, $event, $subject, $textBody, $attachmentFilenames): array
+    {
+        $cleanSubject = $this->cleanEmailSubject($subject);
+        $cleanBody = $this->cleanEmailBody($textBody, 300);
+
+        // 管理画面URL
+        $adminUrl = rtrim((string) config('app.url'), '/') . '/admin/reservations/' . $reservation->id;
+
+        // 添付ファイル表示文字列
+        $attachmentText = null;
+        if (! empty($attachmentFilenames)) {
+            $count = count($attachmentFilenames);
+            $shown = array_slice($attachmentFilenames, 0, 2);
+            $attachmentText = '📎 添付' . $count . '件: ' . implode('、', $shown);
+            if ($count > 2) {
+                $attachmentText .= ' ほか';
+            }
+        }
+
+        // body contents を組み立て
+        $bodyContents = [
+            // お客様名（大きく）
+            [
+                'type' => 'text',
+                'text' => $reservation->name . ' 様',
+                'weight' => 'bold',
+                'size' => 'lg',
+                'color' => '#111827',
+                'wrap' => true,
+            ],
+            // イベント名
+            [
+                'type' => 'text',
+                'text' => $event->title ?? '(イベント名なし)',
+                'size' => 'xs',
+                'color' => '#6B7280',
+                'wrap' => true,
+                'margin' => 'xs',
+            ],
+            // 区切り
+            [
+                'type' => 'separator',
+                'margin' => 'md',
+            ],
+            // 件名ラベル
+            [
+                'type' => 'text',
+                'text' => '件名',
+                'size' => 'xxs',
+                'color' => '#9CA3AF',
+                'margin' => 'md',
+            ],
+            // 件名本体
+            [
+                'type' => 'text',
+                'text' => $cleanSubject,
+                'size' => 'sm',
+                'color' => '#111827',
+                'weight' => 'bold',
+                'wrap' => true,
+                'margin' => 'xs',
+            ],
+            // 本文ラベル
+            [
+                'type' => 'text',
+                'text' => '本文',
+                'size' => 'xxs',
+                'color' => '#9CA3AF',
+                'margin' => 'md',
+            ],
+            // 本文本体
+            [
+                'type' => 'text',
+                'text' => $cleanBody,
+                'size' => 'sm',
+                'color' => '#374151',
+                'wrap' => true,
+                'margin' => 'xs',
+            ],
+        ];
+
+        // 添付がある場合は追加
+        if ($attachmentText !== null) {
+            $bodyContents[] = [
+                'type' => 'separator',
+                'margin' => 'md',
+            ];
+            $bodyContents[] = [
+                'type' => 'text',
+                'text' => $attachmentText,
+                'size' => 'xs',
+                'color' => '#6B7280',
+                'wrap' => true,
+                'margin' => 'md',
+            ];
+        }
+
+        return [
+            'type' => 'bubble',
+            'size' => 'mega',
+            'header' => [
+                'type' => 'box',
+                'layout' => 'vertical',
+                'backgroundColor' => '#4F46E5',
+                'paddingAll' => '14px',
+                'contents' => [
+                    [
+                        'type' => 'text',
+                        'text' => '📧  メール受信',
+                        'color' => '#FFFFFF',
+                        'weight' => 'bold',
+                        'size' => 'md',
+                    ],
+                ],
+            ],
+            'body' => [
+                'type' => 'box',
+                'layout' => 'vertical',
+                'spacing' => 'none',
+                'paddingAll' => '16px',
+                'contents' => $bodyContents,
+            ],
+            'footer' => [
+                'type' => 'box',
+                'layout' => 'vertical',
+                'spacing' => 'sm',
+                'paddingAll' => '12px',
+                'contents' => [
+                    [
+                        'type' => 'button',
+                        'style' => 'primary',
+                        'color' => '#4F46E5',
+                        'height' => 'sm',
+                        'action' => [
+                            'type' => 'uri',
+                            'label' => '予約詳細を開く',
+                            'uri' => $adminUrl,
+                        ],
+                    ],
+                ],
+            ],
+            'styles' => [
+                'footer' => [
+                    'separator' => true,
+                ],
+            ],
+        ];
     }
 }

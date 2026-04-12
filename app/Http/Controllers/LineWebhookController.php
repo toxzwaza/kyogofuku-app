@@ -121,7 +121,7 @@ class LineWebhookController extends Controller
             $response = $e->getResponse();
             $statusCode = $response ? $response->getStatusCode() : 'unknown';
             $body = $response ? $response->getBody()->getContents() : 'unknown';
-            
+
             Log::error('LINE push notification failed', [
                 'status_code' => $statusCode,
                 'error_body' => $body,
@@ -131,6 +131,78 @@ class LineWebhookController extends Controller
             throw $e;
         } catch (\Exception $e) {
             Log::error('LINE push notification error: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * 事前構築された Flex Message を LINE グループに送信
+     *
+     * @param  array  $flexContents  Flex Message の contents（bubble or carousel）
+     * @param  string  $altText  プッシュ通知・トークリスト表示用のテキスト（最大400文字）
+     * @param  string|null  $groupId  グループID（未指定時は .env の LINE_GROUP_ID）
+     */
+    public function pushFlexMessage(array $flexContents, string $altText, $groupId = null)
+    {
+        $channelToken = env('LINE_CHANNEL_TOKEN');
+
+        if (empty($groupId)) {
+            $groupId = env('LINE_GROUP_ID');
+        }
+
+        if (empty($channelToken)) {
+            Log::error('LINE_CHANNEL_TOKEN is not set in .env file');
+            throw new \Exception('LINE_CHANNEL_TOKEN is not configured');
+        }
+
+        if (empty($groupId)) {
+            Log::error('LINE_GROUP_ID is not provided and not set in .env file');
+            throw new \Exception('LINE_GROUP_ID is not configured');
+        }
+
+        $messages = [
+            [
+                'type' => 'flex',
+                'altText' => mb_substr($altText, 0, 400),
+                'contents' => $flexContents,
+            ],
+        ];
+
+        $http = new \GuzzleHttp\Client([
+            'verify' => false,
+        ]);
+
+        try {
+            $response = $http->post('https://api.line.me/v2/bot/message/push', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $channelToken,
+                ],
+                'json' => [
+                    'to' => $groupId,
+                    'messages' => $messages,
+                ],
+            ]);
+
+            Log::info('LINE flex notification sent successfully', [
+                'status' => $response->getStatusCode(),
+            ]);
+
+            return $response;
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $statusCode = $response ? $response->getStatusCode() : 'unknown';
+            $body = $response ? $response->getBody()->getContents() : 'unknown';
+
+            Log::error('LINE flex notification failed', [
+                'status_code' => $statusCode,
+                'error_body' => $body,
+                'token_preview' => substr($channelToken, 0, 10) . '...',
+            ]);
+
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('LINE flex notification error: ' . $e->getMessage());
             throw $e;
         }
     }
