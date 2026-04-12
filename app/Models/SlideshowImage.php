@@ -12,6 +12,7 @@ class SlideshowImage extends Model
 
     protected $fillable = [
         'slideshow_id',
+        'media_file_id',
         'path',
         'storage_disk',
         'alt',
@@ -28,6 +29,14 @@ class SlideshowImage extends Model
     public function slideshow()
     {
         return $this->belongsTo(Slideshow::class);
+    }
+
+    /**
+     * メディアファイルとのリレーション
+     */
+    public function mediaFile()
+    {
+        return $this->belongsTo(MediaFile::class);
     }
 
     /**

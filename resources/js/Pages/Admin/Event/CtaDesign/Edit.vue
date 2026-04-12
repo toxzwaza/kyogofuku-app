@@ -42,24 +42,36 @@
                             <div class="border-b border-gray-200 pb-8">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">ボタン背景ブロック用画像</label>
                                 <p class="text-xs text-gray-500 mb-3">固定CTAエリア全体の背景画像です。</p>
-                                <input
-                                    ref="backgroundInput"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/jpg,image/gif"
-                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100"
-                                    @change="handleBackgroundChange"
-                                />
+                                <div class="flex flex-wrap gap-3 items-center">
+                                    <input
+                                        ref="backgroundInput"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/jpg,image/gif"
+                                        class="block flex-1 min-w-[200px] text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100"
+                                        @change="handleBackgroundChange"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="openPicker('background')"
+                                        class="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                                    >
+                                        ライブラリから選択
+                                    </button>
+                                </div>
                                 <p class="mt-1 text-xs text-gray-500">JPEG, PNG, JPG, GIF（最大10MB）</p>
                                 <label class="mt-3 flex items-center">
                                     <input
                                         v-model="form.remove_cta_background"
                                         type="checkbox"
                                         class="rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                                        @change="onRemoveCheck('background')"
                                     />
                                     <span class="ml-2 text-sm text-gray-700">画像を削除して未設定に戻す</span>
                                 </label>
                                 <div v-if="previewBackground || (event.cta_background_url && !form.remove_cta_background)" class="mt-4">
-                                    <p class="text-sm text-gray-600 mb-2">{{ previewBackground ? 'プレビュー:' : '現在の画像:' }}</p>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        {{ previewBackground ? (mediaBackgroundName ? `ライブラリ: ${mediaBackgroundName}` : 'プレビュー:') : '現在の画像:' }}
+                                    </p>
                                     <img
                                         :src="previewBackground || event.cta_background_url"
                                         alt="ボタン背景"
@@ -72,24 +84,36 @@
                             <div class="border-b border-gray-200 pb-8">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">WEB予約ボタン画像</label>
                                 <p class="text-xs text-gray-500 mb-3">「WEB予約」ボタンに表示する画像です。</p>
-                                <input
-                                    ref="webButtonInput"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/jpg,image/gif"
-                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100"
-                                    @change="handleWebButtonChange"
-                                />
+                                <div class="flex flex-wrap gap-3 items-center">
+                                    <input
+                                        ref="webButtonInput"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/jpg,image/gif"
+                                        class="block flex-1 min-w-[200px] text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100"
+                                        @change="handleWebButtonChange"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="openPicker('web')"
+                                        class="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                                    >
+                                        ライブラリから選択
+                                    </button>
+                                </div>
                                 <p class="mt-1 text-xs text-gray-500">JPEG, PNG, JPG, GIF（最大10MB）</p>
                                 <label class="mt-3 flex items-center">
                                     <input
                                         v-model="form.remove_cta_web_button"
                                         type="checkbox"
                                         class="rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                                        @change="onRemoveCheck('web')"
                                     />
                                     <span class="ml-2 text-sm text-gray-700">画像を削除して未設定に戻す</span>
                                 </label>
                                 <div v-if="previewWebButton || (event.cta_web_button_url && !form.remove_cta_web_button)" class="mt-4">
-                                    <p class="text-sm text-gray-600 mb-2">{{ previewWebButton ? 'プレビュー:' : '現在の画像:' }}</p>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        {{ previewWebButton ? (mediaWebName ? `ライブラリ: ${mediaWebName}` : 'プレビュー:') : '現在の画像:' }}
+                                    </p>
                                     <img
                                         :src="previewWebButton || event.cta_web_button_url"
                                         alt="WEB予約ボタン"
@@ -102,24 +126,36 @@
                             <div class="pb-8">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">電話予約ボタン画像</label>
                                 <p class="text-xs text-gray-500 mb-3">「電話予約」ボタンに表示する画像です。</p>
-                                <input
-                                    ref="phoneButtonInput"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/jpg,image/gif"
-                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100"
-                                    @change="handlePhoneButtonChange"
-                                />
+                                <div class="flex flex-wrap gap-3 items-center">
+                                    <input
+                                        ref="phoneButtonInput"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/jpg,image/gif"
+                                        class="block flex-1 min-w-[200px] text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100"
+                                        @change="handlePhoneButtonChange"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="openPicker('phone')"
+                                        class="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                                    >
+                                        ライブラリから選択
+                                    </button>
+                                </div>
                                 <p class="mt-1 text-xs text-gray-500">JPEG, PNG, JPG, GIF（最大10MB）</p>
                                 <label class="mt-3 flex items-center">
                                     <input
                                         v-model="form.remove_cta_phone_button"
                                         type="checkbox"
                                         class="rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                                        @change="onRemoveCheck('phone')"
                                     />
                                     <span class="ml-2 text-sm text-gray-700">画像を削除して未設定に戻す</span>
                                 </label>
                                 <div v-if="previewPhoneButton || (event.cta_phone_button_url && !form.remove_cta_phone_button)" class="mt-4">
-                                    <p class="text-sm text-gray-600 mb-2">{{ previewPhoneButton ? 'プレビュー:' : '現在の画像:' }}</p>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        {{ previewPhoneButton ? (mediaPhoneName ? `ライブラリ: ${mediaPhoneName}` : 'プレビュー:') : '現在の画像:' }}
+                                    </p>
                                     <img
                                         :src="previewPhoneButton || event.cta_phone_button_url"
                                         alt="電話予約ボタン"
@@ -169,6 +205,13 @@
                 </div>
             </div>
         </div>
+
+        <!-- メディアライブラリピッカー -->
+        <MediaPicker
+            :show="showMediaPicker"
+            @close="showMediaPicker = false"
+            @select="handleMediaSelect"
+        />
     </AuthenticatedLayout>
 </template>
 
@@ -177,6 +220,7 @@ import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
+import MediaPicker from '@/Components/MediaPicker.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -193,6 +237,14 @@ const previewBackground = ref(null);
 const previewWebButton = ref(null);
 const previewPhoneButton = ref(null);
 
+// ライブラリ選択時のファイル名表示用
+const mediaBackgroundName = ref(null);
+const mediaWebName = ref(null);
+const mediaPhoneName = ref(null);
+
+const showMediaPicker = ref(false);
+const pickerTarget = ref(null); // 'background' | 'web' | 'phone'
+
 const form = useForm({
     cta_background: null,
     cta_web_button: null,
@@ -200,13 +252,71 @@ const form = useForm({
     remove_cta_background: false,
     remove_cta_web_button: false,
     remove_cta_phone_button: false,
+    media_cta_background_id: null,
+    media_cta_web_button_id: null,
+    media_cta_phone_button_id: null,
     cta_color_type: props.event.cta_color_type || 'red',
 });
+
+function openPicker(target) {
+    pickerTarget.value = target;
+    showMediaPicker.value = true;
+}
+
+function handleMediaSelect(selectedMedia) {
+    if (!selectedMedia || selectedMedia.length === 0) return;
+    const media = selectedMedia[0]; // CTA画像は1枚ずつ
+
+    if (pickerTarget.value === 'background') {
+        form.media_cta_background_id = media.id;
+        form.cta_background = null;
+        form.remove_cta_background = false;
+        previewBackground.value = media.url;
+        mediaBackgroundName.value = media.original_filename;
+        if (backgroundInput.value) backgroundInput.value.value = '';
+    } else if (pickerTarget.value === 'web') {
+        form.media_cta_web_button_id = media.id;
+        form.cta_web_button = null;
+        form.remove_cta_web_button = false;
+        previewWebButton.value = media.url;
+        mediaWebName.value = media.original_filename;
+        if (webButtonInput.value) webButtonInput.value.value = '';
+    } else if (pickerTarget.value === 'phone') {
+        form.media_cta_phone_button_id = media.id;
+        form.cta_phone_button = null;
+        form.remove_cta_phone_button = false;
+        previewPhoneButton.value = media.url;
+        mediaPhoneName.value = media.original_filename;
+        if (phoneButtonInput.value) phoneButtonInput.value.value = '';
+    }
+}
+
+// 「削除」チェックが入ったらライブラリ選択をクリア
+function onRemoveCheck(target) {
+    if (target === 'background' && form.remove_cta_background) {
+        form.media_cta_background_id = null;
+        form.cta_background = null;
+        previewBackground.value = null;
+        mediaBackgroundName.value = null;
+    } else if (target === 'web' && form.remove_cta_web_button) {
+        form.media_cta_web_button_id = null;
+        form.cta_web_button = null;
+        previewWebButton.value = null;
+        mediaWebName.value = null;
+    } else if (target === 'phone' && form.remove_cta_phone_button) {
+        form.media_cta_phone_button_id = null;
+        form.cta_phone_button = null;
+        previewPhoneButton.value = null;
+        mediaPhoneName.value = null;
+    }
+}
 
 function handleBackgroundChange(event) {
     const file = event.target.files?.[0];
     if (file) {
         form.cta_background = file;
+        form.media_cta_background_id = null;
+        mediaBackgroundName.value = null;
         const reader = new FileReader();
         reader.onload = (e) => { previewBackground.value = e.target?.result ?? null; };
         reader.readAsDataURL(file);
@@ -218,6 +328,8 @@ function handleWebButtonChange(event) {
     const file = event.target.files?.[0];
     if (file) {
         form.cta_web_button = file;
+        form.media_cta_web_button_id = null;
+        mediaWebName.value = null;
         const reader = new FileReader();
         reader.onload = (e) => { previewWebButton.value = e.target?.result ?? null; };
         reader.readAsDataURL(file);
@@ -229,6 +341,8 @@ function handlePhoneButtonChange(event) {
     const file = event.target.files?.[0];
     if (file) {
         form.cta_phone_button = file;
+        form.media_cta_phone_button_id = null;
+        mediaPhoneName.value = null;
         const reader = new FileReader();
         reader.onload = (e) => { previewPhoneButton.value = e.target?.result ?? null; };
         reader.readAsDataURL(file);

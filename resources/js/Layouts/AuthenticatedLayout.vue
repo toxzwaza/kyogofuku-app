@@ -54,6 +54,7 @@ const menuItems = [
             { label: 'API並び順', route: 'admin.events.utm-analytics-order' },
             { label: '開催会場一覧', route: 'admin.venues.index' },
             { label: 'スライドショー一覧', route: 'admin.slideshows.index' },
+            { label: 'メディアライブラリ', route: 'admin.media.index' },
         ],
     },
     {
@@ -249,7 +250,7 @@ const menuItems = [
                                             route().current(menu.route.replace('.index', '.*')) ||
                                             (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*'))) ||
                                             (menu.key === 'customers' && (route().current('admin.customer-tags.*') || route().current('admin.constraint-templates.*') || route().current('admin.line-unknown-inbox.*'))) ||
-                                            (menu.key === 'events' && (route().current('admin.venues.*') || route().current('admin.slideshows.*')))
+                                            (menu.key === 'events' && (route().current('admin.venues.*') || route().current('admin.slideshows.*') || route().current('admin.media.*')))
                                                 ? 'theme-active-link'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
                                         ]"
@@ -278,7 +279,7 @@ const menuItems = [
                                             route().current(menu.route.replace('.index', '.*')) ||
                                             (menu.key === 'master' && (route().current('admin.shops.*') || route().current('admin.users.*'))) ||
                                             (menu.key === 'customers' && (route().current('admin.customer-tags.*') || route().current('admin.constraint-templates.*') || route().current('admin.line-unknown-inbox.*'))) ||
-                                            (menu.key === 'events' && (route().current('admin.venues.*') || route().current('admin.slideshows.*')))
+                                            (menu.key === 'events' && (route().current('admin.venues.*') || route().current('admin.slideshows.*') || route().current('admin.media.*')))
                                                 ? 'theme-active-link'
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300'
                                         ]"
@@ -437,7 +438,7 @@ const menuItems = [
                         >
                             給与計算シミュレーター
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*') && !route().current('admin.venues.*') && !route().current('admin.slideshows.*')">
+                        <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.*') && !route().current('admin.venues.*') && !route().current('admin.slideshows.*') && !route().current('admin.media.*')">
                             イベント管理
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.index')" class="pl-8">
@@ -454,6 +455,9 @@ const menuItems = [
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.slideshows.index')" :active="route().current('admin.slideshows.*')" class="pl-8">
                             スライドショー一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.media.index')" :active="route().current('admin.media.*')" class="pl-8">
+                            メディアライブラリ
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.photo-slots.index')" :active="route().current('admin.photo-slots.*')">
                             前撮り管理

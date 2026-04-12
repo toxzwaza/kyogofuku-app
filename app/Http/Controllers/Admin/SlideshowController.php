@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MediaFile;
 use App\Models\Slideshow;
 use App\Models\SlideshowImage;
 use Illuminate\Http\Request;
@@ -198,6 +199,36 @@ class SlideshowController extends Controller
             Log::error('WebP変換エラー (S3 slideshows/' . $slideshowId . '): ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * メディアライブラリからスライドショー画像を追加
+     */
+    public function storeImageFromLibrary(Request $request, Slideshow $slideshow)
+    {
+        $validated = $request->validate([
+            'media_file_ids' => 'required|array|min:1',
+            'media_file_ids.*' => 'integer|exists:media_files,id',
+        ]);
+
+        $maxSortOrder = $slideshow->images()->max('sort_order') ?? 0;
+
+        foreach ($validated['media_file_ids'] as $index => $mediaFileId) {
+            $mediaFile = MediaFile::findOrFail($mediaFileId);
+
+            SlideshowImage::create([
+                'slideshow_id' => $slideshow->id,
+                'media_file_id' => $mediaFile->id,
+                'path' => $mediaFile->path,
+                'storage_disk' => $mediaFile->storage_disk,
+                'alt' => $mediaFile->alt,
+                'sort_order' => $maxSortOrder + $index + 1,
+            ]);
+        }
+
+        $count = count($validated['media_file_ids']);
+        return redirect()->route('admin.slideshows.show', $slideshow->id)
+            ->with('success', "ライブラリから{$count}件の画像を追加しました。");
     }
 
     /**

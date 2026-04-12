@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\MediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -45,6 +46,7 @@ class EventLpSettingsController extends Controller
             'background_image_enabled' => 'nullable|boolean',
             'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'remove_background_image' => 'nullable|boolean',
+            'media_background_image_id' => 'nullable|integer|exists:media_files,id',
             'include_lp_design' => 'nullable|boolean',
         ];
         if ($request->boolean('include_lp_design')) {
@@ -83,7 +85,11 @@ class EventLpSettingsController extends Controller
         }
 
         // 背景画像の削除または差し替え
-        if ($request->boolean('remove_background_image') || $request->hasFile('background_image')) {
+        if ($request->filled('media_background_image_id')) {
+            $media = MediaFile::findOrFail($request->input('media_background_image_id'));
+            $updates['background_image_path'] = $media->path;
+            $updates['background_image_storage_disk'] = $media->storage_disk;
+        } elseif ($request->boolean('remove_background_image') || $request->hasFile('background_image')) {
             $this->deleteBackgroundImage($event->background_image_path, $event->background_image_storage_disk);
             $updates['background_image_path'] = null;
             $updates['background_image_storage_disk'] = null;

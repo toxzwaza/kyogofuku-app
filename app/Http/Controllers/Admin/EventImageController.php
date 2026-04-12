@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventImage;
+use App\Models\MediaFile;
 use App\Models\Slideshow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -121,6 +122,37 @@ class EventImageController extends Controller
 
         return redirect()->route('admin.events.images.index', $event->id)
             ->with('success', '画像を追加しました。');
+    }
+
+    /**
+     * メディアライブラリからイベント画像を追加
+     */
+    public function storeFromLibrary(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'media_file_ids' => 'required|array|min:1',
+            'media_file_ids.*' => 'integer|exists:media_files,id',
+        ]);
+
+        $maxSortOrder = $event->images()->max('sort_order') ?? 0;
+
+        foreach ($validated['media_file_ids'] as $index => $mediaFileId) {
+            $mediaFile = MediaFile::findOrFail($mediaFileId);
+
+            EventImage::create([
+                'event_id' => $event->id,
+                'media_file_id' => $mediaFile->id,
+                'path' => $mediaFile->path,
+                'storage_disk' => $mediaFile->storage_disk,
+                'webp_path' => null,
+                'alt' => $mediaFile->alt,
+                'sort_order' => $maxSortOrder + $index + 1,
+            ]);
+        }
+
+        $count = count($validated['media_file_ids']);
+        return redirect()->route('admin.events.images.index', $event->id)
+            ->with('success', "ライブラリから{$count}件の画像を追加しました。");
     }
 
     /**

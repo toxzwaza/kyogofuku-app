@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\MediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -36,6 +37,9 @@ class EventCtaDesignController extends Controller
             'remove_cta_background' => 'nullable|boolean',
             'remove_cta_web_button' => 'nullable|boolean',
             'remove_cta_phone_button' => 'nullable|boolean',
+            'media_cta_background_id' => 'nullable|integer|exists:media_files,id',
+            'media_cta_web_button_id' => 'nullable|integer|exists:media_files,id',
+            'media_cta_phone_button_id' => 'nullable|integer|exists:media_files,id',
             'cta_color_type' => 'nullable|string|in:red,pink,rose,orange,amber,purple,violet,indigo,blue,sky,cyan,teal,green,emerald',
         ]);
 
@@ -46,7 +50,11 @@ class EventCtaDesignController extends Controller
         $updates = [];
 
         // ボタン背景
-        if ($request->boolean('remove_cta_background') || $request->hasFile('cta_background')) {
+        if ($request->filled('media_cta_background_id')) {
+            $media = MediaFile::findOrFail($request->input('media_cta_background_id'));
+            $updates['cta_background_path'] = $media->path;
+            $updates['cta_storage_disk'] = $media->storage_disk;
+        } elseif ($request->boolean('remove_cta_background') || $request->hasFile('cta_background')) {
             $this->deleteCtaFile($event->cta_background_path, $event->cta_storage_disk);
             $updates['cta_background_path'] = null;
             if ($request->hasFile('cta_background') && $manager) {
@@ -59,7 +67,11 @@ class EventCtaDesignController extends Controller
         }
 
         // WEB予約ボタン
-        if ($request->boolean('remove_cta_web_button') || $request->hasFile('cta_web_button')) {
+        if ($request->filled('media_cta_web_button_id')) {
+            $media = MediaFile::findOrFail($request->input('media_cta_web_button_id'));
+            $updates['cta_web_button_path'] = $media->path;
+            $updates['cta_storage_disk'] = $media->storage_disk;
+        } elseif ($request->boolean('remove_cta_web_button') || $request->hasFile('cta_web_button')) {
             $this->deleteCtaFile($event->cta_web_button_path, $event->cta_storage_disk);
             $updates['cta_web_button_path'] = null;
             if ($request->hasFile('cta_web_button') && $manager) {
@@ -72,7 +84,11 @@ class EventCtaDesignController extends Controller
         }
 
         // 電話予約ボタン
-        if ($request->boolean('remove_cta_phone_button') || $request->hasFile('cta_phone_button')) {
+        if ($request->filled('media_cta_phone_button_id')) {
+            $media = MediaFile::findOrFail($request->input('media_cta_phone_button_id'));
+            $updates['cta_phone_button_path'] = $media->path;
+            $updates['cta_storage_disk'] = $media->storage_disk;
+        } elseif ($request->boolean('remove_cta_phone_button') || $request->hasFile('cta_phone_button')) {
             $this->deleteCtaFile($event->cta_phone_button_path, $event->cta_storage_disk);
             $updates['cta_phone_button_path'] = null;
             if ($request->hasFile('cta_phone_button') && $manager) {

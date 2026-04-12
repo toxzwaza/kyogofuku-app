@@ -8,6 +8,12 @@
                     イベント画像管理 - {{ event.title }}
                 </h2>
                 <div class="flex space-x-4">
+                    <button
+                        @click="showMediaPicker = true"
+                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                    >
+                        ライブラリから追加
+                    </button>
                     <Link
                         :href="route('admin.events.images.create', event.id)"
                         class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
@@ -313,6 +319,12 @@
                 </div>
             </Transition>
         </Teleport>
+        <!-- メディアライブラリピッカー -->
+        <MediaPicker
+            :show="showMediaPicker"
+            @close="showMediaPicker = false"
+            @select="handleMediaSelect"
+        />
     </AuthenticatedLayout>
 </template>
 
@@ -324,6 +336,7 @@ import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
 import SlideshowPositionManager from './Components/SlideshowPositionManager.vue';
 import CtaButtonPositionToggle from './Components/CtaButtonPositionToggle.vue';
+import MediaPicker from '@/Components/MediaPicker.vue';
 
 const props = defineProps({
     event: Object,
@@ -351,6 +364,7 @@ const isBulkDeleting = ref(false);
 const marginModalImage = ref(null);
 const marginForm = ref({ margin_top_px: null, margin_bottom_px: null });
 const isSavingMargin = ref(false);
+const showMediaPicker = ref(false);
 
 // ドラッグ時の自動スクロール用
 const AUTO_SCROLL_ZONE = 80;
@@ -687,6 +701,17 @@ const bulkDeleteSelected = () => {
         onFinish: () => {
             isBulkDeleting.value = false;
         },
+    });
+};
+
+// メディアライブラリから画像を追加
+const handleMediaSelect = (selectedMedia) => {
+    if (!selectedMedia || selectedMedia.length === 0) return;
+    const mediaFileIds = selectedMedia.map(m => m.id);
+    router.post(route('admin.events.images.store-from-library', props.event.id), {
+        media_file_ids: mediaFileIds,
+    }, {
+        preserveScroll: true,
     });
 };
 

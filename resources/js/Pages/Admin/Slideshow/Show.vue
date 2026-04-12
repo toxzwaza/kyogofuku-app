@@ -118,7 +118,15 @@
                 <!-- 画像追加（スライドショー設定の下に配置） -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold mb-4">画像を追加</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">画像を追加</h3>
+                            <button
+                                @click="showMediaPicker = true"
+                                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                            >
+                                ライブラリから追加
+                            </button>
+                        </div>
                         <form @submit.prevent="submitImage" enctype="multipart/form-data">
                             <div class="space-y-4">
                                 <div>
@@ -308,6 +316,13 @@
             </div>
         </div>
 
+        <!-- メディアライブラリピッカー -->
+        <MediaPicker
+            :show="showMediaPicker"
+            @close="showMediaPicker = false"
+            @select="handleMediaSelect"
+        />
+
         <!-- 画像拡大プレビューモーダル -->
         <Teleport to="body">
             <Transition
@@ -355,6 +370,7 @@
 import { ref, watch, onUnmounted } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import MediaPicker from '@/Components/MediaPicker.vue';
 
 const props = defineProps({
     slideshow: Object,
@@ -373,6 +389,7 @@ const selectedIds = ref(new Set());
 const previewImage = ref(null);
 const isBulkDeleting = ref(false);
 const migratingImageId = ref(null);
+const showMediaPicker = ref(false);
 
 const AUTO_SCROLL_ZONE = 80;
 const SCROLL_STEP = 14;
@@ -407,6 +424,17 @@ const getImageUrl = (image) => {
     const path = image?.path ?? image;
     if (typeof path === 'string' && path.startsWith('http')) return path;
     return `/storage/${path || ''}`;
+};
+
+// メディアライブラリから画像を追加
+const handleMediaSelect = (selectedMedia) => {
+    if (!selectedMedia || selectedMedia.length === 0) return;
+    const mediaFileIds = selectedMedia.map(m => m.id);
+    router.post(route('admin.slideshows.images.store-from-library', props.slideshow.id), {
+        media_file_ids: mediaFileIds,
+    }, {
+        preserveScroll: true,
+    });
 };
 
 const migrateImageToS3 = (image) => {

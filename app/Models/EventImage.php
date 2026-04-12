@@ -12,6 +12,7 @@ class EventImage extends Model
 
     protected $fillable = [
         'event_id',
+        'media_file_id',
         'path',
         'storage_disk',
         'webp_path',
@@ -33,6 +34,14 @@ class EventImage extends Model
     public function event()
     {
         return $this->belongsTo(Event::class);
+    }
+
+    /**
+     * メディアファイルとのリレーション
+     */
+    public function mediaFile()
+    {
+        return $this->belongsTo(MediaFile::class);
     }
 
     /**

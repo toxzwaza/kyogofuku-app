@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagControll
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignController;
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
+use App\Http\Controllers\Admin\MediaFileController as AdminMediaFileController;
 use App\Http\Controllers\Admin\EventLpSettingsController as AdminEventLpSettingsController;
 use App\Http\Controllers\Admin\EventUtmAnalyticsOrderController;
 use App\Http\Controllers\Admin\LineUnknownInboxController;
@@ -147,10 +148,20 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::put('/photo-studios/{photoStudio}', [AdminPhotoStudioController::class, 'update'])->name('photo-studios.update');
     Route::delete('/photo-studios/{photoStudio}', [AdminPhotoStudioController::class, 'destroy'])->name('photo-studios.destroy');
 
+    // メディアライブラリ
+    Route::get('/media', [AdminMediaFileController::class, 'index'])->name('media.index');
+    Route::post('/media', [AdminMediaFileController::class, 'store'])->name('media.store');
+    Route::post('/media/upload-json', [AdminMediaFileController::class, 'storeJson'])->name('media.store-json');
+    Route::get('/media/list-json', [AdminMediaFileController::class, 'listJson'])->name('media.list-json');
+    Route::patch('/media/{mediaFile}', [AdminMediaFileController::class, 'update'])->name('media.update');
+    Route::delete('/media/{mediaFile}', [AdminMediaFileController::class, 'destroy'])->name('media.destroy');
+    Route::post('/media/import-existing', [AdminMediaFileController::class, 'importExisting'])->name('media.import-existing');
+
     // イベント画像管理
     Route::get('/events/{event}/images', [AdminEventImageController::class, 'index'])->name('events.images.index');
     Route::get('/events/{event}/images/create', [AdminEventImageController::class, 'create'])->name('events.images.create');
     Route::post('/events/{event}/images', [AdminEventImageController::class, 'store'])->name('events.images.store');
+    Route::post('/events/{event}/images/from-library', [AdminEventImageController::class, 'storeFromLibrary'])->name('events.images.store-from-library');
     Route::delete('/images/{image}', [AdminEventImageController::class, 'destroy'])->name('images.destroy');
     Route::post('/events/{event}/images/bulk-destroy', [AdminEventImageController::class, 'destroyBulk'])->name('events.images.bulk-destroy');
     Route::post('/events/{event}/images/{image}/convert-webp', [AdminEventImageController::class, 'convertToWebp'])->name('events.images.convert-webp');
@@ -175,6 +186,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::put('/slideshows/{slideshow}', [AdminSlideshowController::class, 'update'])->name('slideshows.update');
     Route::delete('/slideshows/{slideshow}', [AdminSlideshowController::class, 'destroy'])->name('slideshows.destroy');
     Route::post('/slideshows/{slideshow}/images', [AdminSlideshowController::class, 'storeImage'])->name('slideshows.images.store');
+    Route::post('/slideshows/{slideshow}/images/from-library', [AdminSlideshowController::class, 'storeImageFromLibrary'])->name('slideshows.images.store-from-library');
     Route::post('/slideshows/{slideshow}/images/{image}/migrate-to-s3', [AdminSlideshowController::class, 'migrateSlideshowImageToS3'])->name('slideshows.images.migrate-to-s3');
     Route::post('/slideshows/{slideshow}/images/bulk-destroy', [AdminSlideshowController::class, 'destroyBulk'])->name('slideshows.images.bulk-destroy');
     Route::delete('/slideshow-images/{image}', [AdminSlideshowController::class, 'destroyImage'])->name('slideshow-images.destroy');

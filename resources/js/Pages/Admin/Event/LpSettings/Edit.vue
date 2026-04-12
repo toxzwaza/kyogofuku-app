@@ -140,13 +140,22 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">背景画像</label>
                                 <p class="text-xs text-gray-500 mb-2">公開ページで表示する背景画像をアップロードできます。未設定の場合は背景画像なしです。</p>
-                                <input
-                                    ref="backgroundImageInput"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/jpg,image/gif"
-                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                                    @change="onBackgroundImageChange"
-                                />
+                                <div class="flex flex-wrap gap-3 items-center">
+                                    <input
+                                        ref="backgroundImageInput"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/jpg,image/gif"
+                                        class="block flex-1 min-w-[200px] text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        @change="onBackgroundImageChange"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="showMediaPicker = true"
+                                        class="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                                    >
+                                        ライブラリから選択
+                                    </button>
+                                </div>
                                 <p class="mt-1 text-xs text-gray-500">JPEG, PNG, JPG, GIF（最大10MB）</p>
                                 <label class="mt-2 flex items-center gap-2 cursor-pointer">
                                     <input
@@ -158,7 +167,7 @@
                                     <span class="text-sm text-gray-700">背景画像を削除する</span>
                                 </label>
                                 <div v-if="previewBackgroundImage || (event.background_image_url && !backgroundForm.remove_background_image)" class="mt-3">
-                                    <p class="text-sm text-gray-600 mb-1">{{ previewBackgroundImage ? 'プレビュー:' : '現在の画像:' }}</p>
+                                    <p class="text-sm text-gray-600 mb-1">{{ previewBackgroundImage ? (mediaBackgroundName ? `ライブラリ: ${mediaBackgroundName}` : 'プレビュー:') : '現在の画像:' }}</p>
                                     <img
                                         :src="previewBackgroundImage || event.background_image_url"
                                         alt="背景画像"
@@ -227,6 +236,13 @@
                 </div>
             </div>
         </div>
+
+        <!-- メディアライブラリピッカー -->
+        <MediaPicker
+            :show="showMediaPicker"
+            @close="showMediaPicker = false"
+            @select="handleMediaSelect"
+        />
     </AuthenticatedLayout>
 </template>
 
@@ -235,6 +251,7 @@ import { ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
+import MediaPicker from '@/Components/MediaPicker.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -254,6 +271,9 @@ const defaultHex = '#e9e2dc';
 const defaultContentHex = '#ffffff';
 const backgroundImageInput = ref(null);
 const previewBackgroundImage = ref(null);
+const showMediaPicker = ref(false);
+const mediaBackgroundName = ref(null);
+const mediaBackgroundId = ref(null);
 
 function normalizeHex(value, defaultVal) {
     if (!value || !String(value).trim()) return defaultVal;
@@ -278,11 +298,24 @@ const lpDesignForm = useForm({
         : '',
 });
 
+function handleMediaSelect(selectedMedia) {
+    if (!selectedMedia || selectedMedia.length === 0) return;
+    const media = selectedMedia[0];
+    mediaBackgroundId.value = media.id;
+    mediaBackgroundName.value = media.original_filename;
+    previewBackgroundImage.value = media.url;
+    backgroundForm.background_image = null;
+    backgroundForm.remove_background_image = false;
+    if (backgroundImageInput.value) backgroundImageInput.value.value = '';
+}
+
 function onBackgroundImageChange(event) {
     const file = event.target.files?.[0];
     if (file) {
         backgroundForm.background_image = file;
         backgroundForm.remove_background_image = false;
+        mediaBackgroundId.value = null;
+        mediaBackgroundName.value = null;
         const reader = new FileReader();
         reader.onload = (e) => { previewBackgroundImage.value = e.target?.result ?? null; };
         reader.readAsDataURL(file);
@@ -292,6 +325,8 @@ function onBackgroundImageChange(event) {
 function onRemoveBackgroundImageChange() {
     if (backgroundForm.remove_background_image) {
         backgroundForm.background_image = null;
+        mediaBackgroundId.value = null;
+        mediaBackgroundName.value = null;
         previewBackgroundImage.value = null;
         if (backgroundImageInput.value) backgroundImageInput.value.value = '';
     }
@@ -311,6 +346,7 @@ function getPayload() {
         background_image_enabled: backgroundForm.background_image_enabled,
         remove_background_image: backgroundForm.remove_background_image,
         background_image: backgroundForm.background_image,
+        media_background_image_id: mediaBackgroundId.value,
     };
 }
 
