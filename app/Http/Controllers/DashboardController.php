@@ -611,6 +611,27 @@ class DashboardController extends Controller
     }
 
     /**
+     * 予約ステータスを一括で「対応完了済み」に更新
+     */
+    public function bulkCompleteReservations(Request $request)
+    {
+        $validated = $request->validate([
+            'reservation_ids' => 'required|array|min:1',
+            'reservation_ids.*' => 'integer|exists:event_reservations,id',
+        ]);
+
+        $updated = EventReservation::whereIn('id', $validated['reservation_ids'])
+            ->where('cancel_flg', false)
+            ->whereIn('status', ['未対応', '確認中', '返信待ち'])
+            ->update([
+                'status' => '対応完了済み',
+                'status_updated_by_user_id' => auth()->id(),
+            ]);
+
+        return redirect()->back()->with('success', $updated . '件の予約を対応完了済みに更新しました。');
+    }
+
+    /**
      * 取り消し可能なアクションを取得（一番新しいステータスのみ）
      * 優先順位: 休憩中 → 退勤 → 休憩終了 → 出勤
      */

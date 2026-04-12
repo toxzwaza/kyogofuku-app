@@ -76,6 +76,7 @@ Route::get('/s3-test/signed-url', [S3TestController::class, 'signedUrl'])->name(
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 Route::get('/dashboard/recent-reservations', [DashboardController::class, 'recentReservations'])->middleware(['auth', 'verified'])->name('dashboard.recent-reservations');
 Route::get('/dashboard/recent-notes', [DashboardController::class, 'recentNotes'])->middleware(['auth', 'verified'])->name('dashboard.recent-notes');
+Route::post('/dashboard/bulk-complete-reservations', [DashboardController::class, 'bulkCompleteReservations'])->middleware(['auth', 'verified'])->name('dashboard.bulk-complete-reservations');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

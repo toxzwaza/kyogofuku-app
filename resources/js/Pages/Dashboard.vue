@@ -351,48 +351,83 @@
                                 </option>
                             </select>
                         </div>
-                        <p class="text-xs text-gray-500 mb-4">
-                            ステータスが「未対応」「確認中」「返信待ち」の予約です。新しい順に表示しています。
-                        </p>
-                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
-                            <li v-for="item in filteredActionRequired" :key="'req-' + item.reservation_id">
-                                <Link
-                                    :href="route('admin.reservations.show', item.reservation_id)"
-                                    class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 hover:bg-gray-50 transition-colors"
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="text-xs text-gray-500">
+                                ステータスが「未対応」「確認中」「返信待ち」の予約です。新しい順に表示しています。
+                            </p>
+                            <button
+                                v-if="actionRequiredCheckedIds.size > 0"
+                                type="button"
+                                @click="bulkCompleteReservations"
+                                :disabled="isBulkCompleting"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md text-xs font-medium hover:bg-green-700 disabled:opacity-50 shrink-0 ml-3"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                {{ isBulkCompleting ? '処理中...' : actionRequiredCheckedIds.size + '件を対応完了にする' }}
+                            </button>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 border-b border-gray-200">
+                                <input
+                                    type="checkbox"
+                                    :checked="isAllActionRequiredChecked"
+                                    @change="toggleAllActionRequired"
+                                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span class="text-xs text-gray-600 font-medium">全選択</span>
+                            </div>
+                            <ul class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                                <li v-for="item in filteredActionRequired" :key="'req-' + item.reservation_id"
+                                    class="flex items-center gap-3 hover:bg-gray-50 transition-colors"
                                     :class="item.days_since_created >= 4 ? 'bg-red-50/50' : 'bg-white'"
                                 >
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex flex-wrap items-center gap-1.5">
-                                            <span class="font-medium text-gray-900">{{ item.customer_name }}</span>
-                                            <span v-for="shop in item.shop_names" :key="shop"
-                                                class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-medium">
-                                                {{ shop }}
-                                            </span>
-                                            <span :class="[
-                                                'text-[10px] px-1.5 py-0.5 rounded font-medium',
-                                                item.status === '未対応' ? 'bg-red-100 text-red-800' :
-                                                item.status === '確認中' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-blue-100 text-blue-800'
-                                            ]">{{ item.status }}</span>
+                                    <div class="pl-4 py-3 shrink-0">
+                                        <input
+                                            type="checkbox"
+                                            :checked="actionRequiredCheckedIds.has(item.reservation_id)"
+                                            @change="toggleActionRequiredCheck(item.reservation_id)"
+                                            class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                    <Link
+                                        :href="route('admin.reservations.show', item.reservation_id)"
+                                        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 pr-4 min-w-0 flex-1"
+                                    >
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-wrap items-center gap-1.5">
+                                                <span class="font-medium text-gray-900">{{ item.customer_name }}</span>
+                                                <span v-for="shop in item.shop_names" :key="shop"
+                                                    class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-medium">
+                                                    {{ shop }}
+                                                </span>
+                                                <span :class="[
+                                                    'text-[10px] px-1.5 py-0.5 rounded font-medium',
+                                                    item.status === '未対応' ? 'bg-red-100 text-red-800' :
+                                                    item.status === '確認中' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-blue-100 text-blue-800'
+                                                ]">{{ item.status }}</span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                {{ item.event_name }}
+                                                <span v-if="item.admin_assignee" class="ml-2 text-gray-400">担当: {{ item.admin_assignee }}</span>
+                                            </p>
                                         </div>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            {{ item.event_name }}
-                                            <span v-if="item.admin_assignee" class="ml-2 text-gray-400">担当: {{ item.admin_assignee }}</span>
-                                        </p>
-                                    </div>
-                                    <div class="shrink-0 text-right">
-                                        <span :class="[
-                                            'text-sm font-semibold',
-                                            item.days_since_created === 0 ? 'text-gray-600' :
-                                            item.days_since_created <= 3 ? 'text-yellow-600' :
-                                            'text-red-600'
-                                        ]">
-                                            {{ item.days_since_created === 0 ? '本日' : item.days_since_created + '日経過' }}
-                                        </span>
-                                    </div>
-                                </Link>
-                            </li>
-                        </ul>
+                                        <div class="shrink-0 text-right">
+                                            <span :class="[
+                                                'text-sm font-semibold',
+                                                item.days_since_created === 0 ? 'text-gray-600' :
+                                                item.days_since_created <= 3 ? 'text-yellow-600' :
+                                                'text-red-600'
+                                            ]">
+                                                {{ item.days_since_created === 0 ? '本日' : item.days_since_created + '日経過' }}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -2605,8 +2640,50 @@ const defaultShopId = computed(() => {
     return (main || shops[0])?.id ?? null;
 });
 
-// 要対応予約のイベントフィルタ
+// 要対応予約のイベントフィルタ＋一括操作
 const actionRequiredEventFilter = ref("");
+const actionRequiredCheckedIds = ref(new Set());
+const isBulkCompleting = ref(false);
+
+const toggleActionRequiredCheck = (id) => {
+    const next = new Set(actionRequiredCheckedIds.value);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    actionRequiredCheckedIds.value = next;
+};
+const isAllActionRequiredChecked = computed(() => {
+    const items = filteredActionRequired.value;
+    return items.length > 0 && items.every((r) => actionRequiredCheckedIds.value.has(r.reservation_id));
+});
+const toggleAllActionRequired = () => {
+    const items = filteredActionRequired.value;
+    if (isAllActionRequiredChecked.value) {
+        // 全解除（フィルタ中の項目のみ解除）
+        const next = new Set(actionRequiredCheckedIds.value);
+        items.forEach((r) => next.delete(r.reservation_id));
+        actionRequiredCheckedIds.value = next;
+    } else {
+        // 全選択
+        const next = new Set(actionRequiredCheckedIds.value);
+        items.forEach((r) => next.add(r.reservation_id));
+        actionRequiredCheckedIds.value = next;
+    }
+};
+const bulkCompleteReservations = () => {
+    const ids = [...actionRequiredCheckedIds.value];
+    if (ids.length === 0) return;
+    if (!confirm(ids.length + '件の予約を「対応完了済み」に変更しますか？')) return;
+    isBulkCompleting.value = true;
+    router.post(route('dashboard.bulk-complete-reservations'), { reservation_ids: ids }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            actionRequiredCheckedIds.value = new Set();
+        },
+        onFinish: () => {
+            isBulkCompleting.value = false;
+        },
+    });
+};
 const actionRequiredEventOptions = computed(() => {
     const events = new Map();
     (props.actionRequiredReservations || []).forEach((r) => {
