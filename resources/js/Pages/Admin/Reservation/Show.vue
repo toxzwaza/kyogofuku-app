@@ -1465,220 +1465,321 @@
                   </p>
                 </div>
                 <div v-show="communicationTab === 'email'" class="min-w-0">
-                  <div class="mb-6 pb-6 border-b border-gray-200">
-                    <form @submit.prevent="sendReplyEmail">
-                      <div class="space-y-4">
-                        <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-1">
-                            スレッド選択
-                          </label>
-                          <select
-                            v-model="replyForm.email_thread_id"
-                            @change="onThreadChange"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            :required="!isNewEmail"
-                          >
-                            <option value="">スレッドを選択してください</option>
-                            <option value="new">新規メール作成</option>
-                            <option
-                              v-for="thread in sortedEmailThreads"
-                              :key="thread.id"
-                              :value="thread.id"
-                            >
-                              {{ thread.subject }} ({{ thread.emails ? thread.emails.length : 0 }}件)
-                            </option>
-                          </select>
-                        </div>
+                  <!-- ヘッダー: スレッド件数 + 新規メール作成ボタン -->
+                  <div class="flex items-center justify-between mb-4">
+                    <p class="text-sm text-gray-600">
+                      <span class="font-medium text-gray-900">{{ sortedEmailThreads.length }}</span>
+                      件のスレッド
+                    </p>
+                    <button
+                      type="button"
+                      @click="openNewComposer"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                      新規メール作成
+                    </button>
+                  </div>
 
-                        <div v-if="isNewEmail">
-                          <label class="block text-sm font-medium text-gray-700 mb-1">
-                            件名 <span class="text-red-500">*</span>
-                          </label>
-                          <input
-                            v-model="replyForm.subject"
-                            type="text"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            placeholder="メールの件名を入力してください"
-                            required
-                          />
-                          <div
-                            v-if="replyForm.errors.subject"
-                            class="mt-1 text-sm text-red-600"
-                          >
-                            {{ replyForm.errors.subject }}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-1">
-                            メッセージ
-                          </label>
-                          <textarea
-                            v-model="replyForm.message"
-                            rows="8"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            :placeholder="isNewEmail ? 'メッセージを入力してください' : '返信メッセージを入力してください'"
-                            required
-                          ></textarea>
-                        </div>
-
-                        <div>
-                          <button
-                            type="submit"
-                            :disabled="replyForm.processing || isSendingEmail"
-                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150"
-                          >
-                            {{ (replyForm.processing || isSendingEmail) ? "送信中..." : (isNewEmail ? "メールを送信" : "返信メールを送信") }}
-                          </button>
-                        </div>
+                  <!-- 新規メール作成フォーム（インライン展開） -->
+                  <div
+                    v-if="showNewComposer"
+                    class="mb-4 border border-indigo-200 bg-indigo-50/30 rounded-lg p-4"
+                  >
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-semibold text-gray-800">新規メール作成</h4>
+                      <button
+                        type="button"
+                        @click="cancelNewComposer"
+                        class="text-gray-400 hover:text-gray-600"
+                        aria-label="閉じる"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <form @submit.prevent="submitNewEmail" class="space-y-3">
+                      <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                          宛先
+                        </label>
+                        <input
+                          type="text"
+                          :value="reservation.email"
+                          readonly
+                          class="block w-full rounded-md border-gray-200 bg-gray-100 text-sm text-gray-600"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                          件名 <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          v-model="replyForm.subject"
+                          type="text"
+                          required
+                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                          placeholder="メールの件名を入力してください"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                          本文
+                        </label>
+                        <textarea
+                          v-model="replyForm.message"
+                          rows="8"
+                          required
+                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono"
+                          placeholder="メッセージを入力してください"
+                        ></textarea>
+                      </div>
+                      <div class="flex gap-2">
+                        <button
+                          type="submit"
+                          :disabled="replyForm.processing || isSendingEmail"
+                          class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                          {{ (replyForm.processing || isSendingEmail) ? "送信中..." : "送信" }}
+                        </button>
+                        <button
+                          type="button"
+                          @click="cancelNewComposer"
+                          :disabled="replyForm.processing || isSendingEmail"
+                          class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          キャンセル
+                        </button>
                       </div>
                     </form>
                   </div>
 
-                  <div v-if="filteredEmailThreads && filteredEmailThreads.length > 0" class="space-y-6">
+                  <!-- スレッド一覧（Gmail風アコーディオン） -->
+                  <div
+                    v-if="sortedEmailThreads && sortedEmailThreads.length > 0"
+                    class="space-y-3"
+                  >
                     <div
-                      v-for="thread in filteredEmailThreads"
+                      v-for="thread in sortedEmailThreads"
                       :key="thread.id"
-                      class="border border-gray-200 rounded-lg p-4"
+                      class="border border-gray-200 rounded-lg bg-white overflow-hidden"
+                      :class="{ 'ring-2 ring-indigo-300': isThreadExpanded(thread.id) }"
                     >
-                      <div class="mb-3">
-                        <h4 class="font-medium text-gray-900">{{ thread.subject }}</h4>
-                        <p class="text-xs text-gray-500 mt-1">
-                          作成日時: {{ formatDateTime(thread.created_at) }}
-                        </p>
-                      </div>
-
-                      <div class="space-y-4">
-                        <div
-                          v-for="email in thread.emails"
-                          :key="email.id"
-                          :class="[
-                            'flex items-start gap-3',
-                            email.from === reservation.email ? 'justify-start' : 'justify-end'
-                          ]"
-                        >
-                          <div
-                            v-if="email.from === reservation.email"
-                            class="flex-shrink-0 w-12 h-12 rounded-full bg-gray-200 border-2 border-gray-300 overflow-hidden flex items-center justify-center"
-                          >
-                            <svg class="w-7 h-7 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                      <!-- スレッドヘッダー -->
+                      <button
+                        type="button"
+                        @click="toggleThread(thread.id)"
+                        class="w-full px-4 py-3 text-left flex items-start gap-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span
+                              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700"
+                            >
+                              {{ thread.emails ? thread.emails.length : 0 }}件
+                            </span>
+                            <span class="text-xs text-gray-500">
+                              {{ relativeTime(latestEmailTime(thread)) }}
+                            </span>
                           </div>
-
-                          <div
-                            :class="[
-                              'relative max-w-[80%] rounded-lg px-4 py-3 shadow-sm',
-                              email.from === reservation.email
-                                ? 'bg-blue-50 border border-blue-200 chat-bubble-left'
-                                : 'bg-green-50 border border-green-200 chat-bubble-right'
-                            ]"
+                          <h3 class="text-base font-semibold text-gray-900 truncate">
+                            {{ thread.subject || "(件名なし)" }}
+                          </h3>
+                          <p
+                            v-if="!isThreadExpanded(thread.id)"
+                            class="text-sm text-gray-600 truncate mt-0.5"
                           >
-                            <template v-if="email.from === reservation.email">
-                              <div
-                                class="absolute left-0 top-4 -ml-2 w-0 h-0 border-t-[8px] border-t-transparent border-r-[8px] border-r-blue-200 border-b-[8px] border-b-transparent"
-                              ></div>
-                              <div
-                                class="absolute left-0 top-4 -ml-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-r-[6px] border-r-blue-50 border-b-[6px] border-b-transparent"
-                              ></div>
-                            </template>
-                            <template v-else>
-                              <div
-                                class="absolute right-0 top-4 -mr-2 w-0 h-0 border-t-[8px] border-t-transparent border-l-[8px] border-l-green-200 border-b-[8px] border-b-transparent"
-                              ></div>
-                              <div
-                                class="absolute right-0 top-4 -mr-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-l-[6px] border-l-green-50 border-b-[6px] border-b-transparent"
-                              ></div>
-                            </template>
+                            {{ latestEmailPreview(thread) }}
+                          </p>
+                        </div>
+                        <svg
+                          :class="{ 'rotate-180': isThreadExpanded(thread.id) }"
+                          class="w-5 h-5 text-gray-400 shrink-0 mt-1 transition-transform"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
 
-                            <div class="mb-2">
-                              <div class="flex justify-between items-start gap-3">
-                                <div>
-                                  <p
-                                    :class="[
-                                      'text-sm font-medium',
-                                      email.from === reservation.email ? 'text-blue-900' : 'text-green-900'
-                                    ]"
-                                  >
-                                    {{ email.from === reservation.email ? 'お客様' : '当店' }}
-                                  </p>
-                                  <p
-                                    :class="[
-                                      'text-xs mt-0.5',
-                                      email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
-                                    ]"
-                                  >
-                                    {{ email.from === reservation.email ? email.from : email.to }}
-                                  </p>
-                                </div>
-                                <p
-                                  :class="[
-                                    'text-xs whitespace-nowrap',
-                                    email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
-                                  ]"
+                      <!-- 展開時：メールリスト + 返信フォーム -->
+                      <div v-if="isThreadExpanded(thread.id)">
+                        <div class="border-t border-gray-200 divide-y divide-gray-100">
+                          <div
+                            v-for="(email, idx) in thread.emails"
+                            :key="email.id"
+                            class="px-4 py-3"
+                            :class="
+                              !isEmailExpanded(thread, email, idx)
+                                ? 'cursor-pointer hover:bg-gray-50'
+                                : ''
+                            "
+                            @click="
+                              !isEmailExpanded(thread, email, idx)
+                                ? toggleEmail(email.id)
+                                : null
+                            "
+                          >
+                            <!-- メールヘッダー -->
+                            <div class="flex items-start justify-between gap-3 mb-2">
+                              <div class="flex items-center gap-2 min-w-0 flex-1">
+                                <span
+                                  class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0"
+                                  :class="
+                                    isFromCustomer(email)
+                                      ? 'bg-blue-100 text-blue-700'
+                                      : 'bg-green-100 text-green-700'
+                                  "
                                 >
-                                  {{ formatDateTime(email.created_at) }}
-                                </p>
+                                  {{ isFromCustomer(email) ? "客" : "店" }}
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                  <div class="text-sm font-medium text-gray-900">
+                                    {{ isFromCustomer(email) ? "お客様" : "当店" }}
+                                  </div>
+                                  <div class="text-xs text-gray-500 truncate">
+                                    {{ isFromCustomer(email) ? email.from : email.to }}
+                                  </div>
+                                </div>
+                              </div>
+                              <span class="text-xs text-gray-500 shrink-0 whitespace-nowrap">
+                                {{ relativeTime(email.created_at) }}
+                              </span>
+                            </div>
+
+                            <!-- 展開: 本文 + 添付 -->
+                            <div v-if="isEmailExpanded(thread, email, idx)" class="mt-2">
+                              <div class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                <template
+                                  v-for="(block, bIdx) in parseEmailBody(
+                                    email.text_body || email.html_body || ''
+                                  )"
+                                  :key="bIdx"
+                                >
+                                  <div v-if="block.type === 'text'">{{ block.content }}</div>
+                                  <div v-else class="my-2">
+                                    <button
+                                      type="button"
+                                      @click.stop="toggleQuote(email.id, bIdx)"
+                                      class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded text-xs"
+                                    >
+                                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                                      </svg>
+                                      {{ isQuoteShown(email.id, bIdx) ? "引用を隠す" : "引用を表示" }}
+                                    </button>
+                                    <div
+                                      v-if="isQuoteShown(email.id, bIdx)"
+                                      class="mt-1 pl-3 border-l-2 border-gray-300 text-gray-500 text-xs whitespace-pre-wrap"
+                                    >{{ block.content }}</div>
+                                  </div>
+                                </template>
+                              </div>
+
+                              <!-- 添付ファイル -->
+                              <div
+                                v-if="email.attachments && email.attachments.length > 0"
+                                class="mt-3 pt-3 border-t border-gray-200"
+                              >
+                                <p class="text-xs text-gray-600 mb-2">添付ファイル</p>
+                                <div class="flex flex-wrap gap-2">
+                                  <a
+                                    v-for="att in email.attachments"
+                                    :key="att.id"
+                                    :href="route('admin.emails.attachments.download', att.id)"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium"
+                                  >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                    {{ att.filename }}
+                                  </a>
+                                </div>
                               </div>
                             </div>
 
-                            <p
-                              :class="[
-                                'text-sm font-medium mb-2',
-                                email.from === reservation.email ? 'text-blue-900' : 'text-green-900'
-                              ]"
-                            >
-                              {{ email.subject }}
-                            </p>
-
-                            <div
-                              :class="[
-                                'text-sm whitespace-pre-wrap',
-                                email.from === reservation.email ? 'text-blue-800' : 'text-green-800'
-                              ]"
-                            >
-                              {{ email.text_body || email.html_body || '-' }}
-                            </div>
-
-                            <div v-if="email.attachments && email.attachments.length > 0" class="mt-3 pt-3 border-t" :class="email.from === reservation.email ? 'border-blue-200' : 'border-green-200'">
-                              <p
-                                :class="[
-                                  'text-xs mb-1',
-                                  email.from === reservation.email ? 'text-blue-600' : 'text-green-600'
-                                ]"
-                              >
-                                添付ファイル:
-                              </p>
-                              <ul
-                                :class="[
-                                  'text-xs space-y-1',
-                                  email.from === reservation.email ? 'text-blue-700' : 'text-green-700'
-                                ]"
-                              >
-                                <li v-for="attachment in email.attachments" :key="attachment.id">
-                                  • {{ attachment.filename }}
-                                </li>
-                              </ul>
+                            <!-- 折りたたみ: 1行プレビュー -->
+                            <div v-else class="text-sm text-gray-500 truncate">
+                              {{ emailPreview(email) }}
                             </div>
                           </div>
+                        </div>
 
-                          <div
-                            v-if="email.from !== reservation.email"
-                            class="flex-shrink-0 w-12 h-12 rounded-full bg-white border-2 border-green-300 overflow-hidden flex items-center justify-center shadow-sm"
-                          >
-                            <img
-                              src="/storage/logo/logo_b.png"
-                              alt="店舗ロゴ"
-                              class="w-full h-full object-contain p-1"
-                            />
+                        <!-- 返信フォーム（インライン） -->
+                        <div class="border-t border-gray-200 bg-gray-50 p-3">
+                          <div v-if="activeReplyThreadId !== thread.id">
+                            <button
+                              type="button"
+                              @click="openReplyForm(thread.id)"
+                              class="w-full py-2 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-md text-sm font-medium flex items-center justify-center gap-1.5"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                              </svg>
+                              返信する
+                            </button>
                           </div>
+                          <form v-else @submit.prevent="submitInlineReply(thread.id)" class="space-y-2">
+                            <div class="text-xs text-gray-600">
+                              <span class="font-medium">返信先:</span> {{ reservation.email }}
+                            </div>
+                            <textarea
+                              v-model="replyForm.message"
+                              rows="6"
+                              required
+                              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono"
+                              placeholder="返信メッセージを入力してください"
+                            ></textarea>
+                            <div class="flex gap-2">
+                              <button
+                                type="submit"
+                                :disabled="replyForm.processing || isSendingEmail"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                                {{ (replyForm.processing || isSendingEmail) ? "送信中..." : "送信" }}
+                              </button>
+                              <button
+                                type="button"
+                                @click="cancelReply"
+                                :disabled="replyForm.processing || isSendingEmail"
+                                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                              >
+                                キャンセル
+                              </button>
+                            </div>
+                          </form>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div v-else class="text-sm text-gray-500 text-center py-8">
-                    メールのやり取りはありません
+                  <div v-else class="text-center py-12 text-gray-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <p class="text-sm">メールのやり取りはありません</p>
+                    <button
+                      type="button"
+                      @click="openNewComposer"
+                      class="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      新規メールを作成する
+                    </button>
                   </div>
                 </div>
               </div>
@@ -2480,27 +2581,183 @@ const replyForm = useForm({
 const isSendingEmail = ref(false);
 const selectedThreadId = ref(null);
 
+// Gmail風UI: スレッド・メール・引用の展開状態
+const expandedThreadIds = ref(new Set());
+const expandedEmailIds = ref(new Set());
+const shownQuoteKeys = ref(new Set());
+const activeReplyThreadId = ref(null);
+const showNewComposer = ref(false);
+
 // 新規メール作成かどうかを判定
 const isNewEmail = computed(() => {
   return replyForm.email_thread_id === "new" || replyForm.email_thread_id === "";
 });
 
-// 選択されたスレッドのメールのみ表示
-const filteredEmailThreads = computed(() => {
-  if (!selectedThreadId.value) {
-    return sortedEmailThreads.value;
-  }
-  return sortedEmailThreads.value.filter(thread => thread.id === selectedThreadId.value);
-});
+// お客様からのメールか判定
+const isFromCustomer = (email) => {
+  if (!email || !email.from) return false;
+  return email.from === props.reservation.email;
+};
 
-// スレッド選択時の処理
-const onThreadChange = () => {
-  if (replyForm.email_thread_id === "new" || replyForm.email_thread_id === "") {
-    selectedThreadId.value = null;
-    replyForm.subject = "";
-  } else {
-    selectedThreadId.value = replyForm.email_thread_id;
+// スレッドの最新メールの時刻
+const latestEmailTime = (thread) => {
+  if (!thread.emails || thread.emails.length === 0) return thread.created_at;
+  // emails は降順ソート済み（sortedEmailThreadsで処理）
+  return thread.emails[0]?.created_at || thread.created_at;
+};
+
+// スレッドの最新メールの1行プレビュー
+const latestEmailPreview = (thread) => {
+  if (!thread.emails || thread.emails.length === 0) return "";
+  const latest = thread.emails[0];
+  return emailPreview(latest);
+};
+
+// メール本文の1行プレビュー（引用除外・改行除去・先頭100文字）
+const emailPreview = (email) => {
+  const text = email.text_body || email.html_body || "";
+  if (!text) return "(本文なし)";
+  // 引用行を除外
+  const lines = text
+    .split("\n")
+    .filter((line) => !/^\s*>/.test(line))
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return lines.slice(0, 100) || "(本文なし)";
+};
+
+// 相対時刻フォーマット
+const relativeTime = (iso) => {
+  if (!iso) return "";
+  const date = new Date(iso);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMin = Math.floor(diffMs / 60000);
+
+  if (diffMin < 1) return "たった今";
+  if (diffMin < 60) return `${diffMin}分前`;
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const hm = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+  const isSameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  if (isSameDay(date, now)) return `今日 ${hm}`;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameDay(date, yesterday)) return `昨日 ${hm}`;
+
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays < 7) return `${diffDays}日前`;
+
+  return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
+};
+
+// 本文を text/quote ブロックにパース
+const parseEmailBody = (text) => {
+  if (!text) return [{ type: "text", content: "" }];
+  const lines = text.split("\n");
+  const blocks = [];
+  let current = null;
+  for (const line of lines) {
+    const isQuote = /^\s*>/.test(line);
+    const type = isQuote ? "quote" : "text";
+    if (current && current.type === type) {
+      current.content += "\n" + line;
+    } else {
+      if (current) blocks.push(current);
+      current = { type, content: line };
+    }
   }
+  if (current) blocks.push(current);
+  // 空の text ブロックを除去
+  return blocks.filter((b) => b.type === "quote" || b.content.trim() !== "");
+};
+
+// スレッド展開トグル
+const isThreadExpanded = (threadId) => expandedThreadIds.value.has(threadId);
+const toggleThread = (threadId) => {
+  const next = new Set(expandedThreadIds.value);
+  if (next.has(threadId)) {
+    next.delete(threadId);
+    // 閉じたスレッドの返信フォームもクローズ
+    if (activeReplyThreadId.value === threadId) {
+      activeReplyThreadId.value = null;
+    }
+  } else {
+    next.add(threadId);
+  }
+  expandedThreadIds.value = next;
+};
+
+// メール展開判定（最新メールは常に展開扱い、それ以外は手動展開時のみ）
+const isEmailExpanded = (thread, email, idx) => {
+  // スレッド内の最新（先頭＝idx=0）は自動展開
+  if (idx === 0) return true;
+  return expandedEmailIds.value.has(email.id);
+};
+const toggleEmail = (emailId) => {
+  const next = new Set(expandedEmailIds.value);
+  if (next.has(emailId)) next.delete(emailId);
+  else next.add(emailId);
+  expandedEmailIds.value = next;
+};
+
+// 引用ブロック展開トグル
+const quoteKey = (emailId, bIdx) => `${emailId}_${bIdx}`;
+const isQuoteShown = (emailId, bIdx) =>
+  shownQuoteKeys.value.has(quoteKey(emailId, bIdx));
+const toggleQuote = (emailId, bIdx) => {
+  const key = quoteKey(emailId, bIdx);
+  const next = new Set(shownQuoteKeys.value);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  shownQuoteKeys.value = next;
+};
+
+// 返信フォームの操作
+const openReplyForm = (threadId) => {
+  activeReplyThreadId.value = threadId;
+  replyForm.email_thread_id = threadId;
+  replyForm.subject = "";
+  replyForm.message = "";
+  selectedThreadId.value = threadId;
+};
+const cancelReply = () => {
+  activeReplyThreadId.value = null;
+  replyForm.reset();
+  replyForm.email_thread_id = "";
+  replyForm.subject = "";
+  replyForm.message = "";
+};
+const submitInlineReply = (threadId) => {
+  replyForm.email_thread_id = threadId;
+  sendReplyEmail();
+};
+
+// 新規メール作成の操作
+const openNewComposer = () => {
+  showNewComposer.value = true;
+  replyForm.email_thread_id = "new";
+  replyForm.subject = "";
+  replyForm.message = "";
+  activeReplyThreadId.value = null;
+};
+const cancelNewComposer = () => {
+  showNewComposer.value = false;
+  replyForm.reset();
+  replyForm.email_thread_id = "";
+  replyForm.subject = "";
+  replyForm.message = "";
+};
+const submitNewEmail = () => {
+  replyForm.email_thread_id = "new";
+  sendReplyEmail();
 };
 
 const sendReplyEmail = () => {
@@ -2549,38 +2806,43 @@ const sendReplyEmail = () => {
     {
       onSuccess: (page) => {
         console.log('メール送信成功', page);
-        
+
         // 成功メッセージを表示
         const successMessage = page.props.flash?.success || page.props.success || (isNewEmail.value ? 'メールを送信しました。' : '返信メールを送信しました。');
         alert(successMessage);
-        
+
         // 新規メール作成の場合、作成したスレッドIDを保存
         const wasNewEmail = isNewEmail.value;
         // 既存スレッドへの返信の場合、選択したスレッドIDを保存
         const previousThreadId = !wasNewEmail ? replyForm.email_thread_id : null;
-        
+
         // フォームをリセット
         replyForm.reset();
         replyForm.email_thread_id = "";
         replyForm.subject = "";
         replyForm.message = "";
-        
+
+        // UI 状態リセット
+        showNewComposer.value = false;
+        activeReplyThreadId.value = null;
+
         // メールスレッドを再読み込み（少し待ってから実行）
         setTimeout(() => {
-          router.reload({ 
+          router.reload({
             only: ["emailThreads", "activity_logs"],
             preserveScroll: true,
             onSuccess: (reloadedPage) => {
-              // 新規作成した場合、最新のスレッド（新規作成したもの）を自動選択
               if (wasNewEmail && sortedEmailThreads.value && sortedEmailThreads.value.length > 0) {
-                selectedThreadId.value = sortedEmailThreads.value[0].id;
-                replyForm.email_thread_id = sortedEmailThreads.value[0].id;
+                // 新規作成した場合、最新スレッドを展開
+                const newest = sortedEmailThreads.value[0];
+                expandedThreadIds.value = new Set([newest.id]);
+                selectedThreadId.value = newest.id;
               } else if (!wasNewEmail && previousThreadId) {
-                // 既存スレッドへの返信の場合、選択したスレッドを維持
+                // 既存スレッドへの返信の場合、そのスレッドを展開維持
+                const next = new Set(expandedThreadIds.value);
+                next.add(previousThreadId);
+                expandedThreadIds.value = next;
                 selectedThreadId.value = previousThreadId;
-                replyForm.email_thread_id = previousThreadId;
-              } else {
-                selectedThreadId.value = null;
               }
             }
           });
@@ -2627,14 +2889,11 @@ onMounted(() => {
     searchCustomers();
   }
 
-  // メールスレッドが1つだけの場合は自動選択（新しい順にソート済みの最初のスレッド）
-  if (sortedEmailThreads.value && sortedEmailThreads.value.length === 1) {
-    replyForm.email_thread_id = sortedEmailThreads.value[0].id;
-    selectedThreadId.value = sortedEmailThreads.value[0].id;
-  } else if (sortedEmailThreads.value && sortedEmailThreads.value.length > 0) {
-    // 複数のスレッドがある場合、最新のスレッドを自動選択
-    replyForm.email_thread_id = sortedEmailThreads.value[0].id;
-    selectedThreadId.value = sortedEmailThreads.value[0].id;
+  // メールスレッドがある場合、最新スレッドを自動展開
+  if (sortedEmailThreads.value && sortedEmailThreads.value.length > 0) {
+    const latestThreadId = sortedEmailThreads.value[0].id;
+    expandedThreadIds.value = new Set([latestThreadId]);
+    selectedThreadId.value = latestThreadId;
   }
 
   // ログインユーザーの所属店舗の最初の店舗を自動選択

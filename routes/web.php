@@ -211,6 +211,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
 
     // 予約メール返信
     Route::post('/reservations/{reservation}/reply-email', [AdminReservationController::class, 'sendReplyEmail'])->name('reservations.reply-email');
+    Route::get('/emails/attachments/{attachment}/download', [AdminReservationController::class, 'downloadEmailAttachment'])->name('emails.attachments.download');
 
     // 予約枠管理
     Route::get('/events/{event}/timeslots', [AdminTimeslotController::class, 'index'])->name('events.timeslots.index');

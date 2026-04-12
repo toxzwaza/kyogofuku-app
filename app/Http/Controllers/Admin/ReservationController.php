@@ -7,6 +7,7 @@ use App\Mail\ReservationReplyMail;
 use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Email;
+use App\Models\EmailAttachment;
 use App\Models\EmailThread;
 use App\Models\Event;
 use App\Models\EventReservation;
@@ -21,6 +22,7 @@ use App\Services\Line\ReservationLineContactMigrator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -1131,6 +1133,18 @@ class ReservationController extends Controller
         }
 
         return redirect()->back()->with('success', 'Googleカレンダーに連携しました。');
+    }
+
+    /**
+     * 受信メールの添付ファイルをダウンロード
+     */
+    public function downloadEmailAttachment(EmailAttachment $attachment)
+    {
+        if (empty($attachment->path) || ! Storage::disk('local')->exists($attachment->path)) {
+            abort(404, '添付ファイルが見つかりません。');
+        }
+
+        return Storage::disk('local')->download($attachment->path, $attachment->filename);
     }
 
     /**
