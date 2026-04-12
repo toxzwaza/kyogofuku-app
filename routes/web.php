@@ -205,6 +205,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // 予約スケジュール管理
     Route::post('/reservations/{reservation}/schedule', [AdminReservationController::class, 'addToSchedule'])->name('reservations.schedule.add');
     Route::delete('/reservations/{reservation}/schedule', [AdminReservationController::class, 'removeFromSchedule'])->name('reservations.schedule.remove');
+    Route::post('/reservations/{reservation}/google-calendar/sync', [AdminReservationController::class, 'syncGoogleCalendar'])->name('reservations.google-calendar.sync');
     Route::patch('/reservations/{reservation}/customer', [AdminReservationController::class, 'linkCustomer'])->name('reservations.customer.link');
     Route::delete('/reservations/{reservation}/customer', [AdminReservationController::class, 'unlinkCustomer'])->name('reservations.customer.unlink');
 

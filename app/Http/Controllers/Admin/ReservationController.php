@@ -399,7 +399,7 @@ class ReservationController extends Controller
      */
     public function show(Request $request, EventReservation $reservation)
     {
-        $reservation->load(['event', 'venue', 'customer.ceremonyArea', 'notes.user', 'statusUpdatedBy', 'schedule.user', 'schedule.participantUsers', 'emailThreads.emails']);
+        $reservation->load(['event', 'venue', 'customer.ceremonyArea', 'notes.user', 'statusUpdatedBy', 'schedule.user', 'schedule.participantUsers', 'schedule.googleCalendarEventSyncs.shop', 'emailThreads.emails']);
 
         $indexFilters = array_filter([
             'venue_id' => $request->query('venue_id'),
@@ -575,7 +575,61 @@ class ReservationController extends Controller
             }),
             'assigneeDatalistOptions' => $this->assigneeDatalistOptionsForEvent($event),
             'line_section' => $lineSection,
+            'googleCalendarSyncInfo' => $this->buildGoogleCalendarSyncInfo($reservation, $eventShops),
         ]);
+    }
+
+    /**
+     * 予約詳細画面で使用する Googleカレンダー連携情報を組み立てる
+     */
+    protected function buildGoogleCalendarSyncInfo(EventReservation $reservation, $eventShops): array
+    {
+        $schedule = $reservation->schedule;
+
+        $syncs = [];
+        if ($schedule) {
+            $syncs = $schedule->googleCalendarEventSyncs
+                ->map(function ($s) {
+                    // Google Calendar の eid は "{eventId} {calendarId}" を base64url エンコードしたもの
+                    $raw = $s->google_event_id . ' ' . $s->google_calendar_id;
+                    $eid = rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+
+                    return [
+                        'id' => $s->id,
+                        'shop_id' => $s->shop_id,
+                        'shop_name' => $s->shop?->name,
+                        'google_calendar_id' => $s->google_calendar_id,
+                        'google_event_id' => $s->google_event_id,
+                        'html_link' => 'https://www.google.com/calendar/event?eid=' . $eid,
+                    ];
+                })
+                ->values()
+                ->all();
+        }
+
+        $expectedShops = $eventShops->map(fn ($s) => [
+            'id' => $s->id,
+            'name' => $s->name,
+        ])->values()->all();
+
+        $canSync = true;
+        $cannotSyncReason = null;
+        if ($reservation->cancel_flg) {
+            $canSync = false;
+            $cannotSyncReason = 'キャンセル済み予約はGoogleカレンダーに連携できません。';
+        } elseif (empty($reservation->reservation_datetime)) {
+            $canSync = false;
+            $cannotSyncReason = '予約日時が未設定のためGoogleカレンダーに連携できません。';
+        }
+
+        return [
+            'has_schedule' => $schedule !== null,
+            'sync_enabled' => (bool) ($schedule?->sync_to_google_calendar),
+            'syncs' => $syncs,
+            'expected_shops' => $expectedShops,
+            'can_sync' => $canSync,
+            'cannot_sync_reason' => $cannotSyncReason,
+        ];
     }
 
     /**
@@ -1033,6 +1087,50 @@ class ReservationController extends Controller
         $reservation->schedule->delete();
 
         return redirect()->back()->with('success', 'スケジュールから解除しました。');
+    }
+
+    /**
+     * 予約をGoogleカレンダーに手動連携する
+     * - スケジュールがなければ作成してGoogleカレンダーへ同期
+     * - スケジュールがあれば再同期（差分反映）
+     */
+    public function syncGoogleCalendar(EventReservation $reservation)
+    {
+        if ($reservation->cancel_flg) {
+            return redirect()->back()->with('error', 'キャンセル済み予約はGoogleカレンダーに連携できません。');
+        }
+        if (empty($reservation->reservation_datetime)) {
+            return redirect()->back()->with('error', '予約日時が未設定のためGoogleカレンダーに連携できません。');
+        }
+
+        $reservation->load(['event', 'venue', 'schedule']);
+
+        try {
+            if ($reservation->schedule === null) {
+                // スケジュールがない → BootstrapService で作成＆同期
+                // （管理画面ログイン中なので Auth::id() が必ず取れる）
+                app(EventReservationScheduleBootstrapService::class)
+                    ->bootstrapIfApplicable($reservation);
+            } else {
+                // 既存スケジュールあり → 再同期
+                $schedule = $reservation->schedule;
+                if (! $schedule->sync_to_google_calendar) {
+                    $schedule->update(['sync_to_google_calendar' => true]);
+                    $schedule->refresh();
+                }
+                app(GoogleCalendarSyncService::class)
+                    ->syncScheduleToShopCalendarsOnUpdate($schedule);
+            }
+        } catch (\Throwable $e) {
+            Log::error('[GoogleCalendar] 手動連携失敗', [
+                'reservation_id' => $reservation->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('error', 'Googleカレンダー連携に失敗しました: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Googleカレンダーに連携しました。');
     }
 
     /**

@@ -721,6 +721,141 @@
                   </form>
                 </div>
 
+                <!-- Googleカレンダー連携 -->
+                <div class="mb-6 pb-6 border-b border-gray-200">
+                  <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <svg
+                      class="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Googleカレンダー連携
+                  </h3>
+
+                  <!-- 連携済み -->
+                  <div
+                    v-if="
+                      googleCalendarSyncInfo.syncs &&
+                      googleCalendarSyncInfo.syncs.length > 0
+                    "
+                  >
+                    <div class="mb-3 flex items-center gap-2">
+                      <span
+                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                      >
+                        <span
+                          class="w-2 h-2 bg-green-500 rounded-full mr-1.5"
+                        ></span>
+                        連携済み（{{ googleCalendarSyncInfo.syncs.length }}件）
+                      </span>
+                    </div>
+                    <div class="space-y-2 mb-3">
+                      <div
+                        v-for="sync in googleCalendarSyncInfo.syncs"
+                        :key="sync.id"
+                        class="p-3 bg-green-50 rounded-lg border border-green-200"
+                      >
+                        <div class="flex items-start justify-between gap-2">
+                          <div class="min-w-0 flex-1">
+                            <div class="text-sm font-medium text-gray-900">
+                              {{ sync.shop_name || "—" }}
+                            </div>
+                            <div
+                              class="text-xs text-gray-500 mt-0.5 truncate"
+                              :title="sync.google_calendar_id"
+                            >
+                              {{ sync.google_calendar_id }}
+                            </div>
+                          </div>
+                          <a
+                            :href="sync.html_link"
+                            target="_blank"
+                            rel="noopener"
+                            class="shrink-0 text-xs text-indigo-600 hover:underline whitespace-nowrap"
+                          >
+                            カレンダーで開く →
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      @click="syncGoogleCalendar"
+                      :disabled="googleCalendarSyncForm.processing"
+                      class="w-full px-3 py-2 text-sm font-medium bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 disabled:opacity-50"
+                    >
+                      {{
+                        googleCalendarSyncForm.processing
+                          ? "処理中..."
+                          : "再同期"
+                      }}
+                    </button>
+                  </div>
+
+                  <!-- 未連携 -->
+                  <div v-else>
+                    <div class="mb-3 flex items-center gap-2">
+                      <span
+                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                      >
+                        <span
+                          class="w-2 h-2 bg-yellow-500 rounded-full mr-1.5"
+                        ></span>
+                        未連携
+                      </span>
+                    </div>
+                    <p
+                      v-if="googleCalendarSyncInfo.can_sync"
+                      class="text-xs text-gray-600 mb-3"
+                    >
+                      この予約はまだGoogleカレンダーに登録されていません。
+                      <span
+                        v-if="
+                          googleCalendarSyncInfo.expected_shops &&
+                          googleCalendarSyncInfo.expected_shops.length > 0
+                        "
+                        class="font-medium"
+                      >
+                        {{
+                          googleCalendarSyncInfo.expected_shops
+                            .map((s) => s.name)
+                            .join("、")
+                        }}
+                      </span>
+                      のカレンダーに登録できます。
+                    </p>
+                    <p v-else class="text-xs text-red-600 mb-3">
+                      {{
+                        googleCalendarSyncInfo.cannot_sync_reason ||
+                        "連携できない状態です。"
+                      }}
+                    </p>
+                    <button
+                      type="button"
+                      @click="syncGoogleCalendar"
+                      :disabled="
+                        !googleCalendarSyncInfo.can_sync ||
+                        googleCalendarSyncForm.processing
+                      "
+                      class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400 text-sm font-medium"
+                    >
+                      {{
+                        googleCalendarSyncForm.processing
+                          ? "連携中..."
+                          : "Googleカレンダーに連携する"
+                      }}
+                    </button>
+                  </div>
+                </div>
+
                 <!-- スケジュール（予約詳細では非表示・処理はバックエンドのまま利用可能） -->
                 <div v-if="false" class="mt-6 pt-6 border-t border-gray-200">
                   <h3 class="text-lg font-semibold mb-4">スケジュール</h3>
@@ -1816,6 +1951,17 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  googleCalendarSyncInfo: {
+    type: Object,
+    default: () => ({
+      has_schedule: false,
+      sync_enabled: false,
+      syncs: [],
+      expected_shops: [],
+      can_sync: false,
+      cannot_sync_reason: null,
+    }),
+  },
 });
 
 const lineCustomerForLineSection = computed(() => {
@@ -1977,6 +2123,23 @@ const submitEntranceTicketSendStatus = () => {
       preserveScroll: true,
       onSuccess: () => {
         router.reload({ only: ["reservation", "activity_logs"] });
+      },
+    }
+  );
+};
+
+// Googleカレンダー連携
+const googleCalendarSyncForm = useForm({});
+
+const syncGoogleCalendar = () => {
+  googleCalendarSyncForm.post(
+    route("admin.reservations.google-calendar.sync", props.reservation.id),
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        router.reload({
+          only: ["reservation", "googleCalendarSyncInfo", "activity_logs"],
+        });
       },
     }
   );
