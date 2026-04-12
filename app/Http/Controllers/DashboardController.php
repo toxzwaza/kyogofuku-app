@@ -396,6 +396,7 @@ class DashboardController extends Controller
             ->whereHas('eventReservation', function ($q) use ($userShopIds) {
                 $q->where('cancel_flg', false)
                   ->whereHas('event', fn ($eq) => $eq->where('is_public', true)
+                      ->where(fn ($dq) => $dq->whereNull('end_at')->orWhere('end_at', '>=', $today))
                       ->whereHas('shops', fn ($sq) => $sq->whereIn('shops.id', $userShopIds)));
             })
             ->get()
