@@ -446,8 +446,8 @@ class DashboardController extends Controller
                     ->where(fn ($dq) => $dq->whereNull('end_at')->orWhere('end_at', '>=', Carbon::today()))
                     ->whereHas('shops', fn ($sq) => $sq->whereIn('shops.id', $userShopIds)))
                 ->with(['event.shops'])
-                ->orderBy('created_at', 'asc')
-                ->limit(15)
+                ->orderBy('created_at', 'desc')
+                ->limit(30)
                 ->get()
                 ->map(function ($r) use ($userShopIds) {
                     return [

@@ -343,7 +343,7 @@
                             </h3>
                         </div>
                         <p class="text-xs text-gray-500 mb-4">
-                            ステータスが「未対応」「確認中」「返信待ち」の予約です。古い順に表示しています。
+                            ステータスが「未対応」「確認中」「返信待ち」の予約です。新しい順に表示しています。
                         </p>
                         <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
                             <li v-for="item in actionRequiredReservations" :key="'req-' + item.reservation_id">
