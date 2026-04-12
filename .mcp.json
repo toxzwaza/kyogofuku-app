@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "kyogofuku": {
+      "command": "node",
+      "args": ["mcp/server.js"],
+      "env": {
+        "KYOGOFUKU_API_BASE": "https://kyogofuku-event.com",
+        "KYOGOFUKU_API_TOKEN": "nl_kyogofuku_712dedd3701075828c71241e91349e9d87375e9d26394cfdb8cec93717e24f0d"
+      }
+    }
+  }
+}

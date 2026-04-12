@@ -29,3 +29,6 @@ Route::get('/utm-analytics', UtmAnalyticsApiController::class);
 
 // 自然言語 API（Claude API tool_use で操作。Bearer トークン認証）
 Route::post('/nl/chat', [NaturalLanguageController::class, 'chat']);
+
+// MCP サーバー用 tool 直接実行エンドポイント（Bearer トークン認証）
+Route::post('/tools/execute', [NaturalLanguageController::class, 'executeTool']);

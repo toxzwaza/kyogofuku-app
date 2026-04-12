@@ -1,0 +1,13 @@
+{
+  "name": "kyogofuku-mcp-server",
+  "version": "1.0.0",
+  "description": "京呉服平田 基幹システム MCP Server",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  }
+}
