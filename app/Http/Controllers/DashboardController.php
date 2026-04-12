@@ -6,6 +6,7 @@ use App\Models\AttendanceRecord;
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\CustomerLineMessage;
+use App\Models\EmailThread;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
@@ -382,6 +383,109 @@ class DashboardController extends Controller
                 ->count()
             : 0;
 
+        // ── 要対応セクション用データ ──
+
+        // 1. 返信待ちメール（最新メールが顧客からのスレッド = 当店が未返信）
+        $pendingEmailReplies = [];
+        if (! empty($userShopIds)) {
+            $pendingEmailReplies = EmailThread::with([
+                'eventReservation.event.shops',
+                'emails' => fn ($q) => $q->orderByDesc('created_at'),
+            ])
+            ->whereHas('emails')
+            ->whereHas('eventReservation', function ($q) use ($userShopIds) {
+                $q->where('cancel_flg', false)
+                  ->whereHas('event.shops', fn ($sq) => $sq->whereIn('shops.id', $userShopIds));
+            })
+            ->get()
+            ->filter(function ($thread) {
+                $latestEmail = $thread->emails->first();
+                if (! $latestEmail) {
+                    return false;
+                }
+                $reservation = $thread->eventReservation;
+                if (! $reservation || ! $reservation->email) {
+                    return false;
+                }
+
+                return str_contains(strtolower($latestEmail->from ?? ''), strtolower($reservation->email));
+            })
+            ->map(function ($thread) use ($userShopIds) {
+                $latestEmail = $thread->emails->first();
+                $reservation = $thread->eventReservation;
+                $event = $reservation->event;
+                $shopNames = $event->shops->filter(fn ($s) => in_array($s->id, $userShopIds))->pluck('name')->toArray();
+                $elapsedHours = (int) Carbon::parse($latestEmail->created_at)->diffInHours(now());
+                $cleanSubject = preg_replace('/\[\d+\]\s*/u', '', $thread->subject ?? $latestEmail->subject ?? '');
+
+                return [
+                    'reservation_id' => $reservation->id,
+                    'customer_name' => $reservation->name,
+                    'subject' => trim($cleanSubject) !== '' ? trim($cleanSubject) : '(件名なし)',
+                    'event_name' => $event->title ?? '',
+                    'shop_names' => $shopNames,
+                    'last_customer_email_at' => $latestEmail->created_at->toIso8601String(),
+                    'elapsed_hours' => $elapsedHours,
+                    'status' => $reservation->status,
+                ];
+            })
+            ->sortByDesc('elapsed_hours')
+            ->take(10)
+            ->values()
+            ->toArray();
+        }
+
+        // 2. 要対応予約（ステータスベース: 未対応/確認中/返信待ち）
+        $actionRequiredReservations = [];
+        if (! empty($userShopIds)) {
+            $actionRequiredReservations = EventReservation::where('cancel_flg', false)
+                ->whereIn('status', ['未対応', '確認中', '返信待ち'])
+                ->whereHas('event.shops', fn ($q) => $q->whereIn('shops.id', $userShopIds))
+                ->with(['event.shops'])
+                ->orderBy('created_at', 'asc')
+                ->limit(15)
+                ->get()
+                ->map(function ($r) use ($userShopIds) {
+                    return [
+                        'reservation_id' => $r->id,
+                        'customer_name' => $r->name,
+                        'event_name' => $r->event->title ?? '',
+                        'shop_names' => $r->event->shops->filter(fn ($s) => in_array($s->id, $userShopIds))->pluck('name')->toArray(),
+                        'status' => $r->status,
+                        'admin_assignee' => $r->admin_assignee,
+                        'created_at' => $r->created_at->toIso8601String(),
+                        'days_since_created' => (int) Carbon::parse($r->created_at)->diffInDays(now()),
+                    ];
+                })
+                ->toArray();
+        }
+
+        // 3. 本日の来店予約
+        $todayAppointments = [];
+        if (! empty($userShopIds)) {
+            $todayAppointments = EventReservation::where('cancel_flg', false)
+                ->whereNotNull('reservation_datetime')
+                ->whereDate('reservation_datetime', $today)
+                ->whereHas('event.shops', fn ($q) => $q->whereIn('shops.id', $userShopIds))
+                ->with(['event.shops', 'venue'])
+                ->orderBy('reservation_datetime', 'asc')
+                ->get()
+                ->map(function ($r) use ($userShopIds) {
+                    return [
+                        'reservation_id' => $r->id,
+                        'time' => Carbon::parse($r->reservation_datetime)->format('H:i'),
+                        'customer_name' => $r->name,
+                        'event_name' => $r->event->title ?? '',
+                        'venue_name' => $r->venue->name ?? '',
+                        'shop_names' => $r->event->shops->filter(fn ($s) => in_array($s->id, $userShopIds))->pluck('name')->toArray(),
+                        'considering_plans' => $r->considering_plans ?? [],
+                        'admin_assignee' => $r->admin_assignee,
+                        'status' => $r->status,
+                    ];
+                })
+                ->toArray();
+        }
+
         $lineInboundUnreadCount = 0;
         $lineInboundRecentItems = [];
         if (! empty($userShopIds)) {
@@ -464,6 +568,9 @@ class DashboardController extends Controller
             'stats' => $stats,
             'pendingContractsCount' => $pendingContractsCount,
             'undecidedPhotoSlotsCount' => $undecidedPhotoSlotsCount,
+            'pendingEmailReplies' => $pendingEmailReplies,
+            'actionRequiredReservations' => $actionRequiredReservations,
+            'todayAppointments' => $todayAppointments,
             'lineInboundUnreadCount' => $lineInboundUnreadCount,
             'lineInboundRecentItems' => $lineInboundRecentItems,
             'formTypeStats' => $formTypeStats,

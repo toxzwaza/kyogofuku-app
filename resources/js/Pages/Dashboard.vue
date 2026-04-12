@@ -210,6 +210,183 @@
                     </div>
                 </div>
 
+                <!-- ⚡ 要対応セクション -->
+
+                <!-- 本日の来店予約 -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                本日の来店予約
+                                <span class="inline-flex items-center justify-center min-w-[1.75rem] px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+                                    {{ todayAppointments.length }}
+                                </span>
+                            </h3>
+                        </div>
+                        <div v-if="todayAppointments.length === 0"
+                            class="rounded-lg border border-dashed border-gray-200 bg-gray-50/80 px-4 py-8 text-center text-sm text-gray-500">
+                            本日の来店予約はありません。
+                        </div>
+                        <ul v-else class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                            <li v-for="item in todayAppointments" :key="item.reservation_id">
+                                <Link
+                                    :href="route('admin.reservations.show', item.reservation_id)"
+                                    class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-white hover:bg-gray-50 transition-colors"
+                                >
+                                    <span class="text-lg font-mono font-bold text-gray-900 shrink-0 w-14">{{ item.time }}</span>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="font-medium text-gray-900">{{ item.customer_name }}</span>
+                                            <span v-for="shop in item.shop_names" :key="shop"
+                                                class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-medium">
+                                                {{ shop }}
+                                            </span>
+                                            <span :class="[
+                                                'text-[10px] px-1.5 py-0.5 rounded font-medium',
+                                                item.status === '未対応' ? 'bg-red-100 text-red-800' :
+                                                item.status === '確認中' ? 'bg-yellow-100 text-yellow-800' :
+                                                item.status === '返信待ち' ? 'bg-blue-100 text-blue-800' :
+                                                item.status === '対応完了済み' ? 'bg-green-100 text-green-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            ]">{{ item.status }}</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            {{ item.event_name }}
+                                            <span v-if="item.venue_name"> / {{ item.venue_name }}</span>
+                                            <span v-if="item.admin_assignee" class="ml-2 text-gray-400">担当: {{ item.admin_assignee }}</span>
+                                        </p>
+                                        <p v-if="item.considering_plans && item.considering_plans.length > 0" class="text-xs text-indigo-600 mt-0.5">
+                                            検討プラン: {{ item.considering_plans.join('、') }}
+                                        </p>
+                                    </div>
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 返信待ちメール -->
+                <div v-if="pendingEmailReplies.length > 0" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                返信待ちメール
+                                <span class="inline-flex items-center justify-center min-w-[1.75rem] px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                                    {{ pendingEmailReplies.length }}
+                                </span>
+                            </h3>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">
+                            お客様からの最新メールに未返信のスレッドです。経過時間が長いものから表示しています。
+                        </p>
+                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                            <li v-for="item in pendingEmailReplies" :key="'email-' + item.reservation_id">
+                                <Link
+                                    :href="route('admin.reservations.show', item.reservation_id)"
+                                    class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 hover:bg-gray-50 transition-colors"
+                                    :class="item.elapsed_hours >= 48 ? 'bg-red-50/50' : 'bg-white'"
+                                >
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="font-medium text-gray-900">{{ item.customer_name }}</span>
+                                            <span v-for="shop in item.shop_names" :key="shop"
+                                                class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-medium">
+                                                {{ shop }}
+                                            </span>
+                                            <span :class="[
+                                                'text-[10px] px-1.5 py-0.5 rounded font-medium',
+                                                item.status === '未対応' ? 'bg-red-100 text-red-800' :
+                                                item.status === '確認中' ? 'bg-yellow-100 text-yellow-800' :
+                                                item.status === '返信待ち' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            ]">{{ item.status }}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 truncate mt-1">{{ item.subject }}</p>
+                                        <p class="text-xs text-gray-400 mt-0.5">{{ item.event_name }}</p>
+                                    </div>
+                                    <div class="shrink-0 text-right">
+                                        <span :class="[
+                                            'text-sm font-semibold',
+                                            item.elapsed_hours < 24 ? 'text-gray-600' :
+                                            item.elapsed_hours < 48 ? 'text-yellow-600' :
+                                            'text-red-600'
+                                        ]">
+                                            {{ item.elapsed_hours < 1 ? 'たった今'
+                                                : item.elapsed_hours < 24 ? item.elapsed_hours + '時間前'
+                                                : Math.floor(item.elapsed_hours / 24) + '日前' }}
+                                        </span>
+                                    </div>
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 要対応予約 -->
+                <div v-if="actionRequiredReservations.length > 0" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                要対応予約
+                                <span class="inline-flex items-center justify-center min-w-[1.75rem] px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
+                                    {{ actionRequiredReservations.length }}
+                                </span>
+                            </h3>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">
+                            ステータスが「未対応」「確認中」「返信待ち」の予約です。古い順に表示しています。
+                        </p>
+                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                            <li v-for="item in actionRequiredReservations" :key="'req-' + item.reservation_id">
+                                <Link
+                                    :href="route('admin.reservations.show', item.reservation_id)"
+                                    class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 hover:bg-gray-50 transition-colors"
+                                    :class="item.days_since_created >= 4 ? 'bg-red-50/50' : 'bg-white'"
+                                >
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="font-medium text-gray-900">{{ item.customer_name }}</span>
+                                            <span v-for="shop in item.shop_names" :key="shop"
+                                                class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-medium">
+                                                {{ shop }}
+                                            </span>
+                                            <span :class="[
+                                                'text-[10px] px-1.5 py-0.5 rounded font-medium',
+                                                item.status === '未対応' ? 'bg-red-100 text-red-800' :
+                                                item.status === '確認中' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-blue-100 text-blue-800'
+                                            ]">{{ item.status }}</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            {{ item.event_name }}
+                                            <span v-if="item.admin_assignee" class="ml-2 text-gray-400">担当: {{ item.admin_assignee }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="shrink-0 text-right">
+                                        <span :class="[
+                                            'text-sm font-semibold',
+                                            item.days_since_created === 0 ? 'text-gray-600' :
+                                            item.days_since_created <= 3 ? 'text-yellow-600' :
+                                            'text-red-600'
+                                        ]">
+                                            {{ item.days_since_created === 0 ? '本日' : item.days_since_created + '日経過' }}
+                                        </span>
+                                    </div>
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- 統計情報カード -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
@@ -2368,6 +2545,9 @@ const props = defineProps({
     stats: Object,
     pendingContractsCount: Number,
     undecidedPhotoSlotsCount: Number,
+    pendingEmailReplies: { type: Array, default: () => [] },
+    actionRequiredReservations: { type: Array, default: () => [] },
+    todayAppointments: { type: Array, default: () => [] },
     lineInboundUnreadCount: { type: Number, default: 0 },
     lineInboundRecentItems: { type: Array, default: () => [] },
     formTypeStats: Object,
