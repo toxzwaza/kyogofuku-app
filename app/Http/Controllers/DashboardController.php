@@ -395,7 +395,8 @@ class DashboardController extends Controller
             ->whereHas('emails')
             ->whereHas('eventReservation', function ($q) use ($userShopIds) {
                 $q->where('cancel_flg', false)
-                  ->whereHas('event.shops', fn ($sq) => $sq->whereIn('shops.id', $userShopIds));
+                  ->whereHas('event', fn ($eq) => $eq->where('is_public', true)
+                      ->whereHas('shops', fn ($sq) => $sq->whereIn('shops.id', $userShopIds)));
             })
             ->get()
             ->filter(function ($thread) {
@@ -440,7 +441,8 @@ class DashboardController extends Controller
         if (! empty($userShopIds)) {
             $actionRequiredReservations = EventReservation::where('cancel_flg', false)
                 ->whereIn('status', ['未対応', '確認中', '返信待ち'])
-                ->whereHas('event.shops', fn ($q) => $q->whereIn('shops.id', $userShopIds))
+                ->whereHas('event', fn ($q) => $q->where('is_public', true)
+                    ->whereHas('shops', fn ($sq) => $sq->whereIn('shops.id', $userShopIds)))
                 ->with(['event.shops'])
                 ->orderBy('created_at', 'asc')
                 ->limit(15)
@@ -466,7 +468,8 @@ class DashboardController extends Controller
             $todayAppointments = EventReservation::where('cancel_flg', false)
                 ->whereNotNull('reservation_datetime')
                 ->whereDate('reservation_datetime', $today)
-                ->whereHas('event.shops', fn ($q) => $q->whereIn('shops.id', $userShopIds))
+                ->whereHas('event', fn ($q) => $q->where('is_public', true)
+                    ->whereHas('shops', fn ($sq) => $sq->whereIn('shops.id', $userShopIds)))
                 ->with(['event.shops', 'venue'])
                 ->orderBy('reservation_datetime', 'asc')
                 ->get()
