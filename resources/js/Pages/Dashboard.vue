@@ -230,7 +230,7 @@
                             class="rounded-lg border border-dashed border-gray-200 bg-gray-50/80 px-4 py-8 text-center text-sm text-gray-500">
                             本日の来店予約はありません。
                         </div>
-                        <ul v-else class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                        <ul v-else class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
                             <li v-for="item in todayAppointments" :key="item.reservation_id">
                                 <Link
                                     :href="route('admin.reservations.show', item.reservation_id)"
@@ -285,7 +285,7 @@
                         <p class="text-xs text-gray-500 mb-4">
                             お客様からの最新メールに未返信のスレッドです。経過時間が長いものから表示しています。
                         </p>
-                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
                             <li v-for="item in pendingEmailReplies" :key="'email-' + item.reservation_id">
                                 <Link
                                     :href="route('admin.reservations.show', item.reservation_id)"
@@ -331,22 +331,31 @@
                 <!-- 要対応予約 -->
                 <div v-if="actionRequiredReservations.length > 0" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-center justify-between mb-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                 </svg>
                                 要対応予約
                                 <span class="inline-flex items-center justify-center min-w-[1.75rem] px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
-                                    {{ actionRequiredReservations.length }}
+                                    {{ filteredActionRequired.length }}
                                 </span>
                             </h3>
+                            <select
+                                v-model="actionRequiredEventFilter"
+                                class="text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1.5 max-w-xs"
+                            >
+                                <option value="">すべてのイベント</option>
+                                <option v-for="ev in actionRequiredEventOptions" :key="ev" :value="ev">
+                                    {{ ev }}
+                                </option>
+                            </select>
                         </div>
                         <p class="text-xs text-gray-500 mb-4">
                             ステータスが「未対応」「確認中」「返信待ち」の予約です。新しい順に表示しています。
                         </p>
-                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
-                            <li v-for="item in actionRequiredReservations" :key="'req-' + item.reservation_id">
+                        <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+                            <li v-for="item in filteredActionRequired" :key="'req-' + item.reservation_id">
                                 <Link
                                     :href="route('admin.reservations.show', item.reservation_id)"
                                     class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 hover:bg-gray-50 transition-colors"
@@ -2548,6 +2557,7 @@ const props = defineProps({
     pendingEmailReplies: { type: Array, default: () => [] },
     actionRequiredReservations: { type: Array, default: () => [] },
     todayAppointments: { type: Array, default: () => [] },
+    // ↓ 既存のpropsはそのまま
     lineInboundUnreadCount: { type: Number, default: 0 },
     lineInboundRecentItems: { type: Array, default: () => [] },
     formTypeStats: Object,
@@ -2593,6 +2603,23 @@ const defaultShopId = computed(() => {
     if (shops.length === 0) return null;
     const main = shops.find((s) => s.main);
     return (main || shops[0])?.id ?? null;
+});
+
+// 要対応予約のイベントフィルタ
+const actionRequiredEventFilter = ref("");
+const actionRequiredEventOptions = computed(() => {
+    const events = new Map();
+    (props.actionRequiredReservations || []).forEach((r) => {
+        if (r.event_name && !events.has(r.event_name)) {
+            events.set(r.event_name, r.event_name);
+        }
+    });
+    return [...events.values()].sort();
+});
+const filteredActionRequired = computed(() => {
+    const items = props.actionRequiredReservations || [];
+    if (!actionRequiredEventFilter.value) return items;
+    return items.filter((r) => r.event_name === actionRequiredEventFilter.value);
 });
 
 const statCards = computed(() => {

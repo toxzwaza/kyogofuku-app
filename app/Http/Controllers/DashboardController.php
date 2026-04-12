@@ -447,7 +447,7 @@ class DashboardController extends Controller
                     ->whereHas('shops', fn ($sq) => $sq->whereIn('shops.id', $userShopIds)))
                 ->with(['event.shops'])
                 ->orderBy('created_at', 'desc')
-                ->limit(30)
+                ->limit(50)
                 ->get()
                 ->map(function ($r) use ($userShopIds) {
                     return [
