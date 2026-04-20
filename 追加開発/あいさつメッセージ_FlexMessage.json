@@ -1,0 +1,63 @@
+{
+  "_comment_": "LINE Official Account Manager の『あいさつメッセージ』に貼り付けるFlexMessage。LIFF URL は『あいさつ連携セルフ紐付け』LIFFアプリ（LIFF ID: 2009633621-q3A6Ygs8）を指す。",
+  "type": "flex",
+  "altText": "ご予約・お客様情報と LINE を連携してください",
+  "contents": {
+    "type": "bubble",
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "京呉服平田",
+          "weight": "bold",
+          "size": "sm",
+          "color": "#888888"
+        },
+        {
+          "type": "text",
+          "text": "ご予約・お客様情報と連携",
+          "weight": "bold",
+          "size": "lg",
+          "margin": "md",
+          "wrap": true
+        },
+        {
+          "type": "text",
+          "text": "下のボタンから『予約番号』または『電話番号』を入力していただくと、ご予約のリマインドや個別ご連絡をこちらの LINE にお送りできます。",
+          "size": "sm",
+          "color": "#555555",
+          "wrap": true,
+          "margin": "md"
+        }
+      ]
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "spacing": "sm",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#06c755",
+          "action": {
+            "type": "uri",
+            "label": "ご予約・情報と連携する",
+            "uri": "https://liff.line.me/2009633621-q3A6Ygs8"
+          }
+        },
+        {
+          "type": "text",
+          "text": "後からでも『リッチメニュー』からアクセスできます",
+          "size": "xs",
+          "color": "#999999",
+          "wrap": true,
+          "align": "center",
+          "margin": "sm"
+        }
+      ]
+    }
+  }
+}

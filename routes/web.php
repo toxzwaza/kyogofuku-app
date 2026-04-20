@@ -389,6 +389,10 @@ Route::get('/line/liff/link', [LineLiffController::class, 'showLink'])->name('li
 Route::post('/line/liff/complete', [LineLiffController::class, 'complete'])->name('line.liff.complete');
 Route::get('/line/liff/resume', [LineLiffController::class, 'liffLoginResume'])->name('line.liff.resume');
 
+// あいさつメッセージ経由のセルフ紐付けフロー（link token 不要）
+Route::get('/line/liff/welcome', [\App\Http\Controllers\LineWelcomeLinkController::class, 'show'])->name('line.liff.welcome');
+Route::post('/line/liff/welcome/match', [\App\Http\Controllers\LineWelcomeLinkController::class, 'match'])->name('line.liff.welcome.match');
+
 Route::get('/test-line', function () {
     app()->call('App\Http\Controllers\LineTestController@test');
 });

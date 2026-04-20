@@ -16,6 +16,7 @@ class VerifyCsrfToken extends Middleware
         'webhook/line',
         'webhook/line/*',
         'line/liff/complete',
+        'line/liff/welcome/match',
         '/inbound-mail',
     ];
 }

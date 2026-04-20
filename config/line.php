@@ -14,6 +14,12 @@ return [
         /** LIFF アプリの ID（liff.line.me/{ここ}） */
         'id' => env('LINE_LIFF_ID', env('LINE_MESSAGING_LIFF_ID')),
         /**
+         * あいさつメッセージ経由のセルフ紐付け LIFF アプリ ID。
+         * 未設定時は通常の LIFF ID にフォールバックする。
+         * 紐付け方式が異なるため別 LIFF アプリ（Endpoint URL = /line/liff/welcome）を推奨。
+         */
+        'welcome_id' => env('LINE_WELCOME_LIFF_ID'),
+        /**
          * ID トークン検証用の client_id（LINE Developers の「LINEログイン」チャネル Basic settings の Channel ID）
          * 未設定時は後方互換で LINE_MESSAGING_CHANNEL_ID を参照（レガシー構成向け）
          */

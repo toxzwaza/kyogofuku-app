@@ -48,6 +48,13 @@ class LineMessagingWebhookController extends Controller
     private function processEvent(array $event): void
     {
         $type = $event['type'] ?? null;
+
+        if ($type === 'follow' || $type === 'unfollow') {
+            $this->processFollowEvent($event, $type);
+
+            return;
+        }
+
         if ($type !== 'message') {
             return;
         }
@@ -115,6 +122,40 @@ class LineMessagingWebhookController extends Controller
                 return;
             }
             throw $e;
+        }
+    }
+
+    /**
+     * follow / unfollow イベントを記録する。
+     *
+     * 友だち追加（follow）後、まだ顧客・予約に紐付いていないユーザーを追跡できるようにする。
+     * あいさつメッセージは LINE Official Account Manager の管理画面で固定送信されるため、
+     * ここでは Push せず、追跡用にログ記録のみ行う。
+     */
+    private function processFollowEvent(array $event, string $type): void
+    {
+        $source = $event['source'] ?? [];
+        if (($source['type'] ?? '') !== 'user' || empty($source['userId'])) {
+            return;
+        }
+
+        $lineUserId = (string) $source['userId'];
+
+        try {
+            LineUnknownInboundMessage::query()->create([
+                'shop_id' => null,
+                'line_user_id' => $lineUserId,
+                'text' => '('.$type.' event)',
+                'line_message_id' => null,
+                'raw_event' => $event,
+                'created_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('LINE webhook: failed to record follow event', [
+                'type' => $type,
+                'line_user_id' => $lineUserId,
+                'message' => $e->getMessage(),
+            ]);
         }
     }
 }
