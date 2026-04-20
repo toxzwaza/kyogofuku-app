@@ -292,6 +292,10 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/line-unknown-inbox/show', [LineUnknownInboxController::class, 'showGroup'])->name('line-unknown-inbox.show');
     Route::post('/line-unknown-inbox/link', [LineUnknownInboxController::class, 'linkToCustomer'])->name('line-unknown-inbox.link');
 
+    // LINE 連携一覧（顧客紐付け / 予約紐付けを横断的に表示・解除）
+    Route::get('/line-contacts', [\App\Http\Controllers\Admin\LineContactListController::class, 'index'])->name('line-contacts.index');
+    Route::delete('/line-contacts/{contact}', [\App\Http\Controllers\Admin\LineContactListController::class, 'destroy'])->name('line-contacts.destroy');
+
     // 制約テンプレート管理
     Route::get('/constraint-templates', [AdminConstraintTemplateController::class, 'index'])->name('constraint-templates.index');
     Route::get('/constraint-templates/create', [AdminConstraintTemplateController::class, 'create'])->name('constraint-templates.create');

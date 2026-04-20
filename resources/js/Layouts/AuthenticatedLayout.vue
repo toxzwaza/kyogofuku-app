@@ -74,6 +74,7 @@ const menuItems = [
         route: 'admin.customers.index',
         subItems: [
             { label: '顧客一覧', route: 'admin.customers.index' },
+            { label: 'LINE 連携一覧', route: 'admin.line-contacts.index' },
             { label: 'LINE 不明メッセージ', route: 'admin.line-unknown-inbox.index' },
             { label: '顧客タグ一覧', route: 'admin.customer-tags.index' },
             { label: '制約一覧', route: 'admin.constraint-templates.index' },
@@ -464,6 +465,9 @@ const menuItems = [
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.customers.index')" :active="route().current('admin.customers.*') && !route().current('admin.customer-tags.*') && !route().current('admin.constraint-templates.*')">
                             顧客一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.line-contacts.index')" :active="route().current('admin.line-contacts.*')" class="pl-8">
+                            LINE 連携一覧
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.line-unknown-inbox.index')" :active="route().current('admin.line-unknown-inbox.*')" class="pl-8">
                             LINE 不明メッセージ
