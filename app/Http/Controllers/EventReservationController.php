@@ -77,6 +77,17 @@ class EventReservationController extends Controller
             $rules['school_name'] = 'required|string|max:255';
             $rules['graduation_ceremony_date'] = 'required|date';
             $rules['visitor_count'] = 'required|integer|min:1|max:500';
+            $rules['companion_types'] = [
+                'nullable',
+                'array',
+                Rule::requiredIf(fn () => (int) $request->input('visitor_count', 0) >= 2),
+            ];
+            $rules['companion_types.*'] = ['string', Rule::in(['家族', '友人'])];
+            $rules['companion_hakama_usage'] = [
+                'nullable',
+                'boolean',
+                Rule::requiredIf(fn () => is_array($request->input('companion_types')) && in_array('友人', $request->input('companion_types'), true)),
+            ];
             $rules['parking_car_count'] = 'nullable|integer|min:1|required_if:parking_usage,あり';
             $rules['referred_by_name'] = 'nullable|string|max:255';
         }
@@ -210,6 +221,14 @@ class EventReservationController extends Controller
             'graduation_ceremony_month' => null,
             'graduation_ceremony_date' => $event->form_type === 'reservation_hakama' ? $request->graduation_ceremony_date : null,
             'visitor_count' => $event->form_type === 'reservation_hakama' ? $request->visitor_count : null,
+            'companion_types' => $event->form_type === 'reservation_hakama' && (int) $request->input('visitor_count', 0) >= 2
+                ? $request->input('companion_types')
+                : null,
+            'companion_hakama_usage' => $event->form_type === 'reservation_hakama'
+                && is_array($request->input('companion_types'))
+                && in_array('友人', $request->input('companion_types'), true)
+                ? $request->boolean('companion_hakama_usage')
+                : null,
             'visit_reasons' => $event->usesTimeslotReservation()
                 ? $this->processVisitReasons($request->visit_reasons, $request->visit_reason_other)
                 : null,
@@ -236,6 +255,7 @@ class EventReservationController extends Controller
             'parking_usage', 'parking_car_count',
             'considering_plans', 'heard_from', 'inquiry_message', 'privacy_agreed',
             'koichi_furisode_used', 'graduation_ceremony_date', 'visitor_count',
+            'companion_types', 'companion_hakama_usage',
         ]);
         // visit_reasonsを処理済みの値に置き換え
         $formData['visit_reasons'] = $this->processVisitReasons($request->visit_reasons, $request->visit_reason_other);
@@ -570,6 +590,14 @@ class EventReservationController extends Controller
 
             if ($reservation->visitor_count !== null) {
                 $message .= "来店人数: {$reservation->visitor_count}名\n";
+            }
+
+            if (! empty($reservation->companion_types)) {
+                $message .= 'お連れ様: '.implode('、', $reservation->companion_types)."\n";
+                if ($reservation->companion_hakama_usage !== null) {
+                    $companionUsageLabel = $reservation->companion_hakama_usage ? '着用する' : '着用しない';
+                    $message .= "お連れ様の袴着用: {$companionUsageLabel}\n";
+                }
             }
 
             if ($reservation->koichi_furisode_used !== null) {

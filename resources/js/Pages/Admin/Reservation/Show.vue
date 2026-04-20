@@ -399,6 +399,14 @@
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">来店人数</label>
                         <p class="text-base font-medium text-gray-900">{{ reservation.visitor_count != null ? reservation.visitor_count + "名" : "—" }}</p>
                       </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お連れ様</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.companion_types && reservation.companion_types.length > 0 ? reservation.companion_types.join("、") : "—" }}</p>
+                      </div>
+                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お連れ様の袴着用</label>
+                        <p class="text-base font-medium text-gray-900">{{ reservation.companion_hakama_usage === true ? "着用する" : reservation.companion_hakama_usage === false ? "着用しない" : "—" }}</p>
+                      </div>
                       <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">来店動機</label>
                         <p class="text-base font-medium text-gray-900">{{ reservation.visit_reasons && reservation.visit_reasons.length > 0 ? reservation.visit_reasons.join("、") : "—" }}</p>

@@ -447,6 +447,18 @@
                             <div class="info-value">{{ $reservation->visitor_count }}名</div>
                         </div>
                         @endif
+                        @if(!empty($reservation->companion_types))
+                        <div class="info-row">
+                            <div class="info-label">お連れ様</div>
+                            <div class="info-value">{{ implode('、', $reservation->companion_types) }}</div>
+                        </div>
+                        @if($reservation->companion_hakama_usage !== null)
+                        <div class="info-row">
+                            <div class="info-label">お連れ様の袴着用</div>
+                            <div class="info-value">{{ $reservation->companion_hakama_usage ? '着用する' : '着用しない' }}</div>
+                        </div>
+                        @endif
+                        @endif
                         @if($reservation->koichi_furisode_used !== null)
                         <div class="info-row">
                             <div class="info-label">好一での振袖利用</div>

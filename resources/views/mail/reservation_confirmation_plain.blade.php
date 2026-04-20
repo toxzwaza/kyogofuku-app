@@ -59,6 +59,12 @@ LINE連携ページ:
 @if($reservation->visitor_count !== null)
 来店人数: {{ $reservation->visitor_count }}名
 @endif
+@if(!empty($reservation->companion_types))
+お連れ様: {{ implode('、', $reservation->companion_types) }}
+@if($reservation->companion_hakama_usage !== null)
+お連れ様の袴着用: {{ $reservation->companion_hakama_usage ? '着用する' : '着用しない' }}
+@endif
+@endif
 @if($reservation->koichi_furisode_used !== null)
 好一での振袖利用: {{ $reservation->koichi_furisode_used ? 'あり' : 'なし' }}
 @endif

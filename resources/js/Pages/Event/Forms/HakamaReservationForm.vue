@@ -439,6 +439,59 @@
                 />
             </div>
 
+            <div v-if="Number(form.visitor_count) >= 2">
+                <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    お連れ様 <span class="text-red-500 ml-1">*</span>
+                </label>
+                <div class="space-y-3">
+                    <label
+                        v-for="option in companionOptions"
+                        :key="option"
+                        class="flex items-center p-3 rounded-lg border-2 border-gray-200 hover:border-pink-300 hover:bg-pink-50 transition-all duration-200 cursor-pointer group"
+                    >
+                        <input
+                            type="checkbox"
+                            :value="option"
+                            v-model="form.companion_types"
+                            class="w-5 h-5 rounded border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
+                        />
+                        <span class="ml-3 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">{{ option }}</span>
+                    </label>
+                </div>
+            </div>
+
+            <div v-if="Number(form.visitor_count) >= 2 && form.companion_types.includes('友人')">
+                <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    お連れ様の袴着用 <span class="text-red-500 ml-1">*</span>
+                </label>
+                <div class="flex space-x-6">
+                    <label class="flex items-center cursor-pointer group">
+                        <input
+                            v-model="form.companion_hakama_usage"
+                            type="radio"
+                            :value="true"
+                            class="w-5 h-5 rounded-full border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
+                        />
+                        <span class="ml-2 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">着用する</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input
+                            v-model="form.companion_hakama_usage"
+                            type="radio"
+                            :value="false"
+                            class="w-5 h-5 rounded-full border-2 border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all duration-200"
+                        />
+                        <span class="ml-2 text-sm text-gray-700 font-medium group-hover:text-pink-600 transition-colors">着用しない</span>
+                    </label>
+                </div>
+            </div>
+
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
                     <svg class="w-4 h-4 mr-1 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -810,6 +863,8 @@ const form = useForm({
     koichi_furisode_used: null,
     graduation_ceremony_date: '',
     visitor_count: null,
+    companion_types: [],
+    companion_hakama_usage: null,
     visit_reasons: [],
     visit_reason_other: '',
     parking_usage: '',
@@ -821,6 +876,9 @@ const form = useForm({
 
 // 検討中のプラン（袴フォームは2択）
 const availablePlans = ['上下フルセットプラン', '袴のみレンタルプラン'];
+
+// お連れ様の選択肢
+const companionOptions = ['家族', '友人'];
 
 // 来店動機の選択肢
 const visitReasonOptions = [
@@ -877,6 +935,21 @@ watch(() => form.venue_id, (newVenueId, oldVenueId) => {
     }
 });
 
+// 来店人数が2未満になったらお連れ様関連をクリア
+watch(() => form.visitor_count, (newVal) => {
+    if (Number(newVal || 0) < 2) {
+        form.companion_types = [];
+        form.companion_hakama_usage = null;
+    }
+});
+
+// 友人が選択から外れたら袴着用の値もクリア
+watch(() => form.companion_types, (types) => {
+    if (!Array.isArray(types) || !types.includes('友人')) {
+        form.companion_hakama_usage = null;
+    }
+}, { deep: true });
+
 const processing = ref(false);
 
 const searchAddress = async () => {
@@ -925,6 +998,15 @@ const submit = () => {
     }
     if (!form.graduation_ceremony_date) {
         alert('卒業式の日付を選択してください。');
+        return;
+    }
+    if (Number(form.visitor_count) >= 2 && (!form.companion_types || form.companion_types.length === 0)) {
+        alert('お連れ様を選択してください。');
+        return;
+    }
+    if (Array.isArray(form.companion_types) && form.companion_types.includes('友人')
+        && form.companion_hakama_usage !== true && form.companion_hakama_usage !== false) {
+        alert('お連れ様の袴着用の有無を選択してください。');
         return;
     }
 
