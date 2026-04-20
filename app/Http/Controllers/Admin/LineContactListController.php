@@ -68,7 +68,7 @@ class LineContactListController extends Controller
                 'label' => $c->label,
                 'shop' => $c->shop ? ['id' => $c->shop->id, 'name' => $c->shop->name] : null,
                 'line_user_id' => $c->line_user_id,
-                'created_at' => $c->created_at?->toIso8601String(),
+                'created_at' => $this->toIso($c->created_at),
             ];
 
             if ($kind === 'customer' && $c->customer) {
@@ -95,7 +95,7 @@ class LineContactListController extends Controller
                         'kana' => $r->furigana,
                         'phone' => $r->phone,
                         'event_title' => $r->event?->title,
-                        'reservation_datetime' => $r->reservation_datetime?->toIso8601String(),
+                        'reservation_datetime' => $this->toIso($r->reservation_datetime),
                         'detail_url' => route('admin.reservations.show', $r->id),
                     ],
                 ];
@@ -132,6 +132,25 @@ class LineContactListController extends Controller
         $contact->delete();
 
         return redirect()->back()->with('success', 'LINE 連携を解除しました。');
+    }
+
+    /**
+     * datetime 系の値を ISO8601 文字列に正規化する。
+     * モデル側で $casts に登録されておらず string で返るケース（reservation_datetime 等）に備える。
+     */
+    private function toIso($value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format(\DateTimeInterface::ATOM);
+        }
+        try {
+            return \Illuminate\Support\Carbon::parse((string) $value)->toIso8601String();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private function countsByKind(): array
