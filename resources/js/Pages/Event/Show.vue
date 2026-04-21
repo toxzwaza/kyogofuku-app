@@ -156,8 +156,8 @@
                                         </a>
                                     </div>
 
-                                    <!-- 開催日時（目立つ表示） -->
-                                    <div v-if="venue.dates && venue.dates.length > 0" class="mt-4 pt-4 border-t border-rose-100">
+                                    <!-- 開催日時（当日以降のみ表示） -->
+                                    <div v-if="formatVenueDates(venue.dates).length > 0" class="mt-4 pt-4 border-t border-rose-100">
                                         <div class="flex items-start gap-3 rounded-lg bg-rose-50/80 px-4 py-3">
                                             <div class="flex-shrink-0 mt-0.5">
                                                 <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,12 +517,16 @@ function getVenueMapEmbedUrl(address) {
 /**
  * 会場の開催日リストを表示用にフォーマット
  * ルール: 月を大きく表示し「/」で区切り、2日連続は「〇, 〇」、3日以上連続は「〇 ~ 〇」、月をまたぐ場合は改行して月ごとに表示
+ * 当日より前の日付は除外する（当日以降のみ表示）
  * @param {string[]} dateStrings - 'Y-m-d' 形式の日付配列
  * @returns {{ monthLabel: string, dayParts: string[] }[]}
  */
 function formatVenueDates(dateStrings) {
   if (!dateStrings || dateStrings.length === 0) return [];
-  const sorted = [...dateStrings].sort();
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const sorted = [...dateStrings].sort().filter((d) => d >= todayStr);
+  if (sorted.length === 0) return [];
   const byMonth = {};
   for (const d of sorted) {
     const [y, m] = d.split('-');
