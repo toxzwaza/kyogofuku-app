@@ -335,7 +335,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import FilterBlock from './ReservationExport/FilterBlock.vue';
 
@@ -533,7 +533,8 @@ const exportCsv = () => {
     form.action = route('admin.events.reservations-export.csv');
     form.style.display = 'none';
 
-    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+    const token = usePage().props.csrf_token
+        || document.querySelector('meta[name="csrf-token"]')?.content;
     const append = (name, value) => {
         const input = document.createElement('input');
         input.type = 'hidden';
