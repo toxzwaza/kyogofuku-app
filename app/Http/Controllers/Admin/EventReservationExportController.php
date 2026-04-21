@@ -75,16 +75,16 @@ class EventReservationExportController extends Controller
         $shops = Shop::orderBy('name')->get(['id', 'name']);
 
         $events = Event::with('shops:id')
-            ->orderByDesc('start_date')
+            ->orderByDesc('start_at')
             ->orderByDesc('id')
-            ->get(['id', 'title', 'form_type', 'start_date', 'end_date'])
+            ->get(['id', 'title', 'form_type', 'start_at', 'end_at'])
             ->map(function ($event) {
                 return [
                     'id' => $event->id,
                     'title' => $event->title,
                     'form_type' => $event->form_type,
-                    'start_date' => optional($event->start_date)->format('Y-m-d'),
-                    'end_date' => optional($event->end_date)->format('Y-m-d'),
+                    'start_date' => optional($event->start_at)->format('Y-m-d'),
+                    'end_date' => optional($event->end_at)->format('Y-m-d'),
                     'shop_ids' => $event->shops->pluck('id')->all(),
                 ];
             });
