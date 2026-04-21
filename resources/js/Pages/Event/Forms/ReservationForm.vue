@@ -589,9 +589,20 @@
             </div>
 
             <div class="pt-6 border-t border-gray-200">
+                <label class="flex items-start cursor-pointer">
+                    <input
+                        v-model="form.privacy_agreed"
+                        type="checkbox"
+                        class="mt-1 rounded border-gray-300 text-pink-600 shadow-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                    />
+                    <span class="ml-2 text-sm text-gray-700">個人情報の取り扱いに同意する</span>
+                </label>
+            </div>
+
+            <div class="pt-6">
                 <button
                     type="submit"
-                    :disabled="!internalSelectedTimeslot || processing"
+                    :disabled="!internalSelectedTimeslot || processing || !form.privacy_agreed"
                     class="w-full bg-gradient-to-r from-pink-600 to-rose-600 text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl hover:from-pink-700 hover:to-rose-700 transform hover:scale-[1.02] transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center"
                 >
                     <svg v-if="!processing" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -893,6 +904,7 @@ const form = useForm({
     considering_plans: getUrlParamArray('considering_plans', []),
     heard_from: '',
     inquiry_message: getUrlParam('inquiry_message', ''),
+    privacy_agreed: true,
 });
 
 console.log('[デバッグ] フォーム初期値:', {
