@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignCo
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
 use App\Http\Controllers\Admin\MediaFileController as AdminMediaFileController;
 use App\Http\Controllers\Admin\EventLpSettingsController as AdminEventLpSettingsController;
+use App\Http\Controllers\Admin\EventReservationExportController;
 use App\Http\Controllers\Admin\EventUtmAnalyticsOrderController;
 use App\Http\Controllers\Admin\LineUnknownInboxController;
 use App\Http\Controllers\Admin\PhotoSlotController as AdminPhotoSlotController;
@@ -125,6 +126,8 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/events/create', [AdminEventController::class, 'create'])->name('events.create');
     Route::get('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'index'])->name('events.utm-analytics-order');
     Route::post('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'updateOrder'])->name('events.utm-analytics-order.update');
+    Route::get('/events/reservations-export', [EventReservationExportController::class, 'index'])->name('events.reservations-export.index');
+    Route::post('/events/reservations-export/csv', [EventReservationExportController::class, 'csv'])->name('events.reservations-export.csv');
     Route::post('/events', [AdminEventController::class, 'store'])->name('events.store');
     Route::get('/events/{event}', [AdminEventController::class, 'show'])->name('events.show');
     Route::put('/events/{event}', [AdminEventController::class, 'update'])->name('events.update');

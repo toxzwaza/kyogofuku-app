@@ -52,6 +52,7 @@ const menuItems = [
             { label: 'イベント一覧', route: 'admin.events.index' },
             { label: 'イベント作成', route: 'admin.events.create' },
             { label: 'API並び順', route: 'admin.events.utm-analytics-order' },
+            { label: 'イベント予約者出力', route: 'admin.events.reservations-export.index' },
             { label: '開催会場一覧', route: 'admin.venues.index' },
             { label: 'スライドショー一覧', route: 'admin.slideshows.index' },
             { label: 'メディアライブラリ', route: 'admin.media.index' },
@@ -450,6 +451,9 @@ const menuItems = [
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.events.utm-analytics-order')" :active="route().current('admin.events.utm-analytics-order')" class="pl-8">
                             API並び順
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.events.reservations-export.index')" :active="route().current('admin.events.reservations-export.*')" class="pl-8">
+                            イベント予約者出力
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.venues.index')" :active="route().current('admin.venues.*')" class="pl-8">
                             開催会場一覧
