@@ -325,11 +325,13 @@
                         </div>
 
                 <!-- 参加イベント -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="mb-4">
-                            <h3 class="text-lg font-semibold text-brand-text">参加イベント</h3>
-                        </div>
+                <UiCard variant="default" padding="lg">
+                    <template #header>
+                        <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                            <CalendarCheck :size="15" class="text-brand-primary" />
+                            参加イベント
+                        </h3>
+                    </template>
                         <div v-if="eventReservationsList.length > 0" class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-brand-border">
                                 <thead class="bg-brand-surface-2">
@@ -384,21 +386,22 @@
                         <div v-else class="text-center py-8 text-brand-text-muted">
                             参加イベントはありません
                         </div>
-                    </div>
-                </div>
+                </UiCard>
 
                 <!-- 成約情報 -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-brand-text">成約情報</h3>
-                            <button
-                                @click="openAddContractModal"
-                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover text-sm font-medium"
-                            >
+                <UiCard variant="default" padding="lg">
+                    <template #header>
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                                <Receipt :size="15" class="text-brand-primary" />
+                                成約情報
+                            </h3>
+                            <UiButton variant="primary" size="sm" @click="openAddContractModal">
+                                <template #leading><Plus :size="13" /></template>
                                 成約追加
-                            </button>
+                            </UiButton>
                         </div>
+                    </template>
                         <div v-if="customer.contracts && customer.contracts.length > 0" class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-brand-border">
                                 <thead class="bg-brand-surface-2">
@@ -480,23 +483,23 @@
                         <div v-else class="text-center py-8 text-brand-text-muted">
                             成約情報がありません
                         </div>
-                    </div>
-                </div>
+                </UiCard>
 
                 <!-- 制約情報 -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-brand-text">制約情報</h3>
-                            <button
-                                @click="openAddConstraintModal"
-                                :disabled="!constraintTemplatesList.length"
-                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                            >
+                <UiCard variant="default" padding="lg">
+                    <template #header>
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                                <Lock :size="15" class="text-brand-primary" />
+                                制約情報
+                            </h3>
+                            <UiButton variant="primary" size="sm" :disabled="!constraintTemplatesList.length" @click="openAddConstraintModal">
+                                <template #leading><Plus :size="13" /></template>
                                 制約追加
-                            </button>
+                            </UiButton>
                         </div>
-                        <div v-if="customerConstraintsList.length > 0" class="space-y-4">
+                    </template>
+                    <div v-if="customerConstraintsList.length > 0" class="space-y-4">
                             <div
                                 v-for="cc in customerConstraintsList"
                                 :key="cc.id"
@@ -561,21 +564,22 @@
                         <div v-else class="text-center py-8 text-brand-text-muted">
                             制約情報がありません
                         </div>
-                    </div>
-                </div>
+                </UiCard>
 
                 <!-- 前撮り情報 -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-brand-text">前撮り情報</h3>
-                            <button
-                                @click="openAddPhotoSlotModal"
-                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover text-sm font-medium"
-                            >
+                <UiCard variant="default" padding="lg">
+                    <template #header>
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                                <Camera :size="15" class="text-brand-primary" />
+                                前撮り情報
+                            </h3>
+                            <UiButton variant="primary" size="sm" @click="openAddPhotoSlotModal">
+                                <template #leading><Plus :size="13" /></template>
                                 前撮り追加
-                            </button>
+                            </UiButton>
                         </div>
+                    </template>
 
                         <div v-if="customer.photoSlots && customer.photoSlots.length > 0" class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-brand-border">
@@ -632,13 +636,16 @@
                         <div v-else class="text-center py-8 text-brand-text-muted">
                             前撮り情報がありません
                         </div>
-                    </div>
-                </div>
+                </UiCard>
 
                 <!-- 顧客写真 -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <h3 class="text-lg font-semibold text-brand-text mb-4">顧客写真</h3>
+                <UiCard variant="default" padding="lg">
+                    <template #header>
+                        <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                            <ImageIcon :size="15" class="text-brand-primary" />
+                            顧客写真
+                        </h3>
+                    </template>
                         
                         <!-- 写真追加フォーム -->
                         <form @submit.prevent="storeCustomerPhoto" class="mb-6 p-4 bg-brand-surface-2 rounded-lg border border-brand-border">
@@ -787,8 +794,7 @@
                         <div v-else class="text-center py-8 text-brand-text-muted">
                             写真がありません
                         </div>
-                    </div>
-                </div>
+                </UiCard>
                         </div>
                     </template>
 
@@ -796,9 +802,13 @@
                     <template #comm>
                         <div class="space-y-4 max-w-4xl">
                         <CustomerLineSection :customer="customer" :shops="shops" />
-                        <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-semibold text-brand-text mb-4">メモ</h3>
+                        <UiCard variant="default" padding="lg">
+                            <template #header>
+                                <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                                    <MessageSquare :size="15" class="text-brand-primary" />
+                                    メモ
+                                </h3>
+                            </template>
 
                                 <!-- メモ登録フォーム -->
                                 <form @submit.prevent="submitNote" class="mb-6">
@@ -856,8 +866,7 @@
                                         メモがありません
                                     </p>
                                 </div>
-                            </div>
-                        </div>
+                        </UiCard>
                         </div>
                     </template>
                 </UiTabs>
@@ -2342,13 +2351,14 @@
 import { ref, reactive, computed, nextTick, watch, onBeforeUnmount } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import {
-    UiPageHeader, UiButton, UiTabs, UiCard,
+    UiPageHeader, UiButton, UiTabs, UiCard, UiBadge,
     UiDetailSection, UiDetailField,
 } from '@/Components/UI';
 import {
     ArrowLeft, Trash2, Plus, Tag, User, UserCircle, Type,
     Cake, Sparkles, MapPin, Users, Clock, FileText, Pencil,
     Phone, Mail, Home, Building2, Info, X as XIcon, MessageSquare,
+    CalendarCheck, Receipt, Lock, Camera, Image as ImageIcon, Eye,
 } from 'lucide-vue-next';
 
 const activeTab = ref('overview');
