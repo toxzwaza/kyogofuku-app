@@ -2,6 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------
+ * 和＋モダン カラートークン (2026-04-23)
+ *   - tailwind.config.js の brand-* カラーは下記 CSS 変数を参照する
+ *   - ライト: :root / ダーク: html.dark
+ *   - 値は "R G B" のスペース区切り RGB (alpha モディファイア対応のため)
+ * ------------------------------------------------------------ */
+@layer base {
+    :root {
+        --color-bg:             254 253 249; /* unohana-50 */
+        --color-surface:        255 255 255;
+        --color-surface-2:      251 248 239; /* unohana-100 */
+        --color-border:         216 216 220; /* sumi-200 */
+        --color-border-strong:  180 180 187; /* sumi-300 */
+        --color-text:            20  20  26; /* sumi-900 */
+        --color-text-muted:      98  98 107; /* sumi-500 */
+        --color-text-subtle:    138 138 147; /* sumi-400 */
+        --color-primary:         31  69 119; /* ai-600 */
+        --color-primary-hover:   23  51  90; /* ai-700 */
+        --color-on-primary:     255 255 255;
+        --color-accent:         167  65  63; /* enji-500 */
+        --color-on-accent:      255 255 255;
+        --color-success:         82 107  41; /* uguisu-600 */
+        --color-warning:        181 146  15; /* natane-500 */
+        --color-danger:         159  28  28; /* akane-600 */
+    }
+
+    html.dark {
+        --color-bg:              10  10  14; /* sumi-950 */
+        --color-surface:         20  20  26; /* sumi-900 */
+        --color-surface-2:       35  35  41; /* sumi-800 */
+        --color-border:          51  51  58; /* sumi-700 */
+        --color-border-strong:   71  71  79; /* sumi-600 */
+        --color-text:           247 247 248; /* sumi-50 */
+        --color-text-muted:     180 180 187; /* sumi-300 */
+        --color-text-subtle:    138 138 147; /* sumi-400 */
+        --color-primary:         78 127 180; /* ai-400 */
+        --color-primary-hover:  124 162 204; /* ai-300 */
+        --color-on-primary:      10  10  14; /* sumi-950 */
+        --color-accent:         194  96  96; /* enji-400 */
+        --color-on-accent:       10  10  14; /* sumi-950 */
+        --color-success:        131 164  74; /* uguisu-400 */
+        --color-warning:        236 201  75; /* natane-300 */
+        --color-danger:         224  72  72; /* akane-400 */
+    }
+}
+
 /* FullCalendar イベントスタイル */
 .fc-event {
     border-radius: 6px !important;

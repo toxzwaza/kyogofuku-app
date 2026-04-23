@@ -121,6 +121,18 @@ Route::get('/api/document/{document}/images', [AdminEventController::class, 'get
 
 // Admin Routes
 Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
+    // UIキット ショーケース（開発用・認証済み）
+    Route::get('/ui-kit', fn () => inertia('Admin/UiKit'))->name('ui-kit');
+
+    // モダン管理ダッシュボード（オーバービュー）
+    Route::get('/', [\App\Http\Controllers\Admin\OverviewController::class, 'index'])->name('overview');
+
+    // グローバル検索（コマンドパレット等）
+    Route::get('/search', \App\Http\Controllers\Admin\AdminSearchController::class)->name('search');
+
+    // ヘルプ
+    Route::get('/help', fn () => inertia('Admin/Help'))->name('help');
+
     // イベント一覧
     Route::get('/events', [AdminEventController::class, 'index'])->name('events.index');
     Route::get('/events/create', [AdminEventController::class, 'create'])->name('events.create');

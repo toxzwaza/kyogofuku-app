@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>京呉服平田 管理画面 カラーパレット案 (2026-04-23)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    /* 和＋モダン カラートークン */
+
+    /* sumi (墨) - neutral */
+    --sumi-50:  #F7F7F8;
+    --sumi-100: #EEEEF0;
+    --sumi-200: #D8D8DC;
+    --sumi-300: #B4B4BB;
+    --sumi-400: #8A8A93;
+    --sumi-500: #62626B;
+    --sumi-600: #47474F;
+    --sumi-700: #33333A;
+    --sumi-800: #232329;
+    --sumi-900: #14141A;
+    --sumi-950: #0A0A0E;
+
+    /* ai (藍) - primary */
+    --ai-50:  #F0F5FA;
+    --ai-100: #DAE7F3;
+    --ai-200: #AEC7E2;
+    --ai-300: #7CA2CC;
+    --ai-400: #4E7FB4;
+    --ai-500: #2C5C94;
+    --ai-600: #1F4577;
+    --ai-700: #17335A;
+    --ai-800: #102440;
+    --ai-900: #0A1829;
+    --ai-950: #060F1C;
+
+    /* enji (臙脂) - accent */
+    --enji-50:  #FBF3F3;
+    --enji-100: #F5E1E1;
+    --enji-200: #E9B8B8;
+    --enji-300: #D88C8C;
+    --enji-400: #C26060;
+    --enji-500: #A7413F;
+    --enji-600: #8B2E2D;
+    --enji-700: #6B2422;
+    --enji-800: #4D1A19;
+    --enji-900: #310F0E;
+    --enji-950: #200908;
+
+    /* unohana (卯の花) - surface / accent-warm */
+    --unohana-50:  #FEFDF9;
+    --unohana-100: #FBF8EF;
+    --unohana-200: #F4EEDB;
+    --unohana-300: #EBE1BE;
+    --unohana-400: #DBCB96;
+    --unohana-500: #C4AF6E;
+    --unohana-600: #A18B4E;
+    --unohana-700: #7A6939;
+    --unohana-800: #524629;
+    --unohana-900: #2E2817;
+    --unohana-950: #1A160C;
+
+    /* uguisu (鶯) - success */
+    --uguisu-50:  #F4F7EE;
+    --uguisu-100: #E3EBD0;
+    --uguisu-200: #C5D8A2;
+    --uguisu-300: #A0BE6E;
+    --uguisu-400: #83A44A;
+    --uguisu-500: #6A8737;
+    --uguisu-600: #526B29;
+    --uguisu-700: #3F511F;
+    --uguisu-800: #2A3615;
+    --uguisu-900: #18200C;
+    --uguisu-950: #0E1306;
+
+    /* natane (菜種) - warning */
+    --natane-50:  #FDF9EC;
+    --natane-100: #FAF1CB;
+    --natane-200: #F4DF8D;
+    --natane-300: #ECC94B;
+    --natane-400: #D9B11A;
+    --natane-500: #B5920F;
+    --natane-600: #8C7109;
+    --natane-700: #665307;
+    --natane-800: #423605;
+    --natane-900: #231C03;
+    --natane-950: #120F01;
+
+    /* akane (茜) - danger */
+    --akane-50:  #FDF2F2;
+    --akane-100: #FBDCDC;
+    --akane-200: #F6AEAE;
+    --akane-300: #EE7878;
+    --akane-400: #E04848;
+    --akane-500: #C42929;
+    --akane-600: #9F1C1C;
+    --akane-700: #7A1616;
+    --akane-800: #561010;
+    --akane-900: #320909;
+    --akane-950: #1F0404;
+
+    /* --- Semantic mapping (light) --- */
+    --color-bg:         var(--unohana-50);
+    --color-surface:    #FFFFFF;
+    --color-surface-2:  var(--unohana-100);
+    --color-border:     var(--sumi-200);
+    --color-border-strong: var(--sumi-300);
+    --color-text:       var(--sumi-900);
+    --color-text-muted: var(--sumi-500);
+    --color-text-subtle: var(--sumi-400);
+    --color-primary:    var(--ai-600);
+    --color-primary-hover: var(--ai-700);
+    --color-on-primary: #FFFFFF;
+    --color-accent:     var(--enji-500);
+    --color-on-accent:  #FFFFFF;
+    --color-success:    var(--uguisu-600);
+    --color-warning:    var(--natane-500);
+    --color-danger:     var(--akane-600);
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 20px;
+    --shadow-sm: 0 1px 2px rgba(20,20,26,0.05);
+    --shadow-md: 0 4px 12px rgba(20,20,26,0.08);
+    --shadow-lg: 0 12px 32px rgba(20,20,26,0.12);
+  }
+
+  html[data-theme="dark"] {
+    --color-bg:         var(--sumi-950);
+    --color-surface:    var(--sumi-900);
+    --color-surface-2:  var(--sumi-800);
+    --color-border:     var(--sumi-700);
+    --color-border-strong: var(--sumi-600);
+    --color-text:       var(--sumi-50);
+    --color-text-muted: var(--sumi-300);
+    --color-text-subtle: var(--sumi-400);
+    --color-primary:    var(--ai-400);
+    --color-primary-hover: var(--ai-300);
+    --color-on-primary: var(--sumi-950);
+    --color-accent:     var(--enji-400);
+    --color-on-accent:  var(--sumi-950);
+    --color-success:    var(--uguisu-400);
+    --color-warning:    var(--natane-300);
+    --color-danger:     var(--akane-400);
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    transition: background 0.3s, color 0.3s;
+  }
+  h1, h2, h3 {
+    font-family: "Zen Old Mincho", "Yu Mincho", "YuMincho", serif;
+    letter-spacing: 0.02em;
+  }
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand {
+    font-family: "Zen Old Mincho", serif;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+  }
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .toggle:hover { background: var(--color-border); }
+
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 56px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
+  h3 { font-size: 15px; margin: 20px 0 8px; color: var(--color-text-muted); letter-spacing: 0.05em; }
+  p.lead { color: var(--color-text-muted); margin: 0 0 32px; font-size: 14px; }
+
+  /* Palette grid */
+  .palette { display: grid; grid-template-columns: 140px repeat(11, 1fr); gap: 4px; margin-bottom: 18px; align-items: stretch; }
+  .palette .label {
+    display: flex; flex-direction: column; justify-content: center;
+    font-size: 13px; padding-right: 12px;
+  }
+  .palette .label small { color: var(--color-text-muted); font-weight: 400; }
+  .swatch {
+    aspect-ratio: 1/1.05; border-radius: 6px; position: relative;
+    display: flex; align-items: flex-end; padding: 6px;
+    font-size: 10px; line-height: 1.2;
+    box-shadow: var(--shadow-sm);
+  }
+  .swatch .shade-num { font-weight: 600; display: block; }
+  .swatch .shade-hex { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; opacity: 0.8; }
+  .swatch.light { color: #fff; }
+  .swatch.dark  { color: #111; }
+
+  /* Semantic mapping table */
+  .mapping {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .chip {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  .chip .dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.08); }
+  .chip .meta { font-size: 13px; }
+  .chip .meta b { display: block; }
+  .chip .meta small { color: var(--color-text-muted); font-family: ui-monospace, monospace; }
+
+  /* UI example grid */
+  .ui-grid {
+    display: grid; gap: 24px; grid-template-columns: 1fr 1fr;
+    margin-top: 16px;
+  }
+  @media (max-width: 800px) { .ui-grid { grid-template-columns: 1fr; } }
+  .card {
+    padding: 20px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+  .card h3 { margin-top: 0; color: var(--color-text); letter-spacing: 0; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+
+  /* buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+  .btn-primary { background: var(--color-primary); color: var(--color-on-primary); }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-accent  { background: var(--color-accent); color: var(--color-on-accent); }
+  .btn-ghost   { background: transparent; border-color: var(--color-border-strong); color: var(--color-text); }
+  .btn-ghost:hover { background: var(--color-surface-2); }
+  .btn-danger  { background: var(--color-danger); color: #fff; }
+  .btn-subtle  { background: var(--color-surface-2); color: var(--color-text); }
+
+  /* badges */
+  .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge-primary { background: var(--ai-100); color: var(--ai-700); }
+  .badge-success { background: var(--uguisu-100); color: var(--uguisu-700); }
+  .badge-warning { background: var(--natane-100); color: var(--natane-700); }
+  .badge-danger  { background: var(--akane-100); color: var(--akane-700); }
+  .badge-neutral { background: var(--sumi-100); color: var(--sumi-700); }
+  html[data-theme="dark"] .badge-primary { background: var(--ai-900); color: var(--ai-200); }
+  html[data-theme="dark"] .badge-success { background: var(--uguisu-900); color: var(--uguisu-200); }
+  html[data-theme="dark"] .badge-warning { background: var(--natane-900); color: var(--natane-200); }
+  html[data-theme="dark"] .badge-danger  { background: var(--akane-900);  color: var(--akane-200); }
+  html[data-theme="dark"] .badge-neutral { background: var(--sumi-800);  color: var(--sumi-200); }
+
+  /* alerts */
+  .alert { padding: 12px 14px; border-radius: var(--radius-md); font-size: 13px; margin-bottom: 8px; border-left: 4px solid; }
+  .alert-success { background: var(--uguisu-50); border-color: var(--color-success); color: var(--uguisu-900); }
+  .alert-warning { background: var(--natane-50); border-color: var(--color-warning); color: var(--natane-900); }
+  .alert-danger  { background: var(--akane-50);  border-color: var(--color-danger);  color: var(--akane-900); }
+  .alert-info    { background: var(--ai-50);     border-color: var(--color-primary); color: var(--ai-900); }
+  html[data-theme="dark"] .alert-success { background: var(--uguisu-900); color: var(--uguisu-100); }
+  html[data-theme="dark"] .alert-warning { background: var(--natane-900); color: var(--natane-100); }
+  html[data-theme="dark"] .alert-danger  { background: var(--akane-900);  color: var(--akane-100); }
+  html[data-theme="dark"] .alert-info    { background: var(--ai-900);     color: var(--ai-100); }
+
+  /* input */
+  .input {
+    display: block; width: 100%; padding: 10px 12px;
+    border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+    background: var(--color-surface); color: var(--color-text); font-size: 14px;
+    font-family: inherit; margin-bottom: 10px;
+  }
+  .input:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; border-color: var(--color-primary); }
+  .label { display: block; font-size: 12px; color: var(--color-text-muted); margin-bottom: 4px; }
+
+  /* table preview */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--color-border); }
+  th { color: var(--color-text-muted); font-weight: 600; background: var(--color-surface-2); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* sidebar mock */
+  .layout-mock { display: grid; grid-template-columns: 220px 1fr; gap: 0; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-border); }
+  .sidebar { background: var(--sumi-900); color: var(--sumi-100); padding: 16px; }
+  html[data-theme="dark"] .sidebar { background: var(--sumi-950); }
+  .sidebar .brand-s { font-family: "Zen Old Mincho", serif; font-size: 15px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--sumi-700); letter-spacing: 0.06em; }
+  .navgroup { margin-bottom: 14px; }
+  .navgroup-title { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sumi-400); margin: 0 0 4px; padding: 0 4px; }
+  .navlink { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; color: var(--sumi-200); font-size: 13px; cursor: pointer; }
+  .navlink:hover { background: var(--sumi-800); }
+  .navlink.active { background: var(--ai-600); color: #fff; }
+  .navlink::before { content: "●"; color: var(--ai-300); font-size: 8px; }
+  .navlink.active::before { color: var(--unohana-300); }
+  .content-area { padding: 20px; background: var(--color-surface); }
+  .content-area h4 { margin: 0 0 4px; }
+  .crumbs { font-size: 11px; color: var(--color-text-muted); margin-bottom: 8px; }
+
+  .gutter { height: 1px; background: var(--color-border); margin: 56px 0; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">京呉服平田 管理画面 — カラーパレット案</div>
+  <button class="toggle" onclick="toggleTheme()">
+    <span id="themeLabel">☀ ライト</span>
+  </button>
+</header>
+
+<main class="wrap">
+  <h1>和＋モダン カラーシステム（2026-04-23 案）</h1>
+  <p class="lead">京呉服業態の伝統色をベースに、Web UIで使いやすい彩度へ調整したトークンセットです。ライト／ダーク両対応。右上のトグルで切り替えてください。</p>
+
+  <h2>1. カラースケール（各色 11段階）</h2>
+
+  <div class="palette">
+    <div class="label"><b>sumi 墨</b><small>neutral / text</small></div>
+    <div class="swatch light" style="background:var(--sumi-50);"  ><span><span class="shade-num">50</span><span class="shade-hex">#F7F7F8</span></span></div>
+    <div class="swatch dark"  style="background:var(--sumi-100);" ><span><span class="shade-num">100</span><span class="shade-hex">#EEEEF0</span></span></div>
+    <div class="swatch dark"  style="background:var(--sumi-200);" ><span><span class="shade-num">200</span><span class="shade-hex">#D8D8DC</span></span></div>
+    <div class="swatch dark"  style="background:var(--sumi-300);" ><span><span class="shade-num">300</span><span class="shade-hex">#B4B4BB</span></span></div>
+    <div class="swatch light" style="background:var(--sumi-400);" ><span><span class="shade-num">400</span><span class="shade-hex">#8A8A93</span></span></div>
+    <div class="swatch light" style="background:var(--sumi-500);" ><span><span class="shade-num">500</span><span class="shade-hex">#62626B</span></span></div>
+    <div class="swatch light" style="background:var(--sumi-600);" ><span><span class="shade-num">600</span><span class="shade-hex">#47474F</span></span></div>
+    <div class="swatch light" style="background:var(--sumi-700);" ><span><span class="shade-num">700</span><span class="shade-hex">#33333A</span></span></div>
+    <div class="swatch light" style="background:var(--sumi-800);" ><span><span class="shade-num">800</span><span class="shade-hex">#232329</span></span></div>
+    <div class="swatch light" style="background:var(--sumi-900);" ><span><span class="shade-num">900</span><span class="shade-hex">#14141A</span></span></div>
+    <div class="swatch light" style="background:var(--sumi-950);" ><span><span class="shade-num">950</span><span class="shade-hex">#0A0A0E</span></span></div>
+  </div>
+
+  <div class="palette">
+    <div class="label"><b>ai 藍</b><small>primary</small></div>
+    <div class="swatch dark"  style="background:var(--ai-50);"  ><span><span class="shade-num">50</span><span class="shade-hex">#F0F5FA</span></span></div>
+    <div class="swatch dark"  style="background:var(--ai-100);" ><span><span class="shade-num">100</span><span class="shade-hex">#DAE7F3</span></span></div>
+    <div class="swatch dark"  style="background:var(--ai-200);" ><span><span class="shade-num">200</span><span class="shade-hex">#AEC7E2</span></span></div>
+    <div class="swatch dark"  style="background:var(--ai-300);" ><span><span class="shade-num">300</span><span class="shade-hex">#7CA2CC</span></span></div>
+    <div class="swatch light" style="background:var(--ai-400);" ><span><span class="shade-num">400</span><span class="shade-hex">#4E7FB4</span></span></div>
+    <div class="swatch light" style="background:var(--ai-500);" ><span><span class="shade-num">500</span><span class="shade-hex">#2C5C94</span></span></div>
+    <div class="swatch light" style="background:var(--ai-600);" ><span><span class="shade-num">600</span><span class="shade-hex">#1F4577</span></span></div>
+    <div class="swatch light" style="background:var(--ai-700);" ><span><span class="shade-num">700</span><span class="shade-hex">#17335A</span></span></div>
+    <div class="swatch light" style="background:var(--ai-800);" ><span><span class="shade-num">800</span><span class="shade-hex">#102440</span></span></div>
+    <div class="swatch light" style="background:var(--ai-900);" ><span><span class="shade-num">900</span><span class="shade-hex">#0A1829</span></span></div>
+    <div class="swatch light" style="background:var(--ai-950);" ><span><span class="shade-num">950</span><span class="shade-hex">#060F1C</span></span></div>
+  </div>
+
+  <div class="palette">
+    <div class="label"><b>enji 臙脂</b><small>accent</small></div>
+    <div class="swatch dark"  style="background:var(--enji-50);"  ><span><span class="shade-num">50</span><span class="shade-hex">#FBF3F3</span></span></div>
+    <div class="swatch dark"  style="background:var(--enji-100);" ><span><span class="shade-num">100</span><span class="shade-hex">#F5E1E1</span></span></div>
+    <div class="swatch dark"  style="background:var(--enji-200);" ><span><span class="shade-num">200</span><span class="shade-hex">#E9B8B8</span></span></div>
+    <div class="swatch dark"  style="background:var(--enji-300);" ><span><span class="shade-num">300</span><span class="shade-hex">#D88C8C</span></span></div>
+    <div class="swatch light" style="background:var(--enji-400);" ><span><span class="shade-num">400</span><span class="shade-hex">#C26060</span></span></div>
+    <div class="swatch light" style="background:var(--enji-500);" ><span><span class="shade-num">500</span><span class="shade-hex">#A7413F</span></span></div>
+    <div class="swatch light" style="background:var(--enji-600);" ><span><span class="shade-num">600</span><span class="shade-hex">#8B2E2D</span></span></div>
+    <div class="swatch light" style="background:var(--enji-700);" ><span><span class="shade-num">700</span><span class="shade-hex">#6B2422</span></span></div>
+    <div class="swatch light" style="background:var(--enji-800);" ><span><span class="shade-num">800</span><span class="shade-hex">#4D1A19</span></span></div>
+    <div class="swatch light" style="background:var(--enji-900);" ><span><span class="shade-num">900</span><span class="shade-hex">#310F0E</span></span></div>
+    <div class="swatch light" style="background:var(--enji-950);" ><span><span class="shade-num">950</span><span class="shade-hex">#200908</span></span></div>
+  </div>
+
+  <div class="palette">
+    <div class="label"><b>unohana 卯の花</b><small>surface warm</small></div>
+    <div class="swatch dark"  style="background:var(--unohana-50);"  ><span><span class="shade-num">50</span><span class="shade-hex">#FEFDF9</span></span></div>
+    <div class="swatch dark"  style="background:var(--unohana-100);" ><span><span class="shade-num">100</span><span class="shade-hex">#FBF8EF</span></span></div>
+    <div class="swatch dark"  style="background:var(--unohana-200);" ><span><span class="shade-num">200</span><span class="shade-hex">#F4EEDB</span></span></div>
+    <div class="swatch dark"  style="background:var(--unohana-300);" ><span><span class="shade-num">300</span><span class="shade-hex">#EBE1BE</span></span></div>
+    <div class="swatch dark"  style="background:var(--unohana-400);" ><span><span class="shade-num">400</span><span class="shade-hex">#DBCB96</span></span></div>
+    <div class="swatch dark"  style="background:var(--unohana-500);" ><span><span class="shade-num">500</span><span class="shade-hex">#C4AF6E</span></span></div>
+    <div class="swatch light" style="background:var(--unohana-600);" ><span><span class="shade-num">600</span><span class="shade-hex">#A18B4E</span></span></div>
+    <div class="swatch light" style="background:var(--unohana-700);" ><span><span class="shade-num">700</span><span class="shade-hex">#7A6939</span></span></div>
+    <div class="swatch light" style="background:var(--unohana-800);" ><span><span class="shade-num">800</span><span class="shade-hex">#524629</span></span></div>
+    <div class="swatch light" style="background:var(--unohana-900);" ><span><span class="shade-num">900</span><span class="shade-hex">#2E2817</span></span></div>
+    <div class="swatch light" style="background:var(--unohana-950);" ><span><span class="shade-num">950</span><span class="shade-hex">#1A160C</span></span></div>
+  </div>
+
+  <div class="palette">
+    <div class="label"><b>uguisu 鶯</b><small>success</small></div>
+    <div class="swatch dark"  style="background:var(--uguisu-50);"  ><span><span class="shade-num">50</span><span class="shade-hex">#F4F7EE</span></span></div>
+    <div class="swatch dark"  style="background:var(--uguisu-100);" ><span><span class="shade-num">100</span><span class="shade-hex">#E3EBD0</span></span></div>
+    <div class="swatch dark"  style="background:var(--uguisu-200);" ><span><span class="shade-num">200</span><span class="shade-hex">#C5D8A2</span></span></div>
+    <div class="swatch dark"  style="background:var(--uguisu-300);" ><span><span class="shade-num">300</span><span class="shade-hex">#A0BE6E</span></span></div>
+    <div class="swatch light" style="background:var(--uguisu-400);" ><span><span class="shade-num">400</span><span class="shade-hex">#83A44A</span></span></div>
+    <div class="swatch light" style="background:var(--uguisu-500);" ><span><span class="shade-num">500</span><span class="shade-hex">#6A8737</span></span></div>
+    <div class="swatch light" style="background:var(--uguisu-600);" ><span><span class="shade-num">600</span><span class="shade-hex">#526B29</span></span></div>
+    <div class="swatch light" style="background:var(--uguisu-700);" ><span><span class="shade-num">700</span><span class="shade-hex">#3F511F</span></span></div>
+    <div class="swatch light" style="background:var(--uguisu-800);" ><span><span class="shade-num">800</span><span class="shade-hex">#2A3615</span></span></div>
+    <div class="swatch light" style="background:var(--uguisu-900);" ><span><span class="shade-num">900</span><span class="shade-hex">#18200C</span></span></div>
+    <div class="swatch light" style="background:var(--uguisu-950);" ><span><span class="shade-num">950</span><span class="shade-hex">#0E1306</span></span></div>
+  </div>
+
+  <div class="palette">
+    <div class="label"><b>natane 菜種</b><small>warning</small></div>
+    <div class="swatch dark"  style="background:var(--natane-50);"  ><span><span class="shade-num">50</span><span class="shade-hex">#FDF9EC</span></span></div>
+    <div class="swatch dark"  style="background:var(--natane-100);" ><span><span class="shade-num">100</span><span class="shade-hex">#FAF1CB</span></span></div>
+    <div class="swatch dark"  style="background:var(--natane-200);" ><span><span class="shade-num">200</span><span class="shade-hex">#F4DF8D</span></span></div>
+    <div class="swatch dark"  style="background:var(--natane-300);" ><span><span class="shade-num">300</span><span class="shade-hex">#ECC94B</span></span></div>
+    <div class="swatch dark"  style="background:var(--natane-400);" ><span><span class="shade-num">400</span><span class="shade-hex">#D9B11A</span></span></div>
+    <div class="swatch light" style="background:var(--natane-500);" ><span><span class="shade-num">500</span><span class="shade-hex">#B5920F</span></span></div>
+    <div class="swatch light" style="background:var(--natane-600);" ><span><span class="shade-num">600</span><span class="shade-hex">#8C7109</span></span></div>
+    <div class="swatch light" style="background:var(--natane-700);" ><span><span class="shade-num">700</span><span class="shade-hex">#665307</span></span></div>
+    <div class="swatch light" style="background:var(--natane-800);" ><span><span class="shade-num">800</span><span class="shade-hex">#423605</span></span></div>
+    <div class="swatch light" style="background:var(--natane-900);" ><span><span class="shade-num">900</span><span class="shade-hex">#231C03</span></span></div>
+    <div class="swatch light" style="background:var(--natane-950);" ><span><span class="shade-num">950</span><span class="shade-hex">#120F01</span></span></div>
+  </div>
+
+  <div class="palette">
+    <div class="label"><b>akane 茜</b><small>danger</small></div>
+    <div class="swatch dark"  style="background:var(--akane-50);"  ><span><span class="shade-num">50</span><span class="shade-hex">#FDF2F2</span></span></div>
+    <div class="swatch dark"  style="background:var(--akane-100);" ><span><span class="shade-num">100</span><span class="shade-hex">#FBDCDC</span></span></div>
+    <div class="swatch dark"  style="background:var(--akane-200);" ><span><span class="shade-num">200</span><span class="shade-hex">#F6AEAE</span></span></div>
+    <div class="swatch dark"  style="background:var(--akane-300);" ><span><span class="shade-num">300</span><span class="shade-hex">#EE7878</span></span></div>
+    <div class="swatch light" style="background:var(--akane-400);" ><span><span class="shade-num">400</span><span class="shade-hex">#E04848</span></span></div>
+    <div class="swatch light" style="background:var(--akane-500);" ><span><span class="shade-num">500</span><span class="shade-hex">#C42929</span></span></div>
+    <div class="swatch light" style="background:var(--akane-600);" ><span><span class="shade-num">600</span><span class="shade-hex">#9F1C1C</span></span></div>
+    <div class="swatch light" style="background:var(--akane-700);" ><span><span class="shade-num">700</span><span class="shade-hex">#7A1616</span></span></div>
+    <div class="swatch light" style="background:var(--akane-800);" ><span><span class="shade-num">800</span><span class="shade-hex">#561010</span></span></div>
+    <div class="swatch light" style="background:var(--akane-900);" ><span><span class="shade-num">900</span><span class="shade-hex">#320909</span></span></div>
+    <div class="swatch light" style="background:var(--akane-950);" ><span><span class="shade-num">950</span><span class="shade-hex">#1F0404</span></span></div>
+  </div>
+
+  <h2>2. セマンティックトークン（意味→色の割付）</h2>
+  <p class="lead">画面では生の色ではなく、意味を持つトークンを使います（例：`text-primary`）。テーマ切替時はこのマッピングだけが差し替わります。</p>
+
+  <div class="mapping">
+    <div class="chip"><span class="dot" style="background:var(--color-primary);"></span><div class="meta"><b>primary</b><small>ai-600 / dark: ai-400</small></div></div>
+    <div class="chip"><span class="dot" style="background:var(--color-accent);"></span><div class="meta"><b>accent</b><small>enji-500 / dark: enji-400</small></div></div>
+    <div class="chip"><span class="dot" style="background:var(--color-success);"></span><div class="meta"><b>success</b><small>uguisu-600 / dark: uguisu-400</small></div></div>
+    <div class="chip"><span class="dot" style="background:var(--color-warning);"></span><div class="meta"><b>warning</b><small>natane-500 / dark: natane-300</small></div></div>
+    <div class="chip"><span class="dot" style="background:var(--color-danger);"></span><div class="meta"><b>danger</b><small>akane-600 / dark: akane-400</small></div></div>
+    <div class="chip"><span class="dot" style="background:var(--color-text);border:1px solid var(--color-border);"></span><div class="meta"><b>text</b><small>sumi-900 / dark: sumi-50</small></div></div>
+    <div class="chip"><span class="dot" style="background:var(--color-surface);border:1px solid var(--color-border);"></span><div class="meta"><b>surface</b><small>#FFF / dark: sumi-900</small></div></div>
+    <div class="chip"><span class="dot" style="background:var(--color-bg);border:1px solid var(--color-border);"></span><div class="meta"><b>bg</b><small>unohana-50 / dark: sumi-950</small></div></div>
+  </div>
+
+  <h2>3. UIコンポーネント適用例</h2>
+
+  <div class="ui-grid">
+
+    <div class="card">
+      <h3>ボタン</h3>
+      <div class="row">
+        <button class="btn btn-primary">予約を確定</button>
+        <button class="btn btn-accent">LINE送信</button>
+        <button class="btn btn-ghost">キャンセル</button>
+      </div>
+      <div class="row">
+        <button class="btn btn-subtle">エクスポート</button>
+        <button class="btn btn-danger">削除</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>ステータスバッジ</h3>
+      <div class="row">
+        <span class="badge badge-primary">確認中</span>
+        <span class="badge badge-success">対応完了</span>
+        <span class="badge badge-warning">返信待ち</span>
+        <span class="badge badge-danger">キャンセル</span>
+        <span class="badge badge-neutral">未対応</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>アラート／トースト</h3>
+      <div class="alert alert-info">Googleカレンダー連携が完了しました。</div>
+      <div class="alert alert-success">予約を保存しました。</div>
+      <div class="alert alert-warning">残り枠が少なくなっています（残り3枠）。</div>
+      <div class="alert alert-danger">送信に失敗しました。時間をおいて再試行してください。</div>
+    </div>
+
+    <div class="card">
+      <h3>フォーム</h3>
+      <label class="label">お客様名</label>
+      <input class="input" type="text" placeholder="京呉服 太郎" value="三宅 愛奈">
+      <label class="label">来店日時</label>
+      <input class="input" type="text" value="2026-04-23 11:00">
+      <div class="row">
+        <button class="btn btn-primary">保存</button>
+        <button class="btn btn-ghost">キャンセル</button>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column: 1 / -1;">
+      <h3>予約一覧（テーブル）</h3>
+      <table>
+        <thead>
+          <tr><th>日時</th><th>顧客</th><th>店舗</th><th>ステータス</th><th>担当</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>04/23 10:00</td><td>三宅 愛奈</td><td>浜店</td><td><span class="badge badge-primary">確認中</span></td><td>黒田</td></tr>
+          <tr><td>04/23 14:00</td><td>小林 綾</td><td>岡山店</td><td><span class="badge badge-success">対応完了</span></td><td>岸</td></tr>
+          <tr><td>04/24 11:00</td><td>田中 未来</td><td>城東店</td><td><span class="badge badge-warning">返信待ち</span></td><td>—</td></tr>
+          <tr><td>04/24 16:00</td><td>吉岡 桃子</td><td>福井店</td><td><span class="badge badge-neutral">未対応</span></td><td>平田</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="grid-column: 1 / -1;">
+      <h3>ダッシュボード／サイドバー イメージ</h3>
+      <div class="layout-mock">
+        <aside class="sidebar">
+          <div class="brand-s">京呉服平田</div>
+          <div class="navgroup">
+            <div class="navgroup-title">予約管理</div>
+            <div class="navlink active">ダッシュボード</div>
+            <div class="navlink">予約一覧</div>
+            <div class="navlink">スケジュール</div>
+          </div>
+          <div class="navgroup">
+            <div class="navgroup-title">顧客</div>
+            <div class="navlink">顧客一覧</div>
+            <div class="navlink">LINE紐付け</div>
+          </div>
+          <div class="navgroup">
+            <div class="navgroup-title">マスタ</div>
+            <div class="navlink">イベント</div>
+            <div class="navlink">店舗</div>
+            <div class="navlink">スタッフ</div>
+          </div>
+        </aside>
+        <section class="content-area">
+          <div class="crumbs">ダッシュボード</div>
+          <h4>本日の予約 4件</h4>
+          <div class="row">
+            <span class="badge badge-primary">確認中 2</span>
+            <span class="badge badge-warning">返信待ち 1</span>
+            <span class="badge badge-success">対応完了 1</span>
+          </div>
+          <p style="font-size: 12px; color: var(--color-text-muted); margin-top: 8px;">※ これは色見本用のダミーです。実装では Chart.js のグラフやStatCardが入ります。</p>
+        </section>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="gutter"></div>
+  <p style="font-size: 12px; color: var(--color-text-muted);">この配色で進めてよければ承認ください。調整希望がある場合は「もう少し柔らかく」「primaryを紫系に」など要望を教えてください。合意後 <code>tailwind.config.js</code> へ反映します。</p>
+</main>
+
+<script>
+function toggleTheme(){
+  const html = document.documentElement;
+  const cur = html.getAttribute('data-theme');
+  if (cur === 'dark') {
+    html.removeAttribute('data-theme');
+    document.getElementById('themeLabel').textContent = '☀ ライト';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    document.getElementById('themeLabel').textContent = '☾ ダーク';
+  }
+}
+</script>
+
+</body>
+</html>
