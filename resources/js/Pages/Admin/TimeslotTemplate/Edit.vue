@@ -4,10 +4,10 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">予約枠テンプレート編集</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">予約枠テンプレート編集</h2>
                 <Link
                     :href="route('admin.timeslot-templates.index')"
-                    class="text-indigo-600 hover:text-indigo-900"
+                    class="text-brand-primary hover:text-brand-primary-hover"
                 >
                     ← テンプレート一覧に戻る
                 </Link>
@@ -16,7 +16,7 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <!-- エラーメッセージ -->
                         <div v-if="$page.props.errors && Object.keys($page.props.errors).length > 0" class="mb-4 rounded-md bg-red-50 p-4">
@@ -42,12 +42,12 @@
                         <form @submit.prevent="submit">
                             <div class="space-y-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">テンプレート名 <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">テンプレート名 <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.name"
                                         type="text"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         placeholder="例: 午前の部、午後の部"
                                     />
                                     <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</div>
@@ -55,18 +55,18 @@
 
                                 <div>
                                     <div class="flex justify-between items-center mb-2">
-                                        <label class="block text-sm font-medium text-gray-700">時間枠 <span class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text">時間枠 <span class="text-red-500">*</span></label>
                                         <button
                                             type="button"
                                             @click="addSlot"
-                                            class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                                            class="px-3 py-1 text-sm bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover"
                                         >
                                             + 時間枠を追加
                                         </button>
                                     </div>
                                     <div v-if="form.errors.slots" class="mb-2 text-sm text-red-600">{{ form.errors.slots }}</div>
                                     
-                                    <div v-if="form.slots.length === 0" class="text-sm text-gray-500 py-4 text-center border border-gray-200 rounded-md">
+                                    <div v-if="form.slots.length === 0" class="text-sm text-brand-text-muted py-4 text-center border border-brand-border rounded-md">
                                         時間枠が登録されていません。上記のボタンから追加してください。
                                     </div>
                                     
@@ -74,15 +74,15 @@
                                         <div
                                             v-for="(slot, index) in form.slots"
                                             :key="index"
-                                            class="p-4 border border-gray-200 rounded-md bg-gray-50"
+                                            class="p-4 border border-brand-border rounded-md bg-brand-surface-2"
                                         >
                                             <div class="grid grid-cols-4 gap-3">
                                                 <div>
-                                                    <label class="block text-xs text-gray-500 mb-1">時</label>
+                                                    <label class="block text-xs text-brand-text-muted mb-1">時</label>
                                                     <select
                                                         v-model="slot.hour"
                                                         required
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     >
                                                         <option
                                                             v-for="hour in hours"
@@ -94,11 +94,11 @@
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label class="block text-xs text-gray-500 mb-1">分</label>
+                                                    <label class="block text-xs text-brand-text-muted mb-1">分</label>
                                                     <select
                                                         v-model="slot.minute"
                                                         required
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     >
                                                         <option
                                                             v-for="minute in minutes"
@@ -110,13 +110,13 @@
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label class="block text-xs text-gray-500 mb-1">枠数</label>
+                                                    <label class="block text-xs text-brand-text-muted mb-1">枠数</label>
                                                     <input
                                                         v-model.number="slot.capacity"
                                                         type="number"
                                                         min="1"
                                                         required
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     />
                                                 </div>
                                                 <div class="flex items-end">
@@ -136,14 +136,14 @@
                                 <div class="flex justify-end space-x-4 pt-4 border-t">
                                     <Link
                                         :href="route('admin.timeslot-templates.index')"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
                                     </Link>
                                     <button
                                         type="submit"
                                         :disabled="form.processing || form.slots.length === 0"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
                                         {{ form.processing ? '保存中...' : '更新' }}
                                     </button>

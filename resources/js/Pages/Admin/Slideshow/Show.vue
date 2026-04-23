@@ -4,11 +4,11 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">スライドショー詳細 - {{ slideshow.name }}</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">スライドショー詳細 - {{ slideshow.name }}</h2>
                 <div class="flex space-x-4">
                     <Link
                         :href="route('admin.slideshows.index')"
-                        class="text-indigo-600 hover:text-indigo-900"
+                        class="text-brand-primary hover:text-brand-primary-hover"
                     >
                         ← スライドショー一覧に戻る
                     </Link>
@@ -19,23 +19,23 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
                 <!-- スライドショー名編集 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="updateName">
                             <div class="flex items-end space-x-4">
                                 <div class="flex-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">スライドショー名</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">スライドショー名</label>
                                     <input
                                         v-model="nameForm.name"
                                         type="text"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                 </div>
                                 <button
                                     type="submit"
                                     :disabled="nameForm.processing"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                    class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                 >
                                     {{ nameForm.processing ? '更新中...' : '名前を更新' }}
                                 </button>
@@ -45,59 +45,59 @@
                 </div>
 
                 <!-- スライドショー設定 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold mb-4">スライドショー設定</h3>
                         <form @submit.prevent="updateSettings">
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">表示タイプ</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">表示タイプ</label>
                                     <select
                                         v-model="settingsForm.type"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     >
                                         <option value="fade">フェード</option>
                                         <option value="slide">スライド</option>
                                         <option value="cube">キューブ</option>
                                         <option value="coverflow">カバーフロー</option>
                                     </select>
-                                    <p class="mt-1 text-sm text-gray-500">スライドショーの切り替えエフェクトを選択</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">スライドショーの切り替えエフェクトを選択</p>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">自動再生</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">自動再生</label>
                                     <label class="flex items-center">
                                         <input
                                             v-model="settingsForm.autoplay_enabled"
                                             type="checkbox"
-                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                         />
-                                        <span class="ml-2 text-sm text-gray-700">自動でスライドを切り替える</span>
+                                        <span class="ml-2 text-sm text-brand-text">自動でスライドを切り替える</span>
                                     </label>
                                 </div>
 
                                 <div v-if="settingsForm.autoplay_enabled">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">自動遷移時間（ミリ秒）</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">自動遷移時間（ミリ秒）</label>
                                     <input
                                         v-model.number="settingsForm.autoplay_interval"
                                         type="number"
                                         min="1000"
                                         max="60000"
                                         step="1000"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">1000〜60000ミリ秒（1秒〜60秒）の範囲で設定</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">1000〜60000ミリ秒（1秒〜60秒）の範囲で設定</p>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">全画面表示</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">全画面表示</label>
                                     <label class="flex items-center">
                                         <input
                                             v-model="settingsForm.fullscreen"
                                             type="checkbox"
-                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                         />
-                                        <span class="ml-2 text-sm text-gray-700">全画面でスライドショーを表示する</span>
+                                        <span class="ml-2 text-sm text-brand-text">全画面でスライドショーを表示する</span>
                                     </label>
                                 </div>
 
@@ -105,7 +105,7 @@
                                     <button
                                         type="submit"
                                         :disabled="settingsForm.processing"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ settingsForm.processing ? '更新中...' : '設定を更新' }}
                                     </button>
@@ -116,7 +116,7 @@
                 </div>
 
                 <!-- 画像追加（スライドショー設定の下に配置） -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold">画像を追加</h3>
@@ -130,7 +130,7 @@
                         <form @submit.prevent="submitImage" enctype="multipart/form-data">
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    <label class="block text-sm font-medium text-brand-text mb-1">
                                         画像 <span class="text-red-500">*</span>
                                     </label>
                                     <input
@@ -139,9 +139,9 @@
                                         multiple
                                         accept="image/*"
                                         @change="handleFileChange"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">複数の画像を選択できます（JPEG, PNG, JPG, GIF、最大10MB）</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">複数の画像を選択できます（JPEG, PNG, JPG, GIF、最大10MB）</p>
                                     <div v-if="imageForm.errors.images" class="mt-1 text-sm text-red-600">{{ imageForm.errors.images }}</div>
 
                                     <!-- プレビュー -->
@@ -164,11 +164,11 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Alt属性</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">Alt属性</label>
                                     <input
                                         v-model="imageForm.alt"
                                         type="text"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         placeholder="画像の説明（オプション）"
                                     />
                                     <div v-if="imageForm.errors.alt" class="mt-1 text-sm text-red-600">{{ imageForm.errors.alt }}</div>
@@ -178,7 +178,7 @@
                                     <button
                                         type="submit"
                                         :disabled="imageForm.processing || selectedFiles.length === 0"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ imageForm.processing ? 'アップロード中...' : '画像を追加' }}
                                     </button>
@@ -189,7 +189,7 @@
                 </div>
 
                 <!-- 画像一覧（複数選択・ドラッグで並び替え） -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div v-if="$page.props.flash?.success" class="mb-4 rounded-md bg-green-50 p-4">
                             <p class="text-sm font-medium text-green-800">{{ $page.props.flash.success }}</p>
@@ -199,9 +199,9 @@
                         </div>
                         <div v-if="sortedImages.length > 0" class="space-y-4">
                             <div class="mb-4 flex flex-wrap items-center gap-3">
-                                <p class="text-sm text-gray-600">ハンドル（≡）をドラッグして並び替え／行の上端で放すと挿入、行の中央付近で放すと入れ替え。行クリックで複数選択できます</p>
+                                <p class="text-sm text-brand-text-muted">ハンドル（≡）をドラッグして並び替え／行の上端で放すと挿入、行の中央付近で放すと入れ替え。行クリックで複数選択できます</p>
                                 <template v-if="selectedIds.size > 0">
-                                    <span class="text-sm font-medium text-indigo-600">{{ selectedIds.size }}件選択中</span>
+                                    <span class="text-sm font-medium text-brand-primary">{{ selectedIds.size }}件選択中</span>
                                     <button
                                         type="button"
                                         @click="bulkDeleteSelected"
@@ -213,7 +213,7 @@
                                     <button
                                         type="button"
                                         @click="clearSelection"
-                                        class="text-sm text-gray-600 hover:text-gray-800 underline"
+                                        class="text-sm text-brand-text-muted hover:text-brand-text underline"
                                     >
                                         選択解除
                                     </button>
@@ -228,14 +228,14 @@
                                 <!-- 挿入ドロップインジケータ（行と行の間） -->
                                 <div
                                     v-if="dropMode === 'insert' && dropTargetIndex === index"
-                                    class="h-1 bg-indigo-500 rounded mb-2"
+                                    class="h-1 bg-brand-primary rounded mb-2"
                                     aria-hidden="true"
                                 />
                                 <!-- 画像行 -->
                                 <div
                                     class="flex items-center space-x-3 p-4 border rounded-lg mb-4 transition-colors cursor-pointer select-none"
                                     :class="[
-                                        dropMode === 'swap' && dropTargetIndex === index ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300 ring-offset-1' : 'border-gray-200 hover:bg-gray-50',
+                                        dropMode === 'swap' && dropTargetIndex === index ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300 ring-offset-1' : 'border-brand-border hover:bg-brand-surface-2',
                                         selectedIds.has(image.id) && !(dropMode === 'swap' && dropTargetIndex === index) ? 'bg-sky-100 border-sky-400 ring-2 ring-sky-300 ring-offset-1' : ''
                                     ]"
                                     :data-drop-index="index"
@@ -253,14 +253,14 @@
                                         @click.stop
                                         title="ドラッグして移動"
                                     >
-                                        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-6 h-6 text-brand-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
                                         </svg>
                                     </div>
                                     <!-- 画像（クリックで拡大プレビュー） -->
                                     <button
                                         type="button"
-                                        class="relative flex-shrink-0 rounded overflow-hidden border border-gray-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow"
+                                        class="relative flex-shrink-0 rounded overflow-hidden border border-brand-border hover:border-indigo-400 hover:ring-2 hover:ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow"
                                         @click.stop="openPreview(image)"
                                         title="クリックで拡大表示"
                                     >
@@ -272,7 +272,7 @@
                                         <button
                                             v-if="image.storage_disk !== 's3'"
                                             type="button"
-                                            class="absolute top-1 right-1 w-7 h-7 flex items-center justify-center rounded-full bg-indigo-500 text-white hover:bg-indigo-600 shadow-md z-10"
+                                            class="absolute top-1 right-1 w-7 h-7 flex items-center justify-center rounded-full bg-brand-primary text-white hover:bg-brand-primary shadow-md z-10"
                                             title="S3 に移行"
                                             :disabled="migratingImageId === image.id"
                                             @click.stop="migrateImageToS3(image)"
@@ -284,8 +284,8 @@
                                         </button>
                                     </button>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm text-gray-600">順序: {{ index + 1 }}</p>
-                                        <p v-if="image.alt" class="text-sm text-gray-600 truncate">Alt: {{ image.alt }}</p>
+                                        <p class="text-sm text-brand-text-muted">順序: {{ index + 1 }}</p>
+                                        <p v-if="image.alt" class="text-sm text-brand-text-muted truncate">Alt: {{ image.alt }}</p>
                                     </div>
                                     <div class="flex-shrink-0 flex flex-col gap-2 items-end" @click.stop>
                                         <button
@@ -302,13 +302,13 @@
                                 <button
                                     @click="saveSortOrder"
                                     :disabled="isSaving"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                    class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                 >
                                     {{ isSaving ? '保存中...' : 'ソート順を保存' }}
                                 </button>
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             画像が登録されていません
                         </div>
                     </div>
@@ -351,7 +351,7 @@
                         />
                         <button
                             type="button"
-                            class="absolute -top-10 right-0 p-2 text-white hover:text-gray-300 rounded-full hover:bg-white/10 transition-colors"
+                            class="absolute -top-10 right-0 p-2 text-white hover:text-brand-text-subtle rounded-full hover:bg-brand-surface/10 transition-colors"
                             @click="closePreview"
                             aria-label="閉じる"
                         >

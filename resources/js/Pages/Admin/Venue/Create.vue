@@ -4,10 +4,10 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">会場追加</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">会場追加</h2>
                 <Link
                     :href="route('admin.venues.index')"
-                    class="text-indigo-600 hover:text-indigo-900"
+                    class="text-brand-primary hover:text-brand-primary-hover"
                 >
                     ← 会場一覧に戻る
                 </Link>
@@ -16,62 +16,62 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="submit">
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">会場名 <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">会場名 <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.name"
                                         type="text"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                                     <textarea
                                         v-model="form.description"
                                         rows="4"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     ></textarea>
-                                    <p class="mt-1 text-sm text-gray-500">HTMLタグが使用できます</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">HTMLタグが使用できます</p>
                                     <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">住所</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">住所</label>
                                     <input
                                         v-model="form.address"
                                         type="text"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">電話番号</label>
                                     <input
                                         v-model="form.phone"
                                         type="tel"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.phone" class="mt-1 text-sm text-red-600">{{ form.errors.phone }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">会場画像</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">会場画像</label>
                                     <input
                                         ref="fileInput"
                                         type="file"
                                         accept="image/*"
                                         @change="handleFileChange"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">JPEG, PNG, JPG, GIF（最大10MB）</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">JPEG, PNG, JPG, GIF（最大10MB）</p>
                                     <div v-if="form.errors.image" class="mt-1 text-sm text-red-600">{{ form.errors.image }}</div>
                                     
                                     <!-- プレビュー -->
@@ -79,7 +79,7 @@
                                         <img
                                             :src="previewImage"
                                             alt="プレビュー"
-                                            class="w-32 h-32 object-cover rounded border border-gray-300"
+                                            class="w-32 h-32 object-cover rounded border border-brand-border"
                                         />
                                     </div>
                                 </div>
@@ -89,23 +89,23 @@
                                         <input
                                             v-model="form.is_active"
                                             type="checkbox"
-                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
-                                        <span class="ml-2 text-sm text-gray-700">有効</span>
+                                        <span class="ml-2 text-sm text-brand-text">有効</span>
                                     </label>
                                 </div>
 
                                 <div class="flex justify-end space-x-4 pt-4">
                                     <Link
                                         :href="route('admin.venues.index')"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
                                     </Link>
                                     <button
                                         type="submit"
                                         :disabled="form.processing"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ form.processing ? '保存中...' : '保存' }}
                                     </button>

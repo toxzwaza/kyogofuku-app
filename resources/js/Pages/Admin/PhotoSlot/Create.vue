@@ -4,29 +4,29 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">前撮り枠追加</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">前撮り枠追加</h2>
                 <ActionButton variant="back" label="前撮り管理に戻る" :href="route('admin.photo-slots.index')" />
             </div>
         </template>
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="addToPendingList">
                             <div class="space-y-4">
                                 <div class="mb-4">
-                                    <h3 class="text-sm font-medium text-gray-700">個別追加</h3>
-                                    <p class="text-xs text-gray-500 mt-1">枠を追加してから保存ボタンで一括登録します</p>
+                                    <h3 class="text-sm font-medium text-brand-text">個別追加</h3>
+                                    <p class="text-xs text-brand-text-muted mt-1">枠を追加してから保存ボタンで一括登録します</p>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    <label class="block text-sm font-medium text-brand-text mb-1">
                                         スタジオ <span class="text-red-500">*</span>
                                     </label>
                                     <select
                                         v-model="form.photo_studio_id"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     >
                                         <option value="">選択してください</option>
                                         <option
@@ -43,24 +43,24 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <label class="block text-sm font-medium text-brand-text mb-2">
                                         担当店舗
                                     </label>
-                                    <div class="space-y-2 border border-gray-300 rounded-md p-4 bg-gray-50">
+                                    <div class="space-y-2 border border-brand-border rounded-md p-4 bg-brand-surface-2">
                                         <label
                                             v-for="shop in shops"
                                             :key="shop.id"
-                                            class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded-md transition-colors"
+                                            class="flex items-center space-x-2 cursor-pointer hover:bg-brand-surface-2 p-2 rounded-md transition-colors"
                                         >
                                             <input
                                                 type="checkbox"
                                                 :value="shop.id"
                                                 v-model="form.shop_ids"
-                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                             />
-                                            <span class="text-sm text-gray-700">{{ shop.name }}</span>
+                                            <span class="text-sm text-brand-text">{{ shop.name }}</span>
                                         </label>
-                                        <p v-if="shops.length === 0" class="text-sm text-gray-500">
+                                        <p v-if="shops.length === 0" class="text-sm text-brand-text-muted">
                                             店舗が登録されていません
                                         </p>
                                     </div>
@@ -70,14 +70,14 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    <label class="block text-sm font-medium text-brand-text mb-1">
                                         撮影日 <span class="text-red-500">*</span>
                                     </label>
                                     <input
                                         v-model="form.shoot_date"
                                         type="date"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.shoot_date" class="mt-1 text-sm text-red-600">
                                         {{ form.errors.shoot_date }}
@@ -85,13 +85,13 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    <label class="block text-sm font-medium text-brand-text mb-1">
                                         撮影時間 <span class="text-red-500">*</span>
                                     </label>
                                     
                                     <!-- 時間ボタン（8:00-16:00、30分間隔） -->
                                     <div class="mb-4">
-                                        <p class="text-sm text-gray-600 mb-2">時間を選択してください（クリックで選択/解除）</p>
+                                        <p class="text-sm text-brand-text-muted mb-2">時間を選択してください（クリックで選択/解除）</p>
                                         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                                             <button
                                                 v-for="time in timeSlots"
@@ -101,8 +101,8 @@
                                                 :class="[
                                                     'px-3 py-2 text-sm font-medium rounded-md border-2 transition-all',
                                                     selectedTimes.includes(time)
-                                                        ? 'bg-indigo-600 text-white border-indigo-600 opacity-100'
-                                                        : 'bg-gray-100 text-gray-600 border-gray-300 opacity-50 hover:opacity-75'
+                                                        ? 'bg-brand-primary text-white border-indigo-600 opacity-100'
+                                                        : 'bg-brand-surface-2 text-brand-text-muted border-brand-border opacity-50 hover:opacity-75'
                                                 ]"
                                             >
                                                 {{ time }}
@@ -111,8 +111,8 @@
                                     </div>
 
                                     <!-- カスタム時間入力 -->
-                                    <div class="border-t border-gray-200 pt-4">
-                                        <p class="text-sm text-gray-600 mb-2">その他の時間を追加</p>
+                                    <div class="border-t border-brand-border pt-4">
+                                        <p class="text-sm text-brand-text-muted mb-2">その他の時間を追加</p>
                                         <div class="space-y-2">
                                             <div
                                                 v-for="(time, index) in customTimes"
@@ -122,7 +122,7 @@
                                                 <input
                                                     v-model="customTimes[index]"
                                                     type="time"
-                                                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="flex-1 rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     placeholder="HH:mm"
                                                 />
                                                 <button
@@ -138,7 +138,7 @@
                                             <button
                                                 type="button"
                                                 @click="addCustomTime"
-                                                class="w-full px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                class="w-full px-4 py-2 text-sm font-medium text-brand-primary bg-indigo-50 rounded-md hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
                                             >
                                                 + カスタム時間を追加
                                             </button>
@@ -146,8 +146,8 @@
                                     </div>
 
                                     <!-- 選択された時間のプレビュー -->
-                                    <div v-if="allSelectedTimes.length > 0" class="mt-4 p-3 bg-gray-50 rounded-md">
-                                        <p class="text-sm font-medium text-gray-700 mb-2">選択された時間（{{ allSelectedTimes.length }}件）:</p>
+                                    <div v-if="allSelectedTimes.length > 0" class="mt-4 p-3 bg-brand-surface-2 rounded-md">
+                                        <p class="text-sm font-medium text-brand-text mb-2">選択された時間（{{ allSelectedTimes.length }}件）:</p>
                                         <div class="flex flex-wrap gap-2">
                                             <span
                                                 v-for="(time, index) in allSelectedTimes"
@@ -171,7 +171,7 @@
                                 <div class="flex justify-end space-x-4 pt-4">
                                     <Link
                                         :href="route('admin.photo-slots.index')"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
                                     </Link>
@@ -188,37 +188,37 @@
 
                         <!-- 追加済み前撮り枠リスト -->
                         <div v-if="pendingSlotGroups.length > 0" class="mt-8 border-t pt-6">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                            <h3 class="text-lg font-medium text-brand-text mb-4">
                                 追加済み前撮り枠（{{ pendingSlotGroups.length }}グループ）
                             </h3>
                             <div class="space-y-3">
                                 <div
                                     v-for="(group, index) in pendingSlotGroups"
                                     :key="index"
-                                    class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                                    class="flex items-center justify-between p-4 bg-brand-surface-2 rounded-lg border border-brand-border"
                                 >
                                     <div class="flex-1 grid grid-cols-4 gap-4">
                                         <div>
-                                            <span class="text-xs text-gray-500">スタジオ</span>
-                                            <p class="text-sm font-medium text-gray-900">
+                                            <span class="text-xs text-brand-text-muted">スタジオ</span>
+                                            <p class="text-sm font-medium text-brand-text">
                                                 {{ getStudioName(group.photo_studio_id) }}
                                             </p>
                                         </div>
                                         <div>
-                                            <span class="text-xs text-gray-500">撮影日</span>
-                                            <p class="text-sm font-medium text-gray-900">
+                                            <span class="text-xs text-brand-text-muted">撮影日</span>
+                                            <p class="text-sm font-medium text-brand-text">
                                                 {{ group.shoot_date }}
                                             </p>
                                         </div>
                                         <div>
-                                            <span class="text-xs text-gray-500">撮影時間</span>
-                                            <p class="text-sm font-medium text-gray-900">
+                                            <span class="text-xs text-brand-text-muted">撮影時間</span>
+                                            <p class="text-sm font-medium text-brand-text">
                                                 {{ group.shoot_times.join(', ') }}
                                             </p>
                                         </div>
                                         <div>
-                                            <span class="text-xs text-gray-500">担当店舗</span>
-                                            <p class="text-sm font-medium text-gray-900">
+                                            <span class="text-xs text-brand-text-muted">担当店舗</span>
+                                            <p class="text-sm font-medium text-brand-text">
                                                 {{ getShopNames(group.shop_ids) }}
                                             </p>
                                         </div>
@@ -237,7 +237,7 @@
                             <div class="flex justify-end space-x-4 mt-6 pt-4 border-t">
                                 <Link
                                     :href="route('admin.photo-slots.index')"
-                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                    class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                 >
                                     キャンセル
                                 </Link>
@@ -245,7 +245,7 @@
                                     type="button"
                                     @click="submit"
                                     :disabled="isSubmitting"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                    class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                 >
                                     {{ isSubmitting ? '保存中...' : '保存（' + totalSlotCount + '件）' }}
                                 </button>

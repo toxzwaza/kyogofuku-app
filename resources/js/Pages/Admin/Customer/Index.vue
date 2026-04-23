@@ -21,24 +21,24 @@
                     <aside
                         class="w-full lg:w-[22rem] shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto"
                     >
-                        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                            <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white">
-                                <h3 class="text-base font-semibold text-gray-900">検索条件</h3>
-                                <p class="text-xs text-gray-500 mt-0.5 leading-snug">
+                        <div class="bg-brand-surface rounded-xl border border-brand-border shadow-sm overflow-hidden">
+                            <div class="px-4 py-3 border-b border-brand-border bg-gradient-to-r from-slate-50 to-white">
+                                <h3 class="text-base font-semibold text-brand-text">検索条件</h3>
+                                <p class="text-xs text-brand-text-muted mt-0.5 leading-snug">
                                     各ブロックを開いて絞り込み、検索を実行してください
                                 </p>
                             </div>
                             <form @submit.prevent="searchCustomers" class="p-3 space-y-2">
                                 <!-- 基本情報 -->
-                                <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
                                     <button
                                         type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
                                         @click="toggleFilterAccordion('basic')"
                                     >
                                         <span>基本情報</span>
                                         <svg
-                                            class="w-4 h-4 text-gray-500 shrink-0 transition-transform duration-200"
+                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.basic }"
                                             fill="none"
                                             stroke="currentColor"
@@ -49,33 +49,33 @@
                                     </button>
                                     <div
                                         v-show="filterAccordion.basic"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-gray-100 bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
                                     >
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">顧客名</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">顧客名</label>
                                             <input
                                                 v-model="searchForm.name"
                                                 type="text"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="顧客名で検索"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">ふりがな</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">ふりがな</label>
                                             <input
                                                 v-model="searchForm.kana"
                                                 type="text"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="ふりがなで検索"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">成人式エリア</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">成人式エリア</label>
                                             <div class="flex gap-2 items-end">
                                                 <div class="flex-1 min-w-0">
                                                     <select
                                                         v-model="searchForm.ceremony_prefecture"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                         @change="searchForm.ceremony_area_id = null"
                                                     >
                                                         <option :value="null">全て</option>
@@ -87,7 +87,7 @@
                                                 <div class="flex-1 min-w-0">
                                                     <select
                                                         v-model="searchForm.ceremony_area_id"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                         :disabled="!searchForm.ceremony_prefecture"
                                                     >
                                                         <option :value="null">全て</option>
@@ -99,43 +99,43 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">電話番号</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">電話番号</label>
                                             <input
                                                 v-model="searchForm.phone_number"
                                                 type="text"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="電話番号で検索"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">登録日（開始）</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">登録日（開始）</label>
                                             <input
                                                 v-model="searchForm.created_at_from"
                                                 type="date"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">登録日（終了）</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">登録日（終了）</label>
                                             <input
                                                 v-model="searchForm.created_at_to"
                                                 type="date"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- 成人式情報 -->
-                                <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
                                     <button
                                         type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
                                         @click="toggleFilterAccordion('seijin')"
                                     >
                                         <span>成人式情報</span>
                                         <svg
-                                            class="w-4 h-4 text-gray-500 shrink-0 transition-transform duration-200"
+                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.seijin }"
                                             fill="none"
                                             stroke="currentColor"
@@ -146,17 +146,17 @@
                                     </button>
                                     <div
                                         v-show="filterAccordion.seijin"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-gray-100 bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
                                     >
-                                        <p v-if="seijinFilterOptionsLoading" class="text-xs text-gray-500">候補を読み込み中…</p>
+                                        <p v-if="seijinFilterOptionsLoading" class="text-xs text-brand-text-muted">候補を読み込み中…</p>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">仕度会場</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">仕度会場</label>
                                             <input
                                                 v-model="searchForm.seijin_preparation_venue"
                                                 type="text"
                                                 list="index-search-seijin-preparation-venue-datalist"
                                                 autocomplete="off"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="部分一致"
                                             />
                                             <datalist id="index-search-seijin-preparation-venue-datalist">
@@ -168,19 +168,19 @@
                                             </datalist>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">時間</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">時間</label>
                                             <input
                                                 v-model="searchForm.seijin_preparation_time"
                                                 type="text"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="部分一致"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">他店お支度</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">他店お支度</label>
                                             <select
                                                 v-model="searchForm.other_store_preparation"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option :value="true">あり</option>
@@ -188,16 +188,16 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">美容室名</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">美容室名</label>
                                             <input
                                                 v-model="searchForm.other_store_salon_name"
                                                 type="text"
                                                 list="index-search-other-store-salon-name-datalist"
                                                 autocomplete="off"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="部分一致"
                                             />
-                                            <p class="mt-1 text-[11px] text-gray-500 leading-snug">
+                                            <p class="mt-1 text-[11px] text-brand-text-muted leading-snug">
                                                 他店お支度が「あり」のとき、空欄のまま検索すると美容室名が未登録の顧客のみに絞り込みます。
                                             </p>
                                             <datalist id="index-search-other-store-salon-name-datalist">
@@ -209,26 +209,26 @@
                                             </datalist>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">着物発送日</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">着物発送日</label>
                                             <input
                                                 v-model="searchForm.kimono_ship_date"
                                                 type="date"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- 成約情報 -->
-                                <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
                                     <button
                                         type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
                                         @click="toggleFilterAccordion('contract')"
                                     >
                                         <span>成約情報</span>
                                         <svg
-                                            class="w-4 h-4 text-gray-500 shrink-0 transition-transform duration-200"
+                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.contract }"
                                             fill="none"
                                             stroke="currentColor"
@@ -239,13 +239,13 @@
                                     </button>
                                     <div
                                         v-show="filterAccordion.contract"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-gray-100 bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
                                     >
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">成約ステータス</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">成約ステータス</label>
                                             <select
                                                 v-model="searchForm.contract_status"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option value="成約なし">成約なし</option>
@@ -255,26 +255,26 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">成約日（開始）</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">成約日（開始）</label>
                                             <input
                                                 v-model="searchForm.contract_date_from"
                                                 type="date"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">成約日（終了）</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">成約日（終了）</label>
                                             <input
                                                 v-model="searchForm.contract_date_to"
                                                 type="date"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">店舗</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">店舗</label>
                                             <select
                                                 v-model="searchForm.shop_id"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option v-for="shop in shops" :key="shop.id" :value="shop.id">
@@ -283,10 +283,10 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">プラン</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">プラン</label>
                                             <select
                                                 v-model="searchForm.plan_id"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option v-for="plan in plans" :key="plan.id" :value="plan.id">
@@ -295,10 +295,10 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">着物種別</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">着物種別</label>
                                             <select
                                                 v-model="searchForm.kimono_type"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option value="振袖">振袖</option>
@@ -306,10 +306,10 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">安心保証</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">安心保証</label>
                                             <select
                                                 v-model="searchForm.warranty_flag"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option :value="true">あり</option>
@@ -317,10 +317,10 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">担当スタッフ</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">担当スタッフ</label>
                                             <select
                                                 v-model="searchForm.user_id"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option v-for="user in users" :key="user.id" :value="user.id">
@@ -329,35 +329,35 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">お仕度会場</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">お仕度会場</label>
                                             <input
                                                 v-model="searchForm.preparation_venue"
                                                 type="text"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="お仕度会場で検索"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">お仕度日程</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">お仕度日程</label>
                                             <input
                                                 v-model="searchForm.preparation_date"
                                                 type="date"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- 制約情報 -->
-                                <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
                                     <button
                                         type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
                                         @click="toggleFilterAccordion('constraint')"
                                     >
                                         <span>制約情報</span>
                                         <svg
-                                            class="w-4 h-4 text-gray-500 shrink-0 transition-transform duration-200"
+                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.constraint }"
                                             fill="none"
                                             stroke="currentColor"
@@ -368,13 +368,13 @@
                                     </button>
                                     <div
                                         v-show="filterAccordion.constraint"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-gray-100 bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
                                     >
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">制約の有無</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">制約の有無</label>
                                             <select
                                                 v-model="searchForm.constraint_presence"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option value="制約なし">制約なし</option>
@@ -382,10 +382,10 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">制約テンプレート</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">制約テンプレート</label>
                                             <select
                                                 v-model="searchForm.constraint_template_id"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option
@@ -398,26 +398,26 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">署名日（開始）</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">署名日（開始）</label>
                                             <input
                                                 v-model="searchForm.constraint_signed_at_from"
                                                 type="date"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">署名日（終了）</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">署名日（終了）</label>
                                             <input
                                                 v-model="searchForm.constraint_signed_at_to"
                                                 type="date"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">説明担当スタッフ</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">説明担当スタッフ</label>
                                             <select
                                                 v-model="searchForm.constraint_explainer_user_id"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option v-for="user in users" :key="user.id" :value="user.id">
@@ -429,15 +429,15 @@
                                 </div>
 
                                 <!-- 前撮り情報 -->
-                                <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
                                     <button
                                         type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
                                         @click="toggleFilterAccordion('photo')"
                                     >
                                         <span>前撮り情報</span>
                                         <svg
-                                            class="w-4 h-4 text-gray-500 shrink-0 transition-transform duration-200"
+                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.photo }"
                                             fill="none"
                                             stroke="currentColor"
@@ -448,13 +448,13 @@
                                     </button>
                                     <div
                                         v-show="filterAccordion.photo"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-gray-100 bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
                                     >
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">担当店舗</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">担当店舗</label>
                                             <select
                                                 v-model="searchForm.photo_slot_shop_id"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option v-for="shop in shops" :key="shop.id" :value="shop.id">
@@ -463,10 +463,10 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">前撮り詳細未決定</label>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">前撮り詳細未決定</label>
                                             <select
                                                 v-model="searchForm.photo_slot_details_undecided"
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option :value="null">全て</option>
                                                 <option :value="true">あり（詳細未決定あり）</option>
@@ -476,17 +476,17 @@
                                     </div>
                                 </div>
 
-                                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                                <div class="flex justify-end gap-2 pt-3 border-t border-brand-border">
                                     <button
                                         type="button"
-                                        class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500"
+                                        class="px-4 py-2 rounded-lg border border-brand-border text-sm font-medium text-brand-text bg-brand-surface hover:bg-brand-surface-2 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-primary"
                                         @click="resetSearch"
                                     >
                                         リセット
                                     </button>
                                     <button
                                         type="submit"
-                                        class="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500"
+                                        class="px-5 py-2 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-primary"
                                     >
                                         検索
                                     </button>
@@ -497,33 +497,33 @@
 
                     <!-- 右：検索結果 -->
                     <div class="flex-1 min-w-0 w-full">
-                        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[min(320px,50vh)]">
-                            <div class="px-4 py-3 border-b border-gray-100 flex flex-wrap items-baseline justify-between gap-2 bg-gray-50/60">
-                                <h3 class="text-base font-semibold text-gray-900">検索結果</h3>
-                                <p class="text-sm text-gray-500">
+                        <div class="bg-brand-surface rounded-xl border border-brand-border shadow-sm overflow-hidden min-h-[min(320px,50vh)]">
+                            <div class="px-4 py-3 border-b border-brand-border flex flex-wrap items-baseline justify-between gap-2 bg-brand-surface-2/60">
+                                <h3 class="text-base font-semibold text-brand-text">検索結果</h3>
+                                <p class="text-sm text-brand-text-muted">
                                     全
-                                    <span class="font-medium text-gray-800 tabular-nums">{{ customers.total ?? 0 }}</span>
+                                    <span class="font-medium text-brand-text tabular-nums">{{ customers.total ?? 0 }}</span>
                                     件
                                 </p>
                             </div>
                             <div class="p-4 sm:p-5">
-                                <div class="overflow-x-auto rounded-lg border border-gray-100">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
+                                <div class="overflow-x-auto rounded-lg border border-brand-border">
+                                    <table class="min-w-full divide-y divide-brand-border">
+                                        <thead class="bg-brand-surface-2">
                                             <tr>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">画像</th>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">タグ</th>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顧客名</th>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ふりがな</th>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成人式エリア</th>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">電話番号</th>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">画像</th>
+                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">タグ</th>
+                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">顧客名</th>
+                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ふりがな</th>
+                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">成人式エリア</th>
+                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">電話番号</th>
+                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
+                                        <tbody class="bg-brand-surface divide-y divide-brand-border">
                                             <template v-if="!customers.data || customers.data.length === 0">
                                                 <tr>
-                                                    <td colspan="7" class="px-4 py-12 text-center text-sm text-gray-500">
+                                                    <td colspan="7" class="px-4 py-12 text-center text-sm text-brand-text-muted">
                                                         該当する顧客がありません
                                                     </td>
                                                 </tr>
@@ -531,7 +531,7 @@
                                             <template v-else>
                                                 <tr v-for="customer in customers.data" :key="customer.id">
                                                     <td class="px-4 py-4 sm:px-6 whitespace-nowrap">
-                                            <div class="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center">
+                                            <div class="w-16 h-16 rounded-lg overflow-hidden border border-brand-border bg-brand-surface-2 flex items-center justify-center">
                                                 <img
                                                     v-if="getFullBodyPhoto(customer)"
                                                     :src="getPhotoUrl(getFullBodyPhoto(customer))"
@@ -540,7 +540,7 @@
                                                 />
                                                 <svg
                                                     v-else
-                                                    class="w-8 h-8 text-gray-400"
+                                                    class="w-8 h-8 text-brand-text-subtle"
                                                     fill="none"
                                                     stroke="currentColor"
                                                     viewBox="0 0 24 24"
@@ -569,16 +569,16 @@
                                                     {{ tag.name }}
                                                 </span>
                                             </div>
-                                            <span v-else class="text-sm text-gray-400">-</span>
+                                            <span v-else class="text-sm text-brand-text-subtle">-</span>
                                                     </td>
-                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-gray-900">{{ customer.name }}</td>
-                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-gray-900">{{ customer.kana || '-' }}</td>
-                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-gray-900">{{ customer.ceremony_area?.name || '-' }}</td>
-                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-gray-900">{{ customer.phone_number || '-' }}</td>
+                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.name }}</td>
+                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.kana || '-' }}</td>
+                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.ceremony_area?.name || '-' }}</td>
+                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.phone_number || '-' }}</td>
                                                     <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm font-medium">
                                             <Link
                                                 :href="route('admin.customers.show', customer.id)"
-                                                class="group relative inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                class="group relative inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                             >
                                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -602,7 +602,7 @@
                                                 :href="link.url"
                                                 :class="[
                                                     'px-3 py-2 sm:px-4 rounded-md text-sm',
-                                                    link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200',
+                                                    link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2 border border-brand-border',
                                                 ]"
                                             >
                                                 <span v-html="link.label"></span>
@@ -611,7 +611,7 @@
                                                 v-else
                                                 :class="[
                                                     'px-3 py-2 sm:px-4 rounded-md text-sm opacity-50 cursor-not-allowed',
-                                                    link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border border-gray-200',
+                                                    link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text border border-brand-border',
                                                 ]"
                                                 v-html="link.label"
                                             ></span>
@@ -633,12 +633,12 @@
                 @click.self="closeAddCustomerModal"
             >
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                    class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                            <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             顧客情報追加
@@ -646,7 +646,7 @@
                         <button
                             @click="closeAddCustomerModal"
                             type="button"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -658,66 +658,66 @@
                     <form @submit.prevent="storeCustomer" class="overflow-y-auto flex-1 px-6 py-5">
                         <div class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         顧客名 <span class="text-red-500">*</span>
                                     </label>
                                     <input
                                         v-model="customerForm.name"
                                         type="text"
                                         required
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         ふりがな
                                     </label>
                                     <input
                                         v-model="customerForm.kana"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         保護者名
                                     </label>
                                     <input
                                         v-model="customerForm.guardian_name"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         生年月日
                                     </label>
                                     <input
                                         v-model="customerForm.birth_date"
                                         type="date"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         成人年度
                                     </label>
                                     <input
                                         v-model.number="customerForm.coming_of_age_year"
                                         type="number"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         成人式エリア
                                     </label>
                                     <div class="flex gap-2 items-end">
                                         <div class="flex-1 min-w-0">
                                             <select
                                                 v-model="customerFormCeremonyPrefecture"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 @change="customerForm.ceremony_area_id = null"
                                             >
                                                 <option :value="null">選択してください</option>
@@ -729,7 +729,7 @@
                                         <div class="flex-1 min-w-0">
                                             <select
                                                 v-model="customerForm.ceremony_area_id"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 :disabled="!customerFormCeremonyPrefecture"
                                             >
                                                 <option :value="null">選択してください</option>
@@ -740,11 +740,11 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">成人式情報</p>
+                                <div class="md:col-span-2 border-t border-brand-border pt-4 mt-2">
+                                    <p class="text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-3">成人式情報</p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                 仕度会場（推奨）
                                             </label>
                                             <input
@@ -752,7 +752,7 @@
                                                 type="text"
                                                 list="seijin-preparation-venue-datalist-customer-index"
                                                 autocomplete="off"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                             <datalist id="seijin-preparation-venue-datalist-customer-index">
                                                 <option
@@ -762,23 +762,23 @@
                                                 />
                                             </datalist>
                                         </div>
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                 時間（推奨）
                                             </label>
                                             <input
                                                 v-model="customerForm.seijin_preparation_time"
                                                 type="text"
                                                 placeholder="例) 10:00"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                            <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                            <label class="flex items-center gap-2 text-sm font-medium text-brand-text cursor-pointer">
                                                 <input
                                                     v-model="customerForm.other_store_preparation"
                                                     type="checkbox"
-                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                                 />
                                                 他店お支度
                                             </label>
@@ -787,8 +787,8 @@
                                             class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity"
                                             :class="{ 'opacity-50': !customerForm.other_store_preparation }"
                                         >
-                                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                            <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                                <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                     美容室名（推奨）
                                                 </label>
                                                 <input
@@ -797,7 +797,7 @@
                                                     list="other-store-salon-name-datalist-customer-index"
                                                     autocomplete="off"
                                                     :disabled="!customerForm.other_store_preparation"
-                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                                                 />
                                                 <datalist id="other-store-salon-name-datalist-customer-index">
                                                     <option
@@ -807,71 +807,71 @@
                                                     />
                                                 </datalist>
                                             </div>
-                                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                            <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                                <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                     着物発送日
                                                 </label>
                                                 <input
                                                     v-model="customerForm.kimono_ship_date"
                                                     type="date"
                                                     :disabled="!customerForm.other_store_preparation"
-                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                                                 />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         電話番号
                                     </label>
                                     <input
                                         v-model="customerForm.phone_number"
                                         type="tel"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         メールアドレス
                                     </label>
                                     <input
                                         v-model="customerForm.email"
                                         type="email"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         郵便番号
                                     </label>
                                     <input
                                         v-model="customerForm.postal_code"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         住所
                                     </label>
                                     <input
                                         v-model="customerForm.address"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
                                 <!-- イベント予約由来の項目 -->
                                 <div
                                     v-if="prefillFromReservation"
-                                    class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2"
+                                    class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2"
                                 >
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         担当店舗（LINE 等）
                                     </label>
                                     <select
                                         v-model="customerForm.shop_id"
-                                        class="w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full max-w-md rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option :value="null">選択してください</option>
                                         <option
@@ -882,42 +882,42 @@
                                             {{ shop.name }}
                                         </option>
                                     </select>
-                                    <p class="mt-1 text-xs text-gray-500">
+                                    <p class="mt-1 text-xs text-brand-text-muted">
                                         イベントの開催店舗から選べます。未設定のイベントは全店舗から選択できます。
                                     </p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         紹介者名
                                     </label>
                                     <input
                                         v-model="customerForm.referred_by_name"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         学校名
                                     </label>
                                     <input
                                         v-model="customerForm.school_name"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         担当者名
                                     </label>
                                     <input
                                         v-model="customerForm.staff_name"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         来店動機
                                     </label>
                                     <div class="flex flex-wrap gap-2">
@@ -926,14 +926,14 @@
                                                 v-model="customerForm.visit_reasons"
                                                 type="checkbox"
                                                 :value="opt.value"
-                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                             />
                                             <span>{{ opt.label }}</span>
                                         </label>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         検討中プラン
                                     </label>
                                     <div class="flex flex-wrap gap-2">
@@ -942,38 +942,38 @@
                                                 v-model="customerForm.considering_plans"
                                                 type="checkbox"
                                                 :value="plan"
-                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                             />
                                             <span>{{ plan }}</span>
                                         </label>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         備考
                                     </label>
                                     <textarea
                                         v-model="customerForm.remarks"
                                         rows="4"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     ></textarea>
                                 </div>
                             </div>
                         </div>
 
                         <!-- フッター -->
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
                             <button
                                 type="button"
                                 @click="closeAddCustomerModal"
-                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                             >
                                 キャンセル
                             </button>
                             <button
                                 type="submit"
                                 :disabled="customerForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span v-if="customerForm.processing">追加中...</span>
                                 <span v-else>追加</span>

@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">制約一覧</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">制約一覧</h2>
                 <ActionButton variant="create" label="制約追加" :href="route('admin.constraint-templates.create')" />
             </div>
         </template>
@@ -18,36 +18,36 @@
                     {{ $page.props.flash.error }}
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-brand-border">
+                                <thead class="bg-brand-surface-2">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">制約名</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">対象店舗</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状態</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">制約名</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">対象店舗</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">状態</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-brand-surface divide-y divide-brand-border">
                                     <tr v-for="template in constraintTemplates.data" :key="template.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ template.id }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-900">{{ template.name }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ template.id }}</td>
+                                        <td class="px-6 py-4 text-sm text-brand-text">{{ template.name }}</td>
+                                        <td class="px-6 py-4 text-sm text-brand-text">
                                             <span v-if="template.shops && template.shops.length > 0">
                                                 <span v-for="(shop, index) in template.shops" :key="shop.id">
                                                     {{ shop.name }}<span v-if="index < template.shops.length - 1">, </span>
                                                 </span>
                                             </span>
-                                            <span v-else class="text-gray-400">未設定</span>
+                                            <span v-else class="text-brand-text-subtle">未設定</span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span
                                                 :class="[
                                                     'px-2 py-1 text-xs font-semibold rounded-full',
-                                                    template.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                                    template.is_active ? 'bg-green-100 text-green-800' : 'bg-brand-surface-2 text-brand-text'
                                                 ]"
                                             >
                                                 {{ template.is_active ? '有効' : '無効' }}
@@ -69,7 +69,7 @@
                             </table>
                         </div>
 
-                        <div v-if="!constraintTemplates.data?.length" class="text-center py-12 text-gray-500">
+                        <div v-if="!constraintTemplates.data?.length" class="text-center py-12 text-brand-text-muted">
                             制約テンプレートがありません。「制約追加」から登録してください。
                         </div>
 
@@ -82,7 +82,7 @@
                                         :href="link.url"
                                         :class="[
                                             'px-4 py-2 mx-1 rounded-md',
-                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2',
                                         ]"
                                     >
                                         <span v-html="link.label"></span>
@@ -91,7 +91,7 @@
                                         v-else
                                         :class="[
                                             'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
-                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700',
+                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text',
                                         ]"
                                         v-html="link.label"
                                     ></span>

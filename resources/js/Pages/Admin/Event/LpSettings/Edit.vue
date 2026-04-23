@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">
                     LP設定 - {{ event.title }}
                 </h2>
                 <ActionButton
@@ -17,25 +17,25 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <EventNavigation :event="event" :show-url-button="false" />
                     </div>
                 </div>
 
                 <!-- LPテンプレート（デザイン） -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">LPテンプレート</h3>
-                        <p class="text-sm text-gray-600 mb-4">
+                        <h3 class="text-lg font-semibold text-brand-text mb-4">LPテンプレート</h3>
+                        <p class="text-sm text-brand-text-muted mb-4">
                             タイムスロット型の公開フォームで利用可能なデザインテンプレートを選べます。未選択のときは従来の公開ページのままです。
                         </p>
                         <form @submit.prevent="submitLpDesign" class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">テンプレート</label>
+                                <label class="block text-sm font-medium text-brand-text mb-2">テンプレート</label>
                                 <select
                                     v-model="lpDesignForm.lp_design_slug"
-                                    class="block w-full max-w-md rounded-md border-gray-300 shadow-sm"
+                                    class="block w-full max-w-md rounded-md border-brand-border shadow-sm"
                                 >
                                     <option value="">なし（従来）</option>
                                     <option
@@ -51,23 +51,23 @@
                                 </p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-brand-text mb-2">
                                     デザイントークン（JSON・任意）
                                 </label>
-                                <p class="text-xs text-gray-500 mb-2">
+                                <p class="text-xs text-brand-text-muted mb-2">
                                     色・角丸など CSS 変数を上書きします。キーは設定で許可されたもののみ有効です。
                                 </p>
                                 <textarea
                                     v-model="lpDesignForm.lp_theme_tokens_json"
                                     rows="8"
-                                    class="block w-full font-mono text-sm rounded-md border-gray-300 shadow-sm"
+                                    class="block w-full font-mono text-sm rounded-md border-brand-border shadow-sm"
                                     placeholder='例: { "--pink": "#e8729a", "--radius-soft": "24px" }'
                                 />
                             </div>
                             <button
                                 type="submit"
                                 :disabled="lpDesignForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50"
                             >
                                 {{ lpDesignForm.processing ? '保存中...' : 'テンプレート設定を保存' }}
                             </button>
@@ -76,27 +76,27 @@
                 </div>
 
                 <!-- 背景設定 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">背景設定</h3>
-                        <p class="text-sm text-gray-600 mb-4">公開ページの背景色と背景画像の表示を設定できます。</p>
+                        <h3 class="text-lg font-semibold text-brand-text mb-4">背景設定</h3>
+                        <p class="text-sm text-brand-text-muted mb-4">公開ページの背景色と背景画像の表示を設定できます。</p>
                         <div v-if="$page.props.flash?.success" class="mb-4 rounded-md bg-green-50 p-4">
                             <p class="text-sm font-medium text-green-800">{{ $page.props.flash.success }}</p>
                         </div>
                         <form @submit.prevent="submitBackground" class="space-y-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">背景色</label>
+                                <label class="block text-sm font-medium text-brand-text mb-2">背景色</label>
                                 <div class="flex flex-wrap items-end gap-4">
                                     <div class="flex items-center gap-2">
                                         <input
                                             v-model="backgroundForm.background_color"
                                             type="color"
-                                            class="h-10 w-14 rounded border border-gray-300 cursor-pointer"
+                                            class="h-10 w-14 rounded border border-brand-border cursor-pointer"
                                         />
                                         <input
                                             v-model="backgroundForm.background_color"
                                             type="text"
-                                            class="rounded-md border-gray-300 shadow-sm w-28 font-mono text-sm"
+                                            class="rounded-md border-brand-border shadow-sm w-28 font-mono text-sm"
                                             placeholder="#e9e2dc"
                                             maxlength="7"
                                         />
@@ -104,26 +104,26 @@
                                     <button
                                         type="button"
                                         @click="resetBackground"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         デフォルトに戻す
                                     </button>
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">コンテンツ色</label>
-                                <p class="text-xs text-gray-500 mb-2">画像・スライドショーなどを囲むエリア（ボックスシャドウの要素）の背景色です。背景色とは別に設定できます。</p>
+                                <label class="block text-sm font-medium text-brand-text mb-2">コンテンツ色</label>
+                                <p class="text-xs text-brand-text-muted mb-2">画像・スライドショーなどを囲むエリア（ボックスシャドウの要素）の背景色です。背景色とは別に設定できます。</p>
                                 <div class="flex flex-wrap items-end gap-4">
                                     <div class="flex items-center gap-2">
                                         <input
                                             v-model="backgroundForm.content_background_color"
                                             type="color"
-                                            class="h-10 w-14 rounded border border-gray-300 cursor-pointer"
+                                            class="h-10 w-14 rounded border border-brand-border cursor-pointer"
                                         />
                                         <input
                                             v-model="backgroundForm.content_background_color"
                                             type="text"
-                                            class="rounded-md border-gray-300 shadow-sm w-28 font-mono text-sm"
+                                            class="rounded-md border-brand-border shadow-sm w-28 font-mono text-sm"
                                             placeholder="#ffffff"
                                             maxlength="7"
                                         />
@@ -131,21 +131,21 @@
                                     <button
                                         type="button"
                                         @click="resetContentColor"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         デフォルトに戻す
                                     </button>
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">背景画像</label>
-                                <p class="text-xs text-gray-500 mb-2">公開ページで表示する背景画像をアップロードできます。未設定の場合は背景画像なしです。</p>
+                                <label class="block text-sm font-medium text-brand-text mb-2">背景画像</label>
+                                <p class="text-xs text-brand-text-muted mb-2">公開ページで表示する背景画像をアップロードできます。未設定の場合は背景画像なしです。</p>
                                 <div class="flex flex-wrap gap-3 items-center">
                                     <input
                                         ref="backgroundImageInput"
                                         type="file"
                                         accept="image/jpeg,image/png,image/jpg,image/gif"
-                                        class="block flex-1 min-w-[200px] text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        class="block flex-1 min-w-[200px] text-sm text-brand-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                         @change="onBackgroundImageChange"
                                     />
                                     <button
@@ -156,22 +156,22 @@
                                         ライブラリから選択
                                     </button>
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500">JPEG, PNG, JPG, GIF（最大10MB）</p>
+                                <p class="mt-1 text-xs text-brand-text-muted">JPEG, PNG, JPG, GIF（最大10MB）</p>
                                 <label class="mt-2 flex items-center gap-2 cursor-pointer">
                                     <input
                                         v-model="backgroundForm.remove_background_image"
                                         type="checkbox"
-                                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                         @change="onRemoveBackgroundImageChange"
                                     />
-                                    <span class="text-sm text-gray-700">背景画像を削除する</span>
+                                    <span class="text-sm text-brand-text">背景画像を削除する</span>
                                 </label>
                                 <div v-if="previewBackgroundImage || (event.background_image_url && !backgroundForm.remove_background_image)" class="mt-3">
-                                    <p class="text-sm text-gray-600 mb-1">{{ previewBackgroundImage ? (mediaBackgroundName ? `ライブラリ: ${mediaBackgroundName}` : 'プレビュー:') : '現在の画像:' }}</p>
+                                    <p class="text-sm text-brand-text-muted mb-1">{{ previewBackgroundImage ? (mediaBackgroundName ? `ライブラリ: ${mediaBackgroundName}` : 'プレビュー:') : '現在の画像:' }}</p>
                                     <img
                                         :src="previewBackgroundImage || event.background_image_url"
                                         alt="背景画像"
-                                        class="max-w-xs h-24 object-cover rounded border border-gray-300"
+                                        class="max-w-xs h-24 object-cover rounded border border-brand-border"
                                     />
                                 </div>
                             </div>
@@ -180,17 +180,17 @@
                                     <input
                                         v-model="backgroundForm.background_image_enabled"
                                         type="checkbox"
-                                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                     />
-                                    <span class="text-sm font-medium text-gray-700">背景画像を表示する</span>
+                                    <span class="text-sm font-medium text-brand-text">背景画像を表示する</span>
                                 </label>
-                                <p class="mt-1 text-xs text-gray-500">オフのときは背景画像なし（デフォルト）です。</p>
+                                <p class="mt-1 text-xs text-brand-text-muted">オフのときは背景画像なし（デフォルト）です。</p>
                             </div>
                             <div class="flex gap-2">
                                 <button
                                     type="submit"
                                     :disabled="backgroundForm.processing"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                                    class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50"
                                 >
                                     {{ backgroundForm.processing ? '保存中...' : '保存する' }}
                                 </button>
@@ -203,7 +203,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Link
                         :href="route('admin.events.images.index', event.id)"
-                        class="block p-6 bg-white rounded-lg shadow-sm border border-gray-200 hover:border-indigo-300 hover:shadow transition-all"
+                        class="block p-6 bg-brand-surface rounded-lg shadow-sm border border-brand-border hover:border-indigo-300 hover:shadow transition-all"
                     >
                         <div class="flex items-center gap-3">
                             <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -212,14 +212,14 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-gray-800">画像管理</h3>
-                                <p class="text-sm text-gray-500">イベント画像の追加・並び替え・スライドショー・CTAボタン位置</p>
+                                <h3 class="font-semibold text-brand-text">画像管理</h3>
+                                <p class="text-sm text-brand-text-muted">イベント画像の追加・並び替え・スライドショー・CTAボタン位置</p>
                             </div>
                         </div>
                     </Link>
                     <Link
                         :href="route('admin.events.cta-design.edit', event.id)"
-                        class="block p-6 bg-white rounded-lg shadow-sm border border-gray-200 hover:border-rose-300 hover:shadow transition-all"
+                        class="block p-6 bg-brand-surface rounded-lg shadow-sm border border-brand-border hover:border-rose-300 hover:shadow transition-all"
                     >
                         <div class="flex items-center gap-3">
                             <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-rose-100 flex items-center justify-center">
@@ -228,8 +228,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-gray-800">CTAデザイン</h3>
-                                <p class="text-sm text-gray-500">固定CTAのボタン背景・WEB予約・電話予約画像</p>
+                                <h3 class="font-semibold text-brand-text">CTAデザイン</h3>
+                                <p class="text-sm text-brand-text-muted">固定CTAのボタン背景・WEB予約・電話予約画像</p>
                             </div>
                         </div>
                     </Link>

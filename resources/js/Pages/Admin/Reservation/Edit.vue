@@ -22,40 +22,40 @@
 
         <div>
             <div class="max-w-4xl mx-auto">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="submit">
                             <div class="space-y-4">
                                 <!-- 共通フィールド -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">お名前 <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">お名前 <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.name"
                                         type="text"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">メールアドレス <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">メールアドレス <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.email"
                                         type="email"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.email" class="mt-1 text-sm text-red-600">{{ form.errors.email }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">電話番号 <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">電話番号 <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.phone"
                                         type="tel"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.phone" class="mt-1 text-sm text-red-600">{{ form.errors.phone }}</div>
                                 </div>
@@ -64,10 +64,10 @@
                                 <template v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'">
                                     <!-- ご来店会場（会場を先に選択） -->
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">ご来店会場 <span class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">ご来店会場 <span class="text-red-500">*</span></label>
                                         <select
                                             v-model="form.venue_id"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         >
                                             <option value="">選択してください</option>
                                             <option v-for="venue in venues" :key="venue.id" :value="venue.id">
@@ -79,12 +79,12 @@
 
                                     <!-- 予約可能な日時（選択会場の枠のみ・日付昇順・満枠グレー・バッジ） -->
                                     <div v-if="timeslots && timeslots.length > 0" class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">予約日時 <span class="text-red-500">*</span></label>
-                                        <div v-if="!form.venue_id" class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
-                                            <p class="text-gray-600 text-sm">会場を選択してください。</p>
+                                        <label class="block text-sm font-medium text-brand-text mb-2">予約日時 <span class="text-red-500">*</span></label>
+                                        <div v-if="!form.venue_id" class="mb-4 p-4 bg-brand-surface-2 border border-brand-border rounded-md">
+                                            <p class="text-brand-text-muted text-sm">会場を選択してください。</p>
                                         </div>
-                                        <div v-else-if="filteredTimeslots.length === 0" class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
-                                            <p class="text-gray-600 text-sm">選択された会場には開催日時がありません。</p>
+                                        <div v-else-if="filteredTimeslots.length === 0" class="mb-4 p-4 bg-brand-surface-2 border border-brand-border rounded-md">
+                                            <p class="text-brand-text-muted text-sm">選択された会場には開催日時がありません。</p>
                                         </div>
                                         <template v-else>
                                             <div v-if="!selectedTimeslot" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -94,9 +94,9 @@
                                                 <div
                                                     v-for="date in sortedGroupedTimeslotDates"
                                                     :key="date"
-                                                    class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
+                                                    class="border-b border-brand-border pb-6 last:border-b-0 last:pb-0"
                                                 >
-                                                    <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ formatDateJaWithWeekday(date) }}</h3>
+                                                    <h3 class="text-lg font-semibold mb-3 text-brand-text">{{ formatDateJaWithWeekday(date) }}</h3>
                                                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                                         <button
                                                             type="button"
@@ -107,11 +107,11 @@
                                                             :class="[
                                                                 'p-3 rounded-lg border-2 transition text-left',
                                                                 getRemainingCapacity(timeslot) === 0
-                                                                    ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-75'
+                                                                    ? 'border-brand-border bg-brand-surface-2 text-brand-text-subtle cursor-not-allowed opacity-75'
                                                                     : [
                                                                         selectedTimeslot?.id === timeslot.id
                                                                             ? 'border-indigo-500 bg-indigo-50'
-                                                                            : 'border-gray-200 hover:border-indigo-300 bg-white'
+                                                                            : 'border-brand-border hover:border-indigo-300 bg-brand-surface'
                                                                     ]
                                                             ]"
                                                         >
@@ -136,8 +136,8 @@
                                                                     <span class="mr-1">★</span>ねらい目
                                                                 </span>
                                                             </div>
-                                                            <p class="font-semibold text-sm mb-1" :class="getRemainingCapacity(timeslot) === 0 ? 'text-gray-500' : 'text-gray-800'">{{ formatTime(timeslot.start_at) }}</p>
-                                                            <p class="text-xs" :class="getRemainingCapacity(timeslot) === 0 ? 'text-gray-400' : 'text-gray-600'">
+                                                            <p class="font-semibold text-sm mb-1" :class="getRemainingCapacity(timeslot) === 0 ? 'text-brand-text-muted' : 'text-brand-text'">{{ formatTime(timeslot.start_at) }}</p>
+                                                            <p class="text-xs" :class="getRemainingCapacity(timeslot) === 0 ? 'text-brand-text-subtle' : 'text-brand-text-muted'">
                                                                 <template v-if="getRemainingCapacity(timeslot) === 0">満枠</template>
                                                                 <template v-else>残り{{ getRemainingCapacity(timeslot) }}枠</template>
                                                             </p>
@@ -146,116 +146,116 @@
                                                 </div>
                                             </div>
                                             <div class="mt-4">
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">選択中の予約日時</label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">選択中の予約日時</label>
                                                 <input
                                                     type="text"
                                                     :value="selectedTimeslot ? formatDateTime(selectedTimeslot.start_at) : (reservation.reservation_datetime ? formatDateTime(reservation.reservation_datetime) : '')"
                                                     readonly
-                                                    class="w-full rounded-md border-gray-300 shadow-sm bg-gray-100"
+                                                    class="w-full rounded-md border-brand-border shadow-sm bg-brand-surface-2"
                                                 />
                                             </div>
                                         </template>
                                         <div v-if="form.errors.reservation_datetime" class="mt-1 text-sm text-red-600">{{ form.errors.reservation_datetime }}</div>
                                     </div>
                                     <div v-else class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">予約日時</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">予約日時</label>
                                         <input
                                             v-model="form.reservation_datetime"
                                             type="text"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                             placeholder="例: 2024-12-25 14:00:00"
                                         />
                                         <div v-if="form.errors.reservation_datetime" class="mt-1 text-sm text-red-600">{{ form.errors.reservation_datetime }}</div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">フリガナ <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.furigana"
                                             type="text"
                                             :required="event.form_type === 'reservation_hakama'"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.furigana" class="mt-1 text-sm text-red-600">{{ form.errors.furigana }}</div>
                                     </div>
 
                                     <div v-if="event.form_type === 'reservation'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">過去当店のご来店はありますか</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">過去当店のご来店はありますか</label>
                                         <div class="flex space-x-4">
                                             <label class="flex items-center">
                                                 <input
                                                     v-model="form.has_visited_before"
                                                     type="radio"
                                                     :value="false"
-                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
-                                                <span class="ml-2 text-sm text-gray-700">なし</span>
+                                                <span class="ml-2 text-sm text-brand-text">なし</span>
                                             </label>
                                             <label class="flex items-center">
                                                 <input
                                                     v-model="form.has_visited_before"
                                                     type="radio"
                                                     :value="true"
-                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
-                                                <span class="ml-2 text-sm text-gray-700">あり</span>
+                                                <span class="ml-2 text-sm text-brand-text">あり</span>
                                             </label>
                                         </div>
                                         <div v-if="form.errors.has_visited_before" class="mt-1 text-sm text-red-600">{{ form.errors.has_visited_before }}</div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">郵便番号 <span v-if="event.form_type === 'reservation_hakama'" class="text-gray-400 text-xs font-normal">（任意）</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">郵便番号 <span v-if="event.form_type === 'reservation_hakama'" class="text-brand-text-subtle text-xs font-normal">（任意）</span></label>
                                         <input
                                             v-model="form.postal_code"
                                             type="text"
                                             placeholder="例: 700-0012"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.postal_code" class="mt-1 text-sm text-red-600">{{ form.errors.postal_code }}</div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">住所 <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">住所 <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.address"
                                             type="text"
                                             :required="event.form_type === 'reservation_hakama'"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</div>
                                     </div>
 
                                     <div v-if="event.form_type === 'reservation_hakama'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">好一での振袖利用 <span class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">好一での振袖利用 <span class="text-red-500">*</span></label>
                                         <div class="flex space-x-4">
                                             <label class="flex items-center">
-                                                <input v-model="form.koichi_furisode_used" type="radio" :value="false" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
-                                                <span class="ml-2 text-sm text-gray-700">なし</span>
+                                                <input v-model="form.koichi_furisode_used" type="radio" :value="false" class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary" />
+                                                <span class="ml-2 text-sm text-brand-text">なし</span>
                                             </label>
                                             <label class="flex items-center">
-                                                <input v-model="form.koichi_furisode_used" type="radio" :value="true" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
-                                                <span class="ml-2 text-sm text-gray-700">あり</span>
+                                                <input v-model="form.koichi_furisode_used" type="radio" :value="true" class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary" />
+                                                <span class="ml-2 text-sm text-brand-text">あり</span>
                                             </label>
                                         </div>
                                         <div v-if="form.errors.koichi_furisode_used" class="mt-1 text-sm text-red-600">{{ form.errors.koichi_furisode_used }}</div>
                                     </div>
 
                                     <div v-if="event.form_type === 'reservation'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">生年月日</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">生年月日</label>
                                         <input
                                             v-model="form.birth_date"
                                             type="date"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.birth_date" class="mt-1 text-sm text-red-600">{{ form.errors.birth_date }}</div>
                                     </div>
 
                                     <div v-if="event.form_type === 'reservation'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">成人式予定年月</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">成人式予定年月</label>
                                         <select
                                             v-model="form.seijin_year"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         >
                                             <option value="">選択してください</option>
                                             <option v-for="year in seijinYears" :key="year" :value="year">
@@ -266,46 +266,46 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">学校名 <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">学校名 <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.school_name"
                                             type="text"
                                             :required="event.form_type === 'reservation_hakama'"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.school_name" class="mt-1 text-sm text-red-600">{{ form.errors.school_name }}</div>
                                     </div>
 
                                     <div v-if="event.form_type === 'reservation_hakama'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div class="sm:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">卒業式の日（予定） <span class="text-red-500">*</span></label>
+                                            <label class="block text-sm font-medium text-brand-text mb-1">卒業式の日（予定） <span class="text-red-500">*</span></label>
                                             <input
                                                 v-model="form.graduation_ceremony_date"
                                                 type="date"
                                                 required
-                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                             />
                                             <div v-if="form.errors.graduation_ceremony_date" class="mt-1 text-sm text-red-600">{{ form.errors.graduation_ceremony_date }}</div>
                                         </div>
                                         <div class="sm:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">来店人数 <span class="text-red-500">*</span></label>
-                                            <input v-model.number="form.visitor_count" type="number" min="1" max="500" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                                            <label class="block text-sm font-medium text-brand-text mb-1">来店人数 <span class="text-red-500">*</span></label>
+                                            <input v-model.number="form.visitor_count" type="number" min="1" max="500" required class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary" />
                                             <div v-if="form.errors.visitor_count" class="mt-1 text-sm text-red-600">{{ form.errors.visitor_count }}</div>
                                         </div>
                                     </div>
 
                                     <div v-if="event.form_type === 'reservation'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">担当者指名</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">担当者指名</label>
                                         <input
                                             v-model="form.staff_name"
                                             type="text"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.staff_name" class="mt-1 text-sm text-red-600">{{ form.errors.staff_name }}</div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">来店動機</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">来店動機</label>
                                         <div class="space-y-2">
                                             <label
                                                 v-for="reason in visitReasonOptions"
@@ -316,16 +316,16 @@
                                                     type="checkbox"
                                                     :value="reason.value"
                                                     v-model="form.visit_reasons"
-                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
-                                                <span class="ml-2 text-sm text-gray-700">{{ reason.label }}</span>
+                                                <span class="ml-2 text-sm text-brand-text">{{ reason.label }}</span>
                                             </label>
                                             <div v-if="form.visit_reasons && form.visit_reasons.includes('その他')" class="ml-6 mt-2">
                                                 <input
                                                     v-model="form.visit_reason_other"
                                                     type="text"
                                                     placeholder="その他の内容を入力してください"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
                                             </div>
                                         </div>
@@ -333,43 +333,43 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ event.form_type === 'reservation_hakama' ? 'お車で来店' : '駐車場利用' }} <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">{{ event.form_type === 'reservation_hakama' ? 'お車で来店' : '駐車場利用' }} <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <div class="flex space-x-4">
                                             <label class="flex items-center">
                                                 <input
                                                     v-model="form.parking_usage"
                                                     type="radio"
                                                     value="なし"
-                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
-                                                <span class="ml-2 text-sm text-gray-700">なし</span>
+                                                <span class="ml-2 text-sm text-brand-text">なし</span>
                                             </label>
                                             <label class="flex items-center">
                                                 <input
                                                     v-model="form.parking_usage"
                                                     type="radio"
                                                     value="あり"
-                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
-                                                <span class="ml-2 text-sm text-gray-700">あり</span>
+                                                <span class="ml-2 text-sm text-brand-text">あり</span>
                                             </label>
                                         </div>
                                         <div v-if="form.errors.parking_usage" class="mt-1 text-sm text-red-600">{{ form.errors.parking_usage }}</div>
                                     </div>
 
                                     <div v-if="form.parking_usage === 'あり'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ event.form_type === 'reservation_hakama' ? '台数' : '駐車台数' }} <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">{{ event.form_type === 'reservation_hakama' ? '台数' : '駐車台数' }} <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
                                         <input
                                             v-model.number="form.parking_car_count"
                                             type="number"
                                             min="1"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.parking_car_count" class="mt-1 text-sm text-red-600">{{ form.errors.parking_car_count }}</div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">検討中のプラン</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">検討中のプラン</label>
                                         <div class="space-y-2">
                                             <label
                                                 v-for="plan in availablePlans"
@@ -380,20 +380,20 @@
                                                     type="checkbox"
                                                     :value="plan"
                                                     v-model="form.considering_plans"
-                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
-                                                <span class="ml-2 text-sm text-gray-700">{{ plan }}</span>
+                                                <span class="ml-2 text-sm text-brand-text">{{ plan }}</span>
                                             </label>
                                         </div>
                                         <div v-if="form.errors.considering_plans" class="mt-1 text-sm text-red-600">{{ form.errors.considering_plans }}</div>
                                     </div>
 
                                     <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">ご紹介者様お名前</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">ご紹介者様お名前</label>
                                         <input
                                             v-model="form.referred_by_name"
                                             type="text"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.referred_by_name" class="mt-1 text-sm text-red-600">{{ form.errors.referred_by_name }}</div>
                                     </div>
@@ -402,11 +402,11 @@
                                 <!-- 資料請求フォーム (document) -->
                                 <template v-if="event.form_type === 'document'">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">請求方法 <span class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">請求方法 <span class="text-red-500">*</span></label>
                                         <select
                                             v-model="form.request_method"
                                             required
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         >
                                             <option value="">選択してください</option>
                                             <option value="郵送">郵送</option>
@@ -416,42 +416,42 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">フリガナ</label>
                                         <input
                                             v-model="form.furigana"
                                             type="text"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.furigana" class="mt-1 text-sm text-red-600">{{ form.errors.furigana }}</div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">生年月日</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">生年月日</label>
                                         <input
                                             v-model="form.birth_date"
                                             type="date"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.birth_date" class="mt-1 text-sm text-red-600">{{ form.errors.birth_date }}</div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">郵便番号</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">郵便番号</label>
                                         <input
                                             v-model="form.postal_code"
                                             type="text"
                                             placeholder="例: 700-0012"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.postal_code" class="mt-1 text-sm text-red-600">{{ form.errors.postal_code }}</div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">住所</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">住所</label>
                                         <input
                                             v-model="form.address"
                                             type="text"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
                                         <div v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</div>
                                     </div>
@@ -461,9 +461,9 @@
                                             <input
                                                 v-model="form.privacy_agreed"
                                                 type="checkbox"
-                                                class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                class="mt-1 rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                             />
-                                            <span class="ml-2 text-sm text-gray-700">個人情報の取扱いについて同意する</span>
+                                            <span class="ml-2 text-sm text-brand-text">個人情報の取扱いについて同意する</span>
                                         </label>
                                         <div v-if="form.errors.privacy_agreed" class="mt-1 text-sm text-red-600">{{ form.errors.privacy_agreed }}</div>
                                     </div>
@@ -472,10 +472,10 @@
                                 <!-- お問い合わせフォーム (contact) -->
                                 <template v-if="event.form_type === 'contact'">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">問い合わせ回答方法</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">問い合わせ回答方法</label>
                                         <select
                                             v-model="form.heard_from"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         >
                                             <option value="">選択してください</option>
                                             <option value="メール">メール</option>
@@ -487,11 +487,11 @@
 
                                 <!-- 共通: お問い合わせ内容 -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">お問い合わせ内容</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">お問い合わせ内容</label>
                                     <textarea
                                         v-model="form.inquiry_message"
                                         rows="4"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     ></textarea>
                                     <div v-if="form.errors.inquiry_message" class="mt-1 text-sm text-red-600">{{ form.errors.inquiry_message }}</div>
                                 </div>
@@ -499,14 +499,14 @@
                                 <div class="flex justify-end space-x-4 pt-4">
                                     <Link
                                         :href="route('admin.events.reservations.index', reservation.event_id)"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
                                     </Link>
                                     <button
                                         type="submit"
                                         :disabled="form.processing"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ form.processing ? '更新中...' : '更新' }}
                                     </button>

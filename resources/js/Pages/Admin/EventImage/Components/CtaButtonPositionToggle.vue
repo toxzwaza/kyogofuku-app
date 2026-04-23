@@ -4,10 +4,10 @@
             <input
                 type="checkbox"
                 :checked="modelValue"
-                class="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                class="rounded border-brand-border text-amber-600 focus:ring-amber-500"
                 @change="$emit('update:modelValue', ($event.target).checked)"
             />
-            <span class="text-sm font-medium text-gray-700">{{ label }}</span>
+            <span class="text-sm font-medium text-brand-text">{{ label }}</span>
         </label>
     </div>
 </template>

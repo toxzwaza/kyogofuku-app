@@ -100,7 +100,7 @@
         </div>
 
         <!-- 操作ナビゲーション -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <EventNavigation :event="event" :show-url-button="false" />
           </div>
@@ -111,9 +111,9 @@
           v-if="usesTimeslotReservation && displayTimeslotStats"
           class="mb-6"
         >
-          <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6">
-              <h3 class="text-lg font-semibold mb-4 text-gray-800">
+              <h3 class="text-lg font-semibold mb-4 text-brand-text">
                 予約枠状況
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -171,12 +171,12 @@
           </div>
         </div>
 
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <!-- タブ（予約フォームの場合は日付表示とテーブル、それ以外はカードとテーブル） -->
             <div
               v-if="!usesTimeslotReservation"
-              class="border-b border-gray-200 mb-6"
+              class="border-b border-brand-border mb-6"
             >
               <nav class="-mb-px flex space-x-8">
                 <button
@@ -184,8 +184,8 @@
                   :class="[
                     'py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
                     activeTab === 'cards'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                      ? 'border-indigo-500 text-brand-primary'
+                      : 'border-transparent text-brand-text-muted hover:text-brand-text hover:border-brand-border',
                   ]"
                 >
                   <span class="inline-flex items-center">
@@ -210,8 +210,8 @@
                   :class="[
                     'py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
                     activeTab === 'table'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                      ? 'border-indigo-500 text-brand-primary'
+                      : 'border-transparent text-brand-text-muted hover:text-brand-text hover:border-brand-border',
                   ]"
                 >
                   <span class="inline-flex items-center">
@@ -234,15 +234,15 @@
               </nav>
             </div>
 
-            <div v-else class="border-b border-gray-200 mb-6">
+            <div v-else class="border-b border-brand-border mb-6">
               <nav class="-mb-px flex space-x-8">
                 <button
                   @click="activeTab = 'schedule'"
                   :class="[
                     'py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
                     activeTab === 'schedule'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                      ? 'border-indigo-500 text-brand-primary'
+                      : 'border-transparent text-brand-text-muted hover:text-brand-text hover:border-brand-border',
                   ]"
                 >
                   <span class="inline-flex items-center">
@@ -267,8 +267,8 @@
                   :class="[
                     'py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
                     activeTab === 'table'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                      ? 'border-indigo-500 text-brand-primary'
+                      : 'border-transparent text-brand-text-muted hover:text-brand-text hover:border-brand-border',
                   ]"
                 >
                   <span class="inline-flex items-center">
@@ -298,39 +298,39 @@
             >
               <!-- 絞り込みUI -->
               <div
-                class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
+                class="mb-6 p-4 bg-brand-surface-2 rounded-lg border border-brand-border"
               >
                 <div class="flex flex-col md:flex-row md:items-end gap-4">
                   <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                    <label class="block text-sm font-medium text-brand-text mb-2"
                       >開始日</label
                     >
                     <input
                       v-model="filterStartDate"
                       type="date"
                       @change="applyFilters"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                     />
                   </div>
                   <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                    <label class="block text-sm font-medium text-brand-text mb-2"
                       >終了日</label
                     >
                     <input
                       v-model="filterEndDate"
                       type="date"
                       @change="applyFilters"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                     />
                   </div>
                   <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                    <label class="block text-sm font-medium text-brand-text mb-2"
                       >会場</label
                     >
                     <select
                       v-model="filterVenueId"
                       @change="onVenueChangeAndApply"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                     >
                       <option value="">すべて</option>
                       <option
@@ -343,14 +343,14 @@
                     </select>
                   </div>
                   <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                    <label class="block text-sm font-medium text-brand-text mb-2"
                       >日付</label
                     >
                     <select
                       v-model="filterReservationDate"
                       @change="onDateChange"
                       :disabled="!filterVenueId"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                     >
                       <option value="">すべて</option>
                       <option
@@ -363,14 +363,14 @@
                     </select>
                   </div>
                   <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2"
+                    <label class="block text-sm font-medium text-brand-text mb-2"
                       >時間</label
                     >
                     <select
                       v-model="filterReservationTime"
                       @change="applyFilters"
                       :disabled="!filterVenueId || !filterReservationDate"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                     >
                       <option value="">すべて</option>
                       <option
@@ -385,13 +385,13 @@
                   <div class="flex gap-2">
                     <button
                       @click="applyFilters"
-                      class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
                     >
                       絞り込み
                     </button>
                     <button
                       @click="resetFilters"
-                      class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      class="px-4 py-2 bg-gray-300 text-brand-text rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                     >
                       リセット
                     </button>
@@ -405,16 +405,16 @@
               >
                 <!-- 左：絞り込み結果の会場・日付・時間へのジャンプ一覧 -->
                 <aside
-                  class="w-full xl:w-64 shrink-0 xl:sticky xl:top-6 z-10 rounded-lg border border-gray-200 bg-gray-50/90 backdrop-blur-sm shadow-sm overflow-hidden"
+                  class="w-full xl:w-64 shrink-0 xl:sticky xl:top-6 z-10 rounded-lg border border-brand-border bg-brand-surface-2/90 backdrop-blur-sm shadow-sm overflow-hidden"
                   aria-label="日付表示の目次"
                 >
                   <div
-                    class="px-3 py-2.5 border-b border-gray-200 bg-white/80"
+                    class="px-3 py-2.5 border-b border-brand-border bg-brand-surface/80"
                   >
-                    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <h2 class="text-xs font-semibold uppercase tracking-wide text-brand-text-muted">
                       表示中の枠一覧
                     </h2>
-                    <p class="text-xs text-gray-500 mt-0.5">
+                    <p class="text-xs text-brand-text-muted mt-0.5">
                       クリックで該当箇所へ移動します
                     </p>
                   </div>
@@ -429,13 +429,13 @@
                       >
                         <a
                           :href="'#' + section.venueAnchorId"
-                          class="flex items-start gap-2 font-semibold text-indigo-700 hover:text-indigo-900 hover:underline rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          class="flex items-start gap-2 font-semibold text-indigo-700 hover:text-brand-primary-hover hover:underline rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                           @click.prevent="
                             scrollToScheduleAnchor(section.venueAnchorId)
                           "
                         >
                           <svg
-                            class="w-4 h-4 mt-0.5 shrink-0 text-indigo-500"
+                            class="w-4 h-4 mt-0.5 shrink-0 text-brand-primary"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -453,7 +453,7 @@
                           }}</span>
                         </a>
                         <ul
-                          class="ml-2 pl-2 border-l border-gray-200 space-y-2"
+                          class="ml-2 pl-2 border-l border-brand-border space-y-2"
                         >
                           <li
                             v-for="d in section.dates"
@@ -462,13 +462,13 @@
                           >
                             <a
                               :href="'#' + d.dateAnchorId"
-                              class="flex items-start gap-1.5 text-gray-700 hover:text-gray-900 hover:underline rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-xs sm:text-sm"
+                              class="flex items-start gap-1.5 text-brand-text hover:text-brand-text hover:underline rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-xs sm:text-sm"
                               @click.prevent="
                                 scrollToScheduleAnchor(d.dateAnchorId)
                               "
                             >
                               <svg
-                                class="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400"
+                                class="w-3.5 h-3.5 mt-0.5 shrink-0 text-brand-text-subtle"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -483,20 +483,20 @@
                               </svg>
                               <span>{{ d.dateLabel }}</span>
                             </a>
-                            <ul class="ml-3 pl-2 border-l border-gray-100 space-y-0.5">
+                            <ul class="ml-3 pl-2 border-l border-brand-border space-y-0.5">
                               <li
                                 v-for="t in d.timeslots"
                                 :key="t.id"
                               >
                                 <a
                                   :href="'#' + t.slotAnchorId"
-                                  class="flex items-center gap-1.5 py-0.5 pl-1 text-xs text-gray-600 hover:text-indigo-700 hover:underline rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 tabular-nums"
+                                  class="flex items-center gap-1.5 py-0.5 pl-1 text-xs text-brand-text-muted hover:text-brand-primary-hover hover:underline rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 tabular-nums"
                                   @click.prevent="
                                     scrollToScheduleAnchor(t.slotAnchorId)
                                   "
                                 >
                                   <svg
-                                    class="w-3 h-3 shrink-0 text-gray-400"
+                                    class="w-3 h-3 shrink-0 text-brand-text-subtle"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -526,7 +526,7 @@
                   v-for="venueKey in orderedVenueKeys"
                   :key="venueKey"
                   :id="scheduleVenueElId(venueKey)"
-                  class="scroll-mt-24 border-b border-gray-300 pb-8 last:border-b-0 last:pb-0"
+                  class="scroll-mt-24 border-b border-brand-border pb-8 last:border-b-0 last:pb-0"
                 >
                   <h2 class="text-2xl font-bold mb-6 text-indigo-700">
                     {{ getVenueName(venueKey) }}
@@ -535,9 +535,9 @@
                     v-for="(dateGroup, date) in groupedByVenue[venueKey]"
                     :key="date"
                     :id="scheduleDateElId(venueKey, date)"
-                    class="scroll-mt-20 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0 mb-6"
+                    class="scroll-mt-20 border-b border-brand-border pb-6 last:border-b-0 last:pb-0 mb-6"
                   >
-                    <h3 class="text-xl font-semibold my-4 text-gray-800">
+                    <h3 class="text-xl font-semibold my-4 text-brand-text">
                       {{ formatDateHeader(date) }}
                     </h3>
                     <div class="space-y-4">
@@ -551,15 +551,15 @@
                         <!-- 時間枠ヘッダー -->
                         <div
                           :class="getTimeslotHeaderClass(timeslot)"
-                          class="px-4 py-3 border-b border-gray-200"
+                          class="px-4 py-3 border-b border-brand-border"
                         >
                           <div class="flex justify-between items-center">
                             <div class="flex items-center space-x-4">
                               <span
-                                class="text-lg font-semibold text-gray-900"
+                                class="text-lg font-semibold text-brand-text"
                                 >{{ formatTime(timeslot.start_at) }}</span
                               >
-                              <span class="text-sm text-gray-600">
+                              <span class="text-sm text-brand-text-muted">
                                 定員: {{ timeslot.capacity }}枠
                                 <span class="mx-2">|</span>
                                 予約済み: {{ timeslot.reservations.length }}枠
@@ -602,7 +602,7 @@
                               </Link>
                               <span
                                 v-else
-                                class="px-3 py-1.5 text-sm font-medium text-gray-400 bg-gray-200 rounded-lg cursor-not-allowed"
+                                class="px-3 py-1.5 text-sm font-medium text-brand-text-subtle bg-gray-200 rounded-lg cursor-not-allowed"
                                 title="枠なし"
                               >
                                 枠なし
@@ -653,7 +653,7 @@
                               <button
                                 @click="adjustCapacity(timeslot.id, 5)"
                                 :disabled="adjustingTimeslotId !== null"
-                                class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                 title="枠を5つ増やす"
                               >
                                 +5
@@ -668,14 +668,14 @@
                             timeslot.reservations &&
                             timeslot.reservations.length > 0
                           "
-                          class="divide-y divide-gray-200"
+                          class="divide-y divide-brand-border"
                         >
                           <div
                             v-for="reservation in timeslot.reservations"
                             :key="reservation.id"
                             :class="[
                               'p-4 transition-colors duration-150',
-                              reservation.cancel_flg ? 'bg-gray-200' : 'hover:bg-gray-50',
+                              reservation.cancel_flg ? 'bg-gray-200' : 'hover:bg-brand-surface-2',
                             ]"
                           >
                             <div class="flex justify-between items-start gap-4">
@@ -684,10 +684,10 @@
                                   class="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3"
                                 >
                                   <span
-                                    class="text-lg font-semibold text-gray-900"
+                                    class="text-lg font-semibold text-brand-text"
                                     >{{ reservation.name }}</span
                                   >
-                                  <span class="text-xs text-gray-500 tabular-nums"
+                                  <span class="text-xs text-brand-text-muted tabular-nums"
                                     >ID: {{ reservation.id }}</span
                                   >
                                   <span
@@ -699,14 +699,14 @@
                                 </div>
 
                                 <div
-                                  class="flex flex-col gap-2 mb-3 pb-3 border-b border-gray-100"
+                                  class="flex flex-col gap-2 mb-3 pb-3 border-b border-brand-border"
                                 >
                                   <div
                                     class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm"
                                   >
                                     <div class="flex items-center gap-1.5 min-w-0">
                                       <svg
-                                        class="w-4 h-4 text-gray-400 shrink-0"
+                                        class="w-4 h-4 text-brand-text-subtle shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -719,7 +719,7 @@
                                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
                                         />
                                       </svg>
-                                      <span class="text-gray-500 shrink-0"
+                                      <span class="text-brand-text-muted shrink-0"
                                         >対応ステータス:</span
                                       >
                                       <template v-if="reservation.status">
@@ -735,7 +735,7 @@
                                         </span>
                                         <span
                                           v-if="reservation.status_updated_by"
-                                          class="text-xs text-gray-500 truncate max-w-[10rem] sm:max-w-xs"
+                                          class="text-xs text-brand-text-muted truncate max-w-[10rem] sm:max-w-xs"
                                           :title="
                                             reservation.status_updated_by.name
                                           "
@@ -745,14 +745,14 @@
                                           }}）
                                         </span>
                                       </template>
-                                      <span v-else class="text-gray-400">—</span>
+                                      <span v-else class="text-brand-text-subtle">—</span>
                                     </div>
 
                                     <div
                                       class="flex items-center gap-1.5 min-w-0"
                                     >
                                       <svg
-                                        class="w-4 h-4 text-gray-400 shrink-0"
+                                        class="w-4 h-4 text-brand-text-subtle shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -765,11 +765,11 @@
                                           d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                                         />
                                       </svg>
-                                      <span class="text-gray-500 shrink-0"
+                                      <span class="text-brand-text-muted shrink-0"
                                         >会場:</span
                                       >
                                       <span
-                                        class="text-gray-800 font-medium truncate"
+                                        class="text-brand-text font-medium truncate"
                                         :title="
                                           reservation.venue
                                             ? reservation.venue.name
@@ -788,7 +788,7 @@
                                       class="flex items-center gap-1.5 min-w-0"
                                     >
                                       <svg
-                                        class="w-4 h-4 text-gray-400 shrink-0"
+                                        class="w-4 h-4 text-brand-text-subtle shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -801,7 +801,7 @@
                                           d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
                                         />
                                       </svg>
-                                      <span class="text-gray-500 shrink-0"
+                                      <span class="text-brand-text-muted shrink-0"
                                         >入場チケット送付:</span
                                       >
                                       <span
@@ -824,7 +824,7 @@
                                       class="flex items-center gap-1.5 min-w-0"
                                     >
                                       <svg
-                                        class="w-4 h-4 text-gray-400 shrink-0"
+                                        class="w-4 h-4 text-brand-text-subtle shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -843,11 +843,11 @@
                                           d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                                         />
                                       </svg>
-                                      <span class="text-gray-500 shrink-0"
+                                      <span class="text-brand-text-muted shrink-0"
                                         >成人式エリア:</span
                                       >
                                       <span
-                                        class="text-gray-800 font-medium truncate"
+                                        class="text-brand-text font-medium truncate"
                                         :title="
                                           reservation.ceremony_area_name || ''
                                         "
@@ -861,11 +861,11 @@
                                 </div>
 
                                 <div
-                                  class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600"
+                                  class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm text-brand-text-muted"
                                 >
                                   <div class="flex items-center">
                                     <svg
-                                      class="w-4 h-4 mr-2 text-gray-400"
+                                      class="w-4 h-4 mr-2 text-brand-text-subtle"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -881,7 +881,7 @@
                                   </div>
                                   <div class="flex items-center">
                                     <svg
-                                      class="w-4 h-4 mr-2 text-gray-400"
+                                      class="w-4 h-4 mr-2 text-brand-text-subtle"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -899,7 +899,7 @@
                                     v-if="reservation.furigana"
                                     class="flex items-center"
                                   >
-                                    <span class="text-gray-500 mr-2"
+                                    <span class="text-brand-text-muted mr-2"
                                       >フリガナ:</span
                                     >
                                     {{ reservation.furigana }}
@@ -910,14 +910,14 @@
                                     "
                                     class="flex items-center"
                                   >
-                                    <span class="text-gray-500 mr-2"
+                                    <span class="text-brand-text-muted mr-2"
                                       >過去来店:</span
                                     >
                                     <span
                                       :class="
                                         reservation.has_visited_before
                                           ? 'text-green-600'
-                                          : 'text-gray-600'
+                                          : 'text-brand-text-muted'
                                       "
                                     >
                                       {{
@@ -934,7 +934,7 @@
                                     "
                                     class="md:col-span-2"
                                   >
-                                    <span class="text-gray-500 mr-2"
+                                    <span class="text-brand-text-muted mr-2"
                                       >検討プラン:</span
                                     >
                                     <span
@@ -949,7 +949,7 @@
                                     v-if="reservation.admin_assignee"
                                     class="md:col-span-2"
                                   >
-                                    <span class="text-gray-500 mr-2"
+                                    <span class="text-brand-text-muted mr-2"
                                       >担当者:</span
                                     >
                                     <span
@@ -959,7 +959,7 @@
                                     </span>
                                   </div>
                                 </div>
-                                <div class="text-xs text-gray-500 mt-2">
+                                <div class="text-xs text-brand-text-muted mt-2">
                                   登録日時:
                                   <span v-html="formatDateTime(reservation.created_at)"></span>
                                 </div>
@@ -967,7 +967,7 @@
                               <div class="flex space-x-2 ml-4">
                                 <Link
                                   :href="getReservationShowUrl(reservation.id)"
-                                  class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                  class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                 >
                                   詳細
                                 </Link>
@@ -991,7 +991,7 @@
                         </div>
                         <div
                           v-else
-                          class="p-4 text-center text-gray-500 text-sm"
+                          class="p-4 text-center text-brand-text-muted text-sm"
                         >
                           この時間枠には予約がありません
                         </div>
@@ -1001,7 +1001,7 @@
                 </div>
                 </div>
               </div>
-              <div v-else class="text-center py-12 text-gray-500">
+              <div v-else class="text-center py-12 text-brand-text-muted">
                 予約枠が登録されていません
               </div>
             </div>
@@ -1021,18 +1021,18 @@
                   :class="[
                     'border rounded-lg shadow-sm overflow-hidden',
                     reservation.cancel_flg
-                      ? 'bg-gray-200 border-gray-300'
-                      : 'bg-white border-gray-200 hover:shadow-md transition-shadow duration-200',
+                      ? 'bg-gray-200 border-brand-border'
+                      : 'bg-brand-surface border-brand-border hover:shadow-md transition-shadow duration-200',
                   ]"
                 >
                   <div class="p-5">
                     <!-- ヘッダー -->
                     <div class="flex justify-between items-start mb-4">
                       <div>
-                        <div class="text-lg font-semibold text-gray-900 mb-1">
+                        <div class="text-lg font-semibold text-brand-text mb-1">
                           {{ reservation.name }}
                         </div>
-                        <div class="text-xs text-gray-500">
+                        <div class="text-xs text-brand-text-muted">
                           ID: {{ reservation.id }}
                         </div>
                       </div>
@@ -1067,7 +1067,7 @@
                     <div class="space-y-2 mb-4">
                       <div class="flex items-start text-sm">
                         <svg
-                          class="w-4 h-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0"
+                          class="w-4 h-4 mr-2 mt-0.5 text-brand-text-subtle flex-shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1079,13 +1079,13 @@
                             d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                           />
                         </svg>
-                        <span class="text-gray-700 break-all">{{
+                        <span class="text-brand-text break-all">{{
                           reservation.email
                         }}</span>
                       </div>
                       <div class="flex items-start text-sm">
                         <svg
-                          class="w-4 h-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0"
+                          class="w-4 h-4 mr-2 mt-0.5 text-brand-text-subtle flex-shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1097,7 +1097,7 @@
                             d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                           />
                         </svg>
-                        <span class="text-gray-700">{{
+                        <span class="text-brand-text">{{
                           reservation.phone || "-"
                         }}</span>
                       </div>
@@ -1105,14 +1105,14 @@
 
                     <div
                       v-if="event.form_type === 'document'"
-                      class="space-y-2 mb-4 pb-4 border-b border-gray-100"
+                      class="space-y-2 mb-4 pb-4 border-b border-brand-border"
                     >
                       <div
                         v-if="reservation.request_method"
                         class="flex items-start text-sm"
                       >
-                        <span class="text-gray-500 mr-2">請求方法:</span>
-                        <span class="text-gray-700 font-medium">{{
+                        <span class="text-brand-text-muted mr-2">請求方法:</span>
+                        <span class="text-brand-text font-medium">{{
                           reservation.request_method
                         }}</span>
                       </div>
@@ -1120,8 +1120,8 @@
                         v-if="reservation.postal_code"
                         class="flex items-start text-sm"
                       >
-                        <span class="text-gray-500 mr-2">郵便番号:</span>
-                        <span class="text-gray-700">{{
+                        <span class="text-brand-text-muted mr-2">郵便番号:</span>
+                        <span class="text-brand-text">{{
                           formatPostalCode(reservation.postal_code)
                         }}</span>
                       </div>
@@ -1129,21 +1129,21 @@
 
                     <div
                       v-if="event.form_type === 'contact'"
-                      class="space-y-2 mb-4 pb-4 border-b border-gray-100"
+                      class="space-y-2 mb-4 pb-4 border-b border-brand-border"
                     >
                       <div
                         v-if="reservation.heard_from"
                         class="flex items-start text-sm"
                       >
-                        <span class="text-gray-500 mr-2">回答方法:</span>
-                        <span class="text-gray-700 font-medium">{{
+                        <span class="text-brand-text-muted mr-2">回答方法:</span>
+                        <span class="text-brand-text font-medium">{{
                           reservation.heard_from
                         }}</span>
                       </div>
                     </div>
 
                     <!-- 登録日時 -->
-                    <div class="text-xs text-gray-500 mb-4">
+                    <div class="text-xs text-brand-text-muted mb-4">
                       登録: <span v-html="formatDateTime(reservation.created_at)"></span>
                     </div>
 
@@ -1151,7 +1151,7 @@
                     <div class="flex space-x-2">
                       <Link
                         :href="getReservationShowUrl(reservation.id)"
-                        class="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                        class="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                       >
                         <svg
                           class="w-4 h-4 mr-1.5"
@@ -1205,7 +1205,7 @@
                   </div>
                 </div>
               </div>
-              <div v-else class="text-center py-12 text-gray-500">
+              <div v-else class="text-center py-12 text-brand-text-muted">
                 予約データがありません
               </div>
             </div>
@@ -1214,7 +1214,7 @@
             <div v-if="activeTab === 'table'">
               <!-- 各種操作 -->
               <div class="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                <h3 class="text-sm font-semibold text-gray-700 mb-4">
+                <h3 class="text-sm font-semibold text-brand-text mb-4">
                   各種操作
                 </h3>
                 
@@ -1222,7 +1222,7 @@
                 <div class="mb-4">
                   <button
                     @click="openPrintModal"
-                    class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 inline-flex items-center"
+                    class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200 inline-flex items-center"
                   >
                     <svg
                       class="w-5 h-5 mr-2"
@@ -1252,11 +1252,11 @@
                       @click="isSortOpen = !isSortOpen"
                       class="w-full p-4 flex justify-between items-center hover:bg-blue-100 transition-colors duration-200"
                     >
-                      <h3 class="text-sm font-semibold text-gray-700">
+                      <h3 class="text-sm font-semibold text-brand-text">
                         並べ替え
                       </h3>
                       <svg
-                        class="w-5 h-5 text-gray-600 transition-transform duration-200"
+                        class="w-5 h-5 text-brand-text-muted transition-transform duration-200"
                         :class="{ 'rotate-180': isSortOpen }"
                         fill="none"
                         stroke="currentColor"
@@ -1273,24 +1273,24 @@
                     <div v-show="isSortOpen" class="px-4 pb-4">
                       <div class="flex flex-col gap-4">
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                          <label class="block text-sm font-medium text-brand-text mb-2"
                             >予約日付</label
                           >
                           <select
                             v-model="sortDateOrder"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                           >
                             <option value="asc">新しい順</option>
                             <option value="desc">古い順</option>
                           </select>
                         </div>
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                          <label class="block text-sm font-medium text-brand-text mb-2"
                             >予約時間</label
                           >
                           <select
                             v-model="sortTimeOrder"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                           >
                             <option value="asc">新しい順</option>
                             <option value="desc">古い順</option>
@@ -1301,16 +1301,16 @@
                   </div>
 
                   <!-- 絞り込みUI -->
-                  <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                  <div class="bg-brand-surface-2 rounded-lg border border-brand-border overflow-hidden">
                     <button
                       @click="isFilterOpen = !isFilterOpen"
-                      class="w-full p-4 flex justify-between items-center hover:bg-gray-100 transition-colors duration-200"
+                      class="w-full p-4 flex justify-between items-center hover:bg-brand-surface-2 transition-colors duration-200"
                     >
-                      <h3 class="text-sm font-semibold text-gray-700">
+                      <h3 class="text-sm font-semibold text-brand-text">
                         絞り込み
                       </h3>
                       <svg
-                        class="w-5 h-5 text-gray-600 transition-transform duration-200"
+                        class="w-5 h-5 text-brand-text-muted transition-transform duration-200"
                         :class="{ 'rotate-180': isFilterOpen }"
                         fill="none"
                         stroke="currentColor"
@@ -1327,13 +1327,13 @@
                     <div v-show="isFilterOpen" class="px-4 pb-4">
                       <div class="flex flex-col gap-4">
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                          <label class="block text-sm font-medium text-brand-text mb-2"
                             >会場</label
                           >
                           <select
                             v-model="filterVenueId"
                             @change="onVenueChangeAndApply"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                           >
                             <option value="">すべて</option>
                             <option
@@ -1346,14 +1346,14 @@
                           </select>
                         </div>
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                          <label class="block text-sm font-medium text-brand-text mb-2"
                             >日付</label
                           >
                           <select
                             v-model="filterReservationDate"
                             @change="onDateChange"
                             :disabled="!filterVenueId"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                           >
                             <option value="">すべて</option>
                             <option
@@ -1366,14 +1366,14 @@
                           </select>
                         </div>
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                          <label class="block text-sm font-medium text-brand-text mb-2"
                             >時間</label
                           >
                           <select
                             v-model="filterReservationTime"
                             @change="applyFilters"
                             :disabled="!filterVenueId || !filterReservationDate"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                           >
                             <option value="">すべて</option>
                             <option
@@ -1386,37 +1386,37 @@
                           </select>
                         </div>
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                          <label class="block text-sm font-medium text-brand-text mb-2"
                             >開始日</label
                           >
                           <input
                             v-model="filterStartDate"
                             type="date"
                             @change="applyFilters"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                           />
                         </div>
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-2"
+                          <label class="block text-sm font-medium text-brand-text mb-2"
                             >終了日</label
                           >
                           <input
                             v-model="filterEndDate"
                             type="date"
                             @change="applyFilters"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                           />
                         </div>
                         <div class="flex gap-2">
                           <button
                             @click="applyFilters"
-                            class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            class="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
                           >
                             絞り込み
                           </button>
                           <button
                             @click="resetFilters"
-                            class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                            class="flex-1 px-4 py-2 bg-gray-300 text-brand-text rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                           >
                             リセット
                           </button>
@@ -1428,14 +1428,14 @@
               </div>
 
               <!-- 区切り線 -->
-              <div class="mb-6 border-t border-gray-300"></div>
+              <div class="mb-6 border-t border-brand-border"></div>
 
               <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-brand-border">
+                  <thead class="bg-brand-surface-2">
                     <tr>
                       <th
-                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                       >
                         ID
                       </th>
@@ -1443,24 +1443,24 @@
                       <!-- 予約フォームの場合 -->
                       <template v-if="usesTimeslotReservation">
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           予約日時
                         </th>
                       </template>
 
                       <th
-                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                       >
                         お名前
                       </th>
                       <th
-                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                       >
                         メール
                       </th>
                       <th
-                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                       >
                         電話番号
                       </th>
@@ -1468,67 +1468,67 @@
                       <!-- 予約フォームの場合 -->
                       <template v-if="usesTimeslotReservation">
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           ご来店会場
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           フリガナ
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           過去来店
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           住所
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           生年月日
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           成人式予定年
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           学校名
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           駐車場利用
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           検討中のプラン
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           ご紹介者様
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           ステータス
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           ステータス更新者
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           担当者
                         </th>
@@ -1537,47 +1537,47 @@
                       <!-- 資料請求フォームの場合 -->
                       <template v-if="event.form_type === 'document'">
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           請求方法
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           フリガナ
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           生年月日
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           郵便番号
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           住所
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           個人情報同意
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           ステータス
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           ステータス更新者
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           担当者
                         </th>
@@ -1586,46 +1586,46 @@
                       <!-- お問い合わせフォームの場合 -->
                       <template v-if="event.form_type === 'contact'">
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           問い合わせ回答方法
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           ステータス
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           ステータス更新者
                         </th>
                         <th
-                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                         >
                           担当者
                         </th>
                       </template>
 
                       <th
-                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                       >
                         登録日時
                       </th>
                       <th
-                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        class="whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider"
                       >
                         操作
                       </th>
                     </tr>
                   </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
+                  <tbody class="bg-brand-surface divide-y divide-brand-border">
                     <!-- 予約フォームの場合：日付ごとにテーブルを分ける -->
                     <template v-if="usesTimeslotReservation">
                       <template v-for="group in groupedReservationsByDate" :key="group.date || 'no-date'">
                         <!-- 日付ヘッダー行 -->
-                        <tr class="bg-gray-100">
-                          <td :colspan="19" class="px-6 py-3 text-sm font-semibold text-gray-700">
+                        <tr class="bg-brand-surface-2">
+                          <td :colspan="19" class="px-6 py-3 text-sm font-semibold text-brand-text">
                             {{ group.dateDisplay }}
                           </td>
                         </tr>
@@ -1636,12 +1636,12 @@
                           :class="{ 'bg-gray-200': reservation.cancel_flg }"
                         >
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.id }}
                           </td>
                           <td
-                            class="px-6 py-4 text-sm text-gray-900"
+                            class="px-6 py-4 text-sm text-brand-text"
                           >
                             <span
                               v-if="reservation.reservation_datetime"
@@ -1651,42 +1651,42 @@
                             <span v-else>-</span>
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.name }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.email }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.phone }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.venue ? reservation.venue.name : "-" }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.furigana || "-" }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.has_visited_before ? "あり" : "なし" }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.address || "-" }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{
                               reservation.birth_date
@@ -1695,7 +1695,7 @@
                             }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{
                               reservation.seijin_year
@@ -1704,17 +1704,17 @@
                             }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.school_name || "-" }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.parking_usage || "-" }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{
                               reservation.considering_plans &&
@@ -1724,7 +1724,7 @@
                             }}
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{ reservation.referred_by_name || "-" }}
                           </td>
@@ -1739,10 +1739,10 @@
                                 >:{{ reservation.status_updated_by.name }}</span
                               >
                             </span>
-                            <span v-else class="text-sm text-gray-500">-</span>
+                            <span v-else class="text-sm text-brand-text-muted">-</span>
                           </td>
                           <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                            class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                           >
                             {{
                               reservation.status_updated_by
@@ -1750,11 +1750,11 @@
                                 : "-"
                             }}
                           </td>
-                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                             {{ reservation.admin_assignee || "-" }}
                           </td>
                           <td
-                            class="px-6 py-4 text-sm text-gray-900"
+                            class="px-6 py-4 text-sm text-brand-text"
                           >
                             <span v-html="formatDateTime(reservation.created_at)"></span>
                           </td>
@@ -1763,7 +1763,7 @@
                           >
                             <Link
                               :href="getReservationShowUrl(reservation.id)"
-                              class="text-indigo-600 hover:text-indigo-900 mr-4"
+                              class="text-brand-primary hover:text-brand-primary-hover mr-4"
                             >
                               詳細
                             </Link>
@@ -1794,22 +1794,22 @@
                         :class="{ 'bg-gray-200': reservation.cancel_flg }"
                       >
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.id }}
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.name }}
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.email }}
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.phone }}
                         </td>
@@ -1817,17 +1817,17 @@
                       <!-- 資料請求フォームの場合 -->
                       <template v-if="event.form_type === 'document'">
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.request_method || "-" }}
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.furigana || "-" }}
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{
                             reservation.birth_date
@@ -1836,17 +1836,17 @@
                           }}
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ formatPostalCode(reservation.postal_code) }}
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.address || "-" }}
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.privacy_agreed ? "同意" : "-" }}
                         </td>
@@ -1861,10 +1861,10 @@
                               >:{{ reservation.status_updated_by.name }}</span
                             >
                           </span>
-                          <span v-else class="text-sm text-gray-500">-</span>
+                          <span v-else class="text-sm text-brand-text-muted">-</span>
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{
                             reservation.status_updated_by
@@ -1872,7 +1872,7 @@
                               : "-"
                           }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                           {{ reservation.admin_assignee || "-" }}
                         </td>
                       </template>
@@ -1880,7 +1880,7 @@
                       <!-- お問い合わせフォームの場合 -->
                       <template v-if="event.form_type === 'contact'">
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{ reservation.heard_from || "-" }}
                         </td>
@@ -1895,10 +1895,10 @@
                               >:{{ reservation.status_updated_by.name }}</span
                             >
                           </span>
-                          <span v-else class="text-sm text-gray-500">-</span>
+                          <span v-else class="text-sm text-brand-text-muted">-</span>
                         </td>
                         <td
-                          class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          class="px-6 py-4 whitespace-nowrap text-sm text-brand-text"
                         >
                           {{
                             reservation.status_updated_by
@@ -1906,13 +1906,13 @@
                               : "-"
                           }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                           {{ reservation.admin_assignee || "-" }}
                         </td>
                       </template>
 
                       <td
-                        class="px-6 py-4 text-sm text-gray-900"
+                        class="px-6 py-4 text-sm text-brand-text"
                       >
                         <span v-html="formatDateTime(reservation.created_at)"></span>
                       </td>
@@ -1921,7 +1921,7 @@
                       >
                         <Link
                           :href="getReservationShowUrl(reservation.id)"
-                          class="text-indigo-600 hover:text-indigo-900 mr-4"
+                          class="text-brand-primary hover:text-brand-primary-hover mr-4"
                         >
                           詳細
                         </Link>
@@ -1960,15 +1960,15 @@
       @click.self="closeTextReservationModal"
     >
       <div
-        class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        class="bg-brand-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
       >
         <div
-          class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10"
+          class="sticky top-0 bg-brand-surface border-b border-brand-border px-6 py-4 flex justify-between items-center z-10"
         >
           <h2 class="text-2xl font-bold">テキストから予約登録</h2>
           <button
             @click="closeTextReservationModal"
-            class="text-gray-500 hover:text-gray-700"
+            class="text-brand-text-muted hover:text-brand-text"
           >
             <svg
               class="w-6 h-6"
@@ -1987,26 +1987,26 @@
         </div>
         <div class="p-6">
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-brand-text mb-2">
               テキストを貼り付けてください
             </label>
             <textarea
               v-model="textReservationInput"
               rows="15"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono text-sm"
+              class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary font-mono text-sm"
               placeholder="【 イベント名 】 FURISODE EXPO in 岡山&#10;&#10;【 ご来店会場 】 岡山プラザホテル&#10;&#10;【 ご予約希望日時 】 2026/1/25(日) 12:30&#10;&#10;【 過去当店にご来店 】 ない&#10;&#10;【 お嬢様名 】 村本莉愛&#10;&#10;【 お嬢様名(ふりがな) 】 むらもりあ&#10;&#10;【 住所 】 岡山県倉敷市水島青葉町2-1-14&#10;&#10;【 Email 】 haruria.2255@docomo.ne.jp&#10;&#10;【 電話番号 】 09052670049&#10;&#10;【 生年月日 】 2007年 5月 5日&#10;&#10;【 ご検討中のプラン 】 振袖レンタルプラン&#10;&#10;【 お問い合わせ内容 】&#10;&#10;【 ご紹介者様お名前 】"
             ></textarea>
           </div>
           <div class="flex justify-end space-x-3">
             <button
               @click="closeTextReservationModal"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              class="px-4 py-2 text-sm font-medium text-brand-text bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               キャンセル
             </button>
             <button
               @click="proceedToReservationFromText"
-              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
             >
               予約登録へ進む
             </button>
@@ -2023,15 +2023,15 @@
       @click.self="closeCustomerReservationModal"
     >
       <div
-        class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        class="bg-brand-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
       >
         <div
-          class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10"
+          class="sticky top-0 bg-brand-surface border-b border-brand-border px-6 py-4 flex justify-between items-center z-10"
         >
           <h2 class="text-2xl font-bold">顧客情報から予約登録</h2>
           <button
             @click="closeCustomerReservationModal"
-            class="text-gray-500 hover:text-gray-700"
+            class="text-brand-text-muted hover:text-brand-text"
           >
             <svg
               class="w-6 h-6"
@@ -2050,34 +2050,34 @@
         </div>
         <div class="p-6">
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-brand-text mb-2">
               顧客名で検索
             </label>
             <input
               v-model="customerSearchName"
               type="text"
               placeholder="名前の一部を入力"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
               @input="searchCustomers"
             />
           </div>
-          <div v-if="isSearchingCustomers" class="py-4 text-sm text-gray-500">
+          <div v-if="isSearchingCustomers" class="py-4 text-sm text-brand-text-muted">
             検索中...
           </div>
           <div
             v-else-if="customerSearchResults.length > 0"
-            class="border border-gray-200 rounded-lg overflow-hidden mb-4"
+            class="border border-brand-border rounded-lg overflow-hidden mb-4"
           >
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-brand-border">
+              <thead class="bg-brand-surface-2">
                 <tr>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">名前</th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">電話番号</th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">式場</th>
+                  <th class="px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase">ID</th>
+                  <th class="px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase">名前</th>
+                  <th class="px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase">電話番号</th>
+                  <th class="px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase">式場</th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="bg-brand-surface divide-y divide-brand-border">
                 <tr
                   v-for="c in customerSearchResults"
                   :key="c.id"
@@ -2085,26 +2085,26 @@
                     'cursor-pointer transition-colors',
                     selectedSearchCustomer?.id === c.id
                       ? 'bg-green-100 hover:bg-green-100'
-                      : 'hover:bg-gray-50',
+                      : 'hover:bg-brand-surface-2',
                   ]"
                   @click="selectedSearchCustomer = c"
                 >
-                  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-900">{{ c.id }}</td>
-                  <td class="whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-900">{{ c.name }}</td>
-                  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-600">{{ c.phone_number || '-' }}</td>
-                  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-600">{{ c.ceremony_area?.name || '-' }}</td>
+                  <td class="whitespace-nowrap px-3 py-2 text-sm text-brand-text">{{ c.id }}</td>
+                  <td class="whitespace-nowrap px-3 py-2 text-sm font-medium text-brand-text">{{ c.name }}</td>
+                  <td class="whitespace-nowrap px-3 py-2 text-sm text-brand-text-muted">{{ c.phone_number || '-' }}</td>
+                  <td class="whitespace-nowrap px-3 py-2 text-sm text-brand-text-muted">{{ c.ceremony_area?.name || '-' }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p
             v-else-if="customerSearchName && !isSearchingCustomers"
-            class="py-3 text-sm text-gray-500 mb-4"
+            class="py-3 text-sm text-brand-text-muted mb-4"
           >
             該当する顧客がいません。別のキーワードで検索してください。
           </p>
           <div v-if="selectedSearchCustomer" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-brand-text mb-2">
               メールアドレス <span class="text-red-500">*</span>
             </label>
             <input
@@ -2112,13 +2112,13 @@
               type="email"
               required
               placeholder="example@email.com"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
             />
           </div>
           <div class="flex justify-end space-x-3">
             <button
               @click="closeCustomerReservationModal"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              class="px-4 py-2 text-sm font-medium text-brand-text bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               キャンセル
             </button>
@@ -2142,15 +2142,15 @@
       @click.self="closePrintModal"
     >
       <div
-        class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        class="bg-brand-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
       >
         <div
-          class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10"
+          class="sticky top-0 bg-brand-surface border-b border-brand-border px-6 py-4 flex justify-between items-center z-10"
         >
           <h2 class="text-2xl font-bold">印刷設定</h2>
           <button
             @click="closePrintModal"
-            class="text-gray-500 hover:text-gray-700"
+            class="text-brand-text-muted hover:text-brand-text"
           >
             <svg
               class="w-6 h-6"
@@ -2172,7 +2172,7 @@
             <div class="w-full">
               <!-- 向き選択 -->
               <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-brand-text mb-2">
                   向き
                 </label>
                 <div class="flex gap-4">
@@ -2199,7 +2199,7 @@
 
               <!-- フォントサイズ選択 -->
               <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-brand-text mb-2">
                   フォントサイズ (px)
                 </label>
                 <input
@@ -2208,13 +2208,13 @@
                   min="8"
                   max="24"
                   step="1"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                 />
               </div>
 
               <!-- メモ欄設定 -->
               <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-brand-text mb-2">
                   メモ欄
                 </label>
                 <div class="flex gap-4 mb-3">
@@ -2238,7 +2238,7 @@
                   </label>
                 </div>
                 <div v-if="printMemoEnabled" class="mt-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <label class="block text-sm font-medium text-brand-text mb-2">
                     メモ欄のサイズ (px)
                   </label>
                   <input
@@ -2247,7 +2247,7 @@
                     min="50"
                     max="300"
                     step="10"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                   />
                 </div>
               </div>
@@ -2255,26 +2255,26 @@
               <!-- カラム選択 -->
               <div class="mb-6">
                 <div class="flex justify-between items-center mb-3">
-                  <label class="block text-sm font-medium text-gray-700">
+                  <label class="block text-sm font-medium text-brand-text">
                     印刷に含めるカラム
                   </label>
                   <div class="flex gap-2">
                     <button
                       @click="selectAllColumns"
-                      class="px-3 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                      class="px-3 py-1 text-xs font-medium text-brand-primary hover:text-brand-primary-hover"
                     >
                       すべて選択
                     </button>
                     <button
                       @click="deselectAllColumns"
-                      class="px-3 py-1 text-xs font-medium text-gray-600 hover:text-gray-800"
+                      class="px-3 py-1 text-xs font-medium text-brand-text-muted hover:text-brand-text"
                     >
                       すべて解除
                     </button>
                   </div>
                 </div>
                 <div
-                  class="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto"
+                  class="border border-brand-border rounded-lg p-4 max-h-96 overflow-y-auto"
                 >
                   <div
                     v-for="column in printColumns"
@@ -2286,9 +2286,9 @@
                         type="checkbox"
                         v-model="selectedPrintColumns"
                         :value="column.key"
-                        class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        class="mr-2 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                       />
-                      <span class="text-sm text-gray-700">{{ column.label }}</span>
+                      <span class="text-sm text-brand-text">{{ column.label }}</span>
                     </label>
                   </div>
                 </div>
@@ -2299,13 +2299,13 @@
           <div class="flex justify-end space-x-3 mt-6">
             <button
               @click="closePrintModal"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              class="px-4 py-2 text-sm font-medium text-brand-text bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               キャンセル
             </button>
             <button
               @click="printTable"
-              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
             >
               印刷
             </button>
@@ -3086,24 +3086,24 @@ const getFormTypeBadgeClass = (formType) => {
     document: "bg-green-100 text-green-800",
     contact: "bg-purple-100 text-purple-800",
   };
-  return classes[formType] || "bg-gray-100 text-gray-800";
+  return classes[formType] || "bg-brand-surface-2 text-brand-text";
 };
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    未対応: "bg-gray-100 text-gray-800",
+    未対応: "bg-brand-surface-2 text-brand-text",
     確認中: "bg-yellow-100 text-yellow-800",
     返信待ち: "bg-blue-100 text-blue-800",
     対応完了済み: "bg-green-100 text-green-800",
   };
-  return classes[status] || "bg-gray-100 text-gray-800";
+  return classes[status] || "bg-brand-surface-2 text-brand-text";
 };
 
 const getEntranceTicketSendBadgeClass = (value) => {
   if (value === "送付済み") {
     return "bg-green-100 text-green-800";
   }
-  return "bg-gray-100 text-gray-800";
+  return "bg-brand-surface-2 text-brand-text";
 };
 
 // 色分けロジックの修正版
@@ -3123,9 +3123,9 @@ const getTimeslotAllDone = (timeslot) => {
   return timeslot.reservations.every((r) => r.status === "対応完了済み");
 };
 const getTimeslotHeaderClass = (timeslot) =>
-  getTimeslotAllDone(timeslot) ? "bg-green-100" : "bg-gray-100";
+  getTimeslotAllDone(timeslot) ? "bg-green-100" : "bg-brand-surface-2";
 const getTimeslotBorderClass = (timeslot) =>
-  getTimeslotAllDone(timeslot) ? "border-green-400" : "border-gray-300";
+  getTimeslotAllDone(timeslot) ? "border-green-400" : "border-brand-border";
 
 const axiosHeaders = {
   Accept: "application/json",

@@ -4,10 +4,10 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">イベント画像追加</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">イベント画像追加</h2>
                 <Link
                     :href="route('admin.events.images.index', event.id)"
-                    class="text-indigo-600 hover:text-indigo-900"
+                    class="text-brand-primary hover:text-brand-primary-hover"
                 >
                     ← 画像一覧に戻る
                 </Link>
@@ -16,12 +16,12 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="submit" enctype="multipart/form-data">
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    <label class="block text-sm font-medium text-brand-text mb-1">
                                         画像 <span class="text-red-500">*</span>
                                     </label>
                                     <input
@@ -30,9 +30,9 @@
                                         multiple
                                         accept="image/*"
                                         @change="handleFileChange"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">複数の画像を選択できます（JPEG, PNG, JPG, GIF、最大10MB）</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">複数の画像を選択できます（JPEG, PNG, JPG, GIF、最大10MB）</p>
                                     <div v-if="form.errors.images" class="mt-1 text-sm text-red-600">{{ form.errors.images }}</div>
                                     
                                     <!-- プレビュー -->
@@ -55,11 +55,11 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Alt属性</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">Alt属性</label>
                                     <input
                                         v-model="form.alt"
                                         type="text"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         placeholder="画像の説明（オプション）"
                                     />
                                     <div v-if="form.errors.alt" class="mt-1 text-sm text-red-600">{{ form.errors.alt }}</div>
@@ -68,14 +68,14 @@
                                 <div class="flex justify-end space-x-4 pt-4">
                                     <Link
                                         :href="route('admin.events.images.index', event.id)"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
                                     </Link>
                                     <button
                                         type="submit"
                                         :disabled="form.processing || selectedFiles.length === 0"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ form.processing ? 'アップロード中...' : 'アップロード' }}
                                     </button>

@@ -4,10 +4,10 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">予約枠編集</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">予約枠編集</h2>
                 <Link
                     :href="route('admin.events.timeslots.index', timeslot.event_id)"
-                    class="text-indigo-600 hover:text-indigo-900"
+                    class="text-brand-primary hover:text-brand-primary-hover"
                 >
                     ← 予約枠一覧に戻る
                 </Link>
@@ -44,7 +44,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div v-if="timeslot.remaining_capacity !== undefined" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
                             <p class="text-blue-800">現在の予約数: {{ timeslot.capacity - timeslot.remaining_capacity }} / {{ timeslot.capacity }}</p>
@@ -54,11 +54,11 @@
                         <form @submit.prevent="submit">
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">会場</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">会場</label>
                                     <select
                                         v-model="form.venue_id"
                                         :class="[
-                                            'w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
+                                            'w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary',
                                             form.errors.venue_id ? 'border-red-300' : ''
                                         ]"
                                     >
@@ -78,13 +78,13 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">開始日時 <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">開始日時 <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.start_at"
                                         type="datetime-local"
                                         required
                                         :class="[
-                                            'w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
+                                            'w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary',
                                             form.errors.start_at ? 'border-red-300' : ''
                                         ]"
                                     />
@@ -92,19 +92,19 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">枠数 <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">枠数 <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.capacity"
                                         type="number"
                                         :min="Math.max(1, timeslot.capacity - timeslot.remaining_capacity)"
                                         required
                                         :class="[
-                                            'w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
+                                            'w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary',
                                             form.errors.capacity ? 'border-red-300' : ''
                                         ]"
                                     />
                                     <p v-if="form.errors.capacity" class="mt-1 text-sm text-red-600">{{ form.errors.capacity }}</p>
-                                    <p v-else class="mt-1 text-sm text-gray-500">
+                                    <p v-else class="mt-1 text-sm text-brand-text-muted">
                                         最小値: {{ Math.max(1, timeslot.capacity - timeslot.remaining_capacity) }}（既存の予約数を下回ることはできません）
                                     </p>
                                 </div>
@@ -114,23 +114,23 @@
                                         <input
                                             v-model="form.is_active"
                                             type="checkbox"
-                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
-                                        <span class="ml-2 text-sm text-gray-700">有効</span>
+                                        <span class="ml-2 text-sm text-brand-text">有効</span>
                                     </label>
                                 </div>
 
                                 <div class="flex justify-end space-x-4 pt-4">
                                     <Link
                                         :href="route('admin.events.timeslots.index', timeslot.event_id)"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
                                     </Link>
                                     <button
                                         type="submit"
                                         :disabled="form.processing"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ form.processing ? '更新中...' : '更新' }}
                                     </button>

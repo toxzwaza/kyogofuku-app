@@ -4,10 +4,10 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">ログ詳細</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">ログ詳細</h2>
                 <Link
                     :href="route('admin.activity-logs.index')"
-                    class="text-indigo-600 hover:text-indigo-900"
+                    class="text-brand-primary hover:text-brand-primary-hover"
                 >
                     ← ログ一覧に戻る
                 </Link>
@@ -16,7 +16,7 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <!-- 成功メッセージ -->
                         <div v-if="$page.props.flash?.success" class="mb-6 rounded-md bg-green-50 p-4">
@@ -48,23 +48,23 @@
 
                         <!-- ログ情報 -->
                         <div class="mb-6">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-800">ログ情報</h3>
-                            <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-brand-text">ログ情報</h3>
+                            <div class="bg-brand-surface-2 rounded-lg p-4">
                                 <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">日時</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ formatDateTime(activityLog.created_at) }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">日時</dt>
+                                        <dd class="mt-1 text-sm text-brand-text">{{ formatDateTime(activityLog.created_at) }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">スタッフ</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ activityLog.user?.name || '-' }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">スタッフ</dt>
+                                        <dd class="mt-1 text-sm text-brand-text">{{ activityLog.user?.name || '-' }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">店舗</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ activityLog.shop?.name || '-' }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">店舗</dt>
+                                        <dd class="mt-1 text-sm text-brand-text">{{ activityLog.shop?.name || '-' }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">処理区分</dt>
+                                        <dt class="text-sm font-medium text-brand-text-muted">処理区分</dt>
                                         <dd class="mt-1">
                                             <span
                                                 :class="[
@@ -77,33 +77,33 @@
                                         </dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">リソース種別</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">
+                                        <dt class="text-sm font-medium text-brand-text-muted">リソース種別</dt>
+                                        <dd class="mt-1 text-sm text-brand-text">
                                             {{ getResourceTypeLabel(activityLog.resource_type) }}
-                                            <span v-if="activityLog.resource_id" class="text-gray-500">
+                                            <span v-if="activityLog.resource_id" class="text-brand-text-muted">
                                                 (ID: {{ activityLog.resource_id }})
                                             </span>
                                         </dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">説明</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ activityLog.description || '-' }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">説明</dt>
+                                        <dd class="mt-1 text-sm text-brand-text">{{ activityLog.description || '-' }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">IPアドレス</dt>
-                                        <dd class="mt-1 text-sm font-mono text-gray-900">{{ activityLog.ip_address || '-' }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">IPアドレス</dt>
+                                        <dd class="mt-1 text-sm font-mono text-brand-text">{{ activityLog.ip_address || '-' }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">URL</dt>
-                                        <dd class="mt-1 text-sm text-gray-900 break-all">{{ activityLog.url || '-' }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">URL</dt>
+                                        <dd class="mt-1 text-sm text-brand-text break-all">{{ activityLog.url || '-' }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">HTTPメソッド</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ activityLog.method || '-' }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">HTTPメソッド</dt>
+                                        <dd class="mt-1 text-sm text-brand-text">{{ activityLog.method || '-' }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">ルート名</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ activityLog.route_name || '-' }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">ルート名</dt>
+                                        <dd class="mt-1 text-sm text-brand-text">{{ activityLog.route_name || '-' }}</dd>
                                     </div>
                                 </dl>
                             </div>
@@ -111,18 +111,18 @@
 
                         <!-- リクエストデータ -->
                         <div v-if="activityLog.new_values || activityLog.old_values" class="mb-6">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-800">リクエストデータ</h3>
-                            <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-brand-text">リクエストデータ</h3>
+                            <div class="bg-brand-surface-2 rounded-lg p-4">
                                 <div v-if="activityLog.new_values" class="mb-4">
-                                    <dt class="text-sm font-medium text-gray-500 mb-2">新規値</dt>
-                                    <dd class="text-sm text-gray-900">
-                                        <pre class="bg-white p-3 rounded border overflow-x-auto">{{ JSON.stringify(activityLog.new_values, null, 2) }}</pre>
+                                    <dt class="text-sm font-medium text-brand-text-muted mb-2">新規値</dt>
+                                    <dd class="text-sm text-brand-text">
+                                        <pre class="bg-brand-surface p-3 rounded border overflow-x-auto">{{ JSON.stringify(activityLog.new_values, null, 2) }}</pre>
                                     </dd>
                                 </div>
                                 <div v-if="activityLog.old_values">
-                                    <dt class="text-sm font-medium text-gray-500 mb-2">更新前の値</dt>
-                                    <dd class="text-sm text-gray-900">
-                                        <pre class="bg-white p-3 rounded border overflow-x-auto">{{ JSON.stringify(activityLog.old_values, null, 2) }}</pre>
+                                    <dt class="text-sm font-medium text-brand-text-muted mb-2">更新前の値</dt>
+                                    <dd class="text-sm text-brand-text">
+                                        <pre class="bg-brand-surface p-3 rounded border overflow-x-auto">{{ JSON.stringify(activityLog.old_values, null, 2) }}</pre>
                                     </dd>
                                 </div>
                             </div>
@@ -130,7 +130,7 @@
 
                         <!-- ブロック情報と解除 -->
                         <div v-if="activityLog.action_type === 'login_failed' && activityLog.ip_address" class="mb-6">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-800">IPアドレスブロック情報</h3>
+                            <h3 class="text-lg font-semibold mb-4 text-brand-text">IPアドレスブロック情報</h3>
                             <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                                 <div v-if="blockedIp" class="mb-4">
                                     <div class="flex items-center mb-2">
@@ -141,20 +141,20 @@
                                     </div>
                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-700">失敗回数</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ blockedIp.failure_count }}回</dd>
+                                            <dt class="text-sm font-medium text-brand-text">失敗回数</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ blockedIp.failure_count }}回</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-700">ブロック日時</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ formatDateTime(blockedIp.blocked_at) }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text">ブロック日時</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ formatDateTime(blockedIp.blocked_at) }}</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-700">最初の失敗日時</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ formatDateTime(blockedIp.first_failed_at) }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text">最初の失敗日時</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ formatDateTime(blockedIp.first_failed_at) }}</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-700">最終失敗日時</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ formatDateTime(blockedIp.last_failed_at) }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text">最終失敗日時</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ formatDateTime(blockedIp.last_failed_at) }}</dd>
                                         </div>
                                     </dl>
                                     <div class="mt-4">
@@ -167,32 +167,32 @@
                                     </div>
                                 </div>
                                 <div v-else>
-                                    <p class="text-sm text-gray-600">このIPアドレスは現在ブロックされていません。</p>
+                                    <p class="text-sm text-brand-text-muted">このIPアドレスは現在ブロックされていません。</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- ブロック解除モーダル -->
                         <div v-if="showUnblockModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="showUnblockModal = false">
-                            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-brand-surface">
                                 <div class="mt-3">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">ブロック解除</h3>
-                                    <p class="text-sm text-gray-600 mb-4">
+                                    <h3 class="text-lg font-medium text-brand-text mb-4">ブロック解除</h3>
+                                    <p class="text-sm text-brand-text-muted mb-4">
                                         IPアドレス <span class="font-mono font-semibold">{{ activityLog.ip_address }}</span> のブロックを解除しますか？
                                     </p>
                                     <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">解除理由（任意）</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-2">解除理由（任意）</label>
                                         <textarea
                                             v-model="unblockReason"
                                             rows="3"
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                             placeholder="解除理由を入力してください"
                                         ></textarea>
                                     </div>
                                     <div class="flex justify-end space-x-3">
                                         <button
                                             @click="showUnblockModal = false"
-                                            class="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                                            class="px-4 py-2 border border-brand-border rounded-md text-sm text-brand-text hover:bg-brand-surface-2"
                                         >
                                             キャンセル
                                         </button>
@@ -255,10 +255,10 @@ const getActionTypeClass = (actionType) => {
         'update': 'bg-yellow-100 text-yellow-800',
         'delete': 'bg-red-100 text-red-800',
         'login': 'bg-purple-100 text-purple-800',
-        'logout': 'bg-gray-100 text-gray-800',
+        'logout': 'bg-brand-surface-2 text-brand-text',
         'login_failed': 'bg-orange-100 text-orange-800',
     };
-    return classes[actionType] || 'bg-gray-100 text-gray-800';
+    return classes[actionType] || 'bg-brand-surface-2 text-brand-text';
 };
 
 const getResourceTypeLabel = (resourceType) => {

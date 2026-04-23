@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-white shadow-sm rounded-lg">
+    <div class="bg-brand-surface shadow-sm rounded-lg">
         <button
             type="button"
             @click="collapsed = !collapsed"
@@ -7,7 +7,7 @@
         >
             <div class="flex items-center gap-3">
                 <svg
-                    class="w-4 h-4 text-gray-400 transition-transform"
+                    class="w-4 h-4 text-brand-text-subtle transition-transform"
                     :class="{ 'rotate-[-90deg]': collapsed }"
                     fill="none"
                     stroke="currentColor"
@@ -15,8 +15,8 @@
                 >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
-                <span class="text-sm font-semibold text-gray-800">{{ title }}</span>
-                <span class="text-xs text-gray-500 tabular-nums">
+                <span class="text-sm font-semibold text-brand-text">{{ title }}</span>
+                <span class="text-xs text-brand-text-muted tabular-nums">
                     {{ countSelected }} / {{ countTotal }}
                 </span>
             </div>
@@ -25,16 +25,16 @@
                 <button
                     type="button"
                     @click="$emit('select-all')"
-                    class="text-xs px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    class="text-xs px-2 py-1 rounded border border-brand-border text-brand-text-muted hover:bg-brand-surface-2"
                 >全選択</button>
                 <button
                     type="button"
                     @click="$emit('clear-all')"
-                    class="text-xs px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    class="text-xs px-2 py-1 rounded border border-brand-border text-brand-text-muted hover:bg-brand-surface-2"
                 >全解除</button>
             </div>
         </button>
-        <div v-show="!collapsed" class="px-4 pb-4 pt-1 border-t border-gray-100">
+        <div v-show="!collapsed" class="px-4 pb-4 pt-1 border-t border-brand-border">
             <slot />
         </div>
     </div>

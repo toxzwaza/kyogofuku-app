@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">イベント予約者出力</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">イベント予約者出力</h2>
                 <button
                     type="button"
                     @click="exportCsv"
@@ -38,13 +38,13 @@
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm transition-colors"
                             :class="selectedShopIds.includes(shop.id)
                                 ? 'bg-indigo-50 border-indigo-300 text-indigo-800'
-                                : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'"
+                                : 'bg-brand-surface-2 border-brand-border text-brand-text hover:bg-brand-surface-2'"
                         >
                             <input
                                 type="checkbox"
                                 :value="shop.id"
                                 v-model="selectedShopIds"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                class="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                             />
                             {{ shop.name }}
                         </label>
@@ -64,28 +64,28 @@
                             type="text"
                             v-model="eventSearchQuery"
                             placeholder="イベント名で検索..."
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                         />
                     </div>
-                    <div v-if="visibleEvents.length === 0" class="text-sm text-gray-500 py-3">
+                    <div v-if="visibleEvents.length === 0" class="text-sm text-brand-text-muted py-3">
                         該当するイベントがありません
                     </div>
-                    <div v-else class="max-h-64 overflow-y-auto border border-gray-100 rounded-md divide-y">
+                    <div v-else class="max-h-64 overflow-y-auto border border-brand-border rounded-md divide-y">
                         <label
                             v-for="event in visibleEvents"
                             :key="event.id"
-                            class="flex items-start gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                            class="flex items-start gap-2 px-3 py-2 hover:bg-brand-surface-2 cursor-pointer"
                         >
                             <input
                                 type="checkbox"
                                 :value="event.id"
                                 v-model="selectedEventIds"
-                                class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                class="mt-1 h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                             />
                             <div class="flex-1 min-w-0">
-                                <div class="text-sm font-medium text-gray-900 truncate">{{ event.title }}</div>
-                                <div class="text-xs text-gray-500">
-                                    <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 mr-1">{{ formTypeLabel(event.form_type) }}</span>
+                                <div class="text-sm font-medium text-brand-text truncate">{{ event.title }}</div>
+                                <div class="text-xs text-brand-text-muted">
+                                    <span class="inline-block px-1.5 py-0.5 rounded bg-brand-surface-2 mr-1">{{ formTypeLabel(event.form_type) }}</span>
                                     <span v-if="event.start_date">{{ event.start_date }}</span>
                                     <span v-if="event.end_date && event.end_date !== event.start_date"> 〜 {{ event.end_date }}</span>
                                 </div>
@@ -115,7 +115,7 @@
                                 type="checkbox"
                                 :value="status"
                                 v-model="selectedStatuses"
-                                class="h-4 w-4 rounded border-gray-300 focus:ring-indigo-500"
+                                class="h-4 w-4 rounded border-brand-border focus:ring-brand-primary"
                             />
                             {{ status }}
                         </label>
@@ -138,16 +138,16 @@
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm transition-colors"
                             :class="selectedUtmSources.includes(utmKey(utm.value))
                                 ? 'bg-sky-50 border-sky-300 text-sky-800'
-                                : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'"
+                                : 'bg-brand-surface-2 border-brand-border text-brand-text hover:bg-brand-surface-2'"
                         >
                             <input
                                 type="checkbox"
                                 :value="utmKey(utm.value)"
                                 v-model="selectedUtmSources"
-                                class="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                                class="h-4 w-4 rounded border-brand-border text-sky-600 focus:ring-sky-500"
                             />
                             <span>{{ utm.label }}</span>
-                            <span class="text-xs text-gray-500">({{ utm.count }})</span>
+                            <span class="text-xs text-brand-text-muted">({{ utm.count }})</span>
                         </label>
                     </div>
                 </FilterBlock>
@@ -164,7 +164,7 @@
                         <button
                             type="button"
                             @click="selectedColumns = [...defaultColumns]"
-                            class="text-xs px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                            class="text-xs px-2 py-1 rounded border border-brand-border text-brand-text-muted hover:bg-brand-surface-2"
                         >
                             主要のみ
                         </button>
@@ -173,13 +173,13 @@
                         <label
                             v-for="col in columnList"
                             :key="col.key"
-                            class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-sm cursor-pointer hover:bg-gray-50"
+                            class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-sm cursor-pointer hover:bg-brand-surface-2"
                         >
                             <input
                                 type="checkbox"
                                 :value="col.key"
                                 v-model="selectedColumns"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                class="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                             />
                             <span class="truncate">{{ col.label }}</span>
                         </label>
@@ -187,14 +187,14 @@
                 </FilterBlock>
 
                 <!-- サマリ -->
-                <div v-if="summary" class="bg-white rounded-lg shadow-sm p-4 space-y-3">
+                <div v-if="summary" class="bg-brand-surface rounded-lg shadow-sm p-4 space-y-3">
                     <div class="flex items-baseline gap-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">対象</span>
-                        <span class="text-2xl font-bold text-gray-900 tabular-nums">{{ summary.total }}</span>
-                        <span class="text-sm text-gray-500">件</span>
+                        <span class="text-xs font-semibold text-brand-text-muted uppercase tracking-wide">対象</span>
+                        <span class="text-2xl font-bold text-brand-text tabular-nums">{{ summary.total }}</span>
+                        <span class="text-sm text-brand-text-muted">件</span>
                     </div>
                     <div>
-                        <p class="text-xs font-semibold text-gray-500 mb-1">ステータス別</p>
+                        <p class="text-xs font-semibold text-brand-text-muted mb-1">ステータス別</p>
                         <div class="flex flex-wrap gap-1.5">
                             <button
                                 v-for="(count, i) in summary.status_counts"
@@ -210,7 +210,7 @@
                         </div>
                     </div>
                     <div v-if="summary.venues.length > 0">
-                        <p class="text-xs font-semibold text-gray-500 mb-1">会場別</p>
+                        <p class="text-xs font-semibold text-brand-text-muted mb-1">会場別</p>
                         <div class="flex flex-wrap gap-1.5">
                             <span
                                 v-for="v in summary.venues.slice(0, 5)"
@@ -222,7 +222,7 @@
                             </span>
                             <span
                                 v-if="summary.venues.length > 5"
-                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600"
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-surface-2 text-brand-text-muted"
                             >
                                 他 {{ summary.venues.length - 5 }} 会場
                             </span>
@@ -231,21 +231,21 @@
                 </div>
 
                 <!-- テーブル -->
-                <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-                    <div class="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
+                <div class="bg-brand-surface shadow-sm rounded-lg overflow-hidden">
+                    <div class="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-brand-border">
                         <div class="flex items-center gap-2">
                             <input
                                 type="text"
                                 v-model="searchQuery"
                                 placeholder="氏名・フリガナ・電話・メール・紹介者名で検索..."
-                                class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm w-80"
+                                class="rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm w-80"
                             />
                         </div>
                         <div class="flex items-center gap-2 text-sm">
-                            <label class="text-gray-600">1ページあたり</label>
+                            <label class="text-brand-text-muted">1ページあたり</label>
                             <select
                                 v-model.number="perPage"
-                                class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                class="rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                             >
                                 <option :value="50">50件</option>
                                 <option :value="100">100件</option>
@@ -254,42 +254,42 @@
                         </div>
                     </div>
 
-                    <div v-if="selectedEventIds.length === 0" class="p-12 text-center text-gray-500">
-                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div v-if="selectedEventIds.length === 0" class="p-12 text-center text-brand-text-muted">
+                        <svg class="w-12 h-12 mx-auto text-brand-text-subtle mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         <p class="text-sm">上記からイベントを選択してください</p>
                     </div>
 
                     <div v-else class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="bg-gray-50">
+                        <table class="min-w-full divide-y divide-brand-border text-sm">
+                            <thead class="bg-brand-surface-2">
                                 <tr>
                                     <th
                                         v-for="col in visibleColumns"
                                         :key="col.key"
-                                        class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                                        class="px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider whitespace-nowrap"
                                     >
                                         {{ col.label }}
                                     </th>
                                     <th class="px-3 py-2"></th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
+                            <tbody class="bg-brand-surface divide-y divide-gray-100">
                                 <tr v-if="!reservations || reservations.data.length === 0">
-                                    <td :colspan="visibleColumns.length + 1" class="px-3 py-8 text-center text-gray-500">
+                                    <td :colspan="visibleColumns.length + 1" class="px-3 py-8 text-center text-brand-text-muted">
                                         条件に一致する予約はありません
                                     </td>
                                 </tr>
                                 <tr
                                     v-for="row in reservations?.data || []"
                                     :key="row.id"
-                                    class="hover:bg-gray-50"
+                                    class="hover:bg-brand-surface-2"
                                 >
                                     <td
                                         v-for="col in visibleColumns"
                                         :key="col.key"
-                                        class="px-3 py-2 whitespace-nowrap text-gray-800"
+                                        class="px-3 py-2 whitespace-nowrap text-brand-text"
                                     >
                                         {{ formatCell(row, col.key) }}
                                     </td>
@@ -297,7 +297,7 @@
                                         <a
                                             :href="route('admin.reservations.show', row.id)"
                                             target="_blank"
-                                            class="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                                            class="text-xs text-brand-primary hover:text-brand-primary-hover underline"
                                         >詳細</a>
                                     </td>
                                 </tr>
@@ -306,8 +306,8 @@
                     </div>
 
                     <!-- ページネーション -->
-                    <div v-if="reservations && reservations.last_page > 1" class="p-3 flex items-center justify-between border-t border-gray-100">
-                        <p class="text-xs text-gray-500">
+                    <div v-if="reservations && reservations.last_page > 1" class="p-3 flex items-center justify-between border-t border-brand-border">
+                        <p class="text-xs text-brand-text-muted">
                             {{ reservations.from }} - {{ reservations.to }} / {{ reservations.total }} 件
                         </p>
                         <div class="flex gap-1">
@@ -319,10 +319,10 @@
                                 v-html="link.label"
                                 class="px-3 py-1 text-sm rounded border"
                                 :class="link.active
-                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                    ? 'bg-brand-primary text-white border-indigo-600'
                                     : link.url
-                                        ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                        : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'"
+                                        ? 'bg-brand-surface text-brand-text border-brand-border hover:bg-brand-surface-2'
+                                        : 'bg-brand-surface-2 text-brand-text-subtle border-brand-border cursor-not-allowed'"
                             ></button>
                         </div>
                     </div>
@@ -470,10 +470,10 @@ const statusPillClass = (status, active) => {
         '確認中': 'bg-blue-100 border-blue-300 text-blue-800',
         '返信待ち': 'bg-yellow-100 border-yellow-300 text-yellow-800',
         '対応完了済み': 'bg-green-100 border-green-300 text-green-800',
-        'キャンセル済み': 'bg-gray-200 border-gray-300 text-gray-700',
+        'キャンセル済み': 'bg-gray-200 border-brand-border text-brand-text',
     };
     if (active) return activeColors[status] || 'bg-indigo-100 border-indigo-300 text-indigo-800';
-    return 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100';
+    return 'bg-brand-surface-2 border-brand-border text-brand-text hover:bg-brand-surface-2';
 };
 
 const formatCell = (row, key) => {

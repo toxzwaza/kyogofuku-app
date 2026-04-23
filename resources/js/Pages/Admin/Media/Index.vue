@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">
                     メディアライブラリ
                 </h2>
             </div>
@@ -23,11 +23,11 @@
                 </div>
 
                 <!-- 既存画像の取り込み -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 flex items-center justify-between">
                         <div>
                             <h3 class="text-lg font-semibold">既存画像の取り込み</h3>
-                            <p class="text-sm text-gray-500 mt-1">
+                            <p class="text-sm text-brand-text-muted mt-1">
                                 イベント画像・スライドショー画像として既にアップロード済みの画像を、メディアライブラリに一括登録します。
                                 ファイルのコピーは行わず、既存パスをそのまま参照します。
                             </p>
@@ -43,7 +43,7 @@
                 </div>
 
                 <!-- アップロードセクション -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold mb-4">画像をアップロード</h3>
                         <form @submit.prevent="submitUpload" enctype="multipart/form-data">
@@ -55,9 +55,9 @@
                                         multiple
                                         accept="image/*"
                                         @change="handleFileChange"
-                                        class="w-full rounded-md border-gray-300 shadow-sm"
+                                        class="w-full rounded-md border-brand-border shadow-sm"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">複数の画像を選択できます（JPEG, PNG, GIF, WebP、最大10MB）</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">複数の画像を選択できます（JPEG, PNG, GIF, WebP、最大10MB）</p>
                                 </div>
 
                                 <!-- プレビュー -->
@@ -76,11 +76,11 @@
 
                                 <!-- タグ入力 -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">タグ（カンマ区切り）</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">タグ（カンマ区切り）</label>
                                     <input
                                         v-model="tagInput"
                                         type="text"
-                                        class="w-full rounded-md border-gray-300 shadow-sm"
+                                        class="w-full rounded-md border-brand-border shadow-sm"
                                         placeholder="例: 振袖, 会場, バナー"
                                     />
                                 </div>
@@ -89,7 +89,7 @@
                                     <button
                                         type="submit"
                                         :disabled="uploadForm.processing || selectedFiles.length === 0"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ uploadForm.processing ? 'アップロード中...' : 'アップロード' }}
                                     </button>
@@ -100,24 +100,24 @@
                 </div>
 
                 <!-- フィルタ・検索 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex flex-wrap gap-4 items-end">
                             <div class="flex-1 min-w-[200px]">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">ファイル名検索</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">ファイル名検索</label>
                                 <input
                                     v-model="searchQuery"
                                     type="text"
-                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm"
                                     placeholder="ファイル名で検索..."
                                     @keyup.enter="applyFilters"
                                 />
                             </div>
                             <div class="min-w-[150px]">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">タグ</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">タグ</label>
                                 <select
                                     v-model="selectedTag"
-                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm"
                                     @change="applyFilters"
                                 >
                                     <option value="">すべて</option>
@@ -133,7 +133,7 @@
                             <button
                                 v-if="searchQuery || selectedTag"
                                 @click="clearFilters"
-                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                                class="px-4 py-2 border border-brand-border text-brand-text rounded-md hover:bg-brand-surface-2"
                             >
                                 クリア
                             </button>
@@ -142,10 +142,10 @@
                 </div>
 
                 <!-- メディアグリッド -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div v-if="mediaFiles.data && mediaFiles.data.length > 0">
-                            <p class="text-sm text-gray-600 mb-4">{{ mediaFiles.total }}件のメディア</p>
+                            <p class="text-sm text-brand-text-muted mb-4">{{ mediaFiles.total }}件のメディア</p>
                             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 <div
                                     v-for="media in mediaFiles.data"
@@ -160,12 +160,12 @@
                                         loading="lazy"
                                     />
                                     <div class="p-2">
-                                        <p class="text-xs text-gray-700 truncate" :title="media.original_filename">
+                                        <p class="text-xs text-brand-text truncate" :title="media.original_filename">
                                             {{ media.original_filename }}
                                         </p>
-                                        <p class="text-xs text-gray-400">
+                                        <p class="text-xs text-brand-text-subtle">
                                             {{ formatFileSize(media.file_size) }}
-                                            <span v-if="media.usage_count > 0" class="text-indigo-600">
+                                            <span v-if="media.usage_count > 0" class="text-brand-primary">
                                                 | {{ media.usage_count }}箇所で使用
                                             </span>
                                         </p>
@@ -173,11 +173,11 @@
                                             <span
                                                 v-for="tag in media.tags.slice(0, 2)"
                                                 :key="tag"
-                                                class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded"
+                                                class="text-[10px] bg-brand-surface-2 text-brand-text-muted px-1.5 py-0.5 rounded"
                                             >
                                                 {{ tag }}
                                             </span>
-                                            <span v-if="media.tags.length > 2" class="text-[10px] text-gray-400">
+                                            <span v-if="media.tags.length > 2" class="text-[10px] text-brand-text-subtle">
                                                 +{{ media.tags.length - 2 }}
                                             </span>
                                         </div>
@@ -192,13 +192,13 @@
                                     :key="link.label"
                                     :href="link.url || '#'"
                                     class="px-3 py-1 border rounded text-sm"
-                                    :class="link.active ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-700 hover:bg-gray-50'"
+                                    :class="link.active ? 'bg-brand-primary text-white border-indigo-600' : 'text-brand-text hover:bg-brand-surface-2'"
                                     v-html="link.label"
                                     :preserve-scroll="true"
                                 />
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             メディアが登録されていません
                         </div>
                     </div>
@@ -223,11 +223,11 @@
                     role="dialog"
                     aria-modal="true"
                 >
-                    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
+                    <div class="bg-brand-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
                         <div class="p-6 space-y-4">
                             <div class="flex justify-between items-start">
-                                <h3 class="text-lg font-semibold text-gray-800">メディア詳細</h3>
-                                <button @click="closeDetail" class="text-gray-400 hover:text-gray-600">
+                                <h3 class="text-lg font-semibold text-brand-text">メディア詳細</h3>
+                                <button @click="closeDetail" class="text-brand-text-subtle hover:text-brand-text-muted">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
@@ -242,44 +242,44 @@
 
                             <div class="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <span class="text-gray-500">ファイル名:</span>
-                                    <p class="text-gray-800">{{ detailMedia.original_filename }}</p>
+                                    <span class="text-brand-text-muted">ファイル名:</span>
+                                    <p class="text-brand-text">{{ detailMedia.original_filename }}</p>
                                 </div>
                                 <div>
-                                    <span class="text-gray-500">サイズ:</span>
-                                    <p class="text-gray-800">{{ formatFileSize(detailMedia.file_size) }}</p>
+                                    <span class="text-brand-text-muted">サイズ:</span>
+                                    <p class="text-brand-text">{{ formatFileSize(detailMedia.file_size) }}</p>
                                 </div>
                                 <div>
-                                    <span class="text-gray-500">解像度:</span>
-                                    <p class="text-gray-800">{{ detailMedia.width }} x {{ detailMedia.height }}px</p>
+                                    <span class="text-brand-text-muted">解像度:</span>
+                                    <p class="text-brand-text">{{ detailMedia.width }} x {{ detailMedia.height }}px</p>
                                 </div>
                                 <div>
-                                    <span class="text-gray-500">使用箇所:</span>
-                                    <p class="text-gray-800">{{ detailMedia.usage_count }}箇所</p>
+                                    <span class="text-brand-text-muted">使用箇所:</span>
+                                    <p class="text-brand-text">{{ detailMedia.usage_count }}箇所</p>
                                 </div>
                                 <div>
-                                    <span class="text-gray-500">登録日:</span>
-                                    <p class="text-gray-800">{{ detailMedia.created_at }}</p>
+                                    <span class="text-brand-text-muted">登録日:</span>
+                                    <p class="text-brand-text">{{ detailMedia.created_at }}</p>
                                 </div>
                             </div>
 
                             <!-- Alt編集 -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Alt属性</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">Alt属性</label>
                                 <input
                                     v-model="detailForm.alt"
                                     type="text"
-                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm"
                                 />
                             </div>
 
                             <!-- タグ編集 -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">タグ（カンマ区切り）</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">タグ（カンマ区切り）</label>
                                 <input
                                     v-model="detailTagInput"
                                     type="text"
-                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm"
                                 />
                             </div>
 
@@ -295,14 +295,14 @@
                                 <div class="flex gap-2">
                                     <button
                                         @click="closeDetail"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
                                     </button>
                                     <button
                                         @click="saveDetail"
                                         :disabled="isSavingDetail"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50"
                                     >
                                         {{ isSavingDetail ? '保存中...' : '保存' }}
                                     </button>

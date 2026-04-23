@@ -54,20 +54,20 @@ function showHref(g) {
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">LINE 不明メッセージ</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">LINE 不明メッセージ</h2>
                 <ActionButton variant="back" label="顧客一覧" :href="route('admin.customers.index')" />
             </div>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white shadow-sm sm:rounded-lg p-6 mb-6">
+                <div class="bg-brand-surface shadow-sm sm:rounded-lg p-6 mb-6">
                     <div class="flex flex-wrap items-end gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">店舗</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">店舗</label>
                             <select
                                 v-model="shopFilter"
-                                class="rounded-md border-gray-300 shadow-sm text-sm"
+                                class="rounded-md border-brand-border shadow-sm text-sm"
                                 @change="applyFilter"
                             >
                                 <option value="">すべて</option>
@@ -76,40 +76,40 @@ function showHref(g) {
                             </select>
                         </div>
                     </div>
-                    <p class="mt-3 text-sm text-gray-500">
+                    <p class="mt-3 text-sm text-brand-text-muted">
                         友だち未登録の LINE ユーザーからの受信がここに溜まります。詳細から顧客へ紐づけできます。
                     </p>
                 </div>
 
-                <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                <div class="bg-brand-surface shadow-sm sm:rounded-lg overflow-hidden">
+                    <table class="min-w-full divide-y divide-brand-border">
+                        <thead class="bg-brand-surface-2">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">店舗</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">LINEユーザー</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">件数</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">最新</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">プレビュー</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">店舗</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">LINEユーザー</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">件数</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">最新</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">プレビュー</th>
                                 <th class="px-4 py-3"></th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="(g, idx) in groups" :key="idx" class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-sm text-gray-900">{{ g.shop_name }}</td>
-                                <td class="px-4 py-3 text-sm font-mono text-gray-700">{{ g.line_user_id_masked }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">{{ g.message_count }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">
+                        <tbody class="divide-y divide-brand-border">
+                            <tr v-for="(g, idx) in groups" :key="idx" class="hover:bg-brand-surface-2">
+                                <td class="px-4 py-3 text-sm text-brand-text">{{ g.shop_name }}</td>
+                                <td class="px-4 py-3 text-sm font-mono text-brand-text">{{ g.line_user_id_masked }}</td>
+                                <td class="px-4 py-3 text-sm text-brand-text-muted">{{ g.message_count }}</td>
+                                <td class="px-4 py-3 text-sm text-brand-text-muted">
                                     {{ g.last_at ? new Date(g.last_at).toLocaleString('ja-JP') : '—' }}
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">{{ g.last_text }}</td>
+                                <td class="px-4 py-3 text-sm text-brand-text max-w-xs truncate">{{ g.last_text }}</td>
                                 <td class="px-4 py-3 text-right">
-                                    <Link :href="showHref(g)" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                    <Link :href="showHref(g)" class="text-brand-primary hover:text-brand-primary-hover text-sm font-medium">
                                         詳細・紐づけ
                                     </Link>
                                 </td>
                             </tr>
                             <tr v-if="!groups.length">
-                                <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500">不明メッセージはありません。</td>
+                                <td colspan="6" class="px-4 py-8 text-center text-sm text-brand-text-muted">不明メッセージはありません。</td>
                             </tr>
                         </tbody>
                     </table>

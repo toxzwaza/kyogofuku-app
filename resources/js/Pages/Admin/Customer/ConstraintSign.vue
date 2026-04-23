@@ -1,15 +1,15 @@
 <template>
     <Head :title="`制約署名 - ${customer.name}`" />
 
-    <div class="min-h-screen bg-gray-100 print:bg-white">
+    <div class="min-h-screen bg-brand-surface-2 print:bg-brand-surface">
         <!-- 印刷時非表示ヘッダー -->
-        <nav class="bg-white border-b border-gray-200 print:hidden">
+        <nav class="bg-brand-surface border-b border-brand-border print:hidden">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16 items-center">
-                    <h1 class="text-xl font-semibold text-gray-800">{{ isPreviewMode ? '印刷プレビュー' : (isEditMode ? '制約署名（編集）' : '制約署名') }}</h1>
+                    <h1 class="text-xl font-semibold text-brand-text">{{ isPreviewMode ? '印刷プレビュー' : (isEditMode ? '制約署名（編集）' : '制約署名') }}</h1>
                     <Link
                         :href="isPreviewMode ? backUrl : route('admin.customers.show', customer.id)"
-                        class="text-gray-600 hover:text-gray-800 text-sm"
+                        class="text-brand-text-muted hover:text-brand-text text-sm"
                     >
                         {{ isPreviewMode ? '編集に戻る' : '顧客詳細に戻る' }}
                     </Link>
@@ -27,21 +27,21 @@
                     {{ $page.props.flash.success }}
                 </div>
                 <!-- 印刷用コンテンツ -->
-                <div ref="printArea" class="bg-white shadow-lg rounded-lg print:shadow-none print:rounded-none print-a4-container">
+                <div ref="printArea" class="bg-brand-surface shadow-lg rounded-lg print:shadow-none print:rounded-none print-a4-container">
                     <!-- A4用紙スタイル -->
                     <div class="a4-page" :style="pageContainerStyle">
                         <!-- 顧客情報 -->
-                        <div class="mb-4 pb-4 border-b border-gray-200 print:mb-1 print:pb-1">
-                            <p class="text-sm text-gray-600" :style="dsFontStyle">顧客名: <span class="font-semibold text-gray-900">{{ customer.name }}</span>
-                                <span v-if="customer.kana" class="ml-2 text-gray-500">({{ customer.kana }})</span>様
+                        <div class="mb-4 pb-4 border-b border-brand-border print:mb-1 print:pb-1">
+                            <p class="text-sm text-brand-text-muted" :style="dsFontStyle">顧客名: <span class="font-semibold text-brand-text">{{ customer.name }}</span>
+                                <span v-if="customer.kana" class="ml-2 text-brand-text-muted">({{ customer.kana }})</span>様
                             </p>
                         </div>
 
                         <!-- 制約タイトル -->
-                        <h2 class="text-xl font-bold text-center text-gray-900 mb-6 print:mb-2" :style="dsTitleStyle">{{ template.name }}</h2>
+                        <h2 class="text-xl font-bold text-center text-brand-text mb-6 print:mb-2" :style="dsTitleStyle">{{ template.name }}</h2>
 
                         <!-- 制約本文（チェックボックス付き） -->
-                        <div class="constraint-body prose prose-sm max-w-none text-gray-800 mb-6 print:mb-2" :style="dsFontStyle">
+                        <div class="constraint-body prose prose-sm max-w-none text-brand-text mb-6 print:mb-2" :style="dsFontStyle">
                             <ConstraintBodyWithChecks
                                 :body="template.body"
                                 :check-values="form.check_values"
@@ -52,27 +52,27 @@
                         </div>
 
                         <!-- 同意・署名セクション -->
-                        <div class="border-t border-gray-200 pt-6 print:pt-2">
+                        <div class="border-t border-brand-border pt-6 print:pt-2">
                             <div class="grid grid-cols-2 gap-6 mb-6 print:gap-2 print:mb-2">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1" :style="dsFontStyle">日付</label>
-                                    <p class="text-gray-900 font-semibold" :style="dsFontStyle">{{ formatDateJa(form.signed_at) }}</p>
+                                    <label class="block text-sm font-medium text-brand-text mb-1" :style="dsFontStyle">日付</label>
+                                    <p class="text-brand-text font-semibold" :style="dsFontStyle">{{ formatDateJa(form.signed_at) }}</p>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1" :style="dsFontStyle">規約説明者</label>
-                                    <p class="text-gray-900 font-semibold" :style="dsFontStyle">{{ explainerDisplayName || '-' }}</p>
+                                    <label class="block text-sm font-medium text-brand-text mb-1" :style="dsFontStyle">規約説明者</label>
+                                    <p class="text-brand-text font-semibold" :style="dsFontStyle">{{ explainerDisplayName || '-' }}</p>
                                 </div>
                             </div>
 
                             <!-- 署名欄 -->
                             <div class="mb-4">
                                 <div class="flex items-center gap-2 mb-2 print:mb-1">
-                                    <div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 print:bg-transparent print:text-black">
+                                    <div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-brand-primary print:bg-transparent print:text-black">
                                         <svg class="w-4 h-4 print:w-3 print:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                         </svg>
                                     </div>
-                                    <label class="text-sm font-semibold text-gray-700" :style="dsFontStyle">ご署名</label>
+                                    <label class="text-sm font-semibold text-brand-text" :style="dsFontStyle">ご署名</label>
                                 </div>
                                 <div
                                     ref="signatureWrap"
@@ -99,26 +99,26 @@
                                         v-if="!isPrinting && !hasSignature"
                                         class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
                                     >
-                                        <span class="text-gray-400 text-sm font-medium tracking-wider">ここに署名してください</span>
+                                        <span class="text-brand-text-subtle text-sm font-medium tracking-wider">ここに署名してください</span>
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center mt-3 print:hidden">
                                     <button
                                         type="button"
                                         @click="clearSignature"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-brand-primary hover:text-brand-primary-hover hover:bg-indigo-50 rounded-lg transition-colors"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
                                         署名をクリア
                                     </button>
-                                    <span class="text-xs text-gray-500 font-medium">※マウスまたはタッチで枠内に描いてください</span>
+                                    <span class="text-xs text-brand-text-muted font-medium">※マウスまたはタッチで枠内に描いてください</span>
                                 </div>
                             </div>
 
                             <!-- 顧客名表示（様付き） -->
-                            <div class="text-right text-gray-700" :style="dsFontStyle">
+                            <div class="text-right text-brand-text" :style="dsFontStyle">
                                 <span class="font-semibold">{{ customer.name }}</span> 様
                             </div>
                         </div>
@@ -130,7 +130,7 @@
                     <button
                         type="button"
                         @click="handlePrint"
-                        class="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 shadow-sm"
+                        class="inline-flex items-center gap-2 px-6 py-3 border border-brand-border rounded-lg bg-brand-surface text-brand-text font-medium hover:bg-brand-surface-2 shadow-sm"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -145,7 +145,7 @@
                         class="inline-flex items-center gap-2 px-8 py-3 rounded-lg font-medium shadow-sm disabled:cursor-not-allowed"
                         :class="isSaved
                             ? 'bg-gray-400 text-white cursor-default'
-                            : 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50'"
+                            : 'bg-brand-primary text-white hover:bg-brand-primary-hover disabled:opacity-50'"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -158,7 +158,7 @@
                         v-if="!isPreviewMode && isEditMode"
                         type="button"
                         @click="deleteConstraint"
-                        class="inline-flex items-center gap-2 px-6 py-3 border border-red-300 rounded-lg bg-white text-red-700 font-medium hover:bg-red-50 shadow-sm"
+                        class="inline-flex items-center gap-2 px-6 py-3 border border-red-300 rounded-lg bg-brand-surface text-red-700 font-medium hover:bg-red-50 shadow-sm"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

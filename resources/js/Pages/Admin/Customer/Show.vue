@@ -39,13 +39,13 @@
                     <!-- 左: 顧客タグ・基本情報 -->
                     <div class="lg:col-span-3 space-y-4 min-w-0">
                 <!-- 顧客タグ（overflow-visible でツールチップが途切れないようにする） -->
-                <div class="bg-white overflow-visible shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-visible shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">顧客タグ</h3>
+                            <h3 class="text-lg font-semibold text-brand-text">顧客タグ</h3>
                             <button
                                 @click="openTagModal"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium"
+                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover text-sm font-medium"
                             >
                                 タグを追加
                             </button>
@@ -69,7 +69,7 @@
                                 <span>{{ tag.name }}</span>
                                 <!-- タグ付け理由・補足がある場合にコメントアイコンを表示（ホバーはタグ全体でツールチップ表示） -->
                                 <span v-if="tag.pivot?.note" class="inline-flex ml-1 shrink-0" aria-hidden="true">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 text-brand-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                     </svg>
                                 </span>
@@ -94,7 +94,7 @@
                                 <button
                                     type="button"
                                     @click.stop="removeTag(tag.id)"
-                                    class="ml-2 text-gray-500 hover:text-red-600 shrink-0"
+                                    class="ml-2 text-brand-text-muted hover:text-red-600 shrink-0"
                                     title="タグを削除"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,18 +103,18 @@
                                 </button>
                             </div>
                         </div>
-                        <div v-else class="text-sm text-gray-500">
+                        <div v-else class="text-sm text-brand-text-muted">
                             タグが設定されていません
                         </div>
                     </div>
                 </div>
 
                 <!-- 顧客基本情報（overflow-visible でツールチップが途切れないようにする） -->
-                <div class="bg-white overflow-visible shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-visible shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                                <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                                 基本情報
@@ -123,7 +123,7 @@
                                 <div class="relative group">
                                     <Link
                                         :href="route('admin.customers.additional-info', customer.id)"
-                                        class="flex items-center gap-2 border border-gray-300 bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm font-medium shadow-sm transition-colors"
+                                        class="flex items-center gap-2 border border-brand-border bg-brand-surface text-brand-text px-4 py-2 rounded-lg hover:bg-brand-surface-2 text-sm font-medium shadow-sm transition-colors"
                                         title="お客様にInformationシートを記入頂き、追加情報を取得します"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +143,7 @@
                                 </div>
                                 <button
                                     @click="openEditCustomerModal"
-                                    class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium shadow-sm transition-colors"
+                                    class="flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-brand-primary-hover text-sm font-medium shadow-sm transition-colors"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -155,8 +155,8 @@
 
                         <!-- 基本情報セクション -->
                         <div class="mb-6">
-                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 基本情報
@@ -164,107 +164,107 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <!-- ID -->
                                 <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-100 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">顧客ID</label>
-                                    <p class="text-lg font-bold text-gray-900">{{ customer.id }}</p>
+                                    <label class="block text-xs font-semibold text-brand-primary uppercase tracking-wide mb-1">顧客ID</label>
+                                    <p class="text-lg font-bold text-brand-text">{{ customer.id }}</p>
                                 </div>
                                 <!-- 顧客名、ふりがな -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                         顧客名
                                     </label>
-                                    <p class="text-lg font-semibold text-gray-900">{{ customer.name }}</p>
+                                    <p class="text-lg font-semibold text-brand-text">{{ customer.name }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                                         </svg>
                                         ふりがな
                                     </label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.kana || '-' }}</p>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.kana || '-' }}</p>
                                 </div>
                                 <!-- 生年月日、成人年度 -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
                                         生年月日
                                     </label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.birth_date || '-' }}</p>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.birth_date || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
                                         成人年度
                                     </label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.coming_of_age_year || '-' }}</p>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.coming_of_age_year || '-' }}</p>
                                 </div>
                                 <!-- 成人エリア、保護者名 -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                         成人式エリア
                                     </label>
-                                    <p class="text-base font-semibold text-gray-900">{{ customer.ceremony_area?.name || '-' }}</p>
+                                    <p class="text-base font-semibold text-brand-text">{{ customer.ceremony_area?.name || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                         </svg>
                                         保護者名
                                     </label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.guardian_name || '-' }}</p>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.guardian_name || '-' }}</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 成人式情報セクション -->
                         <div class="mb-6">
-                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                                 </svg>
                                 成人式情報
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">仕度会場（推奨）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.seijin_preparation_venue || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">仕度会場（推奨）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.seijin_preparation_venue || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">時間（推奨）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.seijin_preparation_time || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">時間（推奨）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.seijin_preparation_time || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">他店お支度</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.other_store_preparation ? 'あり' : 'なし' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">他店お支度</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.other_store_preparation ? 'あり' : 'なし' }}</p>
                                 </div>
                                 <template v-if="customer.other_store_preparation">
-                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">美容室名（推奨）</label>
-                                        <p class="text-base font-medium text-gray-900">{{ customer.other_store_salon_name || '-' }}</p>
+                                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">美容室名（推奨）</label>
+                                        <p class="text-base font-medium text-brand-text">{{ customer.other_store_salon_name || '-' }}</p>
                                     </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">住所</label>
-                                        <p class="text-base font-medium text-gray-900">{{ customer.other_store_salon_address || '-' }}</p>
+                                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">住所</label>
+                                        <p class="text-base font-medium text-brand-text">{{ customer.other_store_salon_address || '-' }}</p>
                                     </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">電話番号</label>
-                                        <p class="text-base font-medium text-gray-900">{{ customer.other_store_salon_phone || '-' }}</p>
+                                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">電話番号</label>
+                                        <p class="text-base font-medium text-brand-text">{{ customer.other_store_salon_phone || '-' }}</p>
                                     </div>
-                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">着物発送日</label>
-                                        <p class="text-base font-medium text-gray-900">{{ customer.kimono_ship_date ? formatDateJa(customer.kimono_ship_date) : '-' }}</p>
+                                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">着物発送日</label>
+                                        <p class="text-base font-medium text-brand-text">{{ customer.kimono_ship_date ? formatDateJa(customer.kimono_ship_date) : '-' }}</p>
                                     </div>
                                 </template>
                             </div>
@@ -272,93 +272,93 @@
 
                         <!-- 連絡先情報セクション -->
                         <div class="mb-6">
-                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
                                 連絡先情報
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                         </svg>
                                         電話番号
                                     </label>
-                                    <p class="text-base font-semibold text-gray-900">{{ customer.phone_number || '-' }}</p>
+                                    <p class="text-base font-semibold text-brand-text">{{ customer.phone_number || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
                                         メールアドレス
                                     </label>
-                                    <p class="text-base font-medium text-gray-900 break-all">{{ customer.email || '-' }}</p>
+                                    <p class="text-base font-medium text-brand-text break-all">{{ customer.email || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
                                         郵便番号
                                     </label>
-                                    <p class="text-base font-medium text-gray-900">{{ formatPostalCode(customer.postal_code) }}</p>
+                                    <p class="text-base font-medium text-brand-text">{{ formatPostalCode(customer.postal_code) }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                         住所
                                     </label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.address || '-' }}</p>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.address || '-' }}</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- システム情報セクション -->
                         <div class="mb-6">
-                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                 </svg>
                                 システム情報
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
                                         登録日
                                     </label>
-                                    <p class="text-base font-semibold text-gray-900">{{ formatDateTime(customer.created_at) }}</p>
+                                    <p class="text-base font-semibold text-brand-text">{{ formatDateTime(customer.created_at) }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
                                         最終更新日
                                     </label>
-                                    <p class="text-base font-semibold text-gray-900">{{ formatDateTime(customer.updated_at) }}</p>
+                                    <p class="text-base font-semibold text-brand-text">{{ formatDateTime(customer.updated_at) }}</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 備考セクション -->
                         <div v-if="customer.remarks" class="mb-6">
-                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 備考
                             </h4>
-                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <p class="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{{ customer.remarks }}</p>
+                            <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                <p class="text-sm text-brand-text whitespace-pre-wrap leading-relaxed">{{ customer.remarks }}</p>
                             </div>
                         </div>
                     </div>
@@ -368,65 +368,65 @@
                     <!-- 中央: 追加情報・参加イベント・成約・制約・前撮り・顧客写真 -->
                     <div class="lg:col-span-6 space-y-4 min-w-0">
                         <!-- 追加情報セクション（振袖アンケート）※customerの項目はcustomerから、それ以外はadditional_infoから表示 -->
-                        <div v-if="hasAdditionalInfo" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div v-if="hasAdditionalInfo" class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
-                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 追加情報（振袖アンケート）
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <!-- 記入日（additional_info のみ） -->
-                                <div v-if="formatAdditionalInfoDate(ai, 'entry_date')" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">記入日</label>
-                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoDate(ai, 'entry_date') }}</p>
+                                <div v-if="formatAdditionalInfoDate(ai, 'entry_date')" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">記入日</label>
+                                    <p class="text-base font-medium text-brand-text">{{ formatAdditionalInfoDate(ai, 'entry_date') }}</p>
                                 </div>
                                 <!-- お名前・ふりがな（お嬢様）＝ customer -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お名前（お嬢様）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.name || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お名前（お嬢様）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.name || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ふりがな（お嬢様）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.kana || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">ふりがな（お嬢様）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.kana || '-' }}</p>
                                 </div>
                                 <!-- お名前・ふりがな（お母様）＝ customer -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お名前（お母様）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.guardian_name || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お名前（お母様）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.guardian_name || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ふりがな（お母様）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.guardian_name_kana || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">ふりがな（お母様）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.guardian_name_kana || '-' }}</p>
                                 </div>
                                 <!-- お誕生日 ＝ customer -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お誕生日</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.birth_date || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お誕生日</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.birth_date || '-' }}</p>
                                 </div>
                                 <!-- 身長・足サイズ（additional_info のみ） -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">身長</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.height ? `${ai.height} cm` : '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">身長</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.height ? `${ai.height} cm` : '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">足サイズ</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.foot_size ? `${ai.foot_size} cm` : '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">足サイズ</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.foot_size ? `${ai.foot_size} cm` : '-' }}</p>
                                 </div>
                                 <!-- 郵便番号・住所 ＝ customer -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">郵便番号</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.postal_code || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">郵便番号</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.postal_code || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ご住所</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.address || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">ご住所</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.address || '-' }}</p>
                                 </div>
                                 <!-- お電話：ご自宅＝customer、お嬢様・お母様＝additional_info -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お電話</label>
-                                    <div class="space-y-1 text-sm text-gray-900">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お電話</label>
+                                    <div class="space-y-1 text-sm text-brand-text">
                                         <p v-if="customer.phone_number">ご自宅：{{ customer.phone_number }}</p>
                                         <p v-if="formatAdditionalInfoPhone(ai, 'phone_daughter')">お嬢様：{{ formatAdditionalInfoPhone(ai, 'phone_daughter') }}</p>
                                         <p v-if="formatAdditionalInfoPhone(ai, 'phone_mother')">お母様：{{ formatAdditionalInfoPhone(ai, 'phone_mother') }}</p>
@@ -434,72 +434,72 @@
                                     </div>
                                 </div>
                                 <!-- 好きな色・好きな事 -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">好きな色</label>
-                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoArray(ai.color) || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">好きな色</label>
+                                    <p class="text-base font-medium text-brand-text">{{ formatAdditionalInfoArray(ai.color) || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">好きな事</label>
-                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoArray(ai.hobby) || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">好きな事</label>
+                                    <p class="text-base font-medium text-brand-text">{{ formatAdditionalInfoArray(ai.hobby) || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">スポーツ（自由記入）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.sports_detail || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">スポーツ（自由記入）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.sports_detail || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お振袖の好きな柄やイメージ</label>
-                                    <p class="text-base font-medium text-gray-900 whitespace-pre-wrap">{{ ai.furisode_image || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お振袖の好きな柄やイメージ</label>
+                                    <p class="text-base font-medium text-brand-text whitespace-pre-wrap">{{ ai.furisode_image || '-' }}</p>
                                 </div>
                                 <!-- 学生・ご希望 -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">卒業予定年度</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.graduation_year ? `${ai.graduation_year}年3月` : '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">卒業予定年度</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.graduation_year ? `${ai.graduation_year}年3月` : '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">卒業式にハカマ</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.hakama || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">卒業式にハカマ</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.hakama || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">購入／レンタル</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.plan || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">購入／レンタル</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.plan || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ママ振り・お振袖フォト</label>
-                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoArray(ai.option) || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">ママ振り・お振袖フォト</label>
+                                    <p class="text-base font-medium text-brand-text">{{ formatAdditionalInfoArray(ai.option) || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">価格帯</label>
-                                    <p class="text-base font-medium text-gray-900">{{ formatAdditionalInfoArray(ai.price) || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">価格帯</label>
+                                    <p class="text-base font-medium text-brand-text">{{ formatAdditionalInfoArray(ai.price) || '-' }}</p>
                                 </div>
                                 <!-- 進路・状況 -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">大学生（学校名）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.university || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">大学生（学校名）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.university || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">短大・専門（学校名）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.college || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">短大・専門（学校名）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.college || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">アルバイト</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.parttime || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">アルバイト</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.parttime || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お勤め</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.work || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お勤め</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.work || '-' }}</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">その他（進路・状況）</label>
-                                    <p class="text-base font-medium text-gray-900">{{ ai.other_status || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">その他（進路・状況）</label>
+                                    <p class="text-base font-medium text-brand-text">{{ ai.other_status || '-' }}</p>
                                 </div>
                                 <!-- ご姉妹 -->
-                                <div v-if="formatAdditionalInfoSisters(ai.sisters)" class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ご姉妹</label>
-                                    <p class="text-base font-medium text-gray-900 whitespace-pre-wrap">{{ formatAdditionalInfoSisters(ai.sisters) }}</p>
+                                <div v-if="formatAdditionalInfoSisters(ai.sisters)" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">ご姉妹</label>
+                                    <p class="text-base font-medium text-brand-text whitespace-pre-wrap">{{ formatAdditionalInfoSisters(ai.sisters) }}</p>
                                 </div>
                                 <!-- 来店動機 ＝ customer.visit_reasons（チェックボックス表示・予約フォームと同一項目） -->
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">ご来店の動機</label>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">ご来店の動機</label>
                                     <div class="space-y-2">
                                         <div
                                             v-for="reason in visitReasonOptions"
@@ -512,50 +512,50 @@
                                                 disabled
                                                 class="rounded accent-gray-800 w-4 h-4"
                                             />
-                                            <span class="text-sm font-medium text-gray-900">{{ reason.label }}</span>
-                                            <span v-if="reason.value === 'その他' && getVisitReasonOtherText(customer.visit_reasons)" class="text-sm text-gray-700">（{{ getVisitReasonOtherText(customer.visit_reasons) }}）</span>
+                                            <span class="text-sm font-medium text-brand-text">{{ reason.label }}</span>
+                                            <span v-if="reason.value === 'その他' && getVisitReasonOtherText(customer.visit_reasons)" class="text-sm text-brand-text">（{{ getVisitReasonOtherText(customer.visit_reasons) }}）</span>
                                         </div>
-                                        <p v-if="!hasAnyVisitReason(customer.visit_reasons)" class="text-sm text-gray-500">-</p>
+                                        <p v-if="!hasAnyVisitReason(customer.visit_reasons)" class="text-sm text-brand-text-muted">-</p>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">担当</label>
-                                    <p class="text-base font-medium text-gray-900">{{ customer.staff_name || '-' }}</p>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">担当</label>
+                                    <p class="text-base font-medium text-brand-text">{{ customer.staff_name || '-' }}</p>
                                 </div>
                             </div>
                             </div>
                         </div>
 
                 <!-- 参加イベント -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">参加イベント</h3>
+                            <h3 class="text-lg font-semibold text-brand-text">参加イベント</h3>
                         </div>
                         <div v-if="eventReservationsList.length > 0" class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-brand-border">
+                                <thead class="bg-brand-surface-2">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">予約ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">イベント名</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">予約日時</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会場</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">予約ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">イベント名</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">予約日時</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">会場</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">担当者</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ステータス</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-brand-surface divide-y divide-brand-border">
                                     <tr
                                         v-for="reservation in eventReservationsList"
                                         :key="reservation.id"
                                         :class="{ 'bg-amber-50': reservation.cancel_flg }"
                                     >
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.event?.title || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.reservation_datetime ? formatDateTime(reservation.reservation_datetime) : '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ reservation.venue?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ getScheduleAssigneeNames(reservation) || '' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ reservation.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ reservation.event?.title || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ reservation.reservation_datetime ? formatDateTime(reservation.reservation_datetime) : '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ reservation.venue?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ getScheduleAssigneeNames(reservation) || '' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span
                                                 v-if="reservation.cancel_flg"
@@ -565,16 +565,16 @@
                                             </span>
                                             <span
                                                 v-else-if="reservation.status"
-                                                class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800"
+                                                class="px-2 py-1 text-xs rounded-full bg-brand-surface-2 text-brand-text"
                                             >
                                                 {{ reservation.status }}
                                             </span>
-                                            <span v-else class="text-gray-500">-</span>
+                                            <span v-else class="text-brand-text-muted">-</span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <Link
                                                 :href="route('admin.reservations.show', reservation.id)"
-                                                class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
+                                                class="inline-flex items-center gap-1 text-brand-primary hover:text-brand-primary-hover font-medium"
                                             >
                                                 詳細
                                             </Link>
@@ -583,57 +583,57 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             参加イベントはありません
                         </div>
                     </div>
                 </div>
 
                 <!-- 成約情報 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">成約情報</h3>
+                            <h3 class="text-lg font-semibold text-brand-text">成約情報</h3>
                             <button
                                 @click="openAddContractModal"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium"
+                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover text-sm font-medium"
                             >
                                 成約追加
                             </button>
                         </div>
                         <div v-if="customer.contracts && customer.contracts.length > 0" class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-brand-border">
+                                <thead class="bg-brand-surface-2">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成約ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成約日</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">店舗</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">着物種別</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成約金額</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">安心保証</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当スタッフ</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">お仕度会場</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">お仕度日程</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">成約ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">成約日</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">店舗</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">プラン</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">着物種別</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ステータス</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">成約金額</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">安心保証</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">担当スタッフ</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">お仕度会場</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">お仕度日程</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-brand-surface divide-y divide-brand-border">
                                     <tr
                                         v-for="contract in customer.contracts"
                                         :key="contract.id"
-                                        :class="contract.deleted_at ? 'bg-gray-100 opacity-75' : ''"
+                                        :class="contract.deleted_at ? 'bg-brand-surface-2 opacity-75' : ''"
                                     >
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.contract_date }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.shop?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.plan?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.kimono_type }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.contract_date }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.shop?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.plan?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.kimono_type }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span
                                                 v-if="contract.deleted_at"
-                                                class="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-600"
+                                                class="px-2 py-1 text-xs rounded-full bg-gray-200 text-brand-text-muted"
                                             >
                                                 無効
                                             </span>
@@ -644,33 +644,33 @@
                                                     (contract.status || '確定') === '確定'
                                                         ? 'bg-green-100 text-green-800'
                                                         : (contract.status || '') === 'キャンセル'
-                                                            ? 'bg-gray-100 text-gray-800'
+                                                            ? 'bg-brand-surface-2 text-brand-text'
                                                             : 'bg-amber-100 text-amber-800'
                                                 "
                                             >
                                                 {{ contract.status || '確定' }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.total_amount ? `¥${contract.total_amount.toLocaleString()}` : '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.total_amount ? `¥${contract.total_amount.toLocaleString()}` : '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span
                                                 class="px-2 py-1 text-xs rounded-full"
                                                 :class="[
-                                                    contract.warranty_flag ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800',
+                                                    contract.warranty_flag ? 'bg-green-100 text-green-800' : 'bg-brand-surface-2 text-brand-text',
                                                     contract.deleted_at ? 'opacity-70' : ''
                                                 ]"
                                             >
                                                 {{ contract.warranty_flag ? 'あり' : 'なし' }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.user?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.preparation_venue || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-gray-500' : 'text-gray-900'">{{ contract.preparation_date || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.user?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.preparation_venue || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm" :class="contract.deleted_at ? 'text-brand-text-muted' : 'text-brand-text'">{{ contract.preparation_date || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <button
                                                 type="button"
                                                 @click="openEditContractModal(contract)"
-                                                class="text-indigo-600 hover:text-indigo-800 font-medium"
+                                                class="text-brand-primary hover:text-brand-primary-hover font-medium"
                                             >
                                                 編集
                                             </button>
@@ -679,21 +679,21 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             成約情報がありません
                         </div>
                     </div>
                 </div>
 
                 <!-- 制約情報 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">制約情報</h3>
+                            <h3 class="text-lg font-semibold text-brand-text">制約情報</h3>
                             <button
                                 @click="openAddConstraintModal"
                                 :disabled="!constraintTemplatesList.length"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                             >
                                 制約追加
                             </button>
@@ -702,12 +702,12 @@
                             <div
                                 v-for="cc in customerConstraintsList"
                                 :key="cc.id"
-                                class="border border-gray-200 rounded-lg p-4 bg-gray-50/50"
+                                class="border border-brand-border rounded-lg p-4 bg-brand-surface-2/50"
                             >
                                 <div class="flex justify-between items-start gap-3">
                                     <div class="min-w-0 flex-1">
-                                        <p class="font-medium text-gray-900">{{ (cc.constraint_template || cc.constraintTemplate)?.name || '制約' }}</p>
-                                        <p class="text-sm text-gray-500 mt-1">
+                                        <p class="font-medium text-brand-text">{{ (cc.constraint_template || cc.constraintTemplate)?.name || '制約' }}</p>
+                                        <p class="text-sm text-brand-text-muted mt-1">
                                             署名日: {{ cc.signed_at ? formatDateJa(cc.signed_at) : '-' }}
                                             <span v-if="cc.explainer_user || cc.explainerUser" class="ml-3">規約説明者: {{ (cc.explainer_user || cc.explainerUser)?.name }}</span>
                                         </p>
@@ -720,7 +720,7 @@
                                                 :href="cc.attachment_url"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                class="inline-flex items-center gap-1 text-sm text-brand-primary hover:text-brand-primary-hover hover:underline"
                                             >
                                                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -737,7 +737,7 @@
                                                 <img
                                                     :src="cc.attachment_url"
                                                     :alt="cc.attachment_original_name || '添付画像'"
-                                                    class="h-20 max-w-[200px] object-contain border border-gray-200 rounded bg-white"
+                                                    class="h-20 max-w-[200px] object-contain border border-brand-border rounded bg-brand-surface"
                                                 />
                                             </a>
                                         </div>
@@ -747,12 +747,12 @@
                                             v-if="cc.signature_image"
                                             :src="cc.signature_image"
                                             alt="署名"
-                                            class="h-10 w-24 object-contain border border-gray-200 rounded"
+                                            class="h-10 w-24 object-contain border border-brand-border rounded"
                                         />
                                         <button
                                             type="button"
                                             @click="openEditConstraintModal(cc)"
-                                            class="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
+                                            class="text-brand-primary hover:text-brand-primary-hover font-medium text-sm"
                                         >
                                             編集
                                         </button>
@@ -760,53 +760,53 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             制約情報がありません
                         </div>
                     </div>
                 </div>
 
                 <!-- 前撮り情報 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">前撮り情報</h3>
+                            <h3 class="text-lg font-semibold text-brand-text">前撮り情報</h3>
                             <button
                                 @click="openAddPhotoSlotModal"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium"
+                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover text-sm font-medium"
                             >
                                 前撮り追加
                             </button>
                         </div>
 
                         <div v-if="customer.photoSlots && customer.photoSlots.length > 0" class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-brand-border">
+                                <thead class="bg-brand-surface-2">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">前撮り枠ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">詳細</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">前撮り会場</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">撮影日</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">撮影開始時刻</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当店舗</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">担当者用メモラベル</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">備考</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">前撮り枠ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">詳細</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">前撮り会場</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">撮影日</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">撮影開始時刻</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">担当店舗</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">担当者</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">プラン</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">担当者用メモラベル</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">備考</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-brand-surface divide-y divide-brand-border">
                                     <tr v-for="photoSlot in customer.photoSlots" :key="photoSlot.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ photoSlot.id }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span v-if="photoSlot.details_undecided" class="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-800">詳細未決定</span>
-                                            <span v-else class="text-gray-500">-</span>
+                                            <span v-else class="text-brand-text-muted">-</span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : (photoSlot.studio?.name || '-') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : formatDateJa(photoSlot.shoot_date) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.details_undecided ? '未定' : formatTime(photoSlot.shoot_time) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ photoSlot.details_undecided ? '未定' : (photoSlot.studio?.name || '-') }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ photoSlot.details_undecided ? '未定' : formatDateJa(photoSlot.shoot_date) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ photoSlot.details_undecided ? '未定' : formatTime(photoSlot.shoot_time) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             <span v-if="photoSlot.shops && photoSlot.shops.length > 0">
                                                 <span v-for="(shop, index) in photoSlot.shops" :key="shop.id">
                                                     {{ shop.name }}<span v-if="index < photoSlot.shops.length - 1">, </span>
@@ -814,15 +814,15 @@
                                             </span>
                                             <span v-else>-</span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.user?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.plan?.name || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ photoSlot.assignment_label || '-' }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-900">{{ photoSlot.remarks || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ photoSlot.user?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ photoSlot.plan?.name || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ photoSlot.assignment_label || '-' }}</td>
+                                        <td class="px-6 py-4 text-sm text-brand-text">{{ photoSlot.remarks || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <button
                                                 type="button"
                                                 @click="openEditPhotoSlotModal(photoSlot)"
-                                                class="text-indigo-600 hover:text-indigo-800 font-medium"
+                                                class="text-brand-primary hover:text-brand-primary-hover font-medium"
                                             >
                                                 編集
                                             </button>
@@ -831,28 +831,28 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             前撮り情報がありません
                         </div>
                     </div>
                 </div>
 
                 <!-- 顧客写真 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">顧客写真</h3>
+                        <h3 class="text-lg font-semibold text-brand-text mb-4">顧客写真</h3>
                         
                         <!-- 写真追加フォーム -->
-                        <form @submit.prevent="storeCustomerPhoto" class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <form @submit.prevent="storeCustomerPhoto" class="mb-6 p-4 bg-brand-surface-2 rounded-lg border border-brand-border">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                                    <label class="block text-xs font-medium text-brand-text mb-1">
                                         写真種類 <span class="text-red-500">*</span>
                                     </label>
                                     <select
                                         v-model="photoForm.photo_type_id"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option value="">選択してください</option>
                                         <option v-for="photoType in photoTypes" :key="photoType.id" :value="photoType.id">
@@ -861,7 +861,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                                    <label class="block text-xs font-medium text-brand-text mb-1">
                                         画像ファイル <span class="text-red-500">*</span>
                                     </label>
                                     <input
@@ -883,9 +883,9 @@
                                         <button
                                             type="button"
                                             @click="photoFileInputCamera?.click()"
-                                            class="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                            class="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-md border border-brand-border bg-brand-surface text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                                         >
-                                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-5 h-5 text-brand-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                             </svg>
                                             カメラで撮影
@@ -893,9 +893,9 @@
                                         <button
                                             type="button"
                                             @click="photoFileInputFile?.click()"
-                                            class="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                            class="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-md border border-brand-border bg-brand-surface text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                                         >
-                                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-5 h-5 text-brand-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                             ファイルを選択
@@ -904,23 +904,23 @@
                                 </div>
                             </div>
                             <div class="mt-4">
-                                <label class="block text-xs font-medium text-gray-700 mb-1">
+                                <label class="block text-xs font-medium text-brand-text mb-1">
                                     備考
                                 </label>
                                 <textarea
                                     v-model="photoForm.remarks"
                                     rows="3"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     placeholder="写真に関する備考を入力"
                                 ></textarea>
                             </div>
                             <!-- プレビュー画像 -->
                             <div v-if="photoPreview" class="mt-4">
-                                <label class="block text-xs font-medium text-gray-700 mb-2">
+                                <label class="block text-xs font-medium text-brand-text mb-2">
                                     プレビュー
                                 </label>
                                 <div
-                                    class="relative inline-block w-32 h-32 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 cursor-pointer group hover:border-indigo-500 transition-colors"
+                                    class="relative inline-block w-32 h-32 rounded-lg overflow-hidden border border-brand-border bg-brand-surface-2 cursor-pointer group hover:border-indigo-500 transition-colors"
                                     @click="openUnsavedPhotoPreview"
                                 >
                                     <img
@@ -937,7 +937,7 @@
                                 <button
                                     type="submit"
                                     :disabled="photoForm.processing || !photoForm.photo"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <span v-if="photoForm.processing">アップロード中...</span>
                                     <span v-else>写真を追加</span>
@@ -948,7 +948,7 @@
                         <!-- 写真一覧 -->
                         <div v-if="customer.photos && customer.photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             <div v-for="photo in customer.photos" :key="photo.id" class="relative group cursor-pointer" @click="openPhotoPreview(photo)">
-                                <div class="aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-indigo-500 transition-colors relative">
+                                <div class="aspect-square rounded-lg overflow-hidden border border-brand-border bg-brand-surface-2 hover:border-indigo-500 transition-colors relative">
                                     <img
                                         :src="getPhotoUrl(photo)"
                                         :alt="photo.type?.name || '写真'"
@@ -958,7 +958,7 @@
                                         <button
                                             v-if="photo.storage_disk !== 's3'"
                                             type="button"
-                                            class="w-7 h-7 flex items-center justify-center rounded-full bg-indigo-500 text-white hover:bg-indigo-600 shadow-md"
+                                            class="w-7 h-7 flex items-center justify-center rounded-full bg-brand-primary text-white hover:bg-brand-primary shadow-md"
                                             title="S3 に移行"
                                             :disabled="migratingPhotoId === photo.id"
                                             @click.stop="migratePhotoToS3(photo)"
@@ -981,12 +981,12 @@
                                     </div>
                                 </div>
                                 <div class="mt-2 text-sm">
-                                    <div class="font-medium text-gray-900">{{ photo.type?.name || '-' }}</div>
-                                    <div v-if="photo.remarks" class="text-gray-600 text-xs mt-1 line-clamp-2">{{ photo.remarks }}</div>
+                                    <div class="font-medium text-brand-text">{{ photo.type?.name || '-' }}</div>
+                                    <div v-if="photo.remarks" class="text-brand-text-muted text-xs mt-1 line-clamp-2">{{ photo.remarks }}</div>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             写真がありません
                         </div>
                     </div>
@@ -996,19 +996,19 @@
                     <!-- 右: LINE 連携・メッセージ・メモ -->
                     <div class="lg:col-span-3 space-y-4 min-w-0">
                         <CustomerLineSection :customer="customer" :shops="shops" />
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-4">メモ</h3>
+                                <h3 class="text-lg font-semibold text-brand-text mb-4">メモ</h3>
 
                                 <!-- メモ登録フォーム -->
                                 <form @submit.prevent="submitNote" class="mb-6">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">新しいメモ</label>
+                                        <label class="block text-sm font-medium text-brand-text mb-1">新しいメモ</label>
                                         <textarea
                                             v-model="noteForm.content"
                                             rows="4"
                                             required
-                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                             placeholder="メモを入力してください"
                                         ></textarea>
                                         <div v-if="noteForm.errors.content" class="mt-1 text-sm text-red-600">
@@ -1018,7 +1018,7 @@
                                     <button
                                         type="submit"
                                         :disabled="noteForm.processing"
-                                        class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="mt-2 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ noteForm.processing ? "登録中..." : "メモを追加" }}
                                     </button>
@@ -1029,14 +1029,14 @@
                                     <div
                                         v-for="note in notes"
                                         :key="note.id"
-                                        class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
+                                        class="border-b border-brand-border pb-4 last:border-b-0 last:pb-0"
                                     >
                                         <div class="flex justify-between items-start mb-2">
                                             <div>
-                                                <p class="text-sm font-medium text-gray-900">
+                                                <p class="text-sm font-medium text-brand-text">
                                                     {{ note.user ? note.user.name : "不明" }}
                                                 </p>
-                                                <p class="text-xs text-gray-500">
+                                                <p class="text-xs text-brand-text-muted">
                                                     {{ formatDateTime(note.created_at) }}
                                                 </p>
                                             </div>
@@ -1048,11 +1048,11 @@
                                                 削除
                                             </button>
                                         </div>
-                                        <p class="text-sm text-gray-700 whitespace-pre-wrap">
+                                        <p class="text-sm text-brand-text whitespace-pre-wrap">
                                             {{ note.content }}
                                         </p>
                                     </div>
-                                    <p v-if="notes.length === 0" class="text-sm text-gray-500 text-center py-4">
+                                    <p v-if="notes.length === 0" class="text-sm text-brand-text-muted text-center py-4">
                                         メモがありません
                                     </p>
                                 </div>
@@ -1071,19 +1071,19 @@
                 @click.self="showEditCustomerModal = false"
             >
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                    class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                            <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             顧客情報編集
                         </h3>
                         <button
                             @click="showEditCustomerModal = false"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1096,73 +1096,73 @@
                         <div class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="md:col-span-2">
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <p class="text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-brand-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                         基本情報
                                     </p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         顧客名 <span class="text-red-500">*</span>
                                     </label>
                                     <input
                                         v-model="customerForm.name"
                                         type="text"
                                         required
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         ふりがな
                                     </label>
                                     <input
                                         v-model="customerForm.kana"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         保護者名
                                     </label>
                                     <input
                                         v-model="customerForm.guardian_name"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         生年月日
                                     </label>
                                     <input
                                         v-model="customerForm.birth_date"
                                         type="date"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         成人年度
                                     </label>
                                     <input
                                         v-model.number="customerForm.coming_of_age_year"
                                         type="number"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         成人式エリア
                                     </label>
                                     <div class="flex gap-2 items-end">
                                         <div class="flex-1 min-w-0">
                                             <select
                                                 v-model="editFormCeremonyPrefecture"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 @change="customerForm.ceremony_area_id = null"
                                             >
                                                 <option :value="null">選択してください</option>
@@ -1174,7 +1174,7 @@
                                         <div class="flex-1 min-w-0">
                                             <select
                                                 v-model="customerForm.ceremony_area_id"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 :disabled="!editFormCeremonyPrefecture"
                                             >
                                                 <option :value="null">選択してください</option>
@@ -1185,16 +1185,16 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="md:col-span-2 border-t border-brand-border pt-4 mt-2">
+                                    <p class="text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-brand-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                                         </svg>
                                         成人式情報
                                     </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                 仕度会場（推奨）
                                             </label>
                                             <input
@@ -1202,7 +1202,7 @@
                                                 type="text"
                                                 list="seijin-preparation-venue-datalist-customer-show"
                                                 autocomplete="off"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                             <datalist id="seijin-preparation-venue-datalist-customer-show">
                                                 <option
@@ -1212,23 +1212,23 @@
                                                 />
                                             </datalist>
                                         </div>
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                 時間（推奨）
                                             </label>
                                             <input
                                                 v-model="customerForm.seijin_preparation_time"
                                                 type="text"
                                                 placeholder="例) 10:00"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                            <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                            <label class="flex items-center gap-2 text-sm font-medium text-brand-text cursor-pointer">
                                                 <input
                                                     v-model="customerForm.other_store_preparation"
                                                     type="checkbox"
-                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                                 />
                                                 他店お支度
                                             </label>
@@ -1237,8 +1237,8 @@
                                             class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity"
                                             :class="{ 'opacity-50': !customerForm.other_store_preparation }"
                                         >
-                                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                            <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                                <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                     美容室名（推奨）
                                                 </label>
                                                 <input
@@ -1247,7 +1247,7 @@
                                                     list="other-store-salon-name-datalist-customer-show"
                                                     autocomplete="off"
                                                     :disabled="!customerForm.other_store_preparation"
-                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                                                 />
                                                 <datalist id="other-store-salon-name-datalist-customer-show">
                                                     <option
@@ -1257,97 +1257,97 @@
                                                     />
                                                 </datalist>
                                             </div>
-                                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                            <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                                <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                     着物発送日
                                                 </label>
                                                 <input
                                                     v-model="customerForm.kimono_ship_date"
                                                     type="date"
                                                     :disabled="!customerForm.other_store_preparation"
-                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                                                 />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="md:col-span-2 border-t border-brand-border pt-4 mt-2">
+                                    <p class="text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-brand-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                         </svg>
                                         連絡先情報
                                     </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                 電話番号
                                             </label>
                                             <input
                                                 v-model="customerForm.phone_number"
                                                 type="tel"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                 メールアドレス
                                             </label>
                                             <input
                                                 v-model="customerForm.email"
                                                 type="email"
                                                 autocomplete="email"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                 郵便番号
                                             </label>
                                             <input
                                                 v-model="customerForm.postal_code"
                                                 type="text"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
-                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                                 住所
                                             </label>
                                             <input
                                                 v-model="customerForm.address"
                                                 type="text"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         備考
                                     </label>
                                     <textarea
                                         v-model="customerForm.remarks"
                                         rows="4"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     ></textarea>
                                 </div>
                             </div>
                         </div>
 
                         <!-- フッター -->
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
                             <button
                                 type="button"
                                 @click="showEditCustomerModal = false"
-                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                             >
                                 キャンセル
                             </button>
                             <button
                                 type="submit"
                                 :disabled="customerForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span v-if="customerForm.processing">保存中...</span>
                                 <span v-else>保存</span>
@@ -1366,19 +1366,19 @@
                 @click.self="showAddContractModal = false"
             >
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                    class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                            <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             成約情報追加
                         </h3>
                         <button
                             @click="showAddContractModal = false"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1390,15 +1390,15 @@
                     <form @submit.prevent="storeContract" class="overflow-y-auto flex-1 px-6 py-5">
                         <div class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         店舗 <span class="text-red-500">*</span>
                                     </label>
                                     <select
                                         v-model="contractForm.shop_id"
                                         required
                                         @change="onShopChange"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option value="">選択してください</option>
                                         <option v-for="shop in shops" :key="shop.id" :value="shop.id">
@@ -1406,13 +1406,13 @@
                                         </option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         担当スタッフ
                                     </label>
                                     <select
                                         v-model="contractForm.user_id"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option :value="null">選択してください</option>
                                         <option v-for="user in shopUsers" :key="user.id" :value="user.id">
@@ -1420,64 +1420,64 @@
                                         </option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         成約日 <span class="text-red-500">*</span>
                                     </label>
                                     <input
                                         v-model="contractForm.contract_date"
                                         type="date"
                                         required
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         着物種別 <span class="text-red-500">*</span>
                                     </label>
                                     <select
                                         v-model="contractForm.kimono_type"
                                         required
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option value="">選択してください</option>
                                         <option value="振袖">振袖</option>
                                         <option value="袴">袴</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         ステータス <span class="text-red-500">*</span>
                                     </label>
                                     <select
                                         v-model="contractForm.status"
                                         required
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option value="保留">保留</option>
                                         <option value="確定">確定</option>
                                         <option value="キャンセル">キャンセル</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         成約金額（税込）
                                     </label>
                                     <input
                                         v-model.number="contractForm.total_amount"
                                         type="number"
                                         min="0"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         プラン <span class="text-red-500">*</span>
                                     </label>
                                     <select
                                         v-model="contractForm.plan_id"
                                         required
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option value="">選択してください</option>
                                         <option v-for="plan in plans" :key="plan.id" :value="plan.id">
@@ -1485,62 +1485,62 @@
                                         </option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         お仕度会場
                                     </label>
                                     <input
                                         v-model="contractForm.preparation_venue"
                                         type="text"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         お仕度日程
                                     </label>
                                     <input
                                         v-model="contractForm.preparation_date"
                                         type="date"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                                     <label class="flex items-center cursor-pointer">
                                         <input
                                             v-model="contractForm.warranty_flag"
                                             type="checkbox"
-                                            class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            class="w-4 h-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                         />
-                                        <span class="ml-2 text-sm text-gray-700">安心保証</span>
+                                        <span class="ml-2 text-sm text-brand-text">安心保証</span>
                                     </label>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         備考
                                     </label>
                                     <textarea
                                         v-model="contractForm.remarks"
                                         rows="4"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     ></textarea>
                                 </div>
                             </div>
                         </div>
 
                         <!-- フッター -->
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
                             <button
                                 type="button"
                                 @click="showAddContractModal = false"
-                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                             >
                                 キャンセル
                             </button>
                             <button
                                 type="submit"
                                 :disabled="contractForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span v-if="contractForm.processing">追加中...</span>
                                 <span v-else>追加</span>
@@ -1559,13 +1559,13 @@
                 @click.self="showEditContractModal = false"
             >
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                    class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900">成約情報編集</h3>
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text">成約情報編集</h3>
                         <button
                             @click="showEditContractModal = false"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1578,72 +1578,72 @@
                         </div>
                         <div class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">店舗 <span class="text-red-500">*</span></label>
-                                    <select v-model="editContractForm.shop_id" required @change="onEditContractShopChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">店舗 <span class="text-red-500">*</span></label>
+                                    <select v-model="editContractForm.shop_id" required @change="onEditContractShopChange" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                         <option value="">選択してください</option>
                                         <option v-for="shop in shops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">担当スタッフ</label>
-                                    <select v-model="editContractForm.user_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">担当スタッフ</label>
+                                    <select v-model="editContractForm.user_id" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                         <option :value="null">選択してください</option>
                                         <option v-for="user in shopUsers" :key="user.id" :value="user.id">{{ user.name }}</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">成約日 <span class="text-red-500">*</span></label>
-                                    <input v-model="editContractForm.contract_date" type="date" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">成約日 <span class="text-red-500">*</span></label>
+                                    <input v-model="editContractForm.contract_date" type="date" required class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">着物種別 <span class="text-red-500">*</span></label>
-                                    <select v-model="editContractForm.kimono_type" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">着物種別 <span class="text-red-500">*</span></label>
+                                    <select v-model="editContractForm.kimono_type" required class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                         <option value="">選択してください</option>
                                         <option value="振袖">振袖</option>
                                         <option value="袴">袴</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">ステータス <span class="text-red-500">*</span></label>
-                                    <select v-model="editContractForm.status" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">ステータス <span class="text-red-500">*</span></label>
+                                    <select v-model="editContractForm.status" required class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                         <option value="保留">保留</option>
                                         <option value="確定">確定</option>
                                         <option value="キャンセル">キャンセル</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">成約金額（税込）</label>
-                                    <input v-model.number="editContractForm.total_amount" type="number" min="0" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">成約金額（税込）</label>
+                                    <input v-model.number="editContractForm.total_amount" type="number" min="0" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">プラン <span class="text-red-500">*</span></label>
-                                    <select v-model="editContractForm.plan_id" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">プラン <span class="text-red-500">*</span></label>
+                                    <select v-model="editContractForm.plan_id" required class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                         <option value="">選択してください</option>
                                         <option v-for="plan in plans" :key="plan.id" :value="plan.id">{{ plan.name }}</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">お仕度会場</label>
-                                    <input v-model="editContractForm.preparation_venue" type="text" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">お仕度会場</label>
+                                    <input v-model="editContractForm.preparation_venue" type="text" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">お仕度日程</label>
-                                    <input v-model="editContractForm.preparation_date" type="date" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">お仕度日程</label>
+                                    <input v-model="editContractForm.preparation_date" type="date" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                                     <label class="flex items-center cursor-pointer">
-                                        <input v-model="editContractForm.warranty_flag" type="checkbox" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                                        <span class="ml-2 text-sm text-gray-700">安心保証</span>
+                                        <input v-model="editContractForm.warranty_flag" type="checkbox" class="w-4 h-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary" />
+                                        <span class="ml-2 text-sm text-brand-text">安心保証</span>
                                     </label>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">備考</label>
-                                    <textarea v-model="editContractForm.remarks" rows="4" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"></textarea>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">備考</label>
+                                    <textarea v-model="editContractForm.remarks" rows="4" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"></textarea>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-between items-center space-x-3 mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center space-x-3 mt-6 pt-4 border-t border-brand-border">
                             <div class="flex items-center">
                                 <button
                                     type="button"
@@ -1657,8 +1657,8 @@
                                 </button>
                             </div>
                             <div class="flex space-x-3">
-                                <button type="button" @click="showEditContractModal = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">キャンセル</button>
-                                <button type="submit" :disabled="editContractForm.processing" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <button type="button" @click="showEditContractModal = false" class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2">キャンセル</button>
+                                <button type="submit" :disabled="editContractForm.processing" class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed">
                                     <span v-if="editContractForm.processing">更新中...</span>
                                     <span v-else>更新</span>
                                 </button>
@@ -1676,12 +1676,12 @@
                 class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
                 @click.self="closeConstraintModal"
             >
-                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900">{{ editingConstraint ? '制約情報編集' : '制約追加 - 準備' }}</h3>
+                <div class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text">{{ editingConstraint ? '制約情報編集' : '制約追加 - 準備' }}</h3>
                         <button
                             @click="closeConstraintModal"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1691,18 +1691,18 @@
                     <div class="overflow-y-auto flex-1 px-6 py-5">
                         <div class="space-y-6">
                             <!-- テンプレート選択（追加時のみ） -->
-                            <div v-if="!editingConstraint" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">制約テンプレート <span class="text-red-500">*</span></label>
-                                <select v-model="constraintForm.constraint_template_id" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            <div v-if="!editingConstraint" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                <label class="block text-sm font-medium text-brand-text mb-2">制約テンプレート <span class="text-red-500">*</span></label>
+                                <select v-model="constraintForm.constraint_template_id" required class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                     <option value="">選択してください</option>
                                     <option v-for="t in constraintTemplatesList" :key="t.id" :value="t.id">{{ t.name }}</option>
                                 </select>
                             </div>
 
                             <!-- 制約本文（マークダウン＋チェックボックス） -->
-                            <div v-if="selectedConstraintTemplate" class="border border-gray-200 rounded-lg p-4 max-h-80 overflow-y-auto">
-                                <h4 class="text-sm font-semibold text-gray-700 mb-3">{{ selectedConstraintTemplate.name }}</h4>
-                                <div class="constraint-body prose prose-sm max-w-none text-gray-800">
+                            <div v-if="selectedConstraintTemplate" class="border border-brand-border rounded-lg p-4 max-h-80 overflow-y-auto">
+                                <h4 class="text-sm font-semibold text-brand-text mb-3">{{ selectedConstraintTemplate.name }}</h4>
+                                <div class="constraint-body prose prose-sm max-w-none text-brand-text">
                                     <ConstraintBodyWithChecks
                                         :body="selectedConstraintTemplate.body"
                                         :check-values="constraintForm.check_values"
@@ -1713,33 +1713,33 @@
 
                             <!-- 署名準備情報 -->
                             <div class="border-t pt-6 space-y-4">
-                                <h4 class="text-sm font-semibold text-gray-700">署名準備情報</h4>
+                                <h4 class="text-sm font-semibold text-brand-text">署名準備情報</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">日付</label>
+                                        <label class="block text-xs font-medium text-brand-text-muted mb-1">日付</label>
                                         <input
                                             v-model="constraintForm.signed_at"
                                             type="date"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                         />
                                     </div>
                                     <div class="space-y-3">
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者（店舗）</label>
+                                            <label class="block text-xs font-medium text-brand-text-muted mb-1">規約説明者（店舗）</label>
                                             <select
                                                 v-model="constraintExplainerShopId"
                                                 @change="onConstraintExplainerShopChange"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             >
                                                 <option value="">店舗を選択</option>
                                                 <option v-for="s in constraintModalShops" :key="s.id" :value="s.id">{{ s.name }}</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者（スタッフ）</label>
+                                            <label class="block text-xs font-medium text-brand-text-muted mb-1">規約説明者（スタッフ）</label>
                                             <select
                                                 v-model="constraintForm.explainer_user_id"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 :disabled="!constraintExplainerShopId"
                                             >
                                                 <option :value="null">{{ constraintExplainerShopId ? 'スタッフを選択' : 'まず店舗を選択してください' }}</option>
@@ -1748,32 +1748,32 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p v-if="constraintAttachmentFile" class="text-xs text-gray-500">
+                                <p v-if="constraintAttachmentFile" class="text-xs text-brand-text-muted">
                                     ※ファイルを選択した場合は「アップロード」で書面を登録します（署名用ページには進みません）。
                                 </p>
-                                <p v-else class="text-xs text-gray-500">
+                                <p v-else class="text-xs text-brand-text-muted">
                                     ※「準備完了」をクリックすると、署名用ページに移動します。署名はそちらで行います。
                                 </p>
                             </div>
 
                             <!-- 添付ファイル（任意・署名準備情報の下） -->
                             <div class="border-t pt-6 space-y-3">
-                                <h4 class="text-sm font-semibold text-gray-700">添付ファイル（任意）</h4>
-                                <p class="text-xs text-gray-500">
+                                <h4 class="text-sm font-semibold text-brand-text">添付ファイル（任意）</h4>
+                                <p class="text-xs text-brand-text-muted">
                                     署名済み書面のスキャン（画像・PDF）をあらかじめお持ちの場合はここで登録できます。
                                 </p>
                                 <input
                                     ref="constraintAttachmentInputRef"
                                     type="file"
                                     accept="image/*,.pdf,application/pdf"
-                                    class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                    class="block w-full text-sm text-brand-text-muted file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                     @change="onConstraintAttachmentChange"
                                 />
-                                <p v-if="constraintAttachmentFile" class="text-xs text-gray-600">
+                                <p v-if="constraintAttachmentFile" class="text-xs text-brand-text-muted">
                                     選択中: {{ constraintAttachmentFile.name }}
                                     <button
                                         type="button"
-                                        class="ml-2 text-indigo-600 hover:underline"
+                                        class="ml-2 text-brand-primary hover:underline"
                                         @click="clearConstraintAttachmentFile"
                                     >
                                         クリア
@@ -1781,15 +1781,15 @@
                                 </p>
                             </div>
                         </div>
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                            <button type="button" @click="closeConstraintModal" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
+                            <button type="button" @click="closeConstraintModal" class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2">
                                 キャンセル
                             </button>
                             <button
                                 type="button"
                                 @click="constraintPrimaryAction"
                                 :disabled="!selectedConstraintTemplate"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {{ constraintPrimaryButtonLabel }}
                             </button>
@@ -1806,13 +1806,13 @@
                 class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
                 @click.self="closeConstraintFileEditModal"
             >
-                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900">制約添付の確認・編集</h3>
+                <div class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text">制約添付の確認・編集</h3>
                         <button
                             type="button"
                             @click="closeConstraintFileEditModal"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1820,17 +1820,17 @@
                         </button>
                     </div>
                     <div v-if="constraintFileEditTarget" class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
-                        <p class="text-sm text-gray-700">
+                        <p class="text-sm text-brand-text">
                             <span class="font-medium">{{ (constraintFileEditTarget.constraint_template || constraintFileEditTarget.constraintTemplate)?.name || '制約' }}</span>
                         </p>
-                        <div v-if="constraintFileEditTarget.attachment_url" class="rounded-lg border border-gray-200 p-4 bg-gray-50">
-                            <p class="text-xs font-medium text-gray-500 mb-2">現在の添付</p>
+                        <div v-if="constraintFileEditTarget.attachment_url" class="rounded-lg border border-brand-border p-4 bg-brand-surface-2">
+                            <p class="text-xs font-medium text-brand-text-muted mb-2">現在の添付</p>
                             <a
                                 v-if="isConstraintAttachmentPdf(constraintFileEditTarget)"
                                 :href="constraintFileEditTarget.attachment_url"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="text-sm text-indigo-600 hover:underline"
+                                class="text-sm text-brand-primary hover:underline"
                             >
                                 {{ constraintFileEditTarget.attachment_original_name || 'PDFを開く' }}
                             </a>
@@ -1844,36 +1844,36 @@
                                 <img
                                     :src="constraintFileEditTarget.attachment_url"
                                     alt="添付"
-                                    class="max-h-40 max-w-full object-contain rounded border bg-white"
+                                    class="max-h-40 max-w-full object-contain rounded border bg-brand-surface"
                                 />
                             </a>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">署名日</label>
+                                <label class="block text-xs font-medium text-brand-text-muted mb-1">署名日</label>
                                 <input
                                     v-model="constraintFileEditForm.signed_at"
                                     type="date"
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                 />
                             </div>
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者（店舗）</label>
+                                    <label class="block text-xs font-medium text-brand-text-muted mb-1">規約説明者（店舗）</label>
                                     <select
                                         v-model="constraintFileEditShopId"
                                         @change="onConstraintFileEditShopChange"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option value="">店舗を選択</option>
                                         <option v-for="s in constraintFileEditModalShops" :key="s.id" :value="s.id">{{ s.name }}</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">規約説明者（スタッフ）</label>
+                                    <label class="block text-xs font-medium text-brand-text-muted mb-1">規約説明者（スタッフ）</label>
                                     <select
                                         v-model="constraintFileEditForm.explainer_user_id"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                         :disabled="!constraintFileEditShopId"
                                     >
                                         <option :value="null">{{ constraintFileEditShopId ? 'スタッフを選択' : 'まず店舗を選択' }}</option>
@@ -1883,17 +1883,17 @@
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">添付ファイルを差し替え（任意）</label>
+                            <label class="block text-xs font-medium text-brand-text-muted mb-1">添付ファイルを差し替え（任意）</label>
                             <input
                                 ref="constraintFileEditAttachmentInputRef"
                                 type="file"
                                 accept="image/*,.pdf,application/pdf"
-                                class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700"
+                                class="block w-full text-sm text-brand-text-muted file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700"
                                 @change="onConstraintFileEditAttachmentChange"
                             />
-                            <p v-if="constraintFileEditNewFile" class="text-xs text-gray-600 mt-1">新規: {{ constraintFileEditNewFile.name }}</p>
+                            <p v-if="constraintFileEditNewFile" class="text-xs text-brand-text-muted mt-1">新規: {{ constraintFileEditNewFile.name }}</p>
                         </div>
-                        <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                        <div class="flex flex-wrap gap-2 pt-2 border-t border-brand-border">
                             <button
                                 type="button"
                                 @click="goToConstraintSignFromFileEdit"
@@ -1903,11 +1903,11 @@
                             </button>
                         </div>
                     </div>
-                    <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex justify-end gap-3 px-6 py-4 border-t border-brand-border bg-brand-surface-2">
                         <button
                             type="button"
                             @click="closeConstraintFileEditModal"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-white"
+                            class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface"
                         >
                             キャンセル
                         </button>
@@ -1915,7 +1915,7 @@
                             type="button"
                             @click="submitConstraintFileEdit"
                             :disabled="constraintFileEditSubmitting"
-                            class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                            class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50"
                         >
                             {{ constraintFileEditSubmitting ? '更新中…' : '更新' }}
                         </button>
@@ -1932,19 +1932,19 @@
                 @click.self="showAddPhotoSlotModal = false"
             >
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                    class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                            <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             前撮り情報追加
                         </h3>
                         <button
                             @click="showAddPhotoSlotModal = false"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1960,21 +1960,21 @@
                                     <input
                                         v-model="photoSlotForm.details_undecided"
                                         type="checkbox"
-                                        class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        class="w-4 h-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                     />
-                                    <span class="ml-2 text-sm font-medium text-gray-700">詳細未決定（担当店舗のみで仮登録）</span>
+                                    <span class="ml-2 text-sm font-medium text-brand-text">詳細未決定（担当店舗のみで仮登録）</span>
                                 </label>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         担当店舗 <span v-if="photoSlotForm.details_undecided" class="text-red-500">*</span>
                                     </label>
                                     <select
                                         v-model="photoSlotForm.shop_id"
                                         @change="onPhotoSlotShopChange"
                                         :required="photoSlotForm.details_undecided"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option value="">選択してください</option>
                                         <option v-for="shop in shops" :key="shop.id" :value="shop.id">
@@ -1983,8 +1983,8 @@
                                     </select>
                                     <div v-if="photoSlotForm.errors.shop_id" class="mt-1 text-sm text-red-600">{{ photoSlotForm.errors.shop_id }}</div>
                                 </div>
-                                <div v-if="!photoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div v-if="!photoSlotForm.details_undecided" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         会場 <span class="text-red-500">*</span>
                                     </label>
                                     <select
@@ -1992,7 +1992,7 @@
                                         required
                                         :disabled="!photoSlotForm.shop_id"
                                         @change="onStudioChange"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                                     >
                                         <option value="">選択してください</option>
                                         <option 
@@ -2003,11 +2003,11 @@
                                             {{ studio.name }}
                                         </option>
                                     </select>
-                                    <p v-if="!photoSlotForm.shop_id" class="mt-1 text-xs text-gray-500">まず担当店舗を選択してください</p>
+                                    <p v-if="!photoSlotForm.shop_id" class="mt-1 text-xs text-brand-text-muted">まず担当店舗を選択してください</p>
                                     <div v-if="photoSlotForm.errors.selected_studio_id" class="mt-1 text-sm text-red-600">{{ photoSlotForm.errors.selected_studio_id }}</div>
                                 </div>
-                                <div v-if="!photoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div v-if="!photoSlotForm.details_undecided" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         撮影日 <span class="text-red-500">*</span>
                                     </label>
                                     <select
@@ -2015,7 +2015,7 @@
                                         required
                                         :disabled="!photoSlotForm.selected_studio_id"
                                         @change="onDateChange"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                                     >
                                         <option value="">選択してください</option>
                                         <option 
@@ -2026,10 +2026,10 @@
                                             {{ formatDateJa(date) }}
                                         </option>
                                     </select>
-                                    <p v-if="!photoSlotForm.selected_studio_id" class="mt-1 text-xs text-gray-500">まず担当店舗と会場を選択してください</p>
+                                    <p v-if="!photoSlotForm.selected_studio_id" class="mt-1 text-xs text-brand-text-muted">まず担当店舗と会場を選択してください</p>
                                 </div>
-                                <div v-if="!photoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div v-if="!photoSlotForm.details_undecided" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         撮影時間 <span class="text-red-500">*</span>
                                     </label>
                                     <select
@@ -2037,7 +2037,7 @@
                                         required
                                         :disabled="!photoSlotForm.selected_date"
                                         @change="onPhotoSlotChange"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                                     >
                                         <option value="">選択してください</option>
                                         <option 
@@ -2049,16 +2049,16 @@
                                             <span v-if="slot.plan"> - {{ slot.plan.name }}</span>
                                         </option>
                                     </select>
-                                    <p v-if="!photoSlotForm.selected_date" class="mt-1 text-xs text-gray-500">まず担当店舗、会場、撮影日を選択してください</p>
+                                    <p v-if="!photoSlotForm.selected_date" class="mt-1 text-xs text-brand-text-muted">まず担当店舗、会場、撮影日を選択してください</p>
                                     <div v-if="photoSlotForm.errors.photo_slot_id" class="mt-1 text-sm text-red-600">{{ photoSlotForm.errors.photo_slot_id }}</div>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         担当者用メモラベル
                                     </label>
                                     <select
                                         v-model="photoSlotForm.assignment_label"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option :value="null">選択してください</option>
                                         <option value="動員">動員</option>
@@ -2068,29 +2068,29 @@
                                         <option value="EXPO / F">EXPO / F</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         担当者
                                     </label>
                                     <select
                                         v-model="photoSlotForm.user_id"
                                         :disabled="!photoSlotForm.shop_id"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                                     >
                                         <option :value="null">選択してください</option>
                                         <option v-for="user in photoSlotShopUsers" :key="user.id" :value="user.id">
                                             {{ user.name }}
                                         </option>
                                     </select>
-                                    <p v-if="!photoSlotForm.shop_id" class="mt-1 text-xs text-gray-500">まず担当店舗を選択してください</p>
+                                    <p v-if="!photoSlotForm.shop_id" class="mt-1 text-xs text-brand-text-muted">まず担当店舗を選択してください</p>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         プラン
                                     </label>
                                     <select
                                         v-model="photoSlotForm.plan_id"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     >
                                         <option :value="null">選択してください</option>
                                         <option v-for="plan in plans" :key="plan.id" :value="plan.id">
@@ -2098,14 +2098,14 @@
                                         </option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
                                         備考
                                     </label>
                                     <textarea
                                         v-model="photoSlotForm.remarks"
                                         rows="4"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                        class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     ></textarea>
                                 </div>
                             </div>
@@ -2122,18 +2122,18 @@
                         </div>
 
                         <!-- フッター -->
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
                             <button
                                 type="button"
                                 @click="showAddPhotoSlotModal = false"
-                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                             >
                                 キャンセル
                             </button>
                             <button
                                 type="submit"
                                 :disabled="photoSlotForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span v-if="photoSlotForm.processing">追加中...</span>
                                 <span v-else>追加</span>
@@ -2152,13 +2152,13 @@
                 @click.self="showEditPhotoSlotModal = false"
             >
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                    class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900">前撮り情報編集</h3>
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text">前撮り情報編集</h3>
                         <button
                             @click="showEditPhotoSlotModal = false"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -2173,43 +2173,43 @@
                                         v-model="editPhotoSlotForm.details_undecided"
                                         type="checkbox"
                                         @change="onEditPhotoSlotDetailsUndecidedChange"
-                                        class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        class="w-4 h-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                     />
-                                    <span class="ml-2 text-sm font-medium text-gray-700">詳細未決定（担当店舗のみで仮登録）</span>
+                                    <span class="ml-2 text-sm font-medium text-brand-text">詳細未決定（担当店舗のみで仮登録）</span>
                                 </label>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">担当店舗 <span class="text-red-500">*</span></label>
-                                    <select v-model="editPhotoSlotForm.shop_id" required @change="onEditPhotoSlotShopChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">担当店舗 <span class="text-red-500">*</span></label>
+                                    <select v-model="editPhotoSlotForm.shop_id" required @change="onEditPhotoSlotShopChange" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                         <option value="">選択してください</option>
                                         <option v-for="shop in shops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
                                     </select>
                                 </div>
-                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">会場 <span class="text-red-500">*</span></label>
-                                    <select v-model="editPhotoSlotForm.selected_studio_id" required :disabled="!editPhotoSlotForm.shop_id" @change="onEditPhotoSlotStudioChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">会場 <span class="text-red-500">*</span></label>
+                                    <select v-model="editPhotoSlotForm.selected_studio_id" required :disabled="!editPhotoSlotForm.shop_id" @change="onEditPhotoSlotStudioChange" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed">
                                         <option value="">選択してください</option>
                                         <option v-for="studio in editAvailableStudios" :key="studio.id" :value="studio.id">{{ studio.name }}</option>
                                     </select>
                                 </div>
-                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">撮影日 <span class="text-red-500">*</span></label>
-                                    <select v-model="editPhotoSlotForm.selected_date" required :disabled="!editPhotoSlotForm.selected_studio_id" @change="onEditPhotoSlotDateChange" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">撮影日 <span class="text-red-500">*</span></label>
+                                    <select v-model="editPhotoSlotForm.selected_date" required :disabled="!editPhotoSlotForm.selected_studio_id" @change="onEditPhotoSlotDateChange" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed">
                                         <option value="">選択してください</option>
                                         <option v-for="date in editAvailableDates" :key="date" :value="date">{{ formatDateJa(date) }}</option>
                                     </select>
                                 </div>
-                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">撮影時間 <span class="text-red-500">*</span></label>
-                                    <select v-model="editPhotoSlotForm.photo_slot_id" required :disabled="!editPhotoSlotForm.selected_date" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                <div v-if="!editPhotoSlotForm.details_undecided" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">撮影時間 <span class="text-red-500">*</span></label>
+                                    <select v-model="editPhotoSlotForm.photo_slot_id" required :disabled="!editPhotoSlotForm.selected_date" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed">
                                         <option value="">選択してください</option>
                                         <option v-for="slot in editAvailableTimeSlots" :key="slot.id" :value="slot.id">{{ formatTime(slot.shoot_time) }}<span v-if="slot.plan"> - {{ slot.plan.name }}</span></option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">担当者用メモラベル</label>
-                                    <select v-model="editPhotoSlotForm.assignment_label" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">担当者用メモラベル</label>
+                                    <select v-model="editPhotoSlotForm.assignment_label" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                         <option :value="null">選択してください</option>
                                         <option value="動員">動員</option>
                                         <option value="岡山店 / F">岡山店 / F</option>
@@ -2218,29 +2218,29 @@
                                         <option value="EXPO / F">EXPO / F</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">担当者</label>
-                                    <select v-model="editPhotoSlotForm.user_id" :disabled="!editPhotoSlotForm.shop_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">担当者</label>
+                                    <select v-model="editPhotoSlotForm.user_id" :disabled="!editPhotoSlotForm.shop_id" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed">
                                         <option :value="null">選択してください</option>
                                         <option v-for="user in photoSlotShopUsers" :key="user.id" :value="user.id">{{ user.name }}</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">プラン</label>
-                                    <select v-model="editPhotoSlotForm.plan_id" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">プラン</label>
+                                    <select v-model="editPhotoSlotForm.plan_id" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                                         <option :value="null">選択してください</option>
                                         <option v-for="plan in plans" :key="plan.id" :value="plan.id">{{ plan.name }}</option>
                                     </select>
                                 </div>
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">備考</label>
-                                    <textarea v-model="editPhotoSlotForm.remarks" rows="4" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"></textarea>
+                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">備考</label>
+                                    <textarea v-model="editPhotoSlotForm.remarks" rows="4" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"></textarea>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                            <button type="button" @click="showEditPhotoSlotModal = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">キャンセル</button>
-                            <button type="submit" :disabled="editPhotoSlotForm.processing" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
+                            <button type="button" @click="showEditPhotoSlotModal = false" class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2">キャンセル</button>
+                            <button type="submit" :disabled="editPhotoSlotForm.processing" class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span v-if="editPhotoSlotForm.processing">更新中...</span>
                                 <span v-else>更新</span>
                             </button>
@@ -2257,15 +2257,15 @@
                 class="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto z-50 flex items-center justify-center p-4"
                 @click.self="closePhotoPreviewModal"
             >
-                <div class="relative bg-white rounded-xl shadow-2xl max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="relative bg-brand-surface rounded-xl shadow-2xl max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text">
                             {{ showingUnsavedPhotoPreview ? 'プレビュー（未保存）' : (selectedPhoto?.type?.name || '写真') }}
                         </h3>
                         <button
                             @click="closePhotoPreviewModal"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                             title="閉じる"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2283,9 +2283,9 @@
                                 class="max-w-full max-h-[70vh] mx-auto object-contain rounded-lg"
                             />
                         </div>
-                        <div v-if="selectedPhoto?.remarks" class="mt-4 p-4 bg-gray-50 rounded-lg">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-2">備考</h4>
-                            <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ selectedPhoto.remarks }}</p>
+                        <div v-if="selectedPhoto?.remarks" class="mt-4 p-4 bg-brand-surface-2 rounded-lg">
+                            <h4 class="text-sm font-semibold text-brand-text mb-2">備考</h4>
+                            <p class="text-sm text-brand-text whitespace-pre-wrap">{{ selectedPhoto.remarks }}</p>
                         </div>
                     </div>
                 </div>
@@ -2299,13 +2299,13 @@
                 class="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto z-50 flex items-center justify-center p-4"
                 @click.self="closePhotoMemoModal"
             >
-                <div class="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900">手書きメモを追加</h3>
+                <div class="relative bg-brand-surface rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text">手書きメモを追加</h3>
                         <button
                             type="button"
                             @click="closePhotoMemoModal"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -2316,7 +2316,7 @@
                         <!-- ペン設定 -->
                         <div class="flex flex-wrap items-center gap-4 mb-4 w-full max-w-2xl">
                             <div class="flex items-center gap-2">
-                                <span class="text-sm font-medium text-gray-700">色</span>
+                                <span class="text-sm font-medium text-brand-text">色</span>
                                 <div class="flex gap-1">
                                     <button
                                         v-for="c in photoMemoPenColors"
@@ -2324,17 +2324,17 @@
                                         type="button"
                                         :title="c.name"
                                         class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110"
-                                        :class="photoMemoPenColor === c.value ? 'border-gray-900 scale-110 ring-2 ring-offset-1 ring-gray-400' : 'border-gray-300'"
+                                        :class="photoMemoPenColor === c.value ? 'border-gray-900 scale-110 ring-2 ring-offset-1 ring-gray-400' : 'border-brand-border'"
                                         :style="{ backgroundColor: c.value }"
                                         @click="photoMemoPenColor = c.value; applyPhotoMemoBrushStyle()"
                                     />
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-sm font-medium text-gray-700">太さ</span>
+                                <span class="text-sm font-medium text-brand-text">太さ</span>
                                 <select
                                     v-model.number="photoMemoPenWidth"
-                                    class="rounded-md border-gray-300 text-sm"
+                                    class="rounded-md border-brand-border text-sm"
                                     @change="applyPhotoMemoBrushStyle()"
                                 >
                                     <option :value="2">細い</option>
@@ -2347,24 +2347,24 @@
                         <!-- キャンバスラッパー: 明示的なサイズでイベントが確実に届くようにする -->
                         <div
                             ref="photoMemoCanvasWrap"
-                            class="w-full bg-gray-100 rounded-lg overflow-hidden"
+                            class="w-full bg-brand-surface-2 rounded-lg overflow-hidden"
                             style="width: 100%; height: 60vh; min-height: 320px; max-height: 70vh;"
                         >
                             <canvas ref="photoMemoCanvas" />
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-brand-border bg-brand-surface-2">
                         <button
                             type="button"
                             @click="skipPhotoMemo"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+                            class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                         >
                             スキップ
                         </button>
                         <button
                             type="button"
                             @click="confirmPhotoMemo"
-                            class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                            class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover"
                         >
                             確定
                         </button>
@@ -2380,9 +2380,9 @@
                 class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
                 @click.self="showDeleteConfirmModal = false"
             >
-                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-red-50 to-pink-50">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <div class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-red-50 to-pink-50">
+                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
@@ -2390,7 +2390,7 @@
                         </h3>
                         <button
                             @click="showDeleteConfirmModal = false"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -2398,7 +2398,7 @@
                         </button>
                     </div>
                     <div class="p-6">
-                        <p class="text-gray-700 mb-4">
+                        <p class="text-brand-text mb-4">
                             「<span class="font-semibold">{{ customer.name }}</span>」を削除しますか？
                         </p>
                         <p class="text-sm text-red-600 mb-6">
@@ -2408,7 +2408,7 @@
                             <button
                                 type="button"
                                 @click="showDeleteConfirmModal = false"
-                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                             >
                                 キャンセル
                             </button>
@@ -2434,12 +2434,12 @@
                 @click.self="closeTagModal"
             >
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
+                    class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                            <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
                             {{ editingTag ? 'タグを編集' : 'タグを追加' }}
@@ -2447,7 +2447,7 @@
                         <button
                             type="button"
                             @click="closeTagModal"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -2460,13 +2460,13 @@
                         <div class="space-y-4">
                             <!-- 追加時: タグ選択 -->
                             <div v-if="!editingTag">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-brand-text mb-2">
                                     タグを選択 <span class="text-red-500">*</span>
                                 </label>
                                 <select
                                     v-model="tagForm.customer_tag_id"
                                     required
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                 >
                                     <option :value="null">選択してください</option>
                                     <option
@@ -2483,7 +2483,7 @@
                             </div>
                             <!-- 編集時: 対象タグを表示 -->
                             <div v-else class="flex items-center gap-2">
-                                <label class="text-sm font-medium text-gray-700 shrink-0">編集対象タグ</label>
+                                <label class="text-sm font-medium text-brand-text shrink-0">編集対象タグ</label>
                                 <span
                                     class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
                                     :style="{
@@ -2497,13 +2497,13 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-brand-text mb-2">
                                     備考（タグ付与理由など）
                                 </label>
                                 <textarea
                                     v-model="tagForm.note"
                                     rows="3"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     placeholder="タグを付与した理由や補足情報を入力"
                                 ></textarea>
                                 <div v-if="tagForm.errors.note" class="mt-1 text-sm text-red-600">
@@ -2513,18 +2513,18 @@
                         </div>
 
                         <!-- フッター -->
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
                             <button
                                 type="button"
                                 @click="closeTagModal"
-                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                             >
                                 キャンセル
                             </button>
                             <button
                                 type="submit"
                                 :disabled="tagForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span v-if="tagForm.processing">{{ editingTag ? '更新中...' : '追加中...' }}</span>
                                 <span v-else>{{ editingTag ? '更新' : '追加' }}</span>

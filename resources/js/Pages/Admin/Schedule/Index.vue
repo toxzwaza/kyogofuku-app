@@ -4,10 +4,10 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">スケジュール管理</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">スケジュール管理</h2>
                 <button
                     @click="showCreateModal = true"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                    class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover"
                 >
                     新規作成
                 </button>
@@ -16,16 +16,16 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <!-- フィルター -->
                         <div class="mb-6 flex items-center space-x-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">店舗</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">店舗</label>
                                 <select
                                     v-model="selectedShopId"
                                     @change="onShopChange"
-                                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                 >
                                     <option value="">すべての店舗</option>
                                     <option
@@ -38,11 +38,11 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">スタッフ</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">スタッフ</label>
                                 <select
                                     v-model="selectedUserId"
                                     @change="loadSchedules"
-                                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                 >
                                     <option value="">すべてのスタッフ</option>
                                     <option
@@ -72,13 +72,13 @@
             class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
             @click.self="closeDetailModal"
         >
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-brand-surface">
                 <div class="mt-3">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">スケジュール詳細</h3>
+                        <h3 class="text-lg font-semibold text-brand-text">スケジュール詳細</h3>
                         <button
                             @click="closeDetailModal"
-                            class="text-gray-400 hover:text-gray-600"
+                            class="text-brand-text-subtle hover:text-brand-text-muted"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -88,42 +88,42 @@
 
                     <div v-if="selectedSchedule" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">タイトル</label>
                             <input
                                 v-if="isEditing"
                                 v-model="editForm.title"
                                 type="text"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             />
-                            <p v-else class="text-sm text-gray-900">{{ selectedSchedule.title }}</p>
+                            <p v-else class="text-sm text-brand-text">{{ selectedSchedule.title }}</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">予定登録者</label>
-                            <p class="text-sm text-gray-900">{{ selectedSchedule.user?.name || '-' }}</p>
+                            <label class="block text-sm font-medium text-brand-text mb-1">予定登録者</label>
+                            <p class="text-sm text-brand-text">{{ selectedSchedule.user?.name || '-' }}</p>
                         </div>
 
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">開始日時</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">開始日時</label>
                             <input
                                 v-if="isEditing"
                                 v-model="editForm.start_at"
                                 type="datetime-local"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             />
-                            <p v-else class="text-sm text-gray-900">{{ formatDateTime(selectedSchedule.start) }}</p>
+                            <p v-else class="text-sm text-brand-text">{{ formatDateTime(selectedSchedule.start) }}</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">終了日時</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">終了日時</label>
                             <input
                                 v-if="isEditing"
                                 v-model="editForm.end_at"
                                 type="datetime-local"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             />
-                            <p v-else class="text-sm text-gray-900">{{ formatDateTime(selectedSchedule.end) }}</p>
+                            <p v-else class="text-sm text-brand-text">{{ formatDateTime(selectedSchedule.end) }}</p>
                         </div>
 
                         <div>
@@ -132,46 +132,46 @@
                                     v-if="isEditing"
                                     v-model="editForm.all_day"
                                     type="checkbox"
-                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                 />
-                                <span v-else class="text-sm text-gray-900">{{ selectedSchedule.allDay ? '終日' : '時間指定' }}</span>
-                                <span v-if="isEditing" class="ml-2 text-sm text-gray-700">終日</span>
+                                <span v-else class="text-sm text-brand-text">{{ selectedSchedule.allDay ? '終日' : '時間指定' }}</span>
+                                <span v-if="isEditing" class="ml-2 text-sm text-brand-text">終日</span>
                             </label>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">色</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">色</label>
                             <input
                                 v-if="isEditing"
                                 v-model="editForm.color"
                                 type="color"
-                                class="w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full h-10 rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             />
                             <div v-else class="flex items-center space-x-2">
                                 <div
                                     class="w-8 h-8 rounded"
                                     :style="{ backgroundColor: selectedSchedule.color }"
                                 ></div>
-                                <span class="text-sm text-gray-900">{{ selectedSchedule.color }}</span>
+                                <span class="text-sm text-brand-text">{{ selectedSchedule.color }}</span>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">登録者</label>
-                            <p class="text-sm text-gray-900">{{ selectedSchedule.user?.name || '-' }}</p>
+                            <label class="block text-sm font-medium text-brand-text mb-1">登録者</label>
+                            <p class="text-sm text-brand-text">{{ selectedSchedule.user?.name || '-' }}</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">担当者</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">担当者</label>
                             
                             <div v-if="isEditing">
                                 <!-- 店舗選択（担当者追加用） -->
                                 <div class="mb-3">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">店舗を選択して担当者を追加</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">店舗を選択して担当者を追加</label>
                                     <select
                                         v-model="selectedShopIdForParticipants"
                                         @change="loadShopUsers(selectedShopIdForParticipants)"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     >
                                         <option value="">店舗を選択してください</option>
                                         <option
@@ -186,7 +186,7 @@
 
                                 <!-- 参加者追加済み一覧 -->
                                 <div v-if="addedParticipants.length > 0" class="mb-3">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">担当者追加済み</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-2">担当者追加済み</label>
                                     <div class="flex flex-wrap gap-2">
                                         <span
                                             v-for="participant in addedParticipants"
@@ -206,23 +206,23 @@
                                 </div>
 
                                 <!-- 店舗ユーザー一覧（チェックボックス） -->
-                                <div v-if="shopUsers.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3">
+                                <div v-if="shopUsers.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-brand-border rounded-md p-3">
                                     <label
                                         v-for="user in shopUsers"
                                         :key="user.id"
-                                        class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                                        class="flex items-center space-x-2 cursor-pointer hover:bg-brand-surface-2 p-2 rounded"
                                     >
                                         <input
                                             type="checkbox"
                                             :value="user.id"
                                             :checked="isParticipantAdded(user.id)"
                                             @change="toggleParticipant(user.id, $event.target.checked)"
-                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
-                                        <span class="text-sm text-gray-900">{{ user.name }}</span>
+                                        <span class="text-sm text-brand-text">{{ user.name }}</span>
                                     </label>
                                 </div>
-                                <p v-else-if="!selectedShopIdForParticipants" class="text-sm text-gray-500">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
+                                <p v-else-if="!selectedShopIdForParticipants" class="text-sm text-brand-text-muted">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
                             </div>
                             <div v-else>
                                 <div v-if="selectedSchedule.participants && selectedSchedule.participants.length > 0" class="flex flex-wrap gap-2">
@@ -234,25 +234,25 @@
                                         {{ participant.name }}
                                     </span>
                                 </div>
-                                <p v-else class="text-sm text-gray-500">担当者なし</p>
+                                <p v-else class="text-sm text-brand-text-muted">担当者なし</p>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                             <textarea
                                 v-if="isEditing"
                                 v-model="editForm.description"
                                 rows="3"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             ></textarea>
-                            <p v-else class="text-sm text-gray-900 whitespace-pre-wrap">{{ selectedSchedule.description || '-' }}</p>
+                            <p v-else class="text-sm text-brand-text whitespace-pre-wrap">{{ selectedSchedule.description || '-' }}</p>
                         </div>
 
                         <div v-if="!isEditing" class="flex justify-end space-x-2 pt-4">
                             <button
                                 @click="startEdit"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover"
                             >
                                 編集
                             </button>
@@ -267,14 +267,14 @@
                         <div v-else class="flex justify-end space-x-2 pt-4">
                             <button
                                 @click="cancelEdit"
-                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                                class="px-4 py-2 bg-gray-300 text-brand-text rounded-md hover:bg-gray-400"
                             >
                                 キャンセル
                             </button>
                             <button
                                 @click="updateSchedule"
                                 :disabled="editForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                             >
                                 {{ editForm.processing ? '更新中...' : '更新' }}
                             </button>
@@ -290,13 +290,13 @@
             class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
             @click.self="showCreateModal = false"
         >
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-brand-surface">
                 <div class="mt-3">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">新規スケジュール作成</h3>
+                        <h3 class="text-lg font-semibold text-brand-text">新規スケジュール作成</h3>
                         <button
                             @click="showCreateModal = false"
-                            class="text-gray-400 hover:text-gray-600"
+                            class="text-brand-text-subtle hover:text-brand-text-muted"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -306,49 +306,49 @@
 
                     <form @submit.prevent="createSchedule" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">タイトル <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">タイトル <span class="text-red-500">*</span></label>
                             <input
                                 v-model="createForm.title"
                                 type="text"
                                 required
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             />
                             <div v-if="createForm.errors.title" class="mt-1 text-sm text-red-600">{{ createForm.errors.title }}</div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">予定登録者 <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">予定登録者 <span class="text-red-500">*</span></label>
                             <input
                                 v-model="currentUser.name"
                                 type="text"
                                 disabled
-                                class="w-full rounded-md border-gray-300 shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+                                class="w-full rounded-md border-brand-border shadow-sm bg-brand-surface-2 text-brand-text-muted cursor-not-allowed"
                             />
                             <input
                                 v-model="createForm.user_id"
                                 type="hidden"
                             />
-                            <p class="mt-1 text-xs text-gray-500">ログインしているユーザーが自動的に設定されます</p>
+                            <p class="mt-1 text-xs text-brand-text-muted">ログインしているユーザーが自動的に設定されます</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">開始日時 <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">開始日時 <span class="text-red-500">*</span></label>
                             <input
                                 v-model="createForm.start_at"
                                 type="datetime-local"
                                 required
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             />
                             <div v-if="createForm.errors.start_at" class="mt-1 text-sm text-red-600">{{ createForm.errors.start_at }}</div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">終了日時 <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">終了日時 <span class="text-red-500">*</span></label>
                             <input
                                 v-model="createForm.end_at"
                                 type="datetime-local"
                                 required
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             />
                             <div v-if="createForm.errors.end_at" class="mt-1 text-sm text-red-600">{{ createForm.errors.end_at }}</div>
                         </div>
@@ -358,31 +358,31 @@
                                 <input
                                     v-model="createForm.all_day"
                                     type="checkbox"
-                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                 />
-                                <span class="ml-2 text-sm text-gray-700">終日</span>
+                                <span class="ml-2 text-sm text-brand-text">終日</span>
                             </label>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">色</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">色</label>
                             <input
                                 v-model="createForm.color"
                                 type="color"
-                                class="w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full h-10 rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             />
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">担当者</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">担当者</label>
                             
                             <!-- 店舗選択（担当者追加用） -->
                             <div class="mb-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">店舗を選択して担当者を追加</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">店舗を選択して担当者を追加</label>
                                 <select
                                     v-model="selectedShopIdForParticipants"
                                     @change="loadShopUsers(selectedShopIdForParticipants)"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                 >
                                     <option value="">店舗を選択してください</option>
                                     <option
@@ -397,7 +397,7 @@
 
                             <!-- 参加者追加済み一覧 -->
                             <div v-if="addedParticipants.length > 0" class="mb-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">担当者追加済み</label>
+                                <label class="block text-sm font-medium text-brand-text mb-2">担当者追加済み</label>
                                 <div class="flex flex-wrap gap-2">
                                     <span
                                         v-for="participant in addedParticipants"
@@ -417,31 +417,31 @@
                             </div>
 
                             <!-- 店舗ユーザー一覧（チェックボックス） -->
-                            <div v-if="shopUsersForParticipants.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3">
+                            <div v-if="shopUsersForParticipants.length > 0" class="space-y-2 max-h-48 overflow-y-auto border border-brand-border rounded-md p-3">
                                 <label
                                     v-for="user in shopUsersForParticipants"
                                     :key="user.id"
-                                    class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                                    class="flex items-center space-x-2 cursor-pointer hover:bg-brand-surface-2 p-2 rounded"
                                 >
                                     <input
                                         type="checkbox"
                                         :value="user.id"
                                         :checked="isParticipantAdded(user.id)"
                                         @change="toggleParticipant(user.id, $event.target.checked)"
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
-                                    <span class="text-sm text-gray-900">{{ user.name }}</span>
+                                    <span class="text-sm text-brand-text">{{ user.name }}</span>
                                 </label>
                             </div>
-                            <p v-else-if="!selectedShopIdForParticipants" class="text-sm text-gray-500">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
+                            <p v-else-if="!selectedShopIdForParticipants" class="text-sm text-brand-text-muted">店舗を選択すると、その店舗に所属するユーザーが表示されます</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                            <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                             <textarea
                                 v-model="createForm.description"
                                 rows="3"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                             ></textarea>
                         </div>
 
@@ -449,14 +449,14 @@
                             <button
                                 type="button"
                                 @click="showCreateModal = false"
-                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                                class="px-4 py-2 bg-gray-300 text-brand-text rounded-md hover:bg-gray-400"
                             >
                                 キャンセル
                             </button>
                             <button
                                 type="submit"
                                 :disabled="createForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                             >
                                 {{ createForm.processing ? '作成中...' : '作成' }}
                             </button>

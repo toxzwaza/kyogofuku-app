@@ -12,9 +12,9 @@
       v-if="isSendingEmail"
       class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
     >
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
+      <div class="bg-brand-surface rounded-lg p-8 flex flex-col items-center">
         <svg
-          class="animate-spin h-12 w-12 text-indigo-600 mb-4"
+          class="animate-spin h-12 w-12 text-brand-primary mb-4"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -33,7 +33,7 @@
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           ></path>
         </svg>
-        <p class="text-gray-700 font-medium">メールを送信しています...</p>
+        <p class="text-brand-text font-medium">メールを送信しています...</p>
       </div>
     </div>
 
@@ -87,7 +87,7 @@
                   type="button"
                   @click="restoreReservation"
                   :disabled="isRestoring"
-                  class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="inline-flex items-center px-4 py-2 bg-brand-primary border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-brand-primary-hover focus:bg-brand-primary-hover active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 transition ease-in-out duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {{ isRestoring ? '処理中...' : 'キャンセルを解除する' }}
                 </button>
@@ -101,13 +101,13 @@
             <div
               :class="[
                 'overflow-hidden shadow-sm sm:rounded-lg',
-                reservation.cancel_flg ? 'bg-gray-100' : 'bg-white',
+                reservation.cancel_flg ? 'bg-brand-surface-2' : 'bg-brand-surface',
               ]"
             >
               <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                  <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                    <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     予約情報
@@ -116,8 +116,8 @@
 
                 <!-- 基本情報セクション -->
                 <div class="mb-6">
-                  <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     基本情報
@@ -125,47 +125,47 @@
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- 予約ID -->
                     <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-100 md:col-span-2">
-                      <label class="block text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">予約ID</label>
-                      <p class="text-lg font-bold text-gray-900">{{ reservation.id }}</p>
+                      <label class="block text-xs font-semibold text-brand-primary uppercase tracking-wide mb-1">予約ID</label>
+                      <p class="text-lg font-bold text-brand-text">{{ reservation.id }}</p>
                     </div>
                     <!-- お名前、フリガナ -->
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                      <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                         お名前
                       </label>
-                      <p class="text-lg font-semibold text-gray-900">{{ reservation.name }}</p>
+                      <p class="text-lg font-semibold text-brand-text">{{ reservation.name }}</p>
                     </div>
-                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama' || event.form_type === 'document'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama' || event.form_type === 'document'" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                      <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                         </svg>
                         フリガナ
                       </label>
-                      <p class="text-base font-medium text-gray-900">{{ reservation.furigana || '-' }}</p>
+                      <p class="text-base font-medium text-brand-text">{{ reservation.furigana || '-' }}</p>
                     </div>
 
                     <!-- メールアドレス、電話番号 -->
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                      <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         メールアドレス
                       </label>
-                      <p class="text-base font-semibold text-gray-900">{{ reservation.email }}</p>
+                      <p class="text-base font-semibold text-brand-text">{{ reservation.email }}</p>
                     </div>
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                      <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                         電話番号
                       </label>
-                      <p class="text-base font-semibold text-gray-900">{{ reservation.phone }}</p>
+                      <p class="text-base font-semibold text-brand-text">{{ reservation.phone }}</p>
                     </div>
                   </div>
                 </div>
@@ -174,173 +174,173 @@
                 <template v-if="event.form_type === 'reservation'">
                   <!-- 予約情報セクション -->
                   <div class="mb-6">
-                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       予約情報
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           予約日時
                         </label>
-                        <p class="text-base font-semibold text-gray-900">{{ reservation.reservation_datetime || "-" }}</p>
+                        <p class="text-base font-semibold text-brand-text">{{ reservation.reservation_datetime || "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
                           ご来店会場
                         </label>
-                        <p class="text-base font-semibold text-gray-900">{{ reservation.venue ? reservation.venue.name : "-" }}</p>
+                        <p class="text-base font-semibold text-brand-text">{{ reservation.venue ? reservation.venue.name : "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           過去当店のご来店
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.has_visited_before ? "あり" : "なし" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.has_visited_before ? "あり" : "なし" }}</p>
                       </div>
                     </div>
                   </div>
 
                   <!-- 個人情報セクション -->
                   <div class="mb-6">
-                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                       個人情報
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
                           郵便番号
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ formatPostalCode(reservation.postal_code) }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ formatPostalCode(reservation.postal_code) }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                           </svg>
                           住所
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.address || "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.address || "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           生年月日
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.birth_date ? formatDate(reservation.birth_date) : "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.birth_date ? formatDate(reservation.birth_date) : "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           成人式予定年月
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.seijin_year ? reservation.seijin_year + "年" : "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.seijin_year ? reservation.seijin_year + "年" : "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                           </svg>
                           学校名
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.school_name || "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.school_name || "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                           </svg>
                           担当者指名
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.staff_name || "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.staff_name || "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                           </svg>
                           来店動機
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.visit_reasons && reservation.visit_reasons.length > 0 ? reservation.visit_reasons.join("、") : "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.visit_reasons && reservation.visit_reasons.length > 0 ? reservation.visit_reasons.join("、") : "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                           </svg>
                           流入経路
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.utm_source || "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.utm_source || "-" }}</p>
                       </div>
                     </div>
                   </div>
 
                   <!-- その他情報セクション -->
                   <div class="mb-6">
-                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       その他情報
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                           </svg>
                           駐車場利用
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.parking_usage || "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.parking_usage || "-" }}</p>
                       </div>
-                      <div v-if="reservation.parking_usage === 'あり'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div v-if="reservation.parking_usage === 'あり'" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                           </svg>
                           駐車台数
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.parking_car_count || "-" }}台</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.parking_car_count || "-" }}台</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                           </svg>
                           検討中のプラン
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.considering_plans && reservation.considering_plans.length > 0 ? reservation.considering_plans.join("、") : "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.considering_plans && reservation.considering_plans.length > 0 ? reservation.considering_plans.join("、") : "-" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                           </svg>
                           ご紹介者様お名前
                         </label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.referred_by_name || "-" }}</p>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.referred_by_name || "-" }}</p>
                       </div>
                     </div>
                   </div>
@@ -349,93 +349,93 @@
                 <!-- 袴予約（岡山） -->
                 <template v-if="event.form_type === 'reservation_hakama'">
                   <div class="mb-6">
-                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       予約情報
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">予約日時</label>
-                        <p class="text-base font-semibold text-gray-900">{{ reservation.reservation_datetime || "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">予約日時</label>
+                        <p class="text-base font-semibold text-brand-text">{{ reservation.reservation_datetime || "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ご来店会場</label>
-                        <p class="text-base font-semibold text-gray-900">{{ reservation.venue ? reservation.venue.name : "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">ご来店会場</label>
+                        <p class="text-base font-semibold text-brand-text">{{ reservation.venue ? reservation.venue.name : "—" }}</p>
                       </div>
                     </div>
                   </div>
                   <div class="mb-6">
-                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                       お客様情報
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">郵便番号</label>
-                        <p class="text-base font-medium text-gray-900">{{ formatPostalCode(reservation.postal_code) }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">郵便番号</label>
+                        <p class="text-base font-medium text-brand-text">{{ formatPostalCode(reservation.postal_code) }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">住所</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.address || "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">住所</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.address || "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">学校名</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.school_name || "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">学校名</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.school_name || "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">好一での振袖利用</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.koichi_furisode_used === true ? "あり" : reservation.koichi_furisode_used === false ? "なし" : "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">好一での振袖利用</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.koichi_furisode_used === true ? "あり" : reservation.koichi_furisode_used === false ? "なし" : "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">卒業式</label>
-                        <p class="text-base font-medium text-gray-900">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">卒業式</label>
+                        <p class="text-base font-medium text-brand-text">
                           {{ formatGraduationCeremonyDisplay(reservation) }}
                         </p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">来店人数</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.visitor_count != null ? reservation.visitor_count + "名" : "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">来店人数</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.visitor_count != null ? reservation.visitor_count + "名" : "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お連れ様</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.companion_types && reservation.companion_types.length > 0 ? reservation.companion_types.join("、") : "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お連れ様</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.companion_types && reservation.companion_types.length > 0 ? reservation.companion_types.join("、") : "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お連れ様の袴着用</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.companion_hakama_usage === true ? "着用する" : reservation.companion_hakama_usage === false ? "着用しない" : "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お連れ様の袴着用</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.companion_hakama_usage === true ? "着用する" : reservation.companion_hakama_usage === false ? "着用しない" : "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">来店動機</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.visit_reasons && reservation.visit_reasons.length > 0 ? reservation.visit_reasons.join("、") : "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">来店動機</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.visit_reasons && reservation.visit_reasons.length > 0 ? reservation.visit_reasons.join("、") : "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">流入経路</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.utm_source || "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">流入経路</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.utm_source || "—" }}</p>
                       </div>
                     </div>
                   </div>
                   <div class="mb-6">
-                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">その他情報</h4>
+                    <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">その他情報</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">お車で来店</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.parking_usage || "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">お車で来店</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.parking_usage || "—" }}</p>
                       </div>
-                      <div v-if="reservation.parking_usage === 'あり'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">台数</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.parking_car_count || "—" }}台</p>
+                      <div v-if="reservation.parking_usage === 'あり'" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">台数</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.parking_car_count || "—" }}台</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">検討中のプラン</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.considering_plans && reservation.considering_plans.length > 0 ? reservation.considering_plans.join("、") : "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">検討中のプラン</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.considering_plans && reservation.considering_plans.length > 0 ? reservation.considering_plans.join("、") : "—" }}</p>
                       </div>
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">ご紹介者様お名前</label>
-                        <p class="text-base font-medium text-gray-900">{{ reservation.referred_by_name || "—" }}</p>
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">ご紹介者様お名前</label>
+                        <p class="text-base font-medium text-brand-text">{{ reservation.referred_by_name || "—" }}</p>
                       </div>
                     </div>
                   </div>
@@ -445,58 +445,58 @@
                   <template v-if="event.form_type === 'document'">
                     <!-- 資料請求情報セクション -->
                     <div class="mb-6">
-                      <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         資料請求情報
                       </h4>
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                          <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             請求方法
                           </label>
-                          <p class="text-base font-semibold text-gray-900">{{ reservation.request_method || "-" }}</p>
+                          <p class="text-base font-semibold text-brand-text">{{ reservation.request_method || "-" }}</p>
                         </div>
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                          <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             生年月日
                           </label>
-                          <p class="text-base font-medium text-gray-900">{{ reservation.birth_date ? formatDate(reservation.birth_date) : "-" }}</p>
+                          <p class="text-base font-medium text-brand-text">{{ reservation.birth_date ? formatDate(reservation.birth_date) : "-" }}</p>
                         </div>
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                          <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                             郵便番号
                           </label>
-                          <p class="text-base font-medium text-gray-900">{{ formatPostalCode(reservation.postal_code) }}</p>
+                          <p class="text-base font-medium text-brand-text">{{ formatPostalCode(reservation.postal_code) }}</p>
                         </div>
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2">
-                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                          <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             住所
                           </label>
-                          <p class="text-base font-medium text-gray-900">{{ reservation.address || "-" }}</p>
+                          <p class="text-base font-medium text-brand-text">{{ reservation.address || "-" }}</p>
                         </div>
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                          <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
                             個人情報保護方針への同意
                           </label>
-                          <p class="text-base font-medium text-gray-900">{{ reservation.privacy_agreed ? "同意" : "-" }}</p>
+                          <p class="text-base font-medium text-brand-text">{{ reservation.privacy_agreed ? "同意" : "-" }}</p>
                         </div>
                       </div>
                     </div>
@@ -505,21 +505,21 @@
                   <!-- お問い合わせフォーム (contact) -->
                   <template v-if="event.form_type === 'contact'">
                     <div class="mb-6">
-                      <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
                         お問い合わせ情報
                       </h4>
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                          <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                             </svg>
                             問い合わせ回答方法
                           </label>
-                          <p class="text-base font-medium text-gray-900">{{ reservation.heard_from || "-" }}</p>
+                          <p class="text-base font-medium text-brand-text">{{ reservation.heard_from || "-" }}</p>
                         </div>
                       </div>
                     </div>
@@ -527,34 +527,34 @@
 
                   <!-- お問い合わせ内容セクション -->
                   <div v-if="reservation.inquiry_message" class="mb-6">
-                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                       </svg>
                       お問い合わせ内容
                     </h4>
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <p class="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{{ reservation.inquiry_message }}</p>
+                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                      <p class="text-sm text-brand-text whitespace-pre-wrap leading-relaxed">{{ reservation.inquiry_message }}</p>
                     </div>
                   </div>
 
                   <!-- システム情報セクション -->
                   <div class="mb-6">
-                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
-                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                       </svg>
                       システム情報
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           登録日時
                         </label>
-                        <p class="text-base font-semibold text-gray-900">{{ formatDateTime(reservation.created_at) }}</p>
+                        <p class="text-base font-semibold text-brand-text">{{ formatDateTime(reservation.created_at) }}</p>
                       </div>
                     </div>
                   </div>
@@ -564,14 +564,14 @@
 
           <!-- 中央: ステータス・スケジュール等（右カラムと同幅） -->
           <div class="lg:col-span-3 min-w-0">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
               <div class="p-6">
                 <!-- ステータス登録 -->
-                <div class="mb-6 pb-6 border-b border-gray-200">
+                <div class="mb-6 pb-6 border-b border-brand-border">
                   <h3 class="text-lg font-semibold mb-4">対応ステータス</h3>
                   <div v-if="reservation.status" class="mb-3">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-gray-600"
+                      <span class="text-sm text-brand-text-muted"
                         >現在のステータス:</span
                       >
                       <span
@@ -583,7 +583,7 @@
                     </div>
                     <div
                       v-if="reservation.status_updated_by"
-                      class="mt-2 text-xs text-gray-500"
+                      class="mt-2 text-xs text-brand-text-muted"
                     >
                       更新者: {{ reservation.status_updated_by.name }}
                     </div>
@@ -591,13 +591,13 @@
                   <form @submit.prevent="updateStatus">
                     <div>
                       <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="block text-sm font-medium text-brand-text mb-1"
                         >ステータス</label
                       >
                       <select
                         v-model="statusForm.status"
                         required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                       >
                         <option value="未対応">未対応</option>
                         <option value="確認中">確認中</option>
@@ -615,7 +615,7 @@
                     <button
                       type="submit"
                       :disabled="statusForm.processing"
-                      class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                      class="mt-2 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                     >
                       {{
                         statusForm.processing ? "更新中..." : "ステータスを更新"
@@ -625,11 +625,11 @@
                 </div>
 
                 <!-- 担当者（管理） -->
-                <div class="mb-6 pb-6 border-b border-gray-200">
+                <div class="mb-6 pb-6 border-b border-brand-border">
                   <h3 class="text-lg font-semibold mb-4">担当者</h3>
                   <form @submit.prevent="submitAssignee">
                     <label
-                      class="block text-sm font-medium text-gray-700 mb-1"
+                      class="block text-sm font-medium text-brand-text mb-1"
                       for="reservation-admin-assignee"
                       >担当者</label
                     >
@@ -639,7 +639,7 @@
                       type="text"
                       list="reservation-assignee-options"
                       autocomplete="off"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                       placeholder="名前を入力するか一覧から選択"
                     />
                     <datalist id="reservation-assignee-options">
@@ -658,7 +658,7 @@
                     <button
                       type="submit"
                       :disabled="assigneeForm.processing"
-                      class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                      class="mt-2 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                     >
                       {{
                         assigneeForm.processing
@@ -670,11 +670,11 @@
                 </div>
 
                 <!-- 入場チケット送付 -->
-                <div class="mb-6 pb-6 border-b border-gray-200">
+                <div class="mb-6 pb-6 border-b border-brand-border">
                   <h3 class="text-lg font-semibold mb-4">入場チケット送付</h3>
                   <div class="mb-3">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm text-gray-600">現在のステータス:</span>
+                      <span class="text-sm text-brand-text-muted">現在のステータス:</span>
                       <span
                         :class="
                           getEntranceTicketSendBadgeClass(
@@ -692,13 +692,13 @@
                   <form @submit.prevent="submitEntranceTicketSendStatus">
                     <div>
                       <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="block text-sm font-medium text-brand-text mb-1"
                         >ステータス</label
                       >
                       <select
                         v-model="entranceTicketSendForm.entrance_ticket_send_status"
                         required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                       >
                         <option value="未送付">未送付</option>
                         <option value="送付済み">送付済み</option>
@@ -719,7 +719,7 @@
                     <button
                       type="submit"
                       :disabled="entranceTicketSendForm.processing"
-                      class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                      class="mt-2 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                     >
                       {{
                         entranceTicketSendForm.processing
@@ -731,7 +731,7 @@
                 </div>
 
                 <!-- Googleカレンダー連携 -->
-                <div class="mb-6 pb-6 border-b border-gray-200">
+                <div class="mb-6 pb-6 border-b border-brand-border">
                   <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
                     <svg
                       class="w-5 h-5 text-blue-600"
@@ -774,11 +774,11 @@
                       >
                         <div class="flex items-start justify-between gap-2">
                           <div class="min-w-0 flex-1">
-                            <div class="text-sm font-medium text-gray-900">
+                            <div class="text-sm font-medium text-brand-text">
                               {{ sync.shop_name || "—" }}
                             </div>
                             <div
-                              class="text-xs text-gray-500 mt-0.5 truncate"
+                              class="text-xs text-brand-text-muted mt-0.5 truncate"
                               :title="sync.google_calendar_id"
                             >
                               {{ sync.google_calendar_id }}
@@ -788,7 +788,7 @@
                             :href="sync.html_link"
                             target="_blank"
                             rel="noopener"
-                            class="shrink-0 text-xs text-indigo-600 hover:underline whitespace-nowrap"
+                            class="shrink-0 text-xs text-brand-primary hover:underline whitespace-nowrap"
                           >
                             カレンダーで開く →
                           </a>
@@ -823,7 +823,7 @@
                     </div>
                     <p
                       v-if="googleCalendarSyncInfo.can_sync"
-                      class="text-xs text-gray-600 mb-3"
+                      class="text-xs text-brand-text-muted mb-3"
                     >
                       この予約はまだGoogleカレンダーに登録されていません。
                       <span
@@ -854,7 +854,7 @@
                         !googleCalendarSyncInfo.can_sync ||
                         googleCalendarSyncForm.processing
                       "
-                      class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400 text-sm font-medium"
+                      class="w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400 text-sm font-medium"
                     >
                       {{
                         googleCalendarSyncForm.processing
@@ -866,7 +866,7 @@
                 </div>
 
                 <!-- スケジュール（予約詳細では非表示・処理はバックエンドのまま利用可能） -->
-                <div v-if="false" class="mt-6 pt-6 border-t border-gray-200">
+                <div v-if="false" class="mt-6 pt-6 border-t border-brand-border">
                   <h3 class="text-lg font-semibold mb-4">スケジュール</h3>
 
                   <!-- スケジュール追加済みの場合：詳細表示 -->
@@ -883,30 +883,30 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">タイトル</label>
-                            <p class="text-sm font-medium text-gray-900">{{ schedule.title }}</p>
+                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-0.5">タイトル</label>
+                            <p class="text-sm font-medium text-brand-text">{{ schedule.title }}</p>
                           </div>
                           <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">日時</label>
-                            <p class="text-sm text-gray-700">
+                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-0.5">日時</label>
+                            <p class="text-sm text-brand-text">
                               {{ schedule.all_day ? '終日' : '' }}
                               {{ formatDateTime(schedule.start_at) }} ～
                               {{ formatDateTime(schedule.end_at) }}
                             </p>
                           </div>
                           <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">登録者</label>
-                            <p class="text-sm text-gray-700">{{ schedule.user ? schedule.user.name : '-' }}</p>
+                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-0.5">登録者</label>
+                            <p class="text-sm text-brand-text">{{ schedule.user ? schedule.user.name : '-' }}</p>
                           </div>
                           <div v-if="schedule.participantUsers && schedule.participantUsers.length > 0">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">担当者</label>
-                            <p class="text-sm text-gray-700">
+                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-0.5">担当者</label>
+                            <p class="text-sm text-brand-text">
                               {{ schedule.participantUsers.map(p => p.name).join('、') }}
                             </p>
                           </div>
                           <div v-if="schedule.description" class="md:col-span-2">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">説明</label>
-                            <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ schedule.description }}</p>
+                            <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-0.5">説明</label>
+                            <p class="text-sm text-brand-text whitespace-pre-wrap">{{ schedule.description }}</p>
                           </div>
                         </div>
                       </div>
@@ -934,56 +934,56 @@
                   <form
                     v-else-if="schedule && isEditingSchedule"
                     @submit.prevent="updateSchedule"
-                    class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg"
+                    class="mb-4 p-4 bg-brand-surface-2 border border-brand-border rounded-lg"
                   >
-                    <h4 class="text-sm font-semibold text-gray-800 mb-4">スケジュールを編集</h4>
+                    <h4 class="text-sm font-semibold text-brand-text mb-4">スケジュールを編集</h4>
                     <div class="mb-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
+                      <label class="block text-sm font-medium text-brand-text mb-1">タイトル</label>
                       <input
                         v-model="scheduleForm.title"
                         type="text"
                         required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         placeholder="スケジュールのタイトル"
                       />
                       <div v-if="scheduleForm.errors.title" class="mt-1 text-sm text-red-600">{{ scheduleForm.errors.title }}</div>
                     </div>
                     <div class="grid grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">開始日時</label>
+                        <label class="block text-sm font-medium text-brand-text mb-1">開始日時</label>
                         <input
                           v-model="scheduleForm.start_at"
                           type="datetime-local"
                           required
-                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         />
                       </div>
                       <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">終了日時</label>
+                        <label class="block text-sm font-medium text-brand-text mb-1">終了日時</label>
                         <input
                           v-model="scheduleForm.end_at"
                           type="datetime-local"
                           required
-                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         />
                       </div>
                     </div>
                     <div class="mb-4">
                       <label class="flex items-center">
-                        <input v-model="scheduleForm.all_day" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                        <span class="ml-2 text-sm text-gray-700">終日</span>
+                        <input v-model="scheduleForm.all_day" type="checkbox" class="rounded border-brand-border text-brand-primary focus:ring-brand-primary" />
+                        <span class="ml-2 text-sm text-brand-text">終日</span>
                       </label>
                       <label class="flex items-center mt-2">
-                        <input v-model="scheduleForm.sync_to_google_calendar" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                        <span class="ml-2 text-sm text-gray-700">Googleカレンダーに同期する</span>
+                        <input v-model="scheduleForm.sync_to_google_calendar" type="checkbox" class="rounded border-brand-border text-brand-primary focus:ring-brand-primary" />
+                        <span class="ml-2 text-sm text-brand-text">Googleカレンダーに同期する</span>
                       </label>
                     </div>
                     <div class="mb-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-1">登録者</label>
+                      <label class="block text-sm font-medium text-brand-text mb-1">登録者</label>
                       <select
                         v-model="scheduleForm.user_id"
                         required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 mb-3"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary mb-3"
                       >
                         <option value="">選択してください</option>
                         <option
@@ -995,19 +995,19 @@
                         </option>
                       </select>
                       <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">担当者</label>
-                        <label class="block text-xs text-gray-600 mb-2">店舗を選択して担当者を追加・変更</label>
+                        <label class="block text-sm font-medium text-brand-text mb-1">担当者</label>
+                        <label class="block text-xs text-brand-text-muted mb-2">店舗を選択して担当者を追加・変更</label>
                         <select
                           v-model="scheduleForm.selectedShopId"
                           @change="onShopChangeForSchedule"
-                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         >
                           <option value="">店舗を選択してください</option>
                           <option v-for="shop in eventShops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
                         </select>
                       </div>
                       <div v-if="addedParticipantsForSchedule.length > 0" class="mb-3">
-                        <label class="block text-xs text-gray-600 mb-2">担当者一覧</label>
+                        <label class="block text-xs text-brand-text-muted mb-2">担当者一覧</label>
                         <div class="flex flex-wrap gap-2">
                           <span
                             v-for="participant in addedParticipantsForSchedule"
@@ -1015,35 +1015,35 @@
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium"
                           >
                             {{ participant.name }}
-                            <button type="button" @click="removeParticipantForSchedule(participant.id)" class="ml-1 text-indigo-600 hover:text-indigo-800 font-bold">×</button>
+                            <button type="button" @click="removeParticipantForSchedule(participant.id)" class="ml-1 text-brand-primary hover:text-brand-primary-hover font-bold">×</button>
                           </span>
                         </div>
                       </div>
                       <div v-if="scheduleForm.selectedShopId && shopUsersForSchedule.length > 0" class="space-y-2">
-                        <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">
+                        <div class="max-h-48 overflow-y-auto border border-brand-border rounded-lg p-3 bg-brand-surface">
                           <label
                             v-for="user in shopUsersForSchedule"
                             :key="user.id"
-                            class="flex items-center space-x-2 p-2 rounded-lg transition-colors cursor-pointer hover:bg-gray-50"
+                            class="flex items-center space-x-2 p-2 rounded-lg transition-colors cursor-pointer hover:bg-brand-surface-2"
                           >
                             <input
                               :id="`edit-participant-${user.id}`"
                               type="checkbox"
                               :checked="isParticipantAddedForSchedule(user.id)"
                               @change="toggleParticipantForSchedule(user.id, $event.target.checked)"
-                              class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              class="w-4 h-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                             />
-                            <span class="text-sm text-gray-900">{{ user.name }}</span>
+                            <span class="text-sm text-brand-text">{{ user.name }}</span>
                           </label>
                         </div>
                       </div>
                     </div>
                     <div class="mb-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                      <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                       <textarea
                         v-model="scheduleForm.description"
                         rows="4"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         placeholder="スケジュールの説明"
                       ></textarea>
                       <div v-if="scheduleForm.errors.description" class="mt-1 text-sm text-red-600">{{ scheduleForm.errors.description }}</div>
@@ -1052,7 +1052,7 @@
                       <button
                         type="submit"
                         :disabled="scheduleForm.processing"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
+                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 text-sm font-medium"
                       >
                         {{ scheduleForm.processing ? '更新中...' : '更新' }}
                       </button>
@@ -1060,7 +1060,7 @@
                         type="button"
                         @click="cancelEditSchedule"
                         :disabled="scheduleForm.processing"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-50 text-sm font-medium"
+                        class="px-4 py-2 bg-gray-200 text-brand-text rounded-md hover:bg-gray-300 disabled:opacity-50 text-sm font-medium"
                       >
                         キャンセル
                       </button>
@@ -1071,14 +1071,14 @@
                   <form v-else @submit.prevent="addToSchedule" class="mb-6">
                     <div class="mb-4">
                       <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="block text-sm font-medium text-brand-text mb-1"
                         >タイトル</label
                       >
                       <input
                         v-model="scheduleForm.title"
                         type="text"
                         required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         placeholder="スケジュールのタイトル"
                       />
                       <div
@@ -1091,27 +1091,27 @@
 
                     <div class="mb-4">
                       <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="block text-sm font-medium text-brand-text mb-1"
                         >開始日時</label
                       >
                       <input
                         v-model="scheduleForm.start_at"
                         type="datetime-local"
                         required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                       />
                     </div>
 
                     <div class="mb-4">
                       <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="block text-sm font-medium text-brand-text mb-1"
                         >終了日時</label
                       >
                       <input
                         v-model="scheduleForm.end_at"
                         type="datetime-local"
                         required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                       />
                     </div>
 
@@ -1120,25 +1120,25 @@
                         <input
                           v-model="scheduleForm.all_day"
                           type="checkbox"
-                          class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                         />
-                        <span class="ml-2 text-sm text-gray-700">終日</span>
+                        <span class="ml-2 text-sm text-brand-text">終日</span>
                       </label>
                     </div>
 
                     <div class="mb-4">
                       <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="block text-sm font-medium text-brand-text mb-1"
                         >担当者</label
                       >
                       
                       <!-- 店舗選択（担当者追加用） -->
                       <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">店舗を選択して担当者を追加</label>
+                        <label class="block text-sm font-medium text-brand-text mb-2">店舗を選択して担当者を追加</label>
                         <select
                           v-model="scheduleForm.selectedShopId"
                           @change="onShopChangeForSchedule"
-                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         >
                           <option value="">店舗を選択してください</option>
                           <option
@@ -1153,7 +1153,7 @@
 
                       <!-- 担当者追加済み一覧 -->
                       <div v-if="addedParticipantsForSchedule.length > 0" class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">担当者追加済み</label>
+                        <label class="block text-sm font-medium text-brand-text mb-2">担当者追加済み</label>
                         <div class="flex flex-wrap gap-2">
                           <span
                             v-for="participant in addedParticipantsForSchedule"
@@ -1167,7 +1167,7 @@
                             <button
                               type="button"
                               @click="removeParticipantForSchedule(participant.id)"
-                              class="ml-1 text-indigo-600 hover:text-indigo-800 font-bold"
+                              class="ml-1 text-brand-primary hover:text-brand-primary-hover font-bold"
                             >
                               ×
                             </button>
@@ -1177,11 +1177,11 @@
 
                       <!-- 店舗ユーザー一覧（チェックボックス） -->
                       <div v-if="scheduleForm.selectedShopId && shopUsersForSchedule.length > 0" class="space-y-2">
-                        <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-white">
+                        <div class="max-h-48 overflow-y-auto border border-brand-border rounded-lg p-3 bg-brand-surface">
                           <label
                             v-for="user in shopUsersForSchedule"
                             :key="user.id"
-                            class="flex items-center space-x-2 p-2 rounded-lg transition-colors cursor-pointer hover:bg-gray-50"
+                            class="flex items-center space-x-2 p-2 rounded-lg transition-colors cursor-pointer hover:bg-brand-surface-2"
                           >
                             <input
                               :id="`participant-${user.id}`"
@@ -1193,28 +1193,28 @@
                                   $event.target.checked
                                 )
                               "
-                              class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              class="w-4 h-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                             />
-                            <span class="text-sm text-gray-900">
+                            <span class="text-sm text-brand-text">
                               {{ user.name }}
                             </span>
                           </label>
                         </div>
                       </div>
-                      <p v-else-if="!scheduleForm.selectedShopId" class="text-sm text-gray-500">
+                      <p v-else-if="!scheduleForm.selectedShopId" class="text-sm text-brand-text-muted">
                         店舗を選択すると、その店舗に所属するユーザーが表示されます
                       </p>
                     </div>
 
                     <div class="mb-4">
                       <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="block text-sm font-medium text-brand-text mb-1"
                         >説明</label
                       >
                       <textarea
                         v-model="scheduleForm.description"
                         rows="6"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         placeholder="スケジュールの説明"
                       ></textarea>
                       <div
@@ -1228,7 +1228,7 @@
                     <button
                       type="submit"
                       :disabled="scheduleForm.processing"
-                      class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                      class="w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                     >
                       {{
                         scheduleForm.processing
@@ -1240,9 +1240,9 @@
                 </div>
 
                 <!-- 顧客紐づけ -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                  <h3 class="text-lg font-semibold text-gray-800 mb-1">顧客紐づけ</h3>
-                  <p class="text-xs text-gray-500 mb-4">
+                <div class="mt-6 pt-6 border-t border-brand-border">
+                  <h3 class="text-lg font-semibold text-brand-text mb-1">顧客紐づけ</h3>
+                  <p class="text-xs text-brand-text-muted mb-4">
                     この予約と顧客マスタを紐づけると、顧客詳細から参加イベントとして表示されます。
                   </p>
 
@@ -1253,11 +1253,11 @@
                   >
                     <div class="flex items-start justify-between gap-3">
                       <div class="min-w-0 flex-1">
-                        <p class="text-xs font-medium uppercase tracking-wide text-indigo-600 mb-1">紐づき顧客</p>
-                        <p class="text-base font-semibold text-gray-900">
+                        <p class="text-xs font-medium uppercase tracking-wide text-brand-primary mb-1">紐づき顧客</p>
+                        <p class="text-base font-semibold text-brand-text">
                           {{ reservation.customer.name }}
                         </p>
-                        <p class="text-sm text-gray-600 mt-0.5">
+                        <p class="text-sm text-brand-text-muted mt-0.5">
                           顧客ID: {{ reservation.customer.id }}
                         </p>
                       </div>
@@ -1266,14 +1266,14 @@
                           type="button"
                           :disabled="isUnlinkingCustomer"
                           @click="unlinkCustomer"
-                          class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+                          class="inline-flex items-center gap-1.5 rounded-md border border-brand-border bg-brand-surface px-3 py-1.5 text-sm font-medium text-brand-text shadow-sm hover:bg-brand-surface-2 disabled:opacity-50"
                         >
                           {{ isUnlinkingCustomer ? '解除中...' : '解除' }}
                         </button>
                         <button
                           type="button"
                           @click="openCustomerLinkSearch"
-                          class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+                          class="inline-flex items-center gap-1.5 rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover"
                         >
                           変更
                         </button>
@@ -1282,27 +1282,27 @@
                   </div>
 
                   <!-- 顧客未紐づけ、または変更時：検索UI -->
-                  <div v-else class="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
-                    <p v-if="!reservation.customer" class="text-sm text-gray-700 mb-4">
-                      <span class="font-medium text-gray-800">顧客が紐づいていません。</span><br />
+                  <div v-else class="rounded-lg border border-brand-border bg-brand-surface-2/50 p-4">
+                    <p v-if="!reservation.customer" class="text-sm text-brand-text mb-4">
+                      <span class="font-medium text-brand-text">顧客が紐づいていません。</span><br />
                       下の検索で既存顧客を選ぶか、下の「顧客追加」から新規登録してください。
                     </p>
-                    <p v-else class="text-sm text-gray-700 mb-4">
+                    <p v-else class="text-sm text-brand-text mb-4">
                       別の顧客に変更する場合は、名前で検索して紐づけ直してください。
                     </p>
                     <div class="mb-3">
-                      <label class="mb-1.5 block text-sm font-medium text-gray-700">顧客名で検索</label>
+                      <label class="mb-1.5 block text-sm font-medium text-brand-text">顧客名で検索</label>
                       <input
                         v-model="customerSearchName"
                         type="text"
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                        class="block w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                         placeholder="例: 山田 太郎"
                         @input="searchCustomers"
                       />
-                      <p class="mt-1 text-xs text-gray-500">スペースは無視して検索されます</p>
+                      <p class="mt-1 text-xs text-brand-text-muted">スペースは無視して検索されます</p>
                     </div>
-                    <div v-if="isSearchingCustomers" class="flex items-center gap-2 py-3 text-sm text-gray-500">
-                      <svg class="h-4 w-4 animate-spin text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <div v-if="isSearchingCustomers" class="flex items-center gap-2 py-3 text-sm text-brand-text-muted">
+                      <svg class="h-4 w-4 animate-spin text-brand-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
@@ -1310,18 +1310,18 @@
                     </div>
                     <div
                       v-else-if="customerSearchResults.length > 0"
-                      class="overflow-x-auto rounded-md border border-gray-200 bg-white shadow-sm"
+                      class="overflow-x-auto rounded-md border border-brand-border bg-brand-surface shadow-sm"
                     >
-                      <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                      <table class="min-w-full divide-y divide-brand-border">
+                        <thead class="bg-brand-surface-2">
                           <tr>
-                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名前</th>
-                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">電話番号</th>
-                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成人エリア</th>
+                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ID</th>
+                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">名前</th>
+                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">電話番号</th>
+                            <th class="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">成人エリア</th>
                           </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white">
+                        <tbody class="divide-y divide-brand-border bg-brand-surface">
                           <tr
                             v-for="c in customerSearchResults"
                             :key="c.id"
@@ -1329,34 +1329,34 @@
                               'cursor-pointer transition-colors',
                               selectedSearchCustomer?.id === c.id
                                 ? 'bg-indigo-100 hover:bg-indigo-100'
-                                : 'hover:bg-gray-50',
+                                : 'hover:bg-brand-surface-2',
                             ]"
                             @click="selectedSearchCustomer = c"
                           >
-                            <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-900">{{ c.id }}</td>
-                            <td class="whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-900">{{ c.name }}</td>
-                            <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-600">{{ c.phone_number || '-' }}</td>
-                            <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-600">{{ c.ceremony_area?.name || '-' }}</td>
+                            <td class="whitespace-nowrap px-3 py-2 text-sm text-brand-text">{{ c.id }}</td>
+                            <td class="whitespace-nowrap px-3 py-2 text-sm font-medium text-brand-text">{{ c.name }}</td>
+                            <td class="whitespace-nowrap px-3 py-2 text-sm text-brand-text-muted">{{ c.phone_number || '-' }}</td>
+                            <td class="whitespace-nowrap px-3 py-2 text-sm text-brand-text-muted">{{ c.ceremony_area?.name || '-' }}</td>
                           </tr>
                         </tbody>
                       </table>
                       <!-- 選択した顧客の操作ボタン（テーブル下部に横並び） -->
                       <div
                         v-if="selectedSearchCustomer"
-                        class="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-gray-50 px-3 py-3"
+                        class="flex flex-wrap items-center gap-2 border-t border-brand-border bg-brand-surface-2 px-3 py-3"
                       >
-                        <span class="mr-2 text-sm text-gray-600">
+                        <span class="mr-2 text-sm text-brand-text-muted">
                           {{ selectedSearchCustomer.name }} を選択中
                         </span>
                         <Link
                           :href="route('admin.customers.show', selectedSearchCustomer.id)"
-                          class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                          class="inline-flex items-center rounded-md border border-brand-border bg-brand-surface px-3 py-1.5 text-sm font-medium text-brand-text shadow-sm hover:bg-brand-surface-2"
                         >
                           詳細
                         </Link>
                         <span
                           v-if="reservation.customer_id && selectedSearchCustomer.id === reservation.customer_id"
-                          class="inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-600"
+                          class="inline-flex items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-1.5 text-sm font-medium text-brand-text-muted"
                         >
                           紐づけ済
                         </span>
@@ -1365,7 +1365,7 @@
                           type="button"
                           :disabled="isLinkingCustomerId === selectedSearchCustomer.id"
                           @click="linkCustomer(selectedSearchCustomer.id)"
-                          class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="inline-flex items-center rounded-md border border-transparent bg-brand-primary px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {{ isLinkingCustomerId === selectedSearchCustomer.id ? '紐づけ中...' : '紐づけ' }}
                         </button>
@@ -1373,7 +1373,7 @@
                     </div>
                     <p
                       v-else-if="customerSearchName && !isSearchingCustomers"
-                      class="py-3 text-sm text-gray-500"
+                      class="py-3 text-sm text-brand-text-muted"
                     >
                       該当する顧客がいません。別のキーワードで検索するか、顧客を新規追加してください。
                     </p>
@@ -1381,7 +1381,7 @@
                       v-if="reservation.customer && showCustomerLinkSearch"
                       type="button"
                       @click="showCustomerLinkSearch = false"
-                      class="mt-3 text-sm font-medium text-gray-600 hover:text-gray-800"
+                      class="mt-3 text-sm font-medium text-brand-text-muted hover:text-brand-text"
                     >
                       ← キャンセル（紐づき表示に戻る）
                     </button>
@@ -1389,7 +1389,7 @@
                 </div>
 
                 <!-- 顧客閲覧 / 顧客追加 -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="mt-6 pt-6 border-t border-brand-border">
                   <div class="flex flex-wrap gap-2">
                     <ActionButton
                       v-if="reservation.customer_id"
@@ -1409,7 +1409,7 @@
                 <!-- キャンセル済みの場合のみ：完全削除 -->
                 <div
                   v-if="reservation.cancel_flg"
-                  class="mt-6 pt-6 border-t border-gray-200"
+                  class="mt-6 pt-6 border-t border-brand-border"
                 >
                   <button
                     type="button"
@@ -1425,9 +1425,9 @@
 
           <!-- 右側: 連絡（LINE・メール）＋ メモ・操作履歴 -->
           <div class="lg:col-span-3 min-w-0 space-y-4">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
               <div
-                class="flex border-b border-gray-200 gap-1 px-1 pt-1"
+                class="flex border-b border-brand-border gap-1 px-1 pt-1"
                 role="tablist"
                 aria-label="連絡"
               >
@@ -1438,7 +1438,7 @@
                     'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
                     communicationTab === 'line'
                       ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
-                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                      : 'border-transparent text-brand-text-muted hover:text-brand-text hover:bg-brand-surface-2',
                   ]"
                   :aria-selected="communicationTab === 'line'"
                   @click="communicationTab = 'line'"
@@ -1452,7 +1452,7 @@
                     'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
                     communicationTab === 'email'
                       ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
-                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                      : 'border-transparent text-brand-text-muted hover:text-brand-text hover:bg-brand-surface-2',
                   ]"
                   :aria-selected="communicationTab === 'email'"
                   @click="communicationTab = 'email'"
@@ -1469,21 +1469,21 @@
                     :shops="line_section.shops"
                     :line-api="line_section.context === 'reservation' ? line_section : null"
                   />
-                  <p v-else class="text-sm text-gray-500 text-center py-6">
+                  <p v-else class="text-sm text-brand-text-muted text-center py-6">
                     LINE 連携情報がありません。
                   </p>
                 </div>
                 <div v-show="communicationTab === 'email'" class="min-w-0">
                   <!-- ヘッダー: スレッド件数 + 新規メール作成ボタン -->
                   <div class="flex items-center justify-between mb-4">
-                    <p class="text-sm text-gray-600">
-                      <span class="font-medium text-gray-900">{{ sortedEmailThreads.length }}</span>
+                    <p class="text-sm text-brand-text-muted">
+                      <span class="font-medium text-brand-text">{{ sortedEmailThreads.length }}</span>
                       件のスレッド
                     </p>
                     <button
                       type="button"
                       @click="openNewComposer"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -1498,11 +1498,11 @@
                     class="mb-4 border border-indigo-200 bg-indigo-50/30 rounded-lg p-4"
                   >
                     <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-semibold text-gray-800">新規メール作成</h4>
+                      <h4 class="text-sm font-semibold text-brand-text">新規メール作成</h4>
                       <button
                         type="button"
                         @click="cancelNewComposer"
-                        class="text-gray-400 hover:text-gray-600"
+                        class="text-brand-text-subtle hover:text-brand-text-muted"
                         aria-label="閉じる"
                       >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1512,37 +1512,37 @@
                     </div>
                     <form @submit.prevent="submitNewEmail" class="space-y-3">
                       <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                        <label class="block text-xs font-medium text-brand-text mb-1">
                           宛先
                         </label>
                         <input
                           type="text"
                           :value="reservation.email"
                           readonly
-                          class="block w-full rounded-md border-gray-200 bg-gray-100 text-sm text-gray-600"
+                          class="block w-full rounded-md border-brand-border bg-brand-surface-2 text-sm text-brand-text-muted"
                         />
                       </div>
                       <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                        <label class="block text-xs font-medium text-brand-text mb-1">
                           件名 <span class="text-red-500">*</span>
                         </label>
                         <input
                           v-model="replyForm.subject"
                           type="text"
                           required
-                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                          class="block w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                           placeholder="メールの件名を入力してください"
                         />
                       </div>
                       <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                        <label class="block text-xs font-medium text-brand-text mb-1">
                           本文
                         </label>
                         <textarea
                           v-model="replyForm.message"
                           rows="8"
                           required
-                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono"
+                          class="block w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm font-mono"
                           placeholder="メッセージを入力してください"
                         ></textarea>
                       </div>
@@ -1550,7 +1550,7 @@
                         <button
                           type="submit"
                           :disabled="replyForm.processing || isSendingEmail"
-                          class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                          class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50"
                         >
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -1561,7 +1561,7 @@
                           type="button"
                           @click="cancelNewComposer"
                           :disabled="replyForm.processing || isSendingEmail"
-                          class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                          class="px-4 py-2 bg-brand-surface border border-brand-border text-brand-text rounded-md text-sm font-medium hover:bg-brand-surface-2 disabled:opacity-50"
                         >
                           キャンセル
                         </button>
@@ -1577,39 +1577,39 @@
                     <div
                       v-for="thread in sortedEmailThreads"
                       :key="thread.id"
-                      class="border border-gray-200 rounded-lg bg-white overflow-hidden"
+                      class="border border-brand-border rounded-lg bg-brand-surface overflow-hidden"
                       :class="{ 'ring-2 ring-indigo-300': isThreadExpanded(thread.id) }"
                     >
                       <!-- スレッドヘッダー -->
                       <button
                         type="button"
                         @click="toggleThread(thread.id)"
-                        class="w-full px-4 py-3 text-left flex items-start gap-3 hover:bg-gray-50 transition-colors"
+                        class="w-full px-4 py-3 text-left flex items-start gap-3 hover:bg-brand-surface-2 transition-colors"
                       >
                         <div class="flex-1 min-w-0">
                           <div class="flex items-center gap-2 mb-1">
                             <span
-                              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700"
+                              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-surface-2 text-brand-text"
                             >
                               {{ thread.emails ? thread.emails.length : 0 }}件
                             </span>
-                            <span class="text-xs text-gray-500">
+                            <span class="text-xs text-brand-text-muted">
                               {{ relativeTime(latestEmailTime(thread)) }}
                             </span>
                           </div>
-                          <h3 class="text-base font-semibold text-gray-900 truncate">
+                          <h3 class="text-base font-semibold text-brand-text truncate">
                             {{ thread.subject || "(件名なし)" }}
                           </h3>
                           <p
                             v-if="!isThreadExpanded(thread.id)"
-                            class="text-sm text-gray-600 truncate mt-0.5"
+                            class="text-sm text-brand-text-muted truncate mt-0.5"
                           >
                             {{ latestEmailPreview(thread) }}
                           </p>
                         </div>
                         <svg
                           :class="{ 'rotate-180': isThreadExpanded(thread.id) }"
-                          class="w-5 h-5 text-gray-400 shrink-0 mt-1 transition-transform"
+                          class="w-5 h-5 text-brand-text-subtle shrink-0 mt-1 transition-transform"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1625,14 +1625,14 @@
 
                       <!-- 展開時：メールリスト + 返信フォーム -->
                       <div v-if="isThreadExpanded(thread.id)">
-                        <div class="border-t border-gray-200 divide-y divide-gray-100">
+                        <div class="border-t border-brand-border divide-y divide-gray-100">
                           <div
                             v-for="(email, idx) in thread.emails"
                             :key="email.id"
                             class="px-4 py-3"
                             :class="
                               !isEmailExpanded(thread, email, idx)
-                                ? 'cursor-pointer hover:bg-gray-50'
+                                ? 'cursor-pointer hover:bg-brand-surface-2'
                                 : ''
                             "
                             @click="
@@ -1655,22 +1655,22 @@
                                   {{ isFromCustomer(email) ? "客" : "店" }}
                                 </span>
                                 <div class="min-w-0 flex-1">
-                                  <div class="text-sm font-medium text-gray-900">
+                                  <div class="text-sm font-medium text-brand-text">
                                     {{ isFromCustomer(email) ? "お客様" : "当店" }}
                                   </div>
-                                  <div class="text-xs text-gray-500 truncate">
+                                  <div class="text-xs text-brand-text-muted truncate">
                                     {{ isFromCustomer(email) ? email.from : email.to }}
                                   </div>
                                 </div>
                               </div>
-                              <span class="text-xs text-gray-500 shrink-0 whitespace-nowrap">
+                              <span class="text-xs text-brand-text-muted shrink-0 whitespace-nowrap">
                                 {{ relativeTime(email.created_at) }}
                               </span>
                             </div>
 
                             <!-- 展開: 本文 + 添付 -->
                             <div v-if="isEmailExpanded(thread, email, idx)" class="mt-2">
-                              <div class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                              <div class="text-sm text-brand-text whitespace-pre-wrap leading-relaxed">
                                 <template
                                   v-for="(block, bIdx) in parseEmailBody(
                                     email.text_body || email.html_body || ''
@@ -1682,7 +1682,7 @@
                                     <button
                                       type="button"
                                       @click.stop="toggleQuote(email.id, bIdx)"
-                                      class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded text-xs"
+                                      class="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-surface-2 hover:bg-gray-200 text-brand-text-muted rounded text-xs"
                                     >
                                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
@@ -1691,7 +1691,7 @@
                                     </button>
                                     <div
                                       v-if="isQuoteShown(email.id, bIdx)"
-                                      class="mt-1 pl-3 border-l-2 border-gray-300 text-gray-500 text-xs whitespace-pre-wrap"
+                                      class="mt-1 pl-3 border-l-2 border-brand-border text-brand-text-muted text-xs whitespace-pre-wrap"
                                     >{{ block.content }}</div>
                                   </div>
                                 </template>
@@ -1700,15 +1700,15 @@
                               <!-- 添付ファイル -->
                               <div
                                 v-if="email.attachments && email.attachments.length > 0"
-                                class="mt-3 pt-3 border-t border-gray-200"
+                                class="mt-3 pt-3 border-t border-brand-border"
                               >
-                                <p class="text-xs text-gray-600 mb-2">添付ファイル</p>
+                                <p class="text-xs text-brand-text-muted mb-2">添付ファイル</p>
                                 <div class="flex flex-wrap gap-2">
                                   <a
                                     v-for="att in email.attachments"
                                     :key="att.id"
                                     :href="route('admin.emails.attachments.download', att.id)"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-surface-2 hover:bg-gray-200 text-brand-text rounded-md text-xs font-medium"
                                   >
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -1720,19 +1720,19 @@
                             </div>
 
                             <!-- 折りたたみ: 1行プレビュー -->
-                            <div v-else class="text-sm text-gray-500 truncate">
+                            <div v-else class="text-sm text-brand-text-muted truncate">
                               {{ emailPreview(email) }}
                             </div>
                           </div>
                         </div>
 
                         <!-- 返信フォーム（インライン） -->
-                        <div class="border-t border-gray-200 bg-gray-50 p-3">
+                        <div class="border-t border-brand-border bg-brand-surface-2 p-3">
                           <div v-if="activeReplyThreadId !== thread.id">
                             <button
                               type="button"
                               @click="openReplyForm(thread.id)"
-                              class="w-full py-2 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-md text-sm font-medium flex items-center justify-center gap-1.5"
+                              class="w-full py-2 bg-brand-surface border border-indigo-200 text-brand-primary hover:bg-indigo-50 rounded-md text-sm font-medium flex items-center justify-center gap-1.5"
                             >
                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -1741,21 +1741,21 @@
                             </button>
                           </div>
                           <form v-else @submit.prevent="submitInlineReply(thread.id)" class="space-y-2">
-                            <div class="text-xs text-gray-600">
+                            <div class="text-xs text-brand-text-muted">
                               <span class="font-medium">返信先:</span> {{ reservation.email }}
                             </div>
                             <textarea
                               v-model="replyForm.message"
                               rows="6"
                               required
-                              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono"
+                              class="block w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm font-mono"
                               placeholder="返信メッセージを入力してください"
                             ></textarea>
                             <div class="flex gap-2">
                               <button
                                 type="submit"
                                 :disabled="replyForm.processing || isSendingEmail"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50"
                               >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -1766,7 +1766,7 @@
                                 type="button"
                                 @click="cancelReply"
                                 :disabled="replyForm.processing || isSendingEmail"
-                                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                                class="px-4 py-2 bg-brand-surface border border-brand-border text-brand-text rounded-md text-sm font-medium hover:bg-brand-surface-2 disabled:opacity-50"
                               >
                                 キャンセル
                               </button>
@@ -1777,15 +1777,15 @@
                     </div>
                   </div>
 
-                  <div v-else class="text-center py-12 text-gray-500">
-                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div v-else class="text-center py-12 text-brand-text-muted">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-brand-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <p class="text-sm">メールのやり取りはありません</p>
                     <button
                       type="button"
                       @click="openNewComposer"
-                      class="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                      class="mt-3 text-sm text-brand-primary hover:text-brand-primary-hover font-medium"
                     >
                       新規メールを作成する
                     </button>
@@ -1794,10 +1794,10 @@
               </div>
             </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
               <div class="p-6">
                 <div
-                  class="flex border-b border-gray-200 mb-4 -mt-1 gap-1"
+                  class="flex border-b border-brand-border mb-4 -mt-1 gap-1"
                   role="tablist"
                   aria-label="メモと操作履歴"
                 >
@@ -1808,7 +1808,7 @@
                       'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
                       rightPanelTab === 'memo'
                         ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
-                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                        : 'border-transparent text-brand-text-muted hover:text-brand-text hover:bg-brand-surface-2',
                     ]"
                     :aria-selected="rightPanelTab === 'memo'"
                     @click="rightPanelTab = 'memo'"
@@ -1822,7 +1822,7 @@
                       'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
                       rightPanelTab === 'history'
                         ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
-                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                        : 'border-transparent text-brand-text-muted hover:text-brand-text hover:bg-brand-surface-2',
                     ]"
                     :aria-selected="rightPanelTab === 'history'"
                     @click="rightPanelTab = 'history'"
@@ -1835,14 +1835,14 @@
                   <form @submit.prevent="submitNote" class="mb-6">
                     <div>
                       <label
-                        class="block text-sm font-medium text-gray-700 mb-1"
+                        class="block text-sm font-medium text-brand-text mb-1"
                         >新しいメモ</label
                       >
                       <textarea
                         v-model="noteForm.content"
                         rows="4"
                         required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                         placeholder="メモを入力してください"
                       ></textarea>
                       <div
@@ -1855,7 +1855,7 @@
                     <button
                       type="submit"
                       :disabled="noteForm.processing"
-                      class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                      class="mt-2 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                     >
                       {{ noteForm.processing ? "登録中..." : "メモを追加" }}
                     </button>
@@ -1865,14 +1865,14 @@
                     <div
                       v-for="note in notes"
                       :key="note.id"
-                      class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
+                      class="border-b border-brand-border pb-4 last:border-b-0 last:pb-0"
                     >
                       <div class="flex justify-between items-start mb-2">
                         <div>
-                          <p class="text-sm font-medium text-gray-900">
+                          <p class="text-sm font-medium text-brand-text">
                             {{ note.user ? note.user.name : "不明" }}
                           </p>
-                          <p class="text-xs text-gray-500">
+                          <p class="text-xs text-brand-text-muted">
                             {{ formatDateTime(note.created_at) }}
                           </p>
                         </div>
@@ -1884,13 +1884,13 @@
                           削除
                         </button>
                       </div>
-                      <p class="text-sm text-gray-700 whitespace-pre-wrap">
+                      <p class="text-sm text-brand-text whitespace-pre-wrap">
                         {{ note.content }}
                       </p>
                     </div>
                     <p
                       v-if="notes.length === 0"
-                      class="text-sm text-gray-500 text-center py-4"
+                      class="text-sm text-brand-text-muted text-center py-4"
                     >
                       メモがありません
                     </p>
@@ -1900,7 +1900,7 @@
                 <div v-show="rightPanelTab === 'history'">
                   <div
                     v-if="activityLogs.length === 0"
-                    class="text-sm text-gray-500 text-center py-8"
+                    class="text-sm text-brand-text-muted text-center py-8"
                   >
                     操作履歴がありません
                   </div>
@@ -1908,7 +1908,7 @@
                     <table class="min-w-full text-sm">
                       <thead>
                         <tr
-                          class="border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wide"
+                          class="border-b border-brand-border text-left text-xs font-medium text-brand-text-muted uppercase tracking-wide"
                         >
                           <th class="py-2 pr-3 whitespace-nowrap">日時</th>
                           <th class="py-2 pr-3">操作内容</th>
@@ -1921,13 +1921,13 @@
                           :key="log.id"
                           class="align-top"
                         >
-                          <td class="py-2 pr-3 text-gray-600 whitespace-nowrap">
+                          <td class="py-2 pr-3 text-brand-text-muted whitespace-nowrap">
                             {{ formatDateTime(log.created_at) }}
                           </td>
-                          <td class="py-2 pr-3 text-gray-800 break-words">
+                          <td class="py-2 pr-3 text-brand-text break-words">
                             {{ log.description || "—" }}
                           </td>
-                          <td class="py-2 text-gray-700 whitespace-nowrap">
+                          <td class="py-2 text-brand-text whitespace-nowrap">
                             {{ log.operator_name }}
                           </td>
                         </tr>
@@ -2280,20 +2280,20 @@ const deleteNote = (noteId) => {
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    未対応: "bg-gray-100 text-gray-800",
+    未対応: "bg-brand-surface-2 text-brand-text",
     確認中: "bg-yellow-100 text-yellow-800",
     返信待ち: "bg-blue-100 text-blue-800",
     対応完了済み: "bg-green-100 text-green-800",
     キャンセル済み: "bg-red-100 text-red-800",
   };
-  return classes[status] || "bg-gray-100 text-gray-800";
+  return classes[status] || "bg-brand-surface-2 text-brand-text";
 };
 
 const getEntranceTicketSendBadgeClass = (value) => {
   if (value === "送付済み") {
     return "bg-green-100 text-green-800";
   }
-  return "bg-gray-100 text-gray-800";
+  return "bg-brand-surface-2 text-brand-text";
 };
 
 // スケジュール関連

@@ -47,13 +47,13 @@
 
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">
                     予約枠一覧 - {{ event.title }}
                 </h2>
                 <div class="flex space-x-4">
                     <Link
                         :href="route('admin.events.timeslots.create', event.id)"
-                        class="group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                        class="group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                     >
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -105,7 +105,7 @@
                 </div>
 
                 <!-- 操作ナビゲーション -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <EventNavigation :event="event" :show-url-button="false" />
                     </div>
@@ -125,37 +125,37 @@
                     </div>
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <!-- 会場ごと、その中で日付ごとにグループ化して表示 -->
                         <div v-if="groupedByVenue && Object.keys(groupedByVenue).length > 0" class="space-y-8">
                             <div
                                 v-for="(venueGroup, venueKey) in groupedByVenue"
                                 :key="venueKey"
-                                class="border-b border-gray-300 pb-8 last:border-b-0 last:pb-0"
+                                class="border-b border-brand-border pb-8 last:border-b-0 last:pb-0"
                             >
                                 <h2 class="text-2xl font-bold mb-6 text-indigo-700">{{ getVenueName(venueKey) }}</h2>
                                 <div v-for="(dateGroup, date) in venueGroup" :key="date" class="mb-6">
-                                    <h3 class="text-xl font-semibold my-4 text-gray-800">{{ formatDateHeader(date) }}</h3>
+                                    <h3 class="text-xl font-semibold my-4 text-brand-text">{{ formatDateHeader(date) }}</h3>
                                     <div class="space-y-4">
                                         <div
                                             v-for="timeslot in dateGroup"
                                             :key="timeslot.id"
-                                            class="border border-gray-200 rounded-lg overflow-hidden"
+                                            class="border border-brand-border rounded-lg overflow-hidden"
                                         >
                                             <!-- 時間枠ヘッダー -->
-                                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                            <div class="bg-brand-surface-2 px-4 py-3 border-b border-brand-border">
                                                 <div class="flex justify-between items-center">
                                                     <div class="flex items-center space-x-4">
-                                                        <span class="text-lg font-semibold text-gray-900">{{ formatTime(timeslot.start_at) }}</span>
-                                                        <span class="text-sm text-gray-600">
+                                                        <span class="text-lg font-semibold text-brand-text">{{ formatTime(timeslot.start_at) }}</span>
+                                                        <span class="text-sm text-brand-text-muted">
                                                             定員: {{ timeslot.capacity }}枠
                                                             <span class="mx-2">|</span>
                                                             予約済み: {{ timeslot.capacity - timeslot.remaining_capacity }}枠
                                                             <span class="mx-2">|</span>
                                                             残り: <span :class="timeslot.remaining_capacity > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">{{ timeslot.remaining_capacity }}枠</span>
                                                         </span>
-                                                        <span class="px-2 py-1 text-xs rounded-full" :class="timeslot.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                                                        <span class="px-2 py-1 text-xs rounded-full" :class="timeslot.is_active ? 'bg-green-100 text-green-800' : 'bg-brand-surface-2 text-brand-text'">
                                                             {{ timeslot.is_active ? '有効' : '無効' }}
                                                         </span>
                                                 </div>
@@ -192,7 +192,7 @@
                                                     <button
                                                         @click="adjustCapacity(timeslot.id, 5)"
                                                         :disabled="adjustingTimeslotId === timeslot.id"
-                                                        class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                        class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                                         title="枠を5つ増やす"
                                                     >
                                                         +5
@@ -221,24 +221,24 @@
                                         </div>
 
                                         <!-- 詳細情報 -->
-                                        <div class="p-4 bg-white">
+                                        <div class="p-4 bg-brand-surface">
                                             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                                                 <div>
-                                                    <span class="text-gray-500">ID:</span>
-                                                    <span class="ml-2 text-gray-900 font-medium">{{ timeslot.id }}</span>
+                                                    <span class="text-brand-text-muted">ID:</span>
+                                                    <span class="ml-2 text-brand-text font-medium">{{ timeslot.id }}</span>
                                                 </div>
                                                 <div>
-                                                    <span class="text-gray-500">開始日時:</span>
-                                                    <span class="ml-2 text-gray-900">{{ formatDateTime(timeslot.start_at) }}</span>
+                                                    <span class="text-brand-text-muted">開始日時:</span>
+                                                    <span class="ml-2 text-brand-text">{{ formatDateTime(timeslot.start_at) }}</span>
                                                 </div>
                                                 <div>
-                                                    <span class="text-gray-500">会場:</span>
-                                                    <span class="ml-2 text-gray-900">{{ timeslot.venue?.name || '会場未設定' }}</span>
+                                                    <span class="text-brand-text-muted">会場:</span>
+                                                    <span class="ml-2 text-brand-text">{{ timeslot.venue?.name || '会場未設定' }}</span>
                                                 </div>
                                                 <div>
-                                                    <span class="text-gray-500">状態:</span>
+                                                    <span class="text-brand-text-muted">状態:</span>
                                                     <span class="ml-2">
-                                                        <span class="px-2 py-1 text-xs rounded-full" :class="timeslot.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                                                        <span class="px-2 py-1 text-xs rounded-full" :class="timeslot.is_active ? 'bg-green-100 text-green-800' : 'bg-brand-surface-2 text-brand-text'">
                                                             {{ timeslot.is_active ? '有効' : '無効' }}
                                                         </span>
                                                     </span>
@@ -250,7 +250,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-center py-12 text-gray-500">
+                        <div v-else class="text-center py-12 text-brand-text-muted">
                             予約枠が登録されていません
                         </div>
                     </div>

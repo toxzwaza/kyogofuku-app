@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">イベント一覧</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">イベント一覧</h2>
                 <ActionButton variant="create" label="新規追加" :href="route('admin.events.create')" />
             </div>
         </template>
@@ -12,21 +12,21 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- 絞り込みブロック -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">絞り込み</h3>
-                            <button @click="resetFilters" class="text-sm text-gray-600 hover:text-gray-800">
+                            <h3 class="text-lg font-semibold text-brand-text">絞り込み</h3>
+                            <button @click="resetFilters" class="text-sm text-brand-text-muted hover:text-brand-text">
                                 リセット
                             </button>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">フォーム種別</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">フォーム種別</label>
                                 <select
                                     v-model="searchForm.form_type"
                                     @change="search"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                 >
                                     <option value="">すべて</option>
                                     <option value="reservation">振袖予約</option>
@@ -36,11 +36,11 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">担当店舗</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">担当店舗</label>
                                 <select
                                     v-model="searchForm.shop_id"
                                     @change="search"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                 >
                                     <option value="">すべての店舗</option>
                                     <option v-for="shop in shops" :key="shop.id" :value="shop.id">
@@ -49,11 +49,11 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">公開状態</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">公開状態</label>
                                 <select
                                     v-model="searchForm.public_status"
                                     @change="search"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                 >
                                     <option value="active">公開中</option>
                                     <option value="ended">受付終了</option>
@@ -65,7 +65,7 @@
                         <div class="mt-4 flex justify-end">
                             <button
                                 @click="search"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
+                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover text-sm"
                             >
                                 検索
                             </button>
@@ -73,27 +73,27 @@
                     </div>
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-brand-border">
+                                <thead class="bg-brand-surface-2">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">タイトル</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">フォーム種別</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">受付開始日</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">受付終了日</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">店舗</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">公開状態</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">タイトル</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">フォーム種別</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">受付開始日</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">受付終了日</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">店舗</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">公開状態</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-brand-surface divide-y divide-brand-border">
                                     <tr v-for="event in events.data" :key="event.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ event.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ event.title }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ event.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ event.title }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             <span class="px-2 py-1 text-xs rounded-full" :class="{
                                                 'bg-blue-100 text-blue-800': event.form_type === 'reservation',
                                                 'bg-cyan-100 text-cyan-900': event.form_type === 'reservation_hakama',
@@ -103,13 +103,13 @@
                                                 {{ getFormTypeLabel(event.form_type) }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             {{ formatDate(event.start_at) }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             {{ formatDate(event.end_at) }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             <span v-for="(shop, index) in event.shops" :key="shop.id">
                                                 {{ shop.name }}<span v-if="index < event.shops.length - 1">, </span>
                                             </span>
@@ -136,7 +136,7 @@
                                         :href="link.url"
                                         :class="[
                                             'px-4 py-2 mx-1 rounded-md',
-                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2',
                                         ]"
                                     >
                                         <span v-html="link.label"></span>
@@ -145,7 +145,7 @@
                                         v-else
                                         :class="[
                                             'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
-                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700',
+                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text',
                                         ]"
                                         v-html="link.label"
                                     ></span>
@@ -234,7 +234,7 @@ const getPublicStatusLabel = (event) => {
 
 const getPublicStatusClass = (event) => {
     if (!event.is_public) {
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-surface-2 text-brand-text';
     }
     if (event.end_at) {
         const todayTokyo = formatDateInputValueJa(new Date().toISOString());

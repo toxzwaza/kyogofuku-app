@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">
                     イベント画像管理 - {{ event.title }}
                 </h2>
                 <div class="flex space-x-4">
@@ -16,7 +16,7 @@
                     </button>
                     <Link
                         :href="route('admin.events.images.create', event.id)"
-                        class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                        class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover"
                     >
                         画像追加
                     </Link>
@@ -32,13 +32,13 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
                 <!-- 操作ナビゲーション -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <EventNavigation :event="event" :show-url-button="false" />
                     </div>
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div v-if="$page.props.flash?.success" class="mb-4 rounded-md bg-green-50 p-4">
                             <p class="text-sm font-medium text-green-800">{{ $page.props.flash.success }}</p>
@@ -48,9 +48,9 @@
                         </div>
                         <div v-if="images && images.length > 0" class="space-y-4">
                             <div class="mb-4 flex flex-wrap items-center gap-3">
-                                <p class="text-sm text-gray-600">ハンドル（≡）をドラッグして並び替え／行の上端で放すと挿入、行の中央付近で放すと入れ替え。行クリックで複数選択できます</p>
+                                <p class="text-sm text-brand-text-muted">ハンドル（≡）をドラッグして並び替え／行の上端で放すと挿入、行の中央付近で放すと入れ替え。行クリックで複数選択できます</p>
                                 <template v-if="selectedIds.size > 0">
-                                    <span class="text-sm font-medium text-indigo-600">{{ selectedIds.size }}件選択中</span>
+                                    <span class="text-sm font-medium text-brand-primary">{{ selectedIds.size }}件選択中</span>
                                     <button
                                         type="button"
                                         @click="bulkDeleteSelected"
@@ -62,7 +62,7 @@
                                     <button
                                         type="button"
                                         @click="clearSelection"
-                                        class="text-sm text-gray-600 hover:text-gray-800 underline"
+                                        class="text-sm text-brand-text-muted hover:text-brand-text underline"
                                     >
                                         選択解除
                                     </button>
@@ -95,14 +95,14 @@
                                 <!-- 挿入ドロップインジケータ（行と行の間） -->
                                 <div
                                     v-if="dropMode === 'insert' && dropTargetIndex === index"
-                                    class="h-1 bg-indigo-500 rounded mb-2"
+                                    class="h-1 bg-brand-primary rounded mb-2"
                                     aria-hidden="true"
                                 />
                                 <!-- 画像行 -->
                                 <div
                                     class="flex items-center space-x-3 p-4 border rounded-lg mb-4 transition-colors cursor-pointer select-none"
                                     :class="[
-                                        dropMode === 'swap' && dropTargetIndex === index ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300 ring-offset-1' : 'border-gray-200 hover:bg-gray-50',
+                                        dropMode === 'swap' && dropTargetIndex === index ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300 ring-offset-1' : 'border-brand-border hover:bg-brand-surface-2',
                                         selectedIds.has(image.id) && !(dropMode === 'swap' && dropTargetIndex === index) ? 'bg-sky-100 border-sky-400 ring-2 ring-sky-300 ring-offset-1' : ''
                                     ]"
                                     :data-drop-index="index"
@@ -120,14 +120,14 @@
                                         @click.stop
                                         title="ドラッグして移動"
                                     >
-                                        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-6 h-6 text-brand-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
                                         </svg>
                                     </div>
                                     <!-- 画像（クリックで拡大プレビュー） -->
                                     <button
                                         type="button"
-                                        class="flex-shrink-0 rounded overflow-hidden border border-gray-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow"
+                                        class="flex-shrink-0 rounded overflow-hidden border border-brand-border hover:border-indigo-400 hover:ring-2 hover:ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow"
                                         @click.stop="openPreview(image)"
                                         title="クリックで拡大表示"
                                     >
@@ -138,16 +138,16 @@
                                         />
                                     </button>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm text-gray-600">順序: {{ index + 1 }}</p>
-                                        <p class="text-sm text-gray-600">ファイル形式: {{ image.file_format || '-' }}</p>
+                                        <p class="text-sm text-brand-text-muted">順序: {{ index + 1 }}</p>
+                                        <p class="text-sm text-brand-text-muted">ファイル形式: {{ image.file_format || '-' }}</p>
                                         <p v-if="image.webp_path" class="text-sm text-green-600">WebP変換済み</p>
-                                        <p v-if="image.alt" class="text-sm text-gray-600 truncate">Alt: {{ image.alt }}</p>
+                                        <p v-if="image.alt" class="text-sm text-brand-text-muted truncate">Alt: {{ image.alt }}</p>
                                     </div>
                                     <div class="flex-shrink-0 flex flex-col gap-2 items-end" @click.stop>
                                         <button
                                             type="button"
                                             @click="openMarginModal(image)"
-                                            class="text-indigo-600 hover:text-indigo-900 text-sm"
+                                            class="text-brand-primary hover:text-brand-primary-hover text-sm"
                                         >
                                             詳細
                                         </button>
@@ -205,7 +205,7 @@
                                 </Link>
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             画像が登録されていません
                         </div>
                     </div>
@@ -241,7 +241,7 @@
                         />
                         <button
                             type="button"
-                            class="absolute -top-10 right-0 p-2 text-white hover:text-gray-300 rounded-full hover:bg-white/10 transition-colors"
+                            class="absolute -top-10 right-0 p-2 text-white hover:text-brand-text-subtle rounded-full hover:bg-brand-surface/10 transition-colors"
                             @click="closePreview"
                             aria-label="閉じる"
                         >
@@ -272,29 +272,29 @@
                     aria-modal="true"
                     aria-label="画像詳細・マージン設定"
                 >
-                    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">画像詳細 - 余白（マージン）</h3>
-                        <p class="text-sm text-gray-500 mb-4">公開ページでこの画像の上・下に余白（px）を付けます。未入力の場合は余白なしです。</p>
+                    <div class="bg-brand-surface rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+                        <h3 class="text-lg font-semibold text-brand-text mb-4">画像詳細 - 余白（マージン）</h3>
+                        <p class="text-sm text-brand-text-muted mb-4">公開ページでこの画像の上・下に余白（px）を付けます。未入力の場合は余白なしです。</p>
                         <form @submit.prevent="submitMargin" class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">上マージン（px）</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">上マージン（px）</label>
                                 <input
                                     v-model.number="marginForm.margin_top_px"
                                     type="number"
                                     min="0"
                                     max="500"
-                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm"
                                     placeholder="未設定"
                                 />
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">下マージン（px）</label>
+                                <label class="block text-sm font-medium text-brand-text mb-1">下マージン（px）</label>
                                 <input
                                     v-model.number="marginForm.margin_bottom_px"
                                     type="number"
                                     min="0"
                                     max="500"
-                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                    class="w-full rounded-md border-brand-border shadow-sm"
                                     placeholder="未設定"
                                 />
                             </div>
@@ -302,14 +302,14 @@
                                 <button
                                     type="button"
                                     @click="closeMarginModal"
-                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                    class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                 >
                                     キャンセル
                                 </button>
                                 <button
                                     type="submit"
                                     :disabled="isSavingMargin"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                                    class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50"
                                 >
                                     {{ isSavingMargin ? '保存中...' : '保存' }}
                                 </button>

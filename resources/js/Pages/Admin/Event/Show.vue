@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">イベント詳細</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">イベント詳細</h2>
                 <ActionButton variant="back" label="イベント一覧に戻る" :href="route('admin.events.index')" />
             </div>
         </template>
@@ -26,7 +26,7 @@
                 </div>
 
                 <!-- 操作ナビゲーション -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <EventNavigation 
                             :event="event" 
@@ -37,7 +37,7 @@
                 </div>
 
                 <!-- 基本情報 -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="space-y-6">
                             <div>
@@ -46,7 +46,7 @@
                                     <button
                                         v-if="!isEditing"
                                         @click="startEdit"
-                                        class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                        class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                     >
                                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -58,26 +58,26 @@
                                 <div v-if="!isEditing">
                                     <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">ID</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ event.id }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text-muted">ID</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ event.id }}</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">タイトル</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ event.title }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text-muted">タイトル</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ event.title }}</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">スラッグ</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ event.slug }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text-muted">スラッグ</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ event.slug }}</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">URLエイリアス</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">
+                                            <dt class="text-sm font-medium text-brand-text-muted">URLエイリアス</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">
                                                 <span v-if="event.slug_aliases && event.slug_aliases.length">{{ event.slug_aliases.join(', ') }}</span>
-                                                <span v-else class="text-gray-400">なし</span>
+                                                <span v-else class="text-brand-text-subtle">なし</span>
                                             </dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">フォーム種別</dt>
+                                            <dt class="text-sm font-medium text-brand-text-muted">フォーム種別</dt>
                                             <dd class="mt-1">
                                                 <span class="px-2 py-1 text-xs rounded-full" :class="{
                                                     'bg-blue-100 text-blue-800': event.form_type === 'reservation',
@@ -90,43 +90,43 @@
                                             </dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">受付開始日</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ formatDate(event.start_at) }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text-muted">受付開始日</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ formatDate(event.start_at) }}</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">受付終了日</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ formatDate(event.end_at) }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text-muted">受付終了日</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ formatDate(event.end_at) }}</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">GTM ID</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">{{ event.gtm_id || '未設定' }}</dd>
+                                            <dt class="text-sm font-medium text-brand-text-muted">GTM ID</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">{{ event.gtm_id || '未設定' }}</dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">成功ページURLテキスト</dt>
-                                            <dd class="mt-1 text-sm text-gray-900">
+                                            <dt class="text-sm font-medium text-brand-text-muted">成功ページURLテキスト</dt>
+                                            <dd class="mt-1 text-sm text-brand-text">
                                                 <span v-if="event.success_text">{{ event.success_text }}</span>
-                                                <span v-else class="text-gray-400">未設定</span>
+                                                <span v-else class="text-brand-text-subtle">未設定</span>
                                             </dd>
                                         </div>
                                         <div class="sm:col-span-2">
-                                            <dt class="text-sm font-medium text-gray-500">受付終了時メッセージ</dt>
-                                            <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line">
+                                            <dt class="text-sm font-medium text-brand-text-muted">受付終了時メッセージ</dt>
+                                            <dd class="mt-1 text-sm text-brand-text whitespace-pre-line">
                                                 <span v-if="event.ended_message_text">{{ event.ended_message_text }}</span>
-                                                <span v-else class="text-gray-400">未設定</span>
+                                                <span v-else class="text-brand-text-subtle">未設定</span>
                                             </dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">公開状態</dt>
+                                            <dt class="text-sm font-medium text-brand-text-muted">公開状態</dt>
                                             <dd class="mt-1">
-                                                <span class="px-2 py-1 text-xs rounded-full" :class="event.is_public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                                                <span class="px-2 py-1 text-xs rounded-full" :class="event.is_public ? 'bg-green-100 text-green-800' : 'bg-brand-surface-2 text-brand-text'">
                                                     {{ event.is_public ? '公開' : '非公開' }}
                                                 </span>
                                             </dd>
                                         </div>
                                         <div>
-                                            <dt class="text-sm font-medium text-gray-500">UTM分析APIに含める</dt>
+                                            <dt class="text-sm font-medium text-brand-text-muted">UTM分析APIに含める</dt>
                                             <dd class="mt-1">
-                                                <span class="px-2 py-1 text-xs rounded-full" :class="event.utm_analytics_enabled ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'">
+                                                <span class="px-2 py-1 text-xs rounded-full" :class="event.utm_analytics_enabled ? 'bg-indigo-100 text-indigo-800' : 'bg-brand-surface-2 text-brand-text'">
                                                     {{ event.utm_analytics_enabled ? 'ON' : 'OFF' }}
                                                 </span>
                                             </dd>
@@ -136,40 +136,40 @@
                                 </div>
 
                                 <!-- 編集フォーム -->
-                                <div v-else class="bg-gray-50 rounded-lg p-4">
+                                <div v-else class="bg-brand-surface-2 rounded-lg p-4">
                                     <form @submit.prevent="updateEvent">
                                         <div class="space-y-4">
                                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                                 <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">タイトル <span class="text-red-500">*</span></label>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">タイトル <span class="text-red-500">*</span></label>
                                                     <input
                                                         v-model="editForm.title"
                                                         type="text"
                                                         required
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     />
                                                     <div v-if="editForm.errors.title" class="mt-1 text-sm text-red-600">{{ editForm.errors.title }}</div>
                                                 </div>
 
                                                 <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">スラッグ <span class="text-red-500">*</span></label>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">スラッグ <span class="text-red-500">*</span></label>
                                                     <input
                                                         v-model="editForm.slug"
                                                         type="text"
                                                         required
                                                         @input="validateSlug"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         :class="slugError ? 'border-red-500' : ''"
                                                         placeholder="例: event-slug-2024"
                                                     />
-                                                    <p class="mt-1 text-xs text-gray-500">URLに使用される文字列です。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
+                                                    <p class="mt-1 text-xs text-brand-text-muted">URLに使用される文字列です。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
                                                     <div v-if="slugError" class="mt-1 text-sm text-red-600">{{ slugError }}</div>
                                                     <div v-if="editForm.errors.slug" class="mt-1 text-sm text-red-600">{{ editForm.errors.slug }}</div>
                                                 </div>
 
                                                 <div class="sm:col-span-2">
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">URLエイリアス</label>
-                                                    <p class="mt-1 text-xs text-gray-500 mb-2">同じイベントに複数のURLでアクセスさせたい場合に登録します。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">URLエイリアス</label>
+                                                    <p class="mt-1 text-xs text-brand-text-muted mb-2">同じイベントに複数のURLでアクセスさせたい場合に登録します。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
                                                     <div
                                                         v-for="(alias, index) in editForm.slug_aliases"
                                                         :key="index"
@@ -178,7 +178,7 @@
                                                         <input
                                                             v-model="editForm.slug_aliases[index]"
                                                             type="text"
-                                                            class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="flex-1 rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                             placeholder="例: old-event-name"
                                                         />
                                                         <button
@@ -192,7 +192,7 @@
                                                     <button
                                                         type="button"
                                                         @click="editForm.slug_aliases.push('')"
-                                                        class="text-sm text-indigo-600 hover:text-indigo-800"
+                                                        class="text-sm text-brand-primary hover:text-brand-primary-hover"
                                                     >
                                                         + エイリアスを追加
                                                     </button>
@@ -202,11 +202,11 @@
                                                 </div>
 
                                                 <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">フォーム種別 <span class="text-red-500">*</span></label>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">フォーム種別 <span class="text-red-500">*</span></label>
                                                     <select
                                                         v-model="editForm.form_type"
                                                         required
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     >
                                                         <option value="reservation">振袖予約</option>
                                                         <option value="reservation_hakama">袴予約（岡山）</option>
@@ -217,21 +217,21 @@
                                                 </div>
 
                                                 <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">受付開始日</label>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">受付開始日</label>
                                                     <input
                                                         v-model="editForm.start_at"
                                                         type="date"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     />
                                                     <div v-if="editForm.errors.start_at" class="mt-1 text-sm text-red-600">{{ editForm.errors.start_at }}</div>
                                                 </div>
 
                                                 <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">受付終了日</label>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">受付終了日</label>
                                                     <input
                                                         v-model="editForm.end_at"
                                                         type="date"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     />
                                                     <div v-if="editForm.errors.end_at" class="mt-1 text-sm text-red-600">{{ editForm.errors.end_at }}</div>
                                                 </div>
@@ -241,9 +241,9 @@
                                                         <input
                                                             v-model="editForm.is_public"
                                                             type="checkbox"
-                                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
-                                                        <span class="ml-2 text-sm text-gray-700">公開</span>
+                                                        <span class="ml-2 text-sm text-brand-text">公開</span>
                                                     </label>
                                                 </div>
 
@@ -252,65 +252,65 @@
                                                         <input
                                                             v-model="editForm.utm_analytics_enabled"
                                                             type="checkbox"
-                                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
-                                                        <span class="ml-2 text-sm text-gray-700">UTM分析APIに含める</span>
+                                                        <span class="ml-2 text-sm text-brand-text">UTM分析APIに含める</span>
                                                     </label>
-                                                    <p class="mt-1 text-xs text-gray-500">ONにすると、流入経路分析APIの返却対象イベントになります。</p>
+                                                    <p class="mt-1 text-xs text-brand-text-muted">ONにすると、流入経路分析APIの返却対象イベントになります。</p>
                                                 </div>
 
                                                 <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">GTM ID</label>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">GTM ID</label>
                                                     <input
                                                         v-model="editForm.gtm_id"
                                                         type="text"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         placeholder="例: GTM-5NP4QCSB"
                                                     />
-                                                    <p class="mt-1 text-xs text-gray-500">Google Tag Manager IDを入力してください（任意）</p>
+                                                    <p class="mt-1 text-xs text-brand-text-muted">Google Tag Manager IDを入力してください（任意）</p>
                                                     <div v-if="editForm.errors.gtm_id" class="mt-1 text-sm text-red-600">{{ editForm.errors.gtm_id }}</div>
                                                 </div>
 
                                                 <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">成功ページURLテキスト</label>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">成功ページURLテキスト</label>
                                                     <input
                                                         v-model="editForm.success_text"
                                                         type="text"
                                                         @input="validateSuccessText"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         :class="successTextError ? 'border-red-500' : ''"
                                                     />
-                                                    <p class="mt-1 text-xs text-gray-500">成功ページのURLに含めるテキストを入力してください（任意）。設定すると `/event/{event}/reserve/success/{text}` の形式になります。英数字、ハイフン、アンダースコアのみ使用可能です。</p>
+                                                    <p class="mt-1 text-xs text-brand-text-muted">成功ページのURLに含めるテキストを入力してください（任意）。設定すると `/event/{event}/reserve/success/{text}` の形式になります。英数字、ハイフン、アンダースコアのみ使用可能です。</p>
                                                     <div v-if="successTextError" class="mt-1 text-sm text-red-600">{{ successTextError }}</div>
                                                     <div v-if="editForm.errors.success_text" class="mt-1 text-sm text-red-600">{{ editForm.errors.success_text }}</div>
                                                 </div>
 
                                                 <div class="sm:col-span-2">
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">受付終了時メッセージ</label>
+                                                    <label class="block text-sm font-medium text-brand-text mb-1">受付終了時メッセージ</label>
                                                     <textarea
                                                         v-model="editForm.ended_message_text"
                                                         rows="3"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         placeholder="例: 次回の開催は未定です。"
                                                     ></textarea>
-                                                    <p class="mt-1 text-xs text-gray-500">公開ページで受付終了後に表示される「このイベントは〇月〇日をもって終了いたしました。」の下に、改行して赤色で表示されます。未入力の場合は表示しません。</p>
+                                                    <p class="mt-1 text-xs text-brand-text-muted">公開ページで受付終了後に表示される「このイベントは〇月〇日をもって終了いたしました。」の下に、改行して赤色で表示されます。未入力の場合は表示しません。</p>
                                                     <div v-if="editForm.errors.ended_message_text" class="mt-1 text-sm text-red-600">{{ editForm.errors.ended_message_text }}</div>
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                                                 <textarea
                                                     v-model="editForm.description"
                                                     rows="4"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 ></textarea>
                                                 <div v-if="editForm.errors.description" class="mt-1 text-sm text-red-600">{{ editForm.errors.description }}</div>
                                             </div>
 
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">開催店舗</label>
-                                                <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                                                <label class="block text-sm font-medium text-brand-text mb-2">開催店舗</label>
+                                                <div class="space-y-2 max-h-48 overflow-y-auto border border-brand-border rounded-md p-3">
                                                     <label
                                                         v-for="shop in allShops"
                                                         :key="shop.id"
@@ -320,9 +320,9 @@
                                                             type="checkbox"
                                                             :value="shop.id"
                                                             v-model="editForm.shop_ids"
-                                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
-                                                        <span class="ml-2 text-sm text-gray-700">{{ shop.name }}</span>
+                                                        <span class="ml-2 text-sm text-brand-text">{{ shop.name }}</span>
                                                     </label>
                                                 </div>
                                                 <div v-if="editForm.errors.shop_ids" class="mt-1 text-sm text-red-600">{{ editForm.errors.shop_ids }}</div>
@@ -332,14 +332,14 @@
                                                 <button
                                                     type="button"
                                                     @click="cancelEdit"
-                                                    class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                    class="px-5 py-2.5 text-sm font-medium text-brand-text bg-brand-surface border border-brand-border rounded-lg shadow-sm hover:bg-brand-surface-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                                 >
                                                     キャンセル
                                                 </button>
                                                 <button
                                                     type="submit"
                                                     :disabled="editForm.processing"
-                                                    class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                                                    class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
                                                 >
                                                     <span v-if="editForm.processing" class="inline-flex items-center">
                                                         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -364,29 +364,29 @@
                             <!-- 説明（編集モードでない場合のみ表示） -->
                             <div v-if="!isEditing && event.description">
                                 <h3 class="text-lg font-semibold mb-4">説明</h3>
-                                <div class="text-sm text-gray-900" v-html="event.description"></div>
+                                <div class="text-sm text-brand-text" v-html="event.description"></div>
                             </div>
 
                             <!-- 開催店舗（編集モードでない場合のみ表示） -->
                             <div v-if="!isEditing && event.shops && event.shops.length > 0">
                                 <h3 class="text-lg font-semibold mb-4">開催店舗</h3>
                                 <div class="space-y-2">
-                                    <div v-for="shop in event.shops" :key="shop.id" class="text-sm text-gray-900">
+                                    <div v-for="shop in event.shops" :key="shop.id" class="text-sm text-brand-text">
                                         {{ shop.name }}
                                     </div>
                                 </div>
                             </div>
-                            <div v-if="!isEditing && (!event.shops || event.shops.length === 0)" class="text-sm text-gray-500">
+                            <div v-if="!isEditing && (!event.shops || event.shops.length === 0)" class="text-sm text-brand-text-muted">
                                 開催店舗が登録されていません。
                             </div>
 
                             <!-- 資料管理（資料請求フォームの場合のみ） -->
-                            <div v-if="event.form_type === 'document'" class="border-t border-gray-200 pt-6">
+                            <div v-if="event.form_type === 'document'" class="border-t border-brand-border pt-6">
                                 <div class="flex justify-between items-center mb-4">
                                     <h3 class="text-lg font-semibold">資料管理</h3>
                                     <button
                                         @click="showAddDocumentForm = !showAddDocumentForm"
-                                        class="group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                        class="group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                     >
                                         <svg v-if="!showAddDocumentForm" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -399,42 +399,42 @@
                                 </div>
 
                                 <!-- 資料追加フォーム -->
-                                <div v-if="showAddDocumentForm" class="mb-6 p-4 bg-gray-50 rounded-lg">
+                                <div v-if="showAddDocumentForm" class="mb-6 p-4 bg-brand-surface-2 rounded-lg">
                                     <form @submit.prevent="uploadDocument">
                                         <div class="space-y-4">
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">資料名 <span class="text-red-500">*</span></label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">資料名 <span class="text-red-500">*</span></label>
                                                 <input
                                                     v-model="newDocument.name"
                                                     type="text"
                                                     required
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     placeholder="資料の名前を入力"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                                                 <textarea
                                                     v-model="newDocument.description"
                                                     rows="2"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     placeholder="資料の説明を入力（任意）"
                                                 ></textarea>
                                             </div>
 
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">PDFファイル <span class="text-red-500">*</span></label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">PDFファイル <span class="text-red-500">*</span></label>
                                                 <input
                                                     ref="pdfFileInput"
                                                     type="file"
                                                     accept=".pdf"
                                                     @change="handlePdfFileChange"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
-                                                <p class="mt-1 text-xs text-gray-500">PDFファイル（最大10MB）</p>
-                                                <div v-if="newDocument.pdfFile" class="mt-2 p-2 bg-gray-100 rounded">
-                                                    <p class="text-sm text-gray-700">{{ newDocument.pdfFile.name }}</p>
+                                                <p class="mt-1 text-xs text-brand-text-muted">PDFファイル（最大10MB）</p>
+                                                <div v-if="newDocument.pdfFile" class="mt-2 p-2 bg-brand-surface-2 rounded">
+                                                    <p class="text-sm text-brand-text">{{ newDocument.pdfFile.name }}</p>
                                                     <button
                                                         type="button"
                                                         @click="removePdfFile"
@@ -446,20 +446,20 @@
                                             </div>
 
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">サムネイル画像（任意）</label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">サムネイル画像（任意）</label>
                                                 <input
                                                     ref="thumbnailFileInput"
                                                     type="file"
                                                     accept="image/*"
                                                     @change="handleThumbnailFileChange"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
-                                                <p class="mt-1 text-xs text-gray-500">サムネイル画像（JPEG、PNG、GIF、最大2MB）</p>
+                                                <p class="mt-1 text-xs text-brand-text-muted">サムネイル画像（JPEG、PNG、GIF、最大2MB）</p>
                                                 <div v-if="newDocument.thumbnailPreview" class="mt-2">
                                                     <img
                                                         :src="newDocument.thumbnailPreview"
                                                         alt="サムネイルプレビュー"
-                                                        class="w-32 h-32 object-cover border border-gray-300 rounded"
+                                                        class="w-32 h-32 object-cover border border-brand-border rounded"
                                                     />
                                                     <button
                                                         type="button"
@@ -475,14 +475,14 @@
                                                 <button
                                                     type="button"
                                                     @click="showAddDocumentForm = false"
-                                                    class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                    class="px-5 py-2.5 text-sm font-medium text-brand-text bg-brand-surface border border-brand-border rounded-lg shadow-sm hover:bg-brand-surface-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                                 >
                                                     キャンセル
                                                 </button>
                                                 <button
                                                     type="submit"
                                                     :disabled="uploadingDocument || !newDocument.name || !newDocument.pdfFile"
-                                                    class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                                                    class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
                                                 >
                                                     <span v-if="uploadingDocument" class="inline-flex items-center">
                                                         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -504,41 +504,41 @@
                                 </div>
 
                                 <!-- 既存資料から選択（編集モードの場合のみ） -->
-                                <div v-if="isEditing" class="mb-6 p-4 border border-gray-300 rounded-lg">
-                                    <h4 class="text-sm font-medium text-gray-700 mb-3">既存資料から選択</h4>
+                                <div v-if="isEditing" class="mb-6 p-4 border border-brand-border rounded-lg">
+                                    <h4 class="text-sm font-medium text-brand-text mb-3">既存資料から選択</h4>
                                     <div v-if="documents.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                         <label
                                             v-for="document in documents"
                                             :key="document.id"
                                             class="relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all"
-                                            :class="editForm.document_ids.includes(document.id) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'"
+                                            :class="editForm.document_ids.includes(document.id) ? 'border-indigo-500 bg-indigo-50' : 'border-brand-border hover:border-gray-400'"
                                         >
                                             <input
                                                 type="checkbox"
                                                 :value="document.id"
                                                 v-model="editForm.document_ids"
-                                                class="absolute top-2 right-2 w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                                class="absolute top-2 right-2 w-5 h-5 text-brand-primary rounded border-brand-border focus:ring-brand-primary"
                                             />
-                                            <div class="aspect-square bg-gray-100 flex items-center justify-center">
+                                            <div class="aspect-square bg-brand-surface-2 flex items-center justify-center">
                                                 <img
                                                     v-if="document.thumbnail_url"
                                                     :src="document.thumbnail_url"
                                                     :alt="document.name"
                                                     class="w-full h-full object-cover"
                                                 />
-                                                <div v-else class="text-gray-400 text-xs text-center p-2">
+                                                <div v-else class="text-brand-text-subtle text-xs text-center p-2">
                                                     <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                     </svg>
                                                     PDF
                                                 </div>
                                             </div>
-                                            <div class="p-2 bg-white">
-                                                <p class="text-xs font-medium text-gray-900 line-clamp-2">{{ document.name }}</p>
+                                            <div class="p-2 bg-brand-surface">
+                                                <p class="text-xs font-medium text-brand-text line-clamp-2">{{ document.name }}</p>
                                             </div>
                                         </label>
                                     </div>
-                                    <p v-else class="text-sm text-gray-500">既存の資料がありません</p>
+                                    <p v-else class="text-sm text-brand-text-muted">既存の資料がありません</p>
                                     <div v-if="editForm.errors.document_ids" class="mt-1 text-sm text-red-600">{{ editForm.errors.document_ids }}</div>
                                 </div>
 
@@ -547,21 +547,21 @@
                                     <div
                                         v-for="document in event.documents"
                                         :key="document.id"
-                                        class="p-4 border border-gray-200 rounded-lg"
+                                        class="p-4 border border-brand-border rounded-lg"
                                     >
                                         <div v-if="!editingDocuments[document.id]">
                                             <div class="flex justify-between items-start">
                                                 <div class="flex-1 flex items-start space-x-4">
                                                     <!-- サムネイル画像 -->
                                                     <div class="flex-shrink-0">
-                                                        <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                                                        <div class="w-24 h-24 bg-brand-surface-2 rounded-lg overflow-hidden flex items-center justify-center">
                                                             <img
                                                                 v-if="document.thumbnail_url"
                                                                 :src="document.thumbnail_url"
                                                                 :alt="document.name"
                                                                 class="w-full h-full object-cover"
                                                             />
-                                                            <div v-else class="text-gray-400 text-xs text-center p-2">
+                                                            <div v-else class="text-brand-text-subtle text-xs text-center p-2">
                                                                 <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                                 </svg>
@@ -571,13 +571,13 @@
                                                     </div>
                                                     <!-- 資料情報 -->
                                                     <div class="flex-1">
-                                                        <h4 class="font-semibold text-gray-900">{{ document.name }}</h4>
-                                                        <p v-if="document.description" class="text-sm text-gray-600 mt-1">{{ document.description }}</p>
+                                                        <h4 class="font-semibold text-brand-text">{{ document.name }}</h4>
+                                                        <p v-if="document.description" class="text-sm text-brand-text-muted mt-1">{{ document.description }}</p>
                                                         <div class="mt-2 flex items-center space-x-4">
-                                                            <div v-if="document.pdf_path" class="text-xs text-gray-500">
+                                                            <div v-if="document.pdf_path" class="text-xs text-brand-text-muted">
                                                                 PDF: あり
                                                             </div>
-                                                            <div v-if="document.thumbnail_path" class="text-xs text-gray-500">
+                                                            <div v-if="document.thumbnail_path" class="text-xs text-brand-text-muted">
                                                                 サムネイル: あり
                                                             </div>
                                                         </div>
@@ -586,7 +586,7 @@
                                                 <div class="flex space-x-2 ml-4">
                                                     <button
                                                         @click="startEditDocument(document)"
-                                                        class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                        class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                                     >
                                                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -609,37 +609,37 @@
                                             <form @submit.prevent="updateDocument(document.id)">
                                                 <div class="space-y-3">
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">資料名 <span class="text-red-500">*</span></label>
+                                                        <label class="block text-sm font-medium text-brand-text mb-1">資料名 <span class="text-red-500">*</span></label>
                                                         <input
                                                             v-model="editingDocumentForms[document.id].name"
                                                             type="text"
                                                             required
-                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
                                                     </div>
 
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                                                        <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                                                         <textarea
                                                             v-model="editingDocumentForms[document.id].description"
                                                             rows="2"
-                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         ></textarea>
                                                     </div>
 
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">PDFファイル（変更する場合のみ）</label>
+                                                        <label class="block text-sm font-medium text-brand-text mb-1">PDFファイル（変更する場合のみ）</label>
                                                         <input
                                                             type="file"
                                                             accept=".pdf"
                                                             @change="(e) => editingDocumentForms[document.id].pdfFile = e.target.files[0]"
-                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
-                                                        <p class="mt-1 text-xs text-gray-500">PDFファイル（最大10MB）</p>
+                                                        <p class="mt-1 text-xs text-brand-text-muted">PDFファイル（最大10MB）</p>
                                                     </div>
 
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">サムネイル画像（変更する場合のみ）</label>
+                                                        <label class="block text-sm font-medium text-brand-text mb-1">サムネイル画像（変更する場合のみ）</label>
                                                         <input
                                                             type="file"
                                                             accept="image/*"
@@ -654,14 +654,14 @@
                                                                     reader.readAsDataURL(file);
                                                                 }
                                                             }"
-                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
-                                                        <p class="mt-1 text-xs text-gray-500">サムネイル画像（JPEG、PNG、GIF、最大2MB）</p>
+                                                        <p class="mt-1 text-xs text-brand-text-muted">サムネイル画像（JPEG、PNG、GIF、最大2MB）</p>
                                                         <div v-if="editingDocumentForms[document.id].thumbnailPreview" class="mt-2">
                                                             <img
                                                                 :src="editingDocumentForms[document.id].thumbnailPreview"
                                                                 alt="サムネイルプレビュー"
-                                                                class="w-32 h-32 object-cover border border-gray-300 rounded"
+                                                                class="w-32 h-32 object-cover border border-brand-border rounded"
                                                             />
                                                         </div>
                                                         <div v-if="document.thumbnail_path" class="mt-2">
@@ -669,9 +669,9 @@
                                                                 <input
                                                                     v-model="editingDocumentForms[document.id].removeThumbnail"
                                                                     type="checkbox"
-                                                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                                    class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                                 />
-                                                                <span class="ml-2 text-sm text-gray-700">サムネイルを削除</span>
+                                                                <span class="ml-2 text-sm text-brand-text">サムネイルを削除</span>
                                                             </label>
                                                         </div>
                                                     </div>
@@ -680,14 +680,14 @@
                                                         <button
                                                             type="button"
                                                             @click="cancelEditDocument(document.id)"
-                                                            class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                            class="px-5 py-2.5 text-sm font-medium text-brand-text bg-brand-surface border border-brand-border rounded-lg shadow-sm hover:bg-brand-surface-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                                         >
                                                             キャンセル
                                                         </button>
                                                         <button
                                                             type="submit"
                                                             :disabled="editingDocumentForms[document.id].processing"
-                                                            class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                                                            class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
                                                         >
                                                             <span v-if="editingDocumentForms[document.id].processing" class="inline-flex items-center">
                                                                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -709,18 +709,18 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div v-else class="text-sm text-gray-500">
+                                <div v-else class="text-sm text-brand-text-muted">
                                     資料が登録されていません。
                                 </div>
                             </div>
 
                             <!-- 会場管理（予約フォームの場合のみ） -->
-                            <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'" class="border-t border-gray-200 pt-6">
+                            <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'" class="border-t border-brand-border pt-6">
                                 <div class="flex justify-between items-center mb-4">
                                     <h3 class="text-lg font-semibold">会場管理</h3>
                                     <button
                                         @click="showAddVenueForm = !showAddVenueForm"
-                                        class="group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                        class="group relative inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                     >
                                         <svg v-if="!showAddVenueForm" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -733,17 +733,17 @@
                                 </div>
 
                                 <!-- 会場追加フォーム -->
-                                <div v-if="showAddVenueForm" class="mb-6 p-4 bg-gray-50 rounded-lg">
+                                <div v-if="showAddVenueForm" class="mb-6 p-4 bg-brand-surface-2 rounded-lg">
                                     <form @submit.prevent="addVenue">
                                         <div class="space-y-4">
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">会場名 <span class="text-red-500">*</span></label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">会場名 <span class="text-red-500">*</span></label>
                                                 <input
                                                     v-model="newVenueForm.name"
                                                     type="text"
                                                     list="venue-list"
                                                     required
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                     placeholder="既存の会場を選択するか、新規会場名を入力"
                                                 />
                                                 <datalist id="venue-list">
@@ -755,29 +755,29 @@
                                             </div>
 
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                                                 <textarea
                                                     v-model="newVenueForm.description"
                                                     rows="2"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 ></textarea>
                                             </div>
 
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">住所</label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">住所</label>
                                                 <input
                                                     v-model="newVenueForm.address"
                                                     type="text"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
+                                                <label class="block text-sm font-medium text-brand-text mb-1">電話番号</label>
                                                 <input
                                                     v-model="newVenueForm.phone"
                                                     type="tel"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                 />
                                             </div>
 
@@ -785,14 +785,14 @@
                                                 <button
                                                     type="button"
                                                     @click="showAddVenueForm = false"
-                                                    class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                    class="px-5 py-2.5 text-sm font-medium text-brand-text bg-brand-surface border border-brand-border rounded-lg shadow-sm hover:bg-brand-surface-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                                 >
                                                     キャンセル
                                                 </button>
                                                 <button
                                                     type="submit"
                                                     :disabled="newVenueForm.processing"
-                                                    class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                                                    class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
                                                 >
                                                     <span v-if="newVenueForm.processing" class="inline-flex items-center">
                                                         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -818,23 +818,23 @@
                                     <div
                                         v-for="venue in event.venues"
                                         :key="venue.id"
-                                        class="p-4 border border-gray-200 rounded-lg"
+                                        class="p-4 border border-brand-border rounded-lg"
                                     >
                                         <div v-if="!editingVenues[venue.id]">
                                             <div class="flex justify-between items-start">
                                                 <div class="flex-1">
-                                                    <h4 class="font-semibold text-gray-900">{{ venue.name }}</h4>
-                                                    <p v-if="venue.description" class="text-sm text-gray-600 mt-1">{{ venue.description }}</p>
-                                                    <p v-if="venue.address" class="text-sm text-gray-600 mt-1">{{ venue.address }}</p>
-                                                    <p v-if="venue.phone" class="text-sm text-gray-600 mt-1">{{ venue.phone }}</p>
-                                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full" :class="venue.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                                                    <h4 class="font-semibold text-brand-text">{{ venue.name }}</h4>
+                                                    <p v-if="venue.description" class="text-sm text-brand-text-muted mt-1">{{ venue.description }}</p>
+                                                    <p v-if="venue.address" class="text-sm text-brand-text-muted mt-1">{{ venue.address }}</p>
+                                                    <p v-if="venue.phone" class="text-sm text-brand-text-muted mt-1">{{ venue.phone }}</p>
+                                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full" :class="venue.is_active ? 'bg-green-100 text-green-800' : 'bg-brand-surface-2 text-brand-text'">
                                                         {{ venue.is_active ? '有効' : '無効' }}
                                                     </span>
                                                 </div>
                                                 <div class="flex space-x-2 ml-4">
                                                     <button
                                                         @click="startEditVenue(venue)"
-                                                        class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                        class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                                     >
                                                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -857,39 +857,39 @@
                                             <form @submit.prevent="updateVenue(venue.id)">
                                                 <div class="space-y-3">
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">会場名 <span class="text-red-500">*</span></label>
+                                                        <label class="block text-sm font-medium text-brand-text mb-1">会場名 <span class="text-red-500">*</span></label>
                                                         <input
                                                             v-model="editingVenueForms[venue.id].name"
                                                             type="text"
                                                             required
-                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
                                                     </div>
 
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+                                                        <label class="block text-sm font-medium text-brand-text mb-1">説明</label>
                                                         <textarea
                                                             v-model="editingVenueForms[venue.id].description"
                                                             rows="2"
-                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         ></textarea>
                                                     </div>
 
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">住所</label>
+                                                        <label class="block text-sm font-medium text-brand-text mb-1">住所</label>
                                                         <input
                                                             v-model="editingVenueForms[venue.id].address"
                                                             type="text"
-                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
                                                     </div>
 
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
+                                                        <label class="block text-sm font-medium text-brand-text mb-1">電話番号</label>
                                                         <input
                                                             v-model="editingVenueForms[venue.id].phone"
                                                             type="tel"
-                                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                            class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                         />
                                                     </div>
 
@@ -898,9 +898,9 @@
                                                             <input
                                                                 v-model="editingVenueForms[venue.id].is_active"
                                                                 type="checkbox"
-                                                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                                class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                                             />
-                                                            <span class="ml-2 text-sm text-gray-700">有効</span>
+                                                            <span class="ml-2 text-sm text-brand-text">有効</span>
                                                         </label>
                                                     </div>
 
@@ -908,14 +908,14 @@
                                                         <button
                                                             type="button"
                                                             @click="cancelEditVenue(venue.id)"
-                                                            class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                            class="px-5 py-2.5 text-sm font-medium text-brand-text bg-brand-surface border border-brand-border rounded-lg shadow-sm hover:bg-brand-surface-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                                         >
                                                             キャンセル
                                                         </button>
                                                         <button
                                                             type="submit"
                                                             :disabled="editingVenueForms[venue.id].processing"
-                                                            class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                                                            class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200"
                                                         >
                                                             <span v-if="editingVenueForms[venue.id].processing" class="inline-flex items-center">
                                                                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -937,7 +937,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div v-else class="text-sm text-gray-500">
+                                <div v-else class="text-sm text-brand-text-muted">
                                     会場が登録されていません。
                                 </div>
                             </div>
@@ -947,16 +947,16 @@
                                 <h3 class="text-lg font-semibold mb-4">統計情報</h3>
                                 <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">画像数</dt>
-                                        <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ event.images ? event.images.length : 0 }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">画像数</dt>
+                                        <dd class="mt-1 text-2xl font-semibold text-brand-text">{{ event.images ? event.images.length : 0 }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">予約枠数</dt>
-                                        <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ event.timeslots ? event.timeslots.length : 0 }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">予約枠数</dt>
+                                        <dd class="mt-1 text-2xl font-semibold text-brand-text">{{ event.timeslots ? event.timeslots.length : 0 }}</dd>
                                     </div>
                                     <div>
-                                        <dt class="text-sm font-medium text-gray-500">予約数</dt>
-                                        <dd class="mt-1 text-2xl font-semibold text-gray-900">{{ event.reservations ? event.reservations.length : 0 }}</dd>
+                                        <dt class="text-sm font-medium text-brand-text-muted">予約数</dt>
+                                        <dd class="mt-1 text-2xl font-semibold text-brand-text">{{ event.reservations ? event.reservations.length : 0 }}</dd>
                                     </div>
                                 </dl>
                             </div>
@@ -974,18 +974,18 @@
                 class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
                 @click.self="showUrlModal = false"
             >
-                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                            <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                             URL発行
                         </h3>
                         <button
                             @click="showUrlModal = false"
-                            class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -998,7 +998,7 @@
                         <div class="space-y-4">
                             <!-- UTMソース入力 -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-brand-text mb-2">
                                     UTMソース
                                 </label>
                                 <input
@@ -1006,7 +1006,7 @@
                                     v-model="utmSourceInput"
                                     list="utm-sources-list"
                                     placeholder="UTMソースを入力または選択"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                    class="w-full px-4 py-2 border border-brand-border rounded-lg focus:ring-brand-primary focus:border-brand-primary"
                                 />
                                 <datalist id="utm-sources-list">
                                     <option
@@ -1022,7 +1022,7 @@
                                 <button
                                     @click="generateUrl"
                                     :disabled="!utmSourceInput || isGeneratingUrl"
-                                    class="w-full inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                    class="w-full inline-flex items-center justify-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <svg v-if="isGeneratingUrl" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1037,7 +1037,7 @@
 
                             <!-- 生成されたURL表示 -->
                             <div v-if="generatedUrl">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-brand-text mb-2">
                                     生成されたURL
                                 </label>
                                 <div class="flex items-center gap-2">
@@ -1045,11 +1045,11 @@
                                         type="text"
                                         :value="generatedUrl"
                                         readonly
-                                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+                                        class="flex-1 px-4 py-2 border border-brand-border rounded-lg bg-brand-surface-2 text-sm font-mono"
                                     />
                                     <button
                                         @click="copyToClipboard"
-                                        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                        class="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors"
                                     >
                                         <svg v-if="!copied" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

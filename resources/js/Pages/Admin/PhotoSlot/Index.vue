@@ -4,7 +4,7 @@
   <AdminLayout>
     <template #header>
       <div class="flex justify-between items-center">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-brand-text leading-tight">
           前撮り管理
         </h2>
         <ActionButton
@@ -36,25 +36,25 @@
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- 絞り込みフォーム -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+        <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg mb-6">
           <div class="p-6">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold text-gray-800">検索条件</h3>
+              <h3 class="text-lg font-semibold text-brand-text">検索条件</h3>
               <button
                 @click="resetFilters"
-                class="text-sm text-gray-600 hover:text-gray-800"
+                class="text-sm text-brand-text-muted hover:text-brand-text"
               >
                 リセット
               </button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1"
+                <label class="block text-xs font-medium text-brand-text mb-1"
                   >店舗</label
                 >
                 <select
                   v-model="filters.shop_id"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                 >
                   <option value="">全て</option>
                   <option v-for="shop in shops" :key="shop.id" :value="shop.id">
@@ -63,12 +63,12 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1"
+                <label class="block text-xs font-medium text-brand-text mb-1"
                   >スタジオ</label
                 >
                 <select
                   v-model="filters.studio_id"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                 >
                   <option value="">全て</option>
                   <option
@@ -81,12 +81,12 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1"
+                <label class="block text-xs font-medium text-brand-text mb-1"
                   >予約状況</label
                 >
                 <select
                   v-model="filters.reservation_status"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                 >
                   <option value="">全て</option>
                   <option value="reserved">予約済み</option>
@@ -94,30 +94,30 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1"
+                <label class="block text-xs font-medium text-brand-text mb-1"
                   >日付範囲（開始）</label
                 >
                 <input
                   v-model="filters.start_date"
                   type="date"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1"
+                <label class="block text-xs font-medium text-brand-text mb-1"
                   >日付範囲（終了）</label
                 >
                 <input
                   v-model="filters.end_date"
                   type="date"
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <!-- 日付ごとにグルーピング表示（アコーディオン） -->
             <div
@@ -130,11 +130,11 @@
               <div
                 v-for="(dateGroup, date) in filteredGroupedSlots"
                 :key="date"
-                class="border border-gray-300 rounded-lg overflow-hidden"
+                class="border border-brand-border rounded-lg overflow-hidden"
               >
                 <!-- 日付ヘッダー（クリック可能） -->
                 <div
-                  class="w-full bg-gray-100 hover:bg-gray-200 px-4 py-3 flex items-center justify-between transition-colors"
+                  class="w-full bg-brand-surface-2 hover:bg-gray-200 px-4 py-3 flex items-center justify-between transition-colors"
                 >
                   <button
                     @click="toggleDate(date)"
@@ -142,7 +142,7 @@
                   >
                     <svg
                       :class="[
-                        'w-5 h-5 text-gray-600 transition-transform',
+                        'w-5 h-5 text-brand-text-muted transition-transform',
                         expandedDates.has(date) ? 'transform rotate-90' : '',
                       ]"
                       fill="none"
@@ -156,10 +156,10 @@
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                    <h3 class="text-lg font-semibold text-gray-800">
+                    <h3 class="text-lg font-semibold text-brand-text">
                       {{ formatDateJaWithWeekday(date) }}
                     </h3>
-                    <span class="text-sm text-gray-600"
+                    <span class="text-sm text-brand-text-muted"
                       >（{{ dateGroup.length }}件）</span
                     >
                   </button>
@@ -174,14 +174,14 @@
                       </span>
                     </div>
                     <div
-                      class="flex items-center space-x-4 text-sm text-gray-600"
+                      class="flex items-center space-x-4 text-sm text-brand-text-muted"
                     >
                       <span>予約済み: {{ getReservedCount(dateGroup) }}件</span>
                       <span>空き: {{ getAvailableCount(dateGroup) }}件</span>
                     </div>
                     <button
                       @click.stop="openDateEditModal(date, dateGroup)"
-                      class="ml-4 px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 flex items-center gap-1"
+                      class="ml-4 px-3 py-1 bg-brand-primary text-white text-sm rounded-md hover:bg-brand-primary-hover flex items-center gap-1"
                     >
                       <svg
                         class="w-4 h-4"
@@ -221,7 +221,7 @@
                     </button>
                     <span
                       v-else
-                      class="ml-2 px-3 py-1 bg-gray-200 text-gray-600 text-sm rounded-md flex items-center gap-1"
+                      class="ml-2 px-3 py-1 bg-gray-200 text-brand-text-muted text-sm rounded-md flex items-center gap-1"
                     >
                       <svg
                         class="w-4 h-4"
@@ -244,7 +244,7 @@
                 <!-- 展開された内容 -->
                 <div
                   v-if="expandedDates.has(date)"
-                  class="p-4 bg-white space-y-3"
+                  class="p-4 bg-brand-surface space-y-3"
                 >
                   <template v-for="(slot, index) in dateGroup" :key="slot.id">
                     <!-- 店舗が切り替わる際の区切り線 -->
@@ -265,29 +265,29 @@
                       "
                       class="mb-2"
                     >
-                      <div class="text-sm font-semibold text-gray-700">
+                      <div class="text-sm font-semibold text-brand-text">
                         {{ getShopName(slot) }}
                       </div>
                     </div>
                     <div
-                      class="border border-gray-200 rounded-lg overflow-hidden"
+                      class="border border-brand-border rounded-lg overflow-hidden"
                     >
                       <!-- 時間枠ヘッダー -->
                       <div
-                        class="bg-gray-50 px-4 py-2 border-b border-gray-200"
+                        class="bg-brand-surface-2 px-4 py-2 border-b border-brand-border"
                       >
                         <div class="flex justify-between items-center">
                           <div class="flex items-center space-x-4">
                             <span
-                              class="text-base font-semibold text-gray-900"
+                              class="text-base font-semibold text-brand-text"
                               >{{ formatTime(slot.shoot_time) }}</span
                             >
-                            <span class="text-sm text-gray-600">
+                            <span class="text-sm text-brand-text-muted">
                               スタジオ: {{ slot.studio?.name || "-" }}
                             </span>
                             <span
                               v-if="slot.shops && slot.shops.length > 0"
-                              class="text-sm text-gray-600"
+                              class="text-sm text-brand-text-muted"
                             >
                               店舗:
                               <span
@@ -307,7 +307,7 @@
                                 'px-2 py-1 text-xs rounded-full',
                                 slot.customer
                                   ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-800',
+                                  : 'bg-brand-surface-2 text-brand-text',
                               ]"
                             >
                               {{ slot.customer ? "予約済み" : "空き" }}
@@ -315,7 +315,7 @@
                             <button
                               v-if="slot.customer"
                               @click="openEditModal(slot)"
-                              class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700"
+                              class="px-3 py-1 bg-brand-primary text-white text-sm rounded-md hover:bg-brand-primary-hover"
                             >
                               編集
                             </button>
@@ -342,7 +342,7 @@
                             </button>
                             <span
                               v-if="slot.customer && slot.user && isSlotScheduled(slot.id)"
-                              class="px-3 py-1 bg-gray-200 text-gray-600 text-sm rounded-md flex items-center gap-1"
+                              class="px-3 py-1 bg-gray-200 text-brand-text-muted text-sm rounded-md flex items-center gap-1"
                             >
                               <svg
                                 class="w-4 h-4"
@@ -379,14 +379,14 @@
                           slot.plan ||
                           slot.remarks
                         "
-                        class="p-3 bg-white"
+                        class="p-3 bg-brand-surface"
                       >
                         <div
                           class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm"
                         >
                           <div v-if="slot.customer">
-                            <span class="text-gray-500 font-medium">顧客:</span>
-                            <span class="ml-2 text-gray-900">
+                            <span class="text-brand-text-muted font-medium">顧客:</span>
+                            <span class="ml-2 text-brand-text">
                               {{ slot.customer.name
                               }}<span
                                 v-if="
@@ -398,32 +398,32 @@
                             </span>
                           </div>
                           <div v-if="slot.assignment_label">
-                            <span class="text-gray-500 font-medium"
+                            <span class="text-brand-text-muted font-medium"
                               >ラベル:</span
                             >
-                            <span class="ml-2 text-gray-900">{{
+                            <span class="ml-2 text-brand-text">{{
                               slot.assignment_label
                             }}</span>
                           </div>
                           <div v-if="slot.user">
-                            <span class="text-gray-500 font-medium"
+                            <span class="text-brand-text-muted font-medium"
                               >担当者:</span
                             >
-                            <span class="ml-2 text-gray-900">{{
+                            <span class="ml-2 text-brand-text">{{
                               slot.user.name
                             }}</span>
                           </div>
                           <div v-if="slot.plan">
-                            <span class="text-gray-500 font-medium"
+                            <span class="text-brand-text-muted font-medium"
                               >プラン:</span
                             >
-                            <span class="ml-2 text-gray-900">{{
+                            <span class="ml-2 text-brand-text">{{
                               slot.plan.name
                             }}</span>
                           </div>
                           <div v-if="slot.remarks" class="md:col-span-2">
-                            <span class="text-gray-500 font-medium">備考:</span>
-                            <span class="ml-2 text-gray-900">{{
+                            <span class="text-brand-text-muted font-medium">備考:</span>
+                            <span class="ml-2 text-brand-text">{{
                               slot.remarks
                             }}</span>
                           </div>
@@ -434,7 +434,7 @@
                 </div>
               </div>
             </div>
-            <div v-else class="text-center py-12 text-gray-500">
+            <div v-else class="text-center py-12 text-brand-text-muted">
               条件に一致する前撮り枠がありません
             </div>
           </div>
@@ -450,15 +450,15 @@
         @click.self="showEditModal = false"
       >
         <div
-          class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+          class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
         >
           <!-- ヘッダー -->
           <div
-            class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50"
+            class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50"
           >
-            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
               <svg
-                class="w-6 h-6 text-indigo-600"
+                class="w-6 h-6 text-brand-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -474,7 +474,7 @@
             </h3>
             <button
               @click="showEditModal = false"
-              class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+              class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
             >
               <svg
                 class="w-6 h-6"
@@ -499,16 +499,16 @@
           >
             <div class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     担当店舗
                   </label>
                   <select
                     v-model="editForm.shop_id"
                     @change="onEditShopChange"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                   >
                     <option value="">選択してください</option>
                     <option
@@ -526,9 +526,9 @@
                     {{ editForm.errors.shop_id }}
                   </div>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     会場 <span class="text-red-500">*</span>
                   </label>
@@ -537,7 +537,7 @@
                     required
                     :disabled="!editForm.shop_id"
                     @change="onEditStudioChange"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                   >
                     <option value="">選択してください</option>
                     <option
@@ -550,7 +550,7 @@
                   </select>
                   <p
                     v-if="!editForm.shop_id"
-                    class="mt-1 text-xs text-gray-500"
+                    class="mt-1 text-xs text-brand-text-muted"
                   >
                     まず担当店舗を選択してください
                   </p>
@@ -561,9 +561,9 @@
                     {{ editForm.errors.selected_studio_id }}
                   </div>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     撮影日 <span class="text-red-500">*</span>
                   </label>
@@ -572,7 +572,7 @@
                     required
                     :disabled="!editForm.selected_studio_id"
                     @change="onEditDateChange"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                   >
                     <option value="">選択してください</option>
                     <option
@@ -585,14 +585,14 @@
                   </select>
                   <p
                     v-if="!editForm.selected_studio_id"
-                    class="mt-1 text-xs text-gray-500"
+                    class="mt-1 text-xs text-brand-text-muted"
                   >
                     まず担当店舗と会場を選択してください
                   </p>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     撮影時間 <span class="text-red-500">*</span>
                   </label>
@@ -601,7 +601,7 @@
                     required
                     :disabled="!editForm.selected_date"
                     @change="onEditPhotoSlotChange"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                   >
                     <option value="">選択してください</option>
                     <option
@@ -614,7 +614,7 @@
                   </select>
                   <p
                     v-if="!editForm.selected_date"
-                    class="mt-1 text-xs text-gray-500"
+                    class="mt-1 text-xs text-brand-text-muted"
                   >
                     まず担当店舗、会場、撮影日を選択してください
                   </p>
@@ -625,15 +625,15 @@
                     {{ editForm.errors.photo_slot_id }}
                   </div>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     担当者用メモラベル
                   </label>
                   <select
                     v-model="editForm.assignment_label"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                   >
                     <option :value="null">選択してください</option>
                     <option value="動員">動員</option>
@@ -643,16 +643,16 @@
                     <option value="EXPO / F">EXPO / F</option>
                   </select>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     担当者
                   </label>
                   <select
                     v-model="editForm.user_id"
                     :disabled="!editForm.shop_id"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
                   >
                     <option :value="null">選択してください</option>
                     <option
@@ -665,20 +665,20 @@
                   </select>
                   <p
                     v-if="!editForm.shop_id"
-                    class="mt-1 text-xs text-gray-500"
+                    class="mt-1 text-xs text-brand-text-muted"
                   >
                     まず担当店舗を選択してください
                   </p>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     プラン
                   </label>
                   <select
                     v-model="editForm.plan_id"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                   >
                     <option :value="null">選択してください</option>
                     <option
@@ -691,17 +691,17 @@
                   </select>
                 </div>
                 <div
-                  class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2"
+                  class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2"
                 >
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     備考
                   </label>
                   <textarea
                     v-model="editForm.remarks"
                     rows="4"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                   ></textarea>
                 </div>
               </div>
@@ -724,19 +724,19 @@
 
             <!-- フッター -->
             <div
-              class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200"
+              class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border"
             >
               <button
                 type="button"
                 @click="showEditModal = false"
-                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
               >
                 キャンセル
               </button>
               <button
                 type="submit"
                 :disabled="editForm.processing"
-                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="editForm.processing">更新中...</span>
                 <span v-else>更新</span>
@@ -755,17 +755,17 @@
         @click.self="showDeleteModal = false"
       >
         <div
-          class="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+          class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
         >
           <div class="p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">削除確認</h3>
-            <p class="text-sm text-gray-600 mb-6">
+            <h3 class="text-lg font-bold text-brand-text mb-4">削除確認</h3>
+            <p class="text-sm text-brand-text-muted mb-6">
               この前撮り枠を削除してもよろしいですか？この操作は取り消せません。
             </p>
             <div class="flex justify-end space-x-3">
               <button
                 @click="showDeleteModal = false"
-                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
               >
                 キャンセル
               </button>
@@ -789,15 +789,15 @@
         @click.self="showDateEditModal = false"
       >
         <div
-          class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+          class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
         >
           <!-- ヘッダー -->
           <div
-            class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50"
+            class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50"
           >
-            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
               <svg
-                class="w-6 h-6 text-indigo-600"
+                class="w-6 h-6 text-brand-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -813,7 +813,7 @@
             </h3>
             <button
               @click="showDateEditModal = false"
-              class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
+              class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
             >
               <svg
                 class="w-6 h-6"
@@ -846,9 +846,9 @@
                 </p>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     撮影日 <span class="text-red-500">*</span>
                   </label>
@@ -856,7 +856,7 @@
                     v-model="dateGroupEditForm.shoot_date"
                     type="date"
                     required
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                   />
                   <div
                     v-if="dateGroupEditForm.errors.shoot_date"
@@ -865,16 +865,16 @@
                     {{ dateGroupEditForm.errors.shoot_date }}
                   </div>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     スタジオ <span class="text-red-500">*</span>
                   </label>
                   <select
                     v-model="dateGroupEditForm.photo_studio_id"
                     required
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                   >
                     <option value="">選択してください</option>
                     <option
@@ -893,30 +893,30 @@
                   </div>
                 </div>
                 <div
-                  class="bg-gray-50 rounded-lg p-4 border border-gray-200 md:col-span-2"
+                  class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2"
                 >
                   <label
-                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
                   >
                     担当店舗
                   </label>
                   <div
-                    class="space-y-2 border border-gray-300 rounded-md p-3 bg-white"
+                    class="space-y-2 border border-brand-border rounded-md p-3 bg-brand-surface"
                   >
                     <label
                       v-for="shop in shops"
                       :key="shop.id"
-                      class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+                      class="flex items-center space-x-2 cursor-pointer hover:bg-brand-surface-2 p-2 rounded-md transition-colors"
                     >
                       <input
                         type="checkbox"
                         :value="shop.id"
                         v-model="dateGroupEditForm.shop_ids"
-                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                       />
-                      <span class="text-sm text-gray-700">{{ shop.name }}</span>
+                      <span class="text-sm text-brand-text">{{ shop.name }}</span>
                     </label>
-                    <p v-if="shops.length === 0" class="text-sm text-gray-500">
+                    <p v-if="shops.length === 0" class="text-sm text-brand-text-muted">
                       店舗が登録されていません
                     </p>
                   </div>
@@ -950,19 +950,19 @@
 
             <!-- フッター -->
             <div
-              class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200"
+              class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border"
             >
               <button
                 type="button"
                 @click="showDateEditModal = false"
-                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
               >
                 キャンセル
               </button>
               <button
                 type="submit"
                 :disabled="dateGroupEditForm.processing"
-                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="dateGroupEditForm.processing">更新中...</span>
                 <span v-else>更新</span>

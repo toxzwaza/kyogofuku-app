@@ -4,10 +4,10 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">店舗追加</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">店舗追加</h2>
                 <Link
                     :href="route('admin.shops.index')"
-                    class="text-indigo-600 hover:text-indigo-900"
+                    class="text-brand-primary hover:text-brand-primary-hover"
                 >
                     ← 店舗一覧に戻る
                 </Link>
@@ -16,51 +16,51 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="submit">
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">店舗名 <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">店舗名 <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.name"
                                         type="text"
                                         required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">住所</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">住所</label>
                                     <input
                                         v-model="form.address"
                                         type="text"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">電話番号</label>
                                     <input
                                         v-model="form.phone"
                                         type="tel"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                     <div v-if="form.errors.phone" class="mt-1 text-sm text-red-600">{{ form.errors.phone }}</div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">店舗画像</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">店舗画像</label>
                                     <input
                                         ref="fileInput"
                                         type="file"
                                         accept="image/*"
                                         @change="handleFileChange"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">JPEG, PNG, JPG, GIF（最大10MB）</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">JPEG, PNG, JPG, GIF（最大10MB）</p>
                                     <div v-if="form.errors.image" class="mt-1 text-sm text-red-600">{{ form.errors.image }}</div>
                                     
                                     <!-- プレビュー -->
@@ -68,44 +68,44 @@
                                         <img
                                             :src="previewImage"
                                             alt="プレビュー"
-                                            class="w-32 h-32 object-cover rounded border border-gray-300"
+                                            class="w-32 h-32 object-cover rounded border border-brand-border"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">LINEグループID</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">LINEグループID</label>
                                     <input
                                         v-model="form.line_group_id"
                                         type="text"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         placeholder="LINEグループIDを入力してください"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">予約通知を送信するLINEグループのIDを設定します</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">予約通知を送信するLINEグループのIDを設定します</p>
                                     <div v-if="form.errors.line_group_id" class="mt-1 text-sm text-red-600">{{ form.errors.line_group_id }}</div>
                                 </div>
 
-                                <div class="border-t border-gray-200 pt-4 space-y-2">
-                                    <p class="text-sm font-semibold text-gray-800">LINE Messaging API（顧客1:1・共通）</p>
-                                    <p class="text-xs text-gray-500">
-                                        Messaging のシークレット・トークン、LINEログインチャネル用の LIFF 設定は全店舗共通で <code class="bg-gray-100 px-1 rounded">.env</code> に設定します（詳細は <code class="bg-gray-100 px-1 rounded">docs/LINE_MESSAGING_SETUP.md</code>）。
+                                <div class="border-t border-brand-border pt-4 space-y-2">
+                                    <p class="text-sm font-semibold text-brand-text">LINE Messaging API（顧客1:1・共通）</p>
+                                    <p class="text-xs text-brand-text-muted">
+                                        Messaging のシークレット・トークン、LINEログインチャネル用の LIFF 設定は全店舗共通で <code class="bg-brand-surface-2 px-1 rounded">.env</code> に設定します（詳細は <code class="bg-brand-surface-2 px-1 rounded">docs/LINE_MESSAGING_SETUP.md</code>）。
                                     </p>
-                                    <p class="text-xs text-gray-500">
+                                    <p class="text-xs text-brand-text-muted">
                                         Webhook URL（Messaging API に登録）:
-                                        <code class="block mt-1 p-2 bg-gray-100 rounded break-all">{{ line_messaging_webhook_url }}</code>
+                                        <code class="block mt-1 p-2 bg-brand-surface-2 rounded break-all">{{ line_messaging_webhook_url }}</code>
                                     </p>
-                                    <p class="text-xs text-gray-500">LIFF の Endpoint URL は {{ app_url }}/line/liff/link を指定してください。</p>
+                                    <p class="text-xs text-brand-text-muted">LIFF の Endpoint URL は {{ app_url }}/line/liff/link を指定してください。</p>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">GoogleカレンダーID</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">GoogleカレンダーID</label>
                                     <input
                                         v-model="form.google_calendar_id"
                                         type="text"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         placeholder="例: xxx@group.calendar.google.com または primary"
                                     />
-                                    <p class="mt-1 text-sm text-gray-500">スケジュール同期先のGoogleカレンダーID。未指定の場合は primary を使用します</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">スケジュール同期先のGoogleカレンダーID。未指定の場合は primary を使用します</p>
                                     <div v-if="form.errors.google_calendar_id" class="mt-1 text-sm text-red-600">{{ form.errors.google_calendar_id }}</div>
                                 </div>
 
@@ -114,23 +114,23 @@
                                         <input
                                             v-model="form.is_active"
                                             type="checkbox"
-                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="rounded border-brand-border text-brand-primary shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                         />
-                                        <span class="ml-2 text-sm text-gray-700">有効</span>
+                                        <span class="ml-2 text-sm text-brand-text">有効</span>
                                     </label>
                                 </div>
 
                                 <div class="flex justify-end space-x-4 pt-4">
                                     <Link
                                         :href="route('admin.shops.index')"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
                                     </Link>
                                     <button
                                         type="submit"
                                         :disabled="form.processing"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
                                     >
                                         {{ form.processing ? '保存中...' : '保存' }}
                                     </button>

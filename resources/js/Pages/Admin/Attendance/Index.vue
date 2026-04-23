@@ -3,50 +3,50 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">勤怠管理</h2>
-                <Link :href="route('dashboard')" class="text-gray-600 hover:text-gray-900">ダッシュボードへ</Link>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">勤怠管理</h2>
+                <Link :href="route('dashboard')" class="text-brand-text-muted hover:text-brand-text">ダッシュボードへ</Link>
             </div>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div v-if="$page.props.flash?.success" class="mb-4 p-3 bg-green-100 text-green-800 rounded-md text-sm">
                             {{ $page.props.flash.success }}
                         </div>
                         <form @submit.prevent="applyFilters" class="mb-4 flex flex-wrap gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">店舗</label>
-                                <select v-model="filters.shop_id" class="rounded-md border-gray-300 text-sm">
+                                <label class="block text-xs font-medium text-brand-text-muted mb-1">店舗</label>
+                                <select v-model="filters.shop_id" class="rounded-md border-brand-border text-sm">
                                     <option value="">すべて</option>
                                     <option v-for="s in shops" :key="s.id" :value="s.id">{{ s.name }}</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">ユーザー</label>
-                                <select v-model="filters.user_id" class="rounded-md border-gray-300 text-sm">
+                                <label class="block text-xs font-medium text-brand-text-muted mb-1">ユーザー</label>
+                                <select v-model="filters.user_id" class="rounded-md border-brand-border text-sm">
                                     <option value="">すべて</option>
                                     <option v-for="u in filteredUsers" :key="u.id" :value="u.id">{{ u.name }}</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">開始日</label>
-                                <input v-model="filters.from" type="date" class="rounded-md border-gray-300 text-sm" />
+                                <label class="block text-xs font-medium text-brand-text-muted mb-1">開始日</label>
+                                <input v-model="filters.from" type="date" class="rounded-md border-brand-border text-sm" />
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">終了日</label>
-                                <input v-model="filters.to" type="date" class="rounded-md border-gray-300 text-sm" />
+                                <label class="block text-xs font-medium text-brand-text-muted mb-1">終了日</label>
+                                <input v-model="filters.to" type="date" class="rounded-md border-brand-border text-sm" />
                             </div>
                             <div class="flex items-end">
-                                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700">絞り込み</button>
+                                <button type="submit" class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm hover:bg-brand-primary-hover">絞り込み</button>
                             </div>
                         </form>
 
                         <div v-if="records.data?.length > 0" class="mb-4 flex flex-wrap items-center gap-3">
-                            <span class="text-sm font-medium text-gray-700">CSVエクスポート</span>
-                            <button type="button" @click="selectAllUsers" class="px-2 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">全選択</button>
-                            <button type="button" @click="deselectAllUsers" class="px-2 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">全解除</button>
+                            <span class="text-sm font-medium text-brand-text">CSVエクスポート</span>
+                            <button type="button" @click="selectAllUsers" class="px-2 py-1 text-sm bg-brand-surface-2 text-brand-text rounded hover:bg-gray-200">全選択</button>
+                            <button type="button" @click="deselectAllUsers" class="px-2 py-1 text-sm bg-brand-surface-2 text-brand-text rounded hover:bg-gray-200">全解除</button>
                             <button
                                 type="button"
                                 :disabled="selectedUserIds.length === 0"
@@ -55,65 +55,65 @@
                             >
                                 CSVダウンロード
                             </button>
-                            <span class="text-xs text-gray-500">選択中: {{ selectedUserIds.length }}件</span>
+                            <span class="text-xs text-brand-text-muted">選択中: {{ selectedUserIds.length }}件</span>
                         </div>
 
                         <div class="mb-4 flex items-center gap-4">
-                            <span class="text-sm font-medium text-gray-700">表示方法</span>
+                            <span class="text-sm font-medium text-brand-text">表示方法</span>
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input
                                     v-model="displayMode"
                                     type="radio"
                                     value="table"
-                                    class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    class="rounded-full border-brand-border text-brand-primary focus:ring-brand-primary"
                                 />
-                                <span class="text-sm text-gray-700">テーブル表示</span>
+                                <span class="text-sm text-brand-text">テーブル表示</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input
                                     v-model="displayMode"
                                     type="radio"
                                     value="byUser"
-                                    class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    class="rounded-full border-brand-border text-brand-primary focus:ring-brand-primary"
                                 />
-                                <span class="text-sm text-gray-700">ユーザー毎</span>
+                                <span class="text-sm text-brand-text">ユーザー毎</span>
                             </label>
                         </div>
 
                         <!-- テーブル表示 -->
                         <div v-if="displayMode === 'table'" class="space-y-4">
-                            <div v-if="uniqueUsersInData.length > 0" class="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded-md text-sm">
-                                <span class="font-medium text-gray-700">エクスポート対象ユーザー:</span>
+                            <div v-if="uniqueUsersInData.length > 0" class="flex flex-wrap items-center gap-2 p-3 bg-brand-surface-2 rounded-md text-sm">
+                                <span class="font-medium text-brand-text">エクスポート対象ユーザー:</span>
                                 <label v-for="u in uniqueUsersInData" :key="u.id" class="flex items-center gap-1.5 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         :checked="selectedUserIds.includes(u.id)"
                                         @change="toggleUserSelection(u.id)"
-                                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                     />
                                     <span>{{ u.name }}</span>
                                 </label>
                             </div>
                             <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-brand-border text-sm">
+                                <thead class="bg-brand-surface-2">
                                     <tr>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">日付</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">ユーザー</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">店舗</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">ステータス</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">出勤</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">退勤</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">ベース開始</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">ベース終了</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">業務開始(給与)</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">残業(丸め)</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700">休憩</th>
-                                        <th class="px-4 py-2 text-left font-medium text-gray-700 w-20">操作</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">日付</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">ユーザー</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">店舗</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">ステータス</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">出勤</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">退勤</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">ベース開始</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">ベース終了</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">業務開始(給与)</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">残業(丸め)</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">休憩</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text w-20">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    <tr v-for="r in records.data" :key="r.id" class="hover:bg-gray-50">
+                                <tbody class="divide-y divide-brand-border">
+                                    <tr v-for="r in records.data" :key="r.id" class="hover:bg-brand-surface-2">
                                         <td class="px-4 py-2">{{ formatDateJaWithWeekday(r.date) }}</td>
                                         <td class="px-4 py-2">{{ r.user?.name ?? '-' }}</td>
                                         <td class="px-4 py-2">{{ r.shop?.name ?? '-' }}</td>
@@ -128,11 +128,11 @@
                                         <td class="px-4 py-2">{{ formatOvertimeRounded(r.payroll?.overtime_minutes_rounded) }}</td>
                                         <td class="px-4 py-2">{{ formatBreaks(r.breaks) }}</td>
                                         <td class="px-4 py-2">
-                                            <button type="button" @click="openEditModal(r)" class="text-indigo-600 hover:text-indigo-800 text-sm">編集</button>
+                                            <button type="button" @click="openEditModal(r)" class="text-brand-primary hover:text-brand-primary-hover text-sm">編集</button>
                                         </td>
                                     </tr>
                                     <tr v-if="!records.data || records.data.length === 0">
-                                        <td colspan="12" class="px-4 py-8 text-center text-gray-500">データがありません</td>
+                                        <td colspan="12" class="px-4 py-8 text-center text-brand-text-muted">データがありません</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -145,36 +145,36 @@
                                 <section
                                     v-for="group in groupedByUser"
                                     :key="group.userId"
-                                    class="rounded-lg border border-gray-200 overflow-hidden"
+                                    class="rounded-lg border border-brand-border overflow-hidden"
                                 >
-                                    <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 font-medium text-gray-800 flex items-center gap-2">
+                                    <div class="px-4 py-2 bg-brand-surface-2 border-b border-brand-border font-medium text-brand-text flex items-center gap-2">
                                         <input
                                             type="checkbox"
                                             :checked="selectedUserIds.includes(group.userId)"
                                             @change="toggleUserSelection(group.userId)"
-                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                         />
                                         <span>{{ group.userName }}（{{ group.records.length }}件）</span>
                                     </div>
                                     <div class="overflow-x-auto">
-                                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                                            <thead class="bg-gray-50">
+                                        <table class="min-w-full divide-y divide-brand-border text-sm">
+                                            <thead class="bg-brand-surface-2">
                                                 <tr>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">日付</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">店舗</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">ステータス</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">出勤</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">退勤</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">ベース開始</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">ベース終了</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">業務開始(給与)</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">残業(丸め)</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700">休憩</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-gray-700 w-20">操作</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">日付</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">店舗</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">ステータス</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">出勤</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">退勤</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">ベース開始</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">ベース終了</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">業務開始(給与)</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">残業(丸め)</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">休憩</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text w-20">操作</th>
                                                 </tr>
                                             </thead>
-                                            <tbody class="divide-y divide-gray-200">
-                                                <tr v-for="r in group.records" :key="r.id" class="hover:bg-gray-50">
+                                            <tbody class="divide-y divide-brand-border">
+                                                <tr v-for="r in group.records" :key="r.id" class="hover:bg-brand-surface-2">
                                                     <td class="px-4 py-2">{{ formatDateJaWithWeekday(r.date) }}</td>
                                                     <td class="px-4 py-2">{{ r.shop?.name ?? '-' }}</td>
                                                     <td class="px-4 py-2">
@@ -188,7 +188,7 @@
                                                     <td class="px-4 py-2">{{ formatOvertimeRounded(r.payroll?.overtime_minutes_rounded) }}</td>
                                                     <td class="px-4 py-2">{{ formatBreaks(r.breaks) }}</td>
                                                     <td class="px-4 py-2">
-                                                        <button type="button" @click="openEditModal(r)" class="text-indigo-600 hover:text-indigo-800 text-sm">編集</button>
+                                                        <button type="button" @click="openEditModal(r)" class="text-brand-primary hover:text-brand-primary-hover text-sm">編集</button>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -196,36 +196,36 @@
                                     </div>
                                 </section>
                             </template>
-                            <p v-else class="py-8 text-center text-gray-500 text-sm">データがありません</p>
+                            <p v-else class="py-8 text-center text-brand-text-muted text-sm">データがありません</p>
                         </div>
 
                         <!-- 編集モーダル -->
                         <div v-if="editRecord" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="editRecord = null">
-                            <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-                                <div class="p-4 border-b font-medium text-gray-800">勤怠を編集</div>
+                            <div class="bg-brand-surface rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                                <div class="p-4 border-b font-medium text-brand-text">勤怠を編集</div>
                                 <form @submit.prevent="submitEdit" class="p-4 space-y-4">
                                     <div>
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">日付</label>
-                                        <input :value="formatDateJaWithWeekday(editRecord.date)" type="text" readonly class="w-full rounded-md border-gray-300 bg-gray-100 text-sm" />
+                                        <label class="block text-xs font-medium text-brand-text-muted mb-1">日付</label>
+                                        <input :value="formatDateJaWithWeekday(editRecord.date)" type="text" readonly class="w-full rounded-md border-brand-border bg-brand-surface-2 text-sm" />
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-600 mb-1">出勤時刻</label>
-                                            <input v-model="editForm.clock_in_time" type="time" class="w-full rounded-md border-gray-300 text-sm" />
+                                            <label class="block text-xs font-medium text-brand-text-muted mb-1">出勤時刻</label>
+                                            <input v-model="editForm.clock_in_time" type="time" class="w-full rounded-md border-brand-border text-sm" />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-600 mb-1">退勤時刻</label>
-                                            <input v-model="editForm.clock_out_time" type="time" class="w-full rounded-md border-gray-300 text-sm" />
+                                            <label class="block text-xs font-medium text-brand-text-muted mb-1">退勤時刻</label>
+                                            <input v-model="editForm.clock_out_time" type="time" class="w-full rounded-md border-brand-border text-sm" />
                                         </div>
                                     </div>
                                     <div>
                                         <div class="flex justify-between items-center mb-2">
-                                            <label class="block text-xs font-medium text-gray-600">休憩</label>
-                                            <button type="button" @click="addEditBreak" class="text-sm text-indigo-600 hover:text-indigo-800">+ 休憩を追加</button>
+                                            <label class="block text-xs font-medium text-brand-text-muted">休憩</label>
+                                            <button type="button" @click="addEditBreak" class="text-sm text-brand-primary hover:text-brand-primary-hover">+ 休憩を追加</button>
                                         </div>
                                         <div v-for="(b, i) in editForm.breaks" :key="i" class="flex gap-2 items-center mb-2">
-                                            <input v-model="b.start_time" type="time" class="flex-1 rounded-md border-gray-300 text-sm" />
-                                            <input v-model="b.end_time" type="time" class="flex-1 rounded-md border-gray-300 text-sm" />
+                                            <input v-model="b.start_time" type="time" class="flex-1 rounded-md border-brand-border text-sm" />
+                                            <input v-model="b.end_time" type="time" class="flex-1 rounded-md border-brand-border text-sm" />
                                             <button type="button" @click="editForm.breaks.splice(i, 1)" class="text-red-600 hover:text-red-800 text-sm">削除</button>
                                         </div>
                                     </div>
@@ -235,10 +235,10 @@
                                         </ul>
                                     </div>
                                     <div class="flex gap-2 pt-2">
-                                        <button type="submit" :disabled="editForm.processing" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700 disabled:opacity-50">
+                                        <button type="submit" :disabled="editForm.processing" class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm hover:bg-brand-primary-hover disabled:opacity-50">
                                             {{ editForm.processing ? '保存中...' : '保存' }}
                                         </button>
-                                        <button type="button" @click="editRecord = null" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200">キャンセル</button>
+                                        <button type="button" @click="editRecord = null" class="px-4 py-2 bg-brand-surface-2 text-brand-text rounded-md text-sm hover:bg-gray-200">キャンセル</button>
                                     </div>
                                 </form>
                             </div>
@@ -448,7 +448,7 @@ function statusLabel(s) {
 
 function statusClass(s) {
     const classes = {
-        draft: 'px-2 py-0.5 bg-gray-100 text-gray-800 rounded text-xs',
+        draft: 'px-2 py-0.5 bg-brand-surface-2 text-brand-text rounded text-xs',
         applied: 'px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs',
         approved: 'px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs',
     };

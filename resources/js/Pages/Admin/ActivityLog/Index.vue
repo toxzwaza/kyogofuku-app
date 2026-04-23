@@ -3,12 +3,12 @@
 
     <AdminLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">ログ管理</h2>
+            <h2 class="font-semibold text-xl text-brand-text leading-tight">ログ管理</h2>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <!-- 成功メッセージ -->
                         <div v-if="$page.props.flash?.success" class="mb-6 rounded-md bg-green-50 p-4">
@@ -44,20 +44,20 @@
                                             <th class="px-4 py-2 text-left text-xs font-medium text-red-900 uppercase">最終失敗日時</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white divide-y divide-red-200">
+                                    <tbody class="bg-brand-surface divide-y divide-red-200">
                                         <tr v-for="blockedIp in blockedIps" :key="blockedIp.id">
-                                            <td class="px-4 py-3 text-sm font-mono text-gray-900">
+                                            <td class="px-4 py-3 text-sm font-mono text-brand-text">
                                                 {{ blockedIp.ip_address }}
                                             </td>
-                                            <td class="px-4 py-3 text-sm text-gray-900">
+                                            <td class="px-4 py-3 text-sm text-brand-text">
                                                 <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">
                                                     {{ blockedIp.failure_count }}回
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3 text-sm text-gray-900">
+                                            <td class="px-4 py-3 text-sm text-brand-text">
                                                 {{ formatDateTime(blockedIp.blocked_at) }}
                                             </td>
-                                            <td class="px-4 py-3 text-sm text-gray-900">
+                                            <td class="px-4 py-3 text-sm text-brand-text">
                                                 {{ formatDateTime(blockedIp.last_failed_at) }}
                                             </td>
                                         </tr>
@@ -67,13 +67,13 @@
                         </div>
 
                         <!-- フィルタリング -->
-                        <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+                        <div class="mb-6 bg-brand-surface-2 p-4 rounded-lg">
                             <form @submit.prevent="applyFilters" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">スタッフ</label>
+                                    <label class="block text-xs font-medium text-brand-text mb-1">スタッフ</label>
                                     <select
                                         v-model="filters.user_id"
-                                        class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm text-sm focus:border-brand-primary focus:ring-brand-primary"
                                     >
                                         <option value="">すべて</option>
                                         <option
@@ -87,10 +87,10 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">店舗</label>
+                                    <label class="block text-xs font-medium text-brand-text mb-1">店舗</label>
                                     <select
                                         v-model="filters.shop_id"
-                                        class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm text-sm focus:border-brand-primary focus:ring-brand-primary"
                                     >
                                         <option value="">すべて</option>
                                         <option
@@ -104,10 +104,10 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">処理区分</label>
+                                    <label class="block text-xs font-medium text-brand-text mb-1">処理区分</label>
                                     <select
                                         v-model="filters.action_type"
-                                        class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm text-sm focus:border-brand-primary focus:ring-brand-primary"
                                     >
                                         <option value="">すべて</option>
                                         <option
@@ -121,10 +121,10 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">リソース種別</label>
+                                    <label class="block text-xs font-medium text-brand-text mb-1">リソース種別</label>
                                     <select
                                         v-model="filters.resource_type"
-                                        class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm text-sm focus:border-brand-primary focus:ring-brand-primary"
                                     >
                                         <option value="">すべて</option>
                                         <option
@@ -138,20 +138,20 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">開始日</label>
+                                    <label class="block text-xs font-medium text-brand-text mb-1">開始日</label>
                                     <input
                                         v-model="filters.date_from"
                                         type="date"
-                                        class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm text-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">終了日</label>
+                                    <label class="block text-xs font-medium text-brand-text mb-1">終了日</label>
                                     <input
                                         v-model="filters.date_to"
                                         type="date"
-                                        class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="w-full rounded-md border-brand-border shadow-sm text-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
                                 </div>
 
@@ -159,13 +159,13 @@
                                     <button
                                         type="button"
                                         @click="resetFilters"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                                        class="px-4 py-2 border border-brand-border rounded-md text-sm text-brand-text hover:bg-brand-surface-2"
                                     >
                                         リセット
                                     </button>
                                     <button
                                         type="submit"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700"
+                                        class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm hover:bg-brand-primary-hover"
                                     >
                                         フィルター適用
                                     </button>
@@ -175,29 +175,29 @@
 
                         <!-- ログ一覧 -->
                         <div v-if="activityLogs && activityLogs.data && activityLogs.data.length > 0" class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-brand-border">
+                                <thead class="bg-brand-surface-2">
                                     <tr>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日時</th>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">スタッフ</th>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">店舗</th>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">処理区分</th>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">リソース</th>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">説明</th>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IPアドレス</th>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
-                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">日時</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">スタッフ</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">店舗</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">処理区分</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">リソース</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">説明</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">IPアドレス</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">URL</th>
+                                        <th class=" whitespace-nowrap px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-brand-surface divide-y divide-brand-border">
                                     <tr v-for="log in activityLogs.data" :key="log.id">
-                                        <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             {{ formatDateTime(log.created_at) }}
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             {{ log.user?.name || '-' }}
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             {{ log.shop?.name || '-' }}
                                         </td>
                                         <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm">
@@ -210,25 +210,25 @@
                                                 {{ getActionTypeLabel(log.action_type) }}
                                             </span>
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm text-brand-text">
                                             {{ getResourceTypeLabel(log.resource_type) }}
-                                            <span v-if="log.resource_id" class="text-gray-500">
+                                            <span v-if="log.resource_id" class="text-brand-text-muted">
                                                 (ID: {{ log.resource_id }})
                                             </span>
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-brand-text">
                                             {{ log.description || '-' }}
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-600">
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-brand-text-muted">
                                             {{ log.ip_address || '-' }}
                                         </td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-brand-text-muted max-w-xs truncate">
                                             {{ log.url }}
                                         </td>
                                         <td class="whitespace-nowrap px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <Link
                                                 :href="route('admin.activity-logs.show', log.id)"
-                                                class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                                                class="group relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                             >
                                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -250,7 +250,7 @@
                                         :href="link.url"
                                         :class="[
                                             'px-4 py-2 mx-1 rounded-md text-sm',
-                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2',
                                             !link.url ? 'opacity-50 cursor-not-allowed' : ''
                                         ]"
                                     >
@@ -259,7 +259,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
+                        <div v-else class="text-center py-8 text-brand-text-muted">
                             ログデータがありません
                         </div>
                     </div>
@@ -342,10 +342,10 @@ const getActionTypeClass = (actionType) => {
         'update': 'bg-yellow-100 text-yellow-800',
         'delete': 'bg-red-100 text-red-800',
         'login': 'bg-purple-100 text-purple-800',
-        'logout': 'bg-gray-100 text-gray-800',
+        'logout': 'bg-brand-surface-2 text-brand-text',
         'login_failed': 'bg-orange-100 text-orange-800',
     };
-    return classes[actionType] || 'bg-gray-100 text-gray-800';
+    return classes[actionType] || 'bg-brand-surface-2 text-brand-text';
 };
 
 // リソースタイプのラベルを取得

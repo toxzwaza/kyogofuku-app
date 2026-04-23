@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">スタジオ一覧</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">スタジオ一覧</h2>
                 <ActionButton variant="create" label="新規追加" :href="route('admin.photo-studios.create')" />
             </div>
         </template>
@@ -18,25 +18,25 @@
                     {{ $page.props.flash.error }}
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-brand-border">
+                                <thead class="bg-brand-surface-2">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">スタジオ名</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">住所</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">備考</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">スタジオ名</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">住所</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">備考</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-brand-surface divide-y divide-brand-border">
                                     <tr v-for="studio in photoStudios.data" :key="studio.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ studio.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ studio.name }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ studio.address || '-' }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-900">{{ studio.remarks || '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ studio.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ studio.name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ studio.address || '-' }}</td>
+                                        <td class="px-6 py-4 text-sm text-brand-text">{{ studio.remarks || '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex space-x-2">
                                                 <ActionButton variant="edit" label="編集" size="sm" :href="route('admin.photo-studios.edit', studio.id)" />
@@ -57,7 +57,7 @@
                                         :href="link.url"
                                         :class="[
                                             'px-4 py-2 mx-1 rounded-md',
-                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2',
                                         ]"
                                     >
                                         <span v-html="link.label"></span>
@@ -66,7 +66,7 @@
                                         v-else
                                         :class="[
                                             'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
-                                            link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700',
+                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text',
                                         ]"
                                         v-html="link.label"
                                     ></span>

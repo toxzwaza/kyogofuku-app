@@ -4,8 +4,8 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center flex-wrap gap-2">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">会社カレンダー（A/B/C）</h2>
-                <Link :href="route('admin.attendance.index')" class="text-gray-600 hover:text-gray-900 text-sm">勤怠一覧へ</Link>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">会社カレンダー（A/B/C）</h2>
+                <Link :href="route('admin.attendance.index')" class="text-brand-text-muted hover:text-brand-text text-sm">勤怠一覧へ</Link>
             </div>
         </template>
 
@@ -20,14 +20,14 @@
                         <li v-for="(msg, key) in pageErrors" :key="key">{{ key }}: {{ Array.isArray(msg) ? msg.join(', ') : msg }}</li>
                     </ul>
                 </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <form @submit.prevent="submit" class="space-y-6">
                         <!-- 年月ナビ -->
                         <div class="flex flex-wrap items-center justify-between gap-4">
                             <div class="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    class="p-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                    class="p-2 rounded-lg border border-brand-border text-brand-text hover:bg-brand-surface-2"
                                     title="前月"
                                     @click="shiftMonth(-1)"
                                 >
@@ -39,12 +39,12 @@
                                 <input
                                     v-model="yearMonth"
                                     type="month"
-                                    class="rounded-md border-gray-300 text-sm"
+                                    class="rounded-md border-brand-border text-sm"
                                     @change="goMonth"
                                 />
                                 <button
                                     type="button"
-                                    class="p-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                    class="p-2 rounded-lg border border-brand-border text-brand-text hover:bg-brand-surface-2"
                                     title="翌月"
                                     @click="shiftMonth(1)"
                                 >
@@ -54,20 +54,20 @@
                                     </svg>
                                 </button>
                             </div>
-                            <p class="text-sm text-gray-500">日付をクリックして A / B / C を設定できます（未設定で登録解除）</p>
+                            <p class="text-sm text-brand-text-muted">日付をクリックして A / B / C を設定できます（未設定で登録解除）</p>
                         </div>
 
                         <!-- カレンダーグリッド（月曜始まり） -->
-                        <div class="border border-gray-200 rounded-xl overflow-hidden">
-                            <div class="grid grid-cols-7 bg-gray-100 border-b border-gray-200 text-center text-xs font-semibold text-gray-600 py-2">
+                        <div class="border border-brand-border rounded-xl overflow-hidden">
+                            <div class="grid grid-cols-7 bg-brand-surface-2 border-b border-brand-border text-center text-xs font-semibold text-brand-text-muted py-2">
                                 <div v-for="w in weekLabels" :key="w" class="py-1">{{ w }}</div>
                             </div>
-                            <div v-for="(week, wi) in calendarWeeks" :key="wi" class="grid grid-cols-7 border-b border-gray-200 last:border-b-0 min-h-[4.5rem]">
+                            <div v-for="(week, wi) in calendarWeeks" :key="wi" class="grid grid-cols-7 border-b border-brand-border last:border-b-0 min-h-[4.5rem]">
                                 <div
                                     v-for="(cell, ci) in week"
                                     :key="ci"
-                                    class="border-r border-gray-200 last:border-r-0 p-1 min-h-[4.5rem]"
-                                    :class="cell.kind === 'empty' ? 'bg-gray-50/80' : ''"
+                                    class="border-r border-brand-border last:border-r-0 p-1 min-h-[4.5rem]"
+                                    :class="cell.kind === 'empty' ? 'bg-brand-surface-2/80' : ''"
                                 >
                                     <button
                                         v-if="cell.kind === 'day'"
@@ -76,7 +76,7 @@
                                         :class="cellButtonClass(cell)"
                                         @click="openPicker(cell.dateStr)"
                                     >
-                                        <span class="text-sm font-medium text-gray-900">{{ cell.day }}</span>
+                                        <span class="text-sm font-medium text-brand-text">{{ cell.day }}</span>
                                         <span
                                             v-if="cell.pattern"
                                             class="mt-1 inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white shadow-sm"
@@ -84,7 +84,7 @@
                                         >
                                             {{ cell.pattern }}
                                         </span>
-                                        <span v-else class="mt-1 text-xs text-gray-400">未設定</span>
+                                        <span v-else class="mt-1 text-xs text-brand-text-subtle">未設定</span>
                                     </button>
                                 </div>
                             </div>
@@ -94,7 +94,7 @@
                             <button
                                 type="submit"
                                 :disabled="saving"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700 disabled:opacity-50"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm hover:bg-brand-primary-hover disabled:opacity-50"
                             >
                                 {{ saving ? '保存中...' : '保存' }}
                             </button>
@@ -113,13 +113,13 @@
                 aria-modal="true"
                 @click.self="closePicker"
             >
-                <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 space-y-4">
-                    <h3 class="text-lg font-semibold text-gray-900">{{ pickerTitle }}</h3>
-                    <p class="text-sm text-gray-500">この日の勤務パターンを選択してください</p>
+                <div class="bg-brand-surface rounded-xl shadow-xl max-w-sm w-full p-5 space-y-4">
+                    <h3 class="text-lg font-semibold text-brand-text">{{ pickerTitle }}</h3>
+                    <p class="text-sm text-brand-text-muted">この日の勤務パターンを選択してください</p>
                     <div class="grid grid-cols-2 gap-2">
                         <button
                             type="button"
-                            class="py-3 rounded-lg border-2 border-gray-200 text-gray-600 font-medium hover:bg-gray-50"
+                            class="py-3 rounded-lg border-2 border-brand-border text-brand-text-muted font-medium hover:bg-brand-surface-2"
                             @click="applyPattern('')"
                         >
                             未設定
@@ -148,7 +148,7 @@
                     </div>
                     <button
                         type="button"
-                        class="w-full py-2 text-sm text-gray-600 hover:text-gray-900"
+                        class="w-full py-2 text-sm text-brand-text-muted hover:text-brand-text"
                         @click="closePicker"
                     >
                         キャンセル
@@ -265,7 +265,7 @@ function cellButtonClass(cell) {
 }
 
 function patternBadgeClass(p) {
-    if (p === 'A') return 'bg-indigo-600';
+    if (p === 'A') return 'bg-brand-primary';
     if (p === 'B') return 'bg-emerald-600';
     if (p === 'C') return 'bg-amber-500';
     return 'bg-gray-400';

@@ -4,7 +4,7 @@
     <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">UTM分析API 並び順</h2>
+                <h2 class="font-semibold text-xl text-brand-text leading-tight">UTM分析API 並び順</h2>
                 <ActionButton variant="back" label="イベント一覧に戻る" :href="route('admin.events.index')" />
             </div>
         </template>
@@ -16,13 +16,13 @@
                     <p class="text-sm font-medium text-green-800">{{ $page.props.flash.success }}</p>
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <p class="text-sm text-gray-600 mb-4">
+                        <p class="text-sm text-brand-text-muted mb-4">
                             UTM分析APIに含める（ON）のイベント一覧です。ドラッグ＆ドロップで並び順を変更できます。変更は自動保存されます。
                         </p>
 
-                        <div v-if="!sortedEvents.length" class="text-center py-12 text-gray-500">
+                        <div v-if="!sortedEvents.length" class="text-center py-12 text-brand-text-muted">
                             UTM分析APIに含めるが ON のイベントがありません。<br />
                             イベント詳細の「UTM分析APIに含める」を ON にしたイベントがここに表示されます。
                         </div>
@@ -33,7 +33,7 @@
                                 :key="event.id"
                                 class="flex items-center gap-3 p-4 border rounded-lg transition-colors"
                                 :class="[
-                                    dropTargetIndex === index ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200' : 'border-gray-200 hover:bg-gray-50',
+                                    dropTargetIndex === index ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200' : 'border-brand-border hover:bg-brand-surface-2',
                                     draggedIndex === index ? 'opacity-50' : '',
                                 ]"
                                 draggable="true"
@@ -44,7 +44,7 @@
                                 @dragend="handleDragEnd"
                             >
                                 <div
-                                    class="flex-shrink-0 cursor-grab active:cursor-grabbing p-2 rounded hover:bg-gray-200 flex items-center justify-center text-gray-500"
+                                    class="flex-shrink-0 cursor-grab active:cursor-grabbing p-2 rounded hover:bg-gray-200 flex items-center justify-center text-brand-text-muted"
                                     @click.stop
                                     title="ドラッグして並び替え"
                                 >
@@ -52,11 +52,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
                                     </svg>
                                 </div>
-                                <span class="flex-shrink-0 w-8 text-sm font-medium text-gray-500">{{ index + 1 }}</span>
+                                <span class="flex-shrink-0 w-8 text-sm font-medium text-brand-text-muted">{{ index + 1 }}</span>
                                 <div class="flex-1 min-w-0">
                                     <Link
                                         :href="route('admin.events.show', event.id)"
-                                        class="text-indigo-600 hover:text-indigo-800 font-medium"
+                                        class="text-brand-primary hover:text-brand-primary-hover font-medium"
                                     >
                                         {{ event.title }}
                                     </Link>
