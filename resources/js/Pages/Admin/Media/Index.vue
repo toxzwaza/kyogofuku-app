@@ -1,325 +1,198 @@
 <template>
     <Head title="メディアライブラリ" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">
-                    メディアライブラリ
-                </h2>
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: 'イベント・予約' }, { label: 'メディアライブラリ' }]">
+        <UiPageHeader
+            title="メディアライブラリ"
+            description="画像を一元管理し、イベント／スライドショー等で再利用できます。"
+        >
+            <template #actions>
+                <UiButton variant="subtle" :loading="isImporting" @click="importExisting">
+                    <template #leading><RefreshCw :size="14" /></template>
+                    既存画像を取り込む
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                <div v-if="$page.props.flash?.success" class="rounded-md bg-green-50 p-4">
-                    <p class="text-sm font-medium text-green-800">{{ $page.props.flash.success }}</p>
-                </div>
-                <div v-if="$page.props.flash?.info" class="rounded-md bg-blue-50 p-4">
-                    <p class="text-sm font-medium text-blue-800">{{ $page.props.flash.info }}</p>
-                </div>
-                <div v-if="$page.props.flash?.error" class="rounded-md bg-red-50 p-4">
-                    <p class="text-sm font-medium text-red-800">{{ $page.props.flash.error }}</p>
-                </div>
-
-                <!-- 既存画像の取り込み -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold">既存画像の取り込み</h3>
-                            <p class="text-sm text-brand-text-muted mt-1">
-                                イベント画像・スライドショー画像として既にアップロード済みの画像を、メディアライブラリに一括登録します。
-                                ファイルのコピーは行わず、既存パスをそのまま参照します。
-                            </p>
-                        </div>
+        <!-- アップロード -->
+        <UiCard variant="default" padding="md" class="mb-4">
+            <template #header><h3 class="font-serif text-base flex items-center gap-2"><Upload :size="15" />画像をアップロード</h3></template>
+            <form @submit.prevent="submitUpload" enctype="multipart/form-data" class="space-y-3">
+                <UiFormField label="画像ファイル" hint="複数選択可。JPEG / PNG / GIF / WebP、最大10MB">
+                    <input
+                        ref="fileInput"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        class="block w-full text-sm text-brand-text file:mr-3 file:py-1.5 file:px-3 file:rounded-soft file:border-0 file:bg-brand-primary file:text-brand-on-primary file:text-xs file:font-medium hover:file:bg-brand-primary-hover"
+                        @change="handleFileChange"
+                    />
+                </UiFormField>
+                <div v-if="previewImages.length > 0" class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                    <div v-for="(preview, index) in previewImages" :key="index" class="relative">
+                        <img :src="preview" alt="プレビュー" class="w-full h-24 object-cover rounded-soft border border-brand-border" />
                         <button
-                            @click="importExisting"
-                            :disabled="isImporting"
-                            class="flex-shrink-0 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-gray-400"
-                        >
-                            {{ isImporting ? '取り込み中...' : '既存画像を取り込む' }}
-                        </button>
+                            type="button"
+                            class="absolute top-1 right-1 bg-brand-danger text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:opacity-90"
+                            @click="removePreview(index)"
+                        >×</button>
                     </div>
                 </div>
-
-                <!-- アップロードセクション -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <h3 class="text-lg font-semibold mb-4">画像をアップロード</h3>
-                        <form @submit.prevent="submitUpload" enctype="multipart/form-data">
-                            <div class="space-y-4">
-                                <div>
-                                    <input
-                                        ref="fileInput"
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        @change="handleFileChange"
-                                        class="w-full rounded-md border-brand-border shadow-sm"
-                                    />
-                                    <p class="mt-1 text-sm text-brand-text-muted">複数の画像を選択できます（JPEG, PNG, GIF, WebP、最大10MB）</p>
-                                </div>
-
-                                <!-- プレビュー -->
-                                <div v-if="previewImages.length > 0" class="grid grid-cols-3 md:grid-cols-6 gap-3">
-                                    <div v-for="(preview, index) in previewImages" :key="index" class="relative">
-                                        <img :src="preview" alt="プレビュー" class="w-full h-24 object-cover rounded" />
-                                        <button
-                                            type="button"
-                                            @click="removePreview(index)"
-                                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                                        >
-                                            &times;
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- タグ入力 -->
-                                <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-1">タグ（カンマ区切り）</label>
-                                    <input
-                                        v-model="tagInput"
-                                        type="text"
-                                        class="w-full rounded-md border-brand-border shadow-sm"
-                                        placeholder="例: 振袖, 会場, バナー"
-                                    />
-                                </div>
-
-                                <div class="flex justify-end">
-                                    <button
-                                        type="submit"
-                                        :disabled="uploadForm.processing || selectedFiles.length === 0"
-                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
-                                    >
-                                        {{ uploadForm.processing ? 'アップロード中...' : 'アップロード' }}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                <UiFormField label="タグ" hint="カンマ区切り（例: 振袖, 会場, バナー）">
+                    <UiInput v-model="tagInput" placeholder="例: 振袖, 会場, バナー" size="sm" />
+                </UiFormField>
+                <div class="flex justify-end">
+                    <UiButton variant="primary" type="submit" :loading="uploadForm.processing" :disabled="selectedFiles.length === 0">
+                        <template #leading><Upload :size="13" /></template>
+                        アップロード
+                    </UiButton>
                 </div>
+            </form>
+        </UiCard>
 
-                <!-- フィルタ・検索 -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex flex-wrap gap-4 items-end">
-                            <div class="flex-1 min-w-[200px]">
-                                <label class="block text-sm font-medium text-brand-text mb-1">ファイル名検索</label>
-                                <input
-                                    v-model="searchQuery"
-                                    type="text"
-                                    class="w-full rounded-md border-brand-border shadow-sm"
-                                    placeholder="ファイル名で検索..."
-                                    @keyup.enter="applyFilters"
-                                />
-                            </div>
-                            <div class="min-w-[150px]">
-                                <label class="block text-sm font-medium text-brand-text mb-1">タグ</label>
-                                <select
-                                    v-model="selectedTag"
-                                    class="w-full rounded-md border-brand-border shadow-sm"
-                                    @change="applyFilters"
-                                >
-                                    <option value="">すべて</option>
-                                    <option v-for="tag in allTags" :key="tag" :value="tag">{{ tag }}</option>
-                                </select>
-                            </div>
-                            <button
-                                @click="applyFilters"
-                                class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                            >
-                                検索
-                            </button>
-                            <button
-                                v-if="searchQuery || selectedTag"
-                                @click="clearFilters"
-                                class="px-4 py-2 border border-brand-border text-brand-text rounded-md hover:bg-brand-surface-2"
-                            >
-                                クリア
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- メディアグリッド -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div v-if="mediaFiles.data && mediaFiles.data.length > 0">
-                            <p class="text-sm text-brand-text-muted mb-4">{{ mediaFiles.total }}件のメディア</p>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                <div
-                                    v-for="media in mediaFiles.data"
-                                    :key="media.id"
-                                    class="group relative border rounded-lg overflow-hidden hover:ring-2 hover:ring-indigo-400 transition-shadow cursor-pointer"
-                                    @click="openDetail(media)"
-                                >
-                                    <img
-                                        :src="media.url"
-                                        :alt="media.alt || media.original_filename"
-                                        class="w-full h-32 object-cover"
-                                        loading="lazy"
-                                    />
-                                    <div class="p-2">
-                                        <p class="text-xs text-brand-text truncate" :title="media.original_filename">
-                                            {{ media.original_filename }}
-                                        </p>
-                                        <p class="text-xs text-brand-text-subtle">
-                                            {{ formatFileSize(media.file_size) }}
-                                            <span v-if="media.usage_count > 0" class="text-brand-primary">
-                                                | {{ media.usage_count }}箇所で使用
-                                            </span>
-                                        </p>
-                                        <div v-if="media.tags && media.tags.length > 0" class="mt-1 flex flex-wrap gap-1">
-                                            <span
-                                                v-for="tag in media.tags.slice(0, 2)"
-                                                :key="tag"
-                                                class="text-[10px] bg-brand-surface-2 text-brand-text-muted px-1.5 py-0.5 rounded"
-                                            >
-                                                {{ tag }}
-                                            </span>
-                                            <span v-if="media.tags.length > 2" class="text-[10px] text-brand-text-subtle">
-                                                +{{ media.tags.length - 2 }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ページネーション -->
-                            <div v-if="mediaFiles.last_page > 1" class="mt-6 flex justify-center gap-2">
-                                <Link
-                                    v-for="link in mediaFiles.links"
-                                    :key="link.label"
-                                    :href="link.url || '#'"
-                                    class="px-3 py-1 border rounded text-sm"
-                                    :class="link.active ? 'bg-brand-primary text-white border-indigo-600' : 'text-brand-text hover:bg-brand-surface-2'"
-                                    v-html="link.label"
-                                    :preserve-scroll="true"
-                                />
-                            </div>
-                        </div>
-                        <div v-else class="text-center py-8 text-brand-text-muted">
-                            メディアが登録されていません
-                        </div>
-                    </div>
+        <!-- 検索 -->
+        <UiCard variant="default" padding="md" class="mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_200px_auto] gap-3 items-end">
+                <UiFormField label="ファイル名検索">
+                    <UiInput v-model="searchQuery" placeholder="ファイル名で検索..." size="sm" @keyup.enter="applyFilters" />
+                </UiFormField>
+                <UiFormField label="タグ">
+                    <UiSelect
+                        v-model="selectedTag"
+                        :options="[{ value: '', label: 'すべて' }, ...allTags.map(t => ({ value: t, label: t }))]"
+                        size="sm"
+                        @update:modelValue="applyFilters"
+                    />
+                </UiFormField>
+                <div class="flex gap-2">
+                    <UiButton variant="primary" size="sm" @click="applyFilters">
+                        <template #leading><Search :size="13" /></template>
+                        検索
+                    </UiButton>
+                    <UiButton v-if="searchQuery || selectedTag" variant="ghost" size="sm" @click="clearFilters">クリア</UiButton>
                 </div>
             </div>
-        </div>
+        </UiCard>
 
-        <!-- 詳細モーダル -->
-        <Teleport to="body">
-            <Transition
-                enter-active-class="transition ease-out duration-200"
-                enter-from-class="opacity-0"
-                enter-to-class="opacity-100"
-                leave-active-class="transition ease-in duration-150"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0"
-            >
-                <div
-                    v-if="detailMedia"
-                    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
-                    @click.self="closeDetail"
-                    role="dialog"
-                    aria-modal="true"
-                >
-                    <div class="bg-brand-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
-                        <div class="p-6 space-y-4">
-                            <div class="flex justify-between items-start">
-                                <h3 class="text-lg font-semibold text-brand-text">メディア詳細</h3>
-                                <button @click="closeDetail" class="text-brand-text-subtle hover:text-brand-text-muted">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+        <!-- グリッド -->
+        <UiCard variant="default" padding="md">
+            <div v-if="mediaFiles.data && mediaFiles.data.length > 0">
+                <p class="text-xs text-brand-text-muted mb-3">{{ mediaFiles.total }} 件のメディア</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <button
+                        v-for="media in mediaFiles.data"
+                        :key="media.id"
+                        type="button"
+                        class="group relative rounded-soft overflow-hidden border border-brand-border bg-brand-surface text-left hover:ring-2 hover:ring-brand-primary transition-all"
+                        @click="openDetail(media)"
+                    >
+                        <img
+                            :src="media.url"
+                            :alt="media.alt || media.original_filename"
+                            class="w-full h-32 object-cover"
+                            loading="lazy"
+                        />
+                        <div class="p-2">
+                            <p class="text-xs text-brand-text truncate" :title="media.original_filename">
+                                {{ media.original_filename }}
+                            </p>
+                            <div class="text-[10px] text-brand-text-subtle flex items-center gap-1 mt-0.5">
+                                <span>{{ formatFileSize(media.file_size) }}</span>
+                                <span v-if="media.usage_count > 0" class="text-brand-primary">・{{ media.usage_count }}箇所</span>
                             </div>
-
-                            <img
-                                :src="detailMedia.url"
-                                :alt="detailMedia.alt || ''"
-                                class="w-full max-h-[40vh] object-contain rounded border"
-                            />
-
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <span class="text-brand-text-muted">ファイル名:</span>
-                                    <p class="text-brand-text">{{ detailMedia.original_filename }}</p>
-                                </div>
-                                <div>
-                                    <span class="text-brand-text-muted">サイズ:</span>
-                                    <p class="text-brand-text">{{ formatFileSize(detailMedia.file_size) }}</p>
-                                </div>
-                                <div>
-                                    <span class="text-brand-text-muted">解像度:</span>
-                                    <p class="text-brand-text">{{ detailMedia.width }} x {{ detailMedia.height }}px</p>
-                                </div>
-                                <div>
-                                    <span class="text-brand-text-muted">使用箇所:</span>
-                                    <p class="text-brand-text">{{ detailMedia.usage_count }}箇所</p>
-                                </div>
-                                <div>
-                                    <span class="text-brand-text-muted">登録日:</span>
-                                    <p class="text-brand-text">{{ detailMedia.created_at }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Alt編集 -->
-                            <div>
-                                <label class="block text-sm font-medium text-brand-text mb-1">Alt属性</label>
-                                <input
-                                    v-model="detailForm.alt"
-                                    type="text"
-                                    class="w-full rounded-md border-brand-border shadow-sm"
-                                />
-                            </div>
-
-                            <!-- タグ編集 -->
-                            <div>
-                                <label class="block text-sm font-medium text-brand-text mb-1">タグ（カンマ区切り）</label>
-                                <input
-                                    v-model="detailTagInput"
-                                    type="text"
-                                    class="w-full rounded-md border-brand-border shadow-sm"
-                                />
-                            </div>
-
-                            <div class="flex justify-between pt-2">
-                                <button
-                                    @click="deleteMedia"
-                                    :disabled="detailMedia.usage_count > 0"
-                                    class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :title="detailMedia.usage_count > 0 ? '使用中のため削除できません' : ''"
-                                >
-                                    削除
-                                </button>
-                                <div class="flex gap-2">
-                                    <button
-                                        @click="closeDetail"
-                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
-                                    >
-                                        キャンセル
-                                    </button>
-                                    <button
-                                        @click="saveDetail"
-                                        :disabled="isSavingDetail"
-                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50"
-                                    >
-                                        {{ isSavingDetail ? '保存中...' : '保存' }}
-                                    </button>
-                                </div>
+                            <div v-if="media.tags && media.tags.length > 0" class="mt-1 flex flex-wrap gap-0.5">
+                                <UiBadge v-for="tag in media.tags.slice(0, 2)" :key="tag" size="sm" variant="neutral">{{ tag }}</UiBadge>
+                                <span v-if="media.tags.length > 2" class="text-[10px] text-brand-text-subtle">+{{ media.tags.length - 2 }}</span>
                             </div>
                         </div>
+                    </button>
+                </div>
+                <div v-if="mediaFiles.last_page > 1" class="mt-4 flex justify-center gap-1">
+                    <Link
+                        v-for="link in mediaFiles.links"
+                        :key="link.label"
+                        :href="link.url || '#'"
+                        class="px-2.5 py-1 rounded-soft border text-xs"
+                        :class="link.active
+                            ? 'bg-brand-primary text-brand-on-primary border-brand-primary'
+                            : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2 border-brand-border'"
+                        v-html="link.label"
+                        preserve-scroll
+                    />
+                </div>
+            </div>
+            <div v-else class="py-10 text-center text-brand-text-muted">
+                <ImageIcon :size="28" class="mx-auto mb-2 text-brand-text-subtle" />
+                <div class="text-sm">メディアが登録されていません</div>
+            </div>
+        </UiCard>
+
+        <!-- 詳細ダイアログ -->
+        <UiDialog v-model:open="detailOpen" size="lg">
+            <template #header>
+                <span class="flex items-center gap-2">
+                    <ImageIcon :size="16" class="text-brand-primary" />
+                    メディア詳細
+                </span>
+            </template>
+            <div v-if="detailMedia" class="space-y-4">
+                <img :src="detailMedia.url" :alt="detailMedia.alt || ''" class="w-full max-h-[40vh] object-contain rounded-soft border border-brand-border bg-brand-surface-2" />
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <div class="text-xs text-brand-text-muted">ファイル名</div>
+                        <p class="text-brand-text break-all">{{ detailMedia.original_filename }}</p>
+                    </div>
+                    <div>
+                        <div class="text-xs text-brand-text-muted">サイズ</div>
+                        <p class="text-brand-text">{{ formatFileSize(detailMedia.file_size) }}</p>
+                    </div>
+                    <div>
+                        <div class="text-xs text-brand-text-muted">解像度</div>
+                        <p class="text-brand-text">{{ detailMedia.width }} x {{ detailMedia.height }} px</p>
+                    </div>
+                    <div>
+                        <div class="text-xs text-brand-text-muted">使用箇所</div>
+                        <p class="text-brand-text">{{ detailMedia.usage_count }} 箇所</p>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="text-xs text-brand-text-muted">登録日</div>
+                        <p class="text-brand-text">{{ detailMedia.created_at }}</p>
                     </div>
                 </div>
-            </Transition>
-        </Teleport>
+                <UiFormField label="Alt属性">
+                    <UiInput v-model="detailForm.alt" size="sm" />
+                </UiFormField>
+                <UiFormField label="タグ（カンマ区切り）">
+                    <UiInput v-model="detailTagInput" size="sm" />
+                </UiFormField>
+            </div>
+            <template #footer>
+                <UiButton
+                    variant="ghost"
+                    class="text-brand-danger mr-auto"
+                    :disabled="detailMedia?.usage_count > 0"
+                    :title="detailMedia?.usage_count > 0 ? '使用中のため削除できません' : ''"
+                    @click="deleteMedia"
+                >
+                    <template #leading><Trash2 :size="13" /></template>
+                    削除
+                </UiButton>
+                <UiButton variant="ghost" @click="closeDetail">キャンセル</UiButton>
+                <UiButton variant="primary" :loading="isSavingDetail" @click="saveDetail">保存</UiButton>
+            </template>
+        </UiDialog>
     </AdminLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import {
+    UiPageHeader, UiButton, UiBadge, UiCard, UiFormField,
+    UiInput, UiSelect, UiDialog,
+} from '@/Components/UI';
+import { Upload, Search, RefreshCw, Trash2, Image as ImageIcon } from 'lucide-vue-next';
 
 const props = defineProps({
     mediaFiles: Object,
@@ -334,10 +207,15 @@ const fileInput = ref(null);
 const selectedFiles = ref([]);
 const previewImages = ref([]);
 const detailMedia = ref(null);
-const detailForm = ref({ alt: '', tags: [] });
+const detailForm = ref({ alt: '' });
 const detailTagInput = ref('');
 const isSavingDetail = ref(false);
 const isImporting = ref(false);
+
+const detailOpen = computed({
+    get: () => !!detailMedia.value,
+    set: (v) => { if (!v) detailMedia.value = null; },
+});
 
 const uploadForm = useForm({
     images: [],
@@ -345,7 +223,7 @@ const uploadForm = useForm({
 });
 
 const formatFileSize = (bytes) => {
-    if (!bytes) return '-';
+    if (!bytes) return '—';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -355,7 +233,7 @@ const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
     selectedFiles.value = files;
     previewImages.value = [];
-    files.forEach(file => {
+    files.forEach((file) => {
         const reader = new FileReader();
         reader.onload = (e) => previewImages.value.push(e.target.result);
         reader.readAsDataURL(file);
@@ -368,15 +246,12 @@ const removePreview = (index) => {
     selectedFiles.value.splice(index, 1);
     uploadForm.images = selectedFiles.value;
     const dt = new DataTransfer();
-    selectedFiles.value.forEach(file => dt.items.add(file));
-    fileInput.value.files = dt.files;
+    selectedFiles.value.forEach((file) => dt.items.add(file));
+    if (fileInput.value) fileInput.value.files = dt.files;
 };
 
 const submitUpload = () => {
-    const tags = tagInput.value
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
+    const tags = tagInput.value.split(',').map((t) => t.trim()).filter(Boolean);
     uploadForm.tags = tags;
     uploadForm.post(route('admin.media.store'), {
         forceFormData: true,
@@ -409,20 +284,15 @@ const openDetail = (media) => {
     detailTagInput.value = (media.tags || []).join(', ');
 };
 
-const closeDetail = () => {
-    detailMedia.value = null;
-};
+const closeDetail = () => { detailMedia.value = null; };
 
 const saveDetail = () => {
     if (!detailMedia.value) return;
-    const tags = detailTagInput.value
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
+    const tags = detailTagInput.value.split(',').map((t) => t.trim()).filter(Boolean);
     isSavingDetail.value = true;
     router.patch(route('admin.media.update', detailMedia.value.id), {
         alt: detailForm.value.alt,
-        tags: tags,
+        tags,
     }, {
         preserveScroll: true,
         onSuccess: () => closeDetail(),
