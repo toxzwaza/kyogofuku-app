@@ -321,6 +321,25 @@ class GoogleCalendarSyncService
 
         $event = $this->buildCalendarEvent($schedule);
 
+        if ($existingSync && $existingSync->google_calendar_id !== $calendarId) {
+            try {
+                $service->events->delete(
+                    $existingSync->google_calendar_id,
+                    $existingSync->google_event_id
+                );
+            } catch (\Throwable $e) {
+                Log::warning('[GoogleCalendar] 旧カレンダーのイベント削除に失敗（続行）', [
+                    'schedule_id' => $schedule->id,
+                    'shop_id' => $shop->id,
+                    'old_calendar_id' => $existingSync->google_calendar_id,
+                    'old_event_id' => $existingSync->google_event_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            $existingSync->delete();
+            $existingSync = null;
+        }
+
         if ($existingSync) {
             $service->events->update(
                 $existingSync->google_calendar_id,
