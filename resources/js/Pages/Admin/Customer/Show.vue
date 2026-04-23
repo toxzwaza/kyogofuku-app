@@ -1167,7 +1167,7 @@
                 >
                     <!-- ヘッダー -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
-                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                        <h3 class="font-serif text-lg font-semibold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
@@ -1175,7 +1175,7 @@
                         </h3>
                         <button
                             @click="showAddContractModal = false"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1362,7 +1362,7 @@
                         <h3 class="text-xl font-bold text-brand-text">成約情報編集</h3>
                         <button
                             @click="showEditContractModal = false"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1478,7 +1478,7 @@
                         <h3 class="text-xl font-bold text-brand-text">{{ editingConstraint ? '制約情報編集' : '制約追加 - 準備' }}</h3>
                         <button
                             @click="closeConstraintModal"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1609,7 +1609,7 @@
                         <button
                             type="button"
                             @click="closeConstraintFileEditModal"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1733,7 +1733,7 @@
                 >
                     <!-- ヘッダー -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
-                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                        <h3 class="font-serif text-lg font-semibold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
@@ -1741,7 +1741,7 @@
                         </h3>
                         <button
                             @click="showAddPhotoSlotModal = false"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1955,7 +1955,7 @@
                         <h3 class="text-xl font-bold text-brand-text">前撮り情報編集</h3>
                         <button
                             @click="showEditPhotoSlotModal = false"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -2062,7 +2062,7 @@
                         </h3>
                         <button
                             @click="closePhotoPreviewModal"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                             title="閉じる"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2102,7 +2102,7 @@
                         <button
                             type="button"
                             @click="closePhotoMemoModal"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -2179,7 +2179,7 @@
             >
                 <div class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
                     <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-red-50 to-pink-50">
-                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                        <h3 class="font-serif text-lg font-semibold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
@@ -2187,7 +2187,7 @@
                         </h3>
                         <button
                             @click="showDeleteConfirmModal = false"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -2235,7 +2235,7 @@
                 >
                     <!-- ヘッダー -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
-                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
+                        <h3 class="font-serif text-lg font-semibold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
@@ -2244,7 +2244,7 @@
                         <button
                             type="button"
                             @click="closeTagModal"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
