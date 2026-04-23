@@ -559,34 +559,29 @@
                       <span class="font-medium text-brand-text">{{ sortedEmailThreads.length }}</span>
                       件のスレッド
                     </p>
-                    <button
-                      type="button"
-                      @click="openNewComposer"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                      </svg>
+                    <UiButton variant="primary" size="sm" @click="openNewComposer">
+                      <template #leading><Plus :size="13" /></template>
                       新規メール作成
-                    </button>
+                    </UiButton>
                   </div>
 
                   <!-- 新規メール作成フォーム（インライン展開） -->
                   <div
                     v-if="showNewComposer"
-                    class="mb-4 border border-brand-border-strong bg-brand-surface-2 rounded-lg p-4"
+                    class="mb-4 rounded-soft border border-brand-border-strong bg-brand-surface-2 p-4"
                   >
                     <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-semibold text-brand-text">新規メール作成</h4>
+                      <h4 class="font-serif text-sm font-semibold text-brand-text flex items-center gap-2">
+                        <Mail :size="14" class="text-brand-primary" />
+                        新規メール作成
+                      </h4>
                       <button
                         type="button"
-                        @click="cancelNewComposer"
-                        class="text-brand-text-subtle hover:text-brand-text-muted"
+                        class="text-brand-text-subtle hover:text-brand-text rounded p-1 -m-1 hover:bg-brand-surface transition-colors"
                         aria-label="閉じる"
+                        @click="cancelNewComposer"
                       >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <X :size="16" />
                       </button>
                     </div>
                     <form @submit.prevent="submitNewEmail" class="space-y-3">
@@ -629,21 +624,19 @@
                         <button
                           type="submit"
                           :disabled="replyForm.processing || isSendingEmail"
-                          class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50"
+                          class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-brand-on-primary rounded-soft text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50"
                         >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                          </svg>
+                          <Send :size="14" />
                           {{ (replyForm.processing || isSendingEmail) ? "送信中..." : "送信" }}
                         </button>
-                        <button
+                        <UiButton
+                          variant="ghost"
                           type="button"
-                          @click="cancelNewComposer"
                           :disabled="replyForm.processing || isSendingEmail"
-                          class="px-4 py-2 bg-brand-surface border border-brand-border text-brand-text rounded-md text-sm font-medium hover:bg-brand-surface-2 disabled:opacity-50"
+                          @click="cancelNewComposer"
                         >
                           キャンセル
-                        </button>
+                        </UiButton>
                       </div>
                     </form>
                   </div>
@@ -856,18 +849,13 @@
                     </div>
                   </div>
 
-                  <div v-else class="text-center py-12 text-brand-text-muted">
-                    <svg class="w-12 h-12 mx-auto mb-3 text-brand-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <p class="text-sm">メールのやり取りはありません</p>
-                    <button
-                      type="button"
-                      @click="openNewComposer"
-                      class="mt-3 text-sm text-brand-primary hover:text-brand-primary-hover font-medium"
-                    >
+                  <div v-else class="text-center py-10 text-brand-text-muted">
+                    <Mail :size="32" class="mx-auto mb-3 text-brand-text-subtle" />
+                    <p class="text-sm mb-3">メールのやり取りはありません</p>
+                    <UiButton variant="primary" size="sm" @click="openNewComposer">
+                      <template #leading><Plus :size="13" /></template>
                       新規メールを作成する
-                    </button>
+                    </UiButton>
                   </div>
                 </div>
               </div>
@@ -1035,7 +1023,7 @@ import {
     Sparkles, Book, Info, AlertTriangle, CheckCircle2, Clock, Send,
     Compass, School, Target, Waypoints,
     ClipboardCheck, UserCog, Ticket, RefreshCw, ExternalLink,
-    UserPlus, Search, Loader2,
+    UserPlus, Search, Loader2, Plus, X,
 } from "lucide-vue-next";
 import ActionButton from "@/Components/ActionButton.vue";
 import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
