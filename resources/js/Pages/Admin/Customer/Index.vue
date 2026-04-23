@@ -22,7 +22,7 @@
                         class="w-full lg:w-[22rem] shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto"
                     >
                         <div class="bg-brand-surface rounded-xl border border-brand-border shadow-sm overflow-hidden">
-                            <div class="px-4 py-3 border-b border-brand-border bg-gradient-to-r from-slate-50 to-white">
+                            <div class="px-4 py-3 border-b border-brand-border bg-brand-surface-2">
                                 <h3 class="text-base font-semibold text-brand-text">検索条件</h3>
                                 <p class="text-xs text-brand-text-muted mt-0.5 leading-snug">
                                     各ブロックを開いて絞り込み、検索を実行してください
@@ -37,19 +37,15 @@
                                         @click="toggleFilterAccordion('basic')"
                                     >
                                         <span>基本情報</span>
-                                        <svg
-                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
+                                        <ChevronDown
+                                            :size="14"
+                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.basic }"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        />
                                     </button>
                                     <div
                                         v-show="filterAccordion.basic"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
                                     >
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">顧客名</label>
@@ -134,19 +130,15 @@
                                         @click="toggleFilterAccordion('seijin')"
                                     >
                                         <span>成人式情報</span>
-                                        <svg
-                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
+                                        <ChevronDown
+                                            :size="14"
+                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.seijin }"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        />
                                     </button>
                                     <div
                                         v-show="filterAccordion.seijin"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
                                     >
                                         <p v-if="seijinFilterOptionsLoading" class="text-xs text-brand-text-muted">候補を読み込み中…</p>
                                         <div>
@@ -227,19 +219,15 @@
                                         @click="toggleFilterAccordion('contract')"
                                     >
                                         <span>成約情報</span>
-                                        <svg
-                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
+                                        <ChevronDown
+                                            :size="14"
+                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.contract }"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        />
                                     </button>
                                     <div
                                         v-show="filterAccordion.contract"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
                                     >
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">成約ステータス</label>
@@ -356,19 +344,15 @@
                                         @click="toggleFilterAccordion('constraint')"
                                     >
                                         <span>制約情報</span>
-                                        <svg
-                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
+                                        <ChevronDown
+                                            :size="14"
+                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.constraint }"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        />
                                     </button>
                                     <div
                                         v-show="filterAccordion.constraint"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
                                     >
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">制約の有無</label>
@@ -436,19 +420,15 @@
                                         @click="toggleFilterAccordion('photo')"
                                     >
                                         <span>前撮り情報</span>
-                                        <svg
-                                            class="w-4 h-4 text-brand-text-muted shrink-0 transition-transform duration-200"
+                                        <ChevronDown
+                                            :size="14"
+                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
                                             :class="{ 'rotate-180': filterAccordion.photo }"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        />
                                     </button>
                                     <div
                                         v-show="filterAccordion.photo"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-slate-50/50"
+                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
                                     >
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">担当店舗</label>
@@ -578,7 +558,7 @@
                                                     <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm font-medium">
                                             <Link
                                                 :href="route('admin.customers.show', customer.id)"
-                                                class="group relative inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
+                                                class="group relative inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium text-white bg-brand-primary rounded-lg shadow-sm hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
                                             >
                                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -636,7 +616,7 @@
                     class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -990,7 +970,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { UiPageHeader, UiButton } from '@/Components/UI';
-import { Plus } from 'lucide-vue-next';
+import { Plus, ChevronDown, Search, Filter, RotateCcw, Eye } from 'lucide-vue-next';
 import ActionButton from '@/Components/ActionButton.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
