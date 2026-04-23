@@ -166,14 +166,13 @@
                     <template #info>
                         <div class="space-y-4 max-w-5xl">
                         <!-- 追加情報セクション（振袖アンケート）※customerの項目はcustomerから、それ以外はadditional_infoから表示 -->
-                        <div v-if="hasAdditionalInfo" class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                追加情報（振袖アンケート）
-                            </h4>
+                        <UiCard v-if="hasAdditionalInfo" variant="default" padding="lg">
+                            <template #header>
+                                <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                                    <ClipboardList :size="15" class="text-brand-primary" />
+                                    追加情報（振袖アンケート）
+                                </h3>
+                            </template>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <!-- 記入日（additional_info のみ） -->
                                 <div v-if="formatAdditionalInfoDate(ai, 'entry_date')" class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
@@ -321,8 +320,7 @@
                                     <p class="text-base font-medium text-brand-text">{{ customer.staff_name || '-' }}</p>
                                 </div>
                             </div>
-                            </div>
-                        </div>
+                        </UiCard>
 
                 <!-- 参加イベント -->
                 <UiCard variant="default" padding="lg">
@@ -2359,6 +2357,7 @@ import {
     Cake, Sparkles, MapPin, Users, Clock, FileText, Pencil,
     Phone, Mail, Home, Building2, Info, X as XIcon, MessageSquare,
     CalendarCheck, Receipt, Lock, Camera, Image as ImageIcon, Eye,
+    ClipboardList,
 } from 'lucide-vue-next';
 
 const activeTab = ref('overview');
