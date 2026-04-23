@@ -882,20 +882,17 @@
                     class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
-                            <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
+                        <h3 class="font-serif text-lg font-semibold text-brand-text flex items-center gap-2">
+                            <Pencil :size="18" class="text-brand-primary" />
                             顧客情報編集
                         </h3>
                         <button
+                            type="button"
+                            class="text-brand-text-muted hover:text-brand-text hover:bg-brand-surface rounded-full p-1 transition-colors"
                             @click="showEditCustomerModal = false"
-                            class="text-brand-text-subtle hover:text-brand-text-muted hover:bg-brand-surface-2 rounded-full p-1 transition-colors"
                         >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <XIcon :size="18" />
                         </button>
                     </div>
 
@@ -1144,22 +1141,14 @@
                         </div>
 
                         <!-- フッター -->
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
-                            <button
-                                type="button"
-                                @click="showEditCustomerModal = false"
-                                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
-                            >
+                        <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-brand-border">
+                            <UiButton variant="ghost" type="button" @click="showEditCustomerModal = false">
                                 キャンセル
-                            </button>
-                            <button
-                                type="submit"
-                                :disabled="customerForm.processing"
-                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <span v-if="customerForm.processing">保存中...</span>
-                                <span v-else>保存</span>
-                            </button>
+                            </UiButton>
+                            <UiButton variant="primary" type="submit" :loading="customerForm.processing">
+                                <template #leading><Pencil :size="13" /></template>
+                                保存する
+                            </UiButton>
                         </div>
                     </form>
                 </div>
@@ -1177,7 +1166,7 @@
                     class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -1369,7 +1358,7 @@
                 <div
                     class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text">成約情報編集</h3>
                         <button
                             @click="showEditContractModal = false"
@@ -1485,7 +1474,7 @@
                 @click.self="closeConstraintModal"
             >
                 <div class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <div class="flex justify-between items-center px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text">{{ editingConstraint ? '制約情報編集' : '制約追加 - 準備' }}</h3>
                         <button
                             @click="closeConstraintModal"
@@ -1615,7 +1604,7 @@
                 @click.self="closeConstraintFileEditModal"
             >
                 <div class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <div class="flex justify-between items-center px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text">制約添付の確認・編集</h3>
                         <button
                             type="button"
@@ -1743,7 +1732,7 @@
                     class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -1962,7 +1951,7 @@
                 <div
                     class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
                 >
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text">前撮り情報編集</h3>
                         <button
                             @click="showEditPhotoSlotModal = false"
@@ -2067,7 +2056,7 @@
             >
                 <div class="relative bg-brand-surface rounded-xl shadow-2xl max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text">
                             {{ showingUnsavedPhotoPreview ? 'プレビュー（未保存）' : (selectedPhoto?.type?.name || '写真') }}
                         </h3>
@@ -2108,7 +2097,7 @@
                 @click.self="closePhotoMemoModal"
             >
                 <div class="relative bg-brand-surface rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text">手書きメモを追加</h3>
                         <button
                             type="button"
@@ -2245,7 +2234,7 @@
                     class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
                 >
                     <!-- ヘッダー -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-gradient-to-r from-indigo-50 to-purple-50">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
                             <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
