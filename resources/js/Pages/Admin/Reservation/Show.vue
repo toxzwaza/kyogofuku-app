@@ -329,7 +329,7 @@
                   <!-- 顧客が紐づいている場合 -->
                   <div
                     v-if="reservation.customer && !showCustomerLinkSearch"
-                    class="rounded-lg border-2 border-indigo-200 bg-indigo-50/50 p-4"
+                    class="rounded-lg border-2 border-brand-border-strong bg-brand-surface-2 p-4"
                   >
                     <div class="flex items-start justify-between gap-3">
                       <div class="min-w-0 flex-1">
@@ -408,7 +408,7 @@
                             :class="[
                               'cursor-pointer transition-colors',
                               selectedSearchCustomer?.id === c.id
-                                ? 'bg-indigo-100 hover:bg-indigo-100'
+                                ? 'bg-ai-100 hover:bg-ai-100'
                                 : 'hover:bg-brand-surface-2',
                             ]"
                             @click="selectedSearchCustomer = c"
@@ -519,7 +519,7 @@
                   :class="[
                     'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
                     communicationTab === 'line'
-                      ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                      ? 'border-brand-primary text-brand-primary bg-brand-surface-2'
                       : 'border-transparent text-brand-text-muted hover:text-brand-text hover:bg-brand-surface-2',
                   ]"
                   :aria-selected="communicationTab === 'line'"
@@ -533,7 +533,7 @@
                   :class="[
                     'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
                     communicationTab === 'email'
-                      ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                      ? 'border-brand-primary text-brand-primary bg-brand-surface-2'
                       : 'border-transparent text-brand-text-muted hover:text-brand-text hover:bg-brand-surface-2',
                   ]"
                   :aria-selected="communicationTab === 'email'"
@@ -577,7 +577,7 @@
                   <!-- 新規メール作成フォーム（インライン展開） -->
                   <div
                     v-if="showNewComposer"
-                    class="mb-4 border border-indigo-200 bg-indigo-50/30 rounded-lg p-4"
+                    class="mb-4 border border-brand-border-strong bg-brand-surface-2 rounded-lg p-4"
                   >
                     <div class="flex items-center justify-between mb-3">
                       <h4 class="text-sm font-semibold text-brand-text">新規メール作成</h4>
@@ -660,7 +660,7 @@
                       v-for="thread in sortedEmailThreads"
                       :key="thread.id"
                       class="border border-brand-border rounded-lg bg-brand-surface overflow-hidden"
-                      :class="{ 'ring-2 ring-indigo-300': isThreadExpanded(thread.id) }"
+                      :class="{ 'ring-2 ring-brand-primary/40': isThreadExpanded(thread.id) }"
                     >
                       <!-- スレッドヘッダー -->
                       <button
@@ -814,7 +814,7 @@
                             <button
                               type="button"
                               @click="openReplyForm(thread.id)"
-                              class="w-full py-2 bg-brand-surface border border-indigo-200 text-brand-primary hover:bg-indigo-50 rounded-md text-sm font-medium flex items-center justify-center gap-1.5"
+                              class="w-full py-2 bg-brand-surface border border-brand-border-strong text-brand-primary hover:bg-brand-surface-2 rounded-md text-sm font-medium flex items-center justify-center gap-1.5"
                             >
                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -889,7 +889,7 @@
                     :class="[
                       'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
                       rightPanelTab === 'memo'
-                        ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                        ? 'border-brand-primary text-brand-primary bg-brand-surface-2'
                         : 'border-transparent text-brand-text-muted hover:text-brand-text hover:bg-brand-surface-2',
                     ]"
                     :aria-selected="rightPanelTab === 'memo'"
@@ -903,7 +903,7 @@
                     :class="[
                       'flex-1 px-3 py-2.5 text-sm font-medium rounded-t-md border-b-2 transition-colors',
                       rightPanelTab === 'history'
-                        ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+                        ? 'border-brand-primary text-brand-primary bg-brand-surface-2'
                         : 'border-transparent text-brand-text-muted hover:text-brand-text hover:bg-brand-surface-2',
                     ]"
                     :aria-selected="rightPanelTab === 'history'"

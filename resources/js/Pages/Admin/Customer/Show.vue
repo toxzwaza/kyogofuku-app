@@ -1576,7 +1576,7 @@
                                     ref="constraintAttachmentInputRef"
                                     type="file"
                                     accept="image/*,.pdf,application/pdf"
-                                    class="block w-full text-sm text-brand-text-muted file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                    class="block w-full text-sm text-brand-text-muted file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-surface-2 file:text-brand-primary hover:file:bg-ai-100"
                                     @change="onConstraintAttachmentChange"
                                 />
                                 <p v-if="constraintAttachmentFile" class="text-xs text-brand-text-muted">
@@ -1698,7 +1698,7 @@
                                 ref="constraintFileEditAttachmentInputRef"
                                 type="file"
                                 accept="image/*,.pdf,application/pdf"
-                                class="block w-full text-sm text-brand-text-muted file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700"
+                                class="block w-full text-sm text-brand-text-muted file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-surface-2 file:text-brand-primary"
                                 @change="onConstraintFileEditAttachmentChange"
                             />
                             <p v-if="constraintFileEditNewFile" class="text-xs text-brand-text-muted mt-1">新規: {{ constraintFileEditNewFile.name }}</p>
@@ -1707,7 +1707,7 @@
                             <button
                                 type="button"
                                 @click="goToConstraintSignFromFileEdit"
-                                class="px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+                                class="px-3 py-2 text-sm font-medium text-brand-primary bg-brand-surface-2 rounded-lg hover:bg-ai-100"
                             >
                                 署名ページで編集
                             </button>
