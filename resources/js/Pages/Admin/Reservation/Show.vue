@@ -172,305 +172,152 @@
         <div class="max-w-3xl">
             <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
               <div class="p-6">
-                <!-- ステータス登録 -->
-                <div class="mb-6 pb-6 border-b border-brand-border">
-                  <h3 class="text-lg font-semibold mb-4">対応ステータス</h3>
-                  <div v-if="reservation.status" class="mb-3">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm text-brand-text-muted"
-                        >現在のステータス:</span
-                      >
-                      <span
-                        :class="getStatusBadgeClass(reservation.status)"
-                        class="px-2 py-1 text-xs font-medium rounded-full"
-                      >
-                        {{ reservation.status }}
-                      </span>
-                    </div>
-                    <div
-                      v-if="reservation.status_updated_by"
-                      class="mt-2 text-xs text-brand-text-muted"
-                    >
-                      更新者: {{ reservation.status_updated_by.name }}
-                    </div>
+                <!-- 対応ステータス -->
+                <section class="mb-6 pb-6 border-b border-brand-border">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                      <ClipboardCheck :size="15" class="text-brand-primary" />
+                      対応ステータス
+                    </h3>
+                    <UiBadge v-if="reservation.status" :variant="statusBadgeVariant(reservation.status)" dot>
+                      {{ reservation.status }}
+                    </UiBadge>
                   </div>
-                  <form @submit.prevent="updateStatus">
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-brand-text mb-1"
-                        >ステータス</label
-                      >
-                      <select
+                  <p v-if="reservation.status_updated_by" class="text-xs text-brand-text-muted mb-3">
+                    更新者: {{ reservation.status_updated_by.name }}
+                  </p>
+                  <form @submit.prevent="updateStatus" class="space-y-2">
+                    <UiFormField label="ステータスを変更" :error="statusForm.errors.status">
+                      <UiSelect
                         v-model="statusForm.status"
-                        required
-                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                      >
-                        <option value="未対応">未対応</option>
-                        <option value="確認中">確認中</option>
-                        <option value="返信待ち">返信待ち</option>
-                        <option value="対応完了済み">対応完了済み</option>
-                        <option value="キャンセル済み">キャンセル済み</option>
-                      </select>
-                      <div
-                        v-if="statusForm.errors.status"
-                        class="mt-1 text-sm text-red-600"
-                      >
-                        {{ statusForm.errors.status }}
-                      </div>
-                    </div>
-                    <button
-                      type="submit"
-                      :disabled="statusForm.processing"
-                      class="mt-2 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
-                    >
-                      {{
-                        statusForm.processing ? "更新中..." : "ステータスを更新"
-                      }}
-                    </button>
-                  </form>
-                </div>
-
-                <!-- 担当者（管理） -->
-                <div class="mb-6 pb-6 border-b border-brand-border">
-                  <h3 class="text-lg font-semibold mb-4">担当者</h3>
-                  <form @submit.prevent="submitAssignee">
-                    <label
-                      class="block text-sm font-medium text-brand-text mb-1"
-                      for="reservation-admin-assignee"
-                      >担当者</label
-                    >
-                    <input
-                      id="reservation-admin-assignee"
-                      v-model="assigneeForm.admin_assignee"
-                      type="text"
-                      list="reservation-assignee-options"
-                      autocomplete="off"
-                      class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                      placeholder="名前を入力するか一覧から選択"
-                    />
-                    <datalist id="reservation-assignee-options">
-                      <option
-                        v-for="(opt, idx) in assigneeDatalistOptions"
-                        :key="`${opt}-${idx}`"
-                        :value="opt"
+                        :options="[
+                          { value: '未対応', label: '未対応' },
+                          { value: '確認中', label: '確認中' },
+                          { value: '返信待ち', label: '返信待ち' },
+                          { value: '対応完了済み', label: '対応完了済み' },
+                          { value: 'キャンセル済み', label: 'キャンセル済み' },
+                        ]"
                       />
-                    </datalist>
-                    <div
-                      v-if="assigneeForm.errors.admin_assignee"
-                      class="mt-1 text-sm text-red-600"
-                    >
-                      {{ assigneeForm.errors.admin_assignee }}
-                    </div>
-                    <button
-                      type="submit"
-                      :disabled="assigneeForm.processing"
-                      class="mt-2 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
-                    >
-                      {{
-                        assigneeForm.processing
-                          ? "更新中..."
-                          : "保存担当者を更新"
-                      }}
-                    </button>
+                    </UiFormField>
+                    <UiButton variant="primary" type="submit" :loading="statusForm.processing" block>
+                      ステータスを更新
+                    </UiButton>
                   </form>
-                </div>
+                </section>
+
+                <!-- 担当者 -->
+                <section class="mb-6 pb-6 border-b border-brand-border">
+                  <h3 class="font-serif text-base font-semibold mb-3 flex items-center gap-2 text-brand-text">
+                    <UserCog :size="15" class="text-brand-primary" />
+                    担当者
+                  </h3>
+                  <form @submit.prevent="submitAssignee" class="space-y-2">
+                    <UiFormField label="保存担当者" hint="名前を入力するか一覧から選択" :error="assigneeForm.errors.admin_assignee">
+                      <UiInput
+                        id="reservation-admin-assignee"
+                        v-model="assigneeForm.admin_assignee"
+                        placeholder="名前を入力するか一覧から選択"
+                        list="reservation-assignee-options"
+                      />
+                      <datalist id="reservation-assignee-options">
+                        <option v-for="(opt, idx) in assigneeDatalistOptions" :key="`${opt}-${idx}`" :value="opt" />
+                      </datalist>
+                    </UiFormField>
+                    <UiButton variant="primary" type="submit" :loading="assigneeForm.processing" block>
+                      担当者を更新
+                    </UiButton>
+                  </form>
+                </section>
 
                 <!-- 入場チケット送付 -->
-                <div class="mb-6 pb-6 border-b border-brand-border">
-                  <h3 class="text-lg font-semibold mb-4">入場チケット送付</h3>
-                  <div class="mb-3">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm text-brand-text-muted">現在のステータス:</span>
-                      <span
-                        :class="
-                          getEntranceTicketSendBadgeClass(
-                            reservation.entrance_ticket_send_status
-                          )
-                        "
-                        class="px-2 py-1 text-xs font-medium rounded-full"
-                      >
-                        {{
-                          reservation.entrance_ticket_send_status || "未送付"
-                        }}
-                      </span>
-                    </div>
+                <section class="mb-6 pb-6 border-b border-brand-border">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                      <Ticket :size="15" class="text-brand-primary" />
+                      入場チケット送付
+                    </h3>
+                    <UiBadge :variant="reservation.entrance_ticket_send_status === '送付済み' ? 'success' : 'neutral'" dot>
+                      {{ reservation.entrance_ticket_send_status || '未送付' }}
+                    </UiBadge>
                   </div>
-                  <form @submit.prevent="submitEntranceTicketSendStatus">
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-brand-text mb-1"
-                        >ステータス</label
-                      >
-                      <select
+                  <form @submit.prevent="submitEntranceTicketSendStatus" class="space-y-2">
+                    <UiFormField label="ステータスを変更" :error="entranceTicketSendForm.errors.entrance_ticket_send_status">
+                      <UiSelect
                         v-model="entranceTicketSendForm.entrance_ticket_send_status"
-                        required
-                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                      >
-                        <option value="未送付">未送付</option>
-                        <option value="送付済み">送付済み</option>
-                      </select>
-                      <div
-                        v-if="
-                          entranceTicketSendForm.errors
-                            .entrance_ticket_send_status
-                        "
-                        class="mt-1 text-sm text-red-600"
-                      >
-                        {{
-                          entranceTicketSendForm.errors
-                            .entrance_ticket_send_status
-                        }}
-                      </div>
-                    </div>
-                    <button
-                      type="submit"
-                      :disabled="entranceTicketSendForm.processing"
-                      class="mt-2 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
-                    >
-                      {{
-                        entranceTicketSendForm.processing
-                          ? "更新中..."
-                          : "ステータスを更新"
-                      }}
-                    </button>
+                        :options="[
+                          { value: '未送付', label: '未送付' },
+                          { value: '送付済み', label: '送付済み' },
+                        ]"
+                      />
+                    </UiFormField>
+                    <UiButton variant="primary" type="submit" :loading="entranceTicketSendForm.processing" block>
+                      ステータスを更新
+                    </UiButton>
                   </form>
-                </div>
+                </section>
 
                 <!-- Googleカレンダー連携 -->
-                <div class="mb-6 pb-6 border-b border-brand-border">
-                  <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <svg
-                      class="w-5 h-5 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Googleカレンダー連携
-                  </h3>
+                <section class="mb-6 pb-6 border-b border-brand-border">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                      <Calendar :size="15" class="text-brand-primary" />
+                      Googleカレンダー連携
+                    </h3>
+                    <UiBadge v-if="googleCalendarSyncInfo.syncs && googleCalendarSyncInfo.syncs.length > 0" variant="success" dot>
+                      連携済み（{{ googleCalendarSyncInfo.syncs.length }}件）
+                    </UiBadge>
+                    <UiBadge v-else variant="warning" dot>未連携</UiBadge>
+                  </div>
 
-                  <!-- 連携済み -->
-                  <div
-                    v-if="
-                      googleCalendarSyncInfo.syncs &&
-                      googleCalendarSyncInfo.syncs.length > 0
-                    "
-                  >
-                    <div class="mb-3 flex items-center gap-2">
-                      <span
-                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                      >
-                        <span
-                          class="w-2 h-2 bg-green-500 rounded-full mr-1.5"
-                        ></span>
-                        連携済み（{{ googleCalendarSyncInfo.syncs.length }}件）
-                      </span>
-                    </div>
+                  <div v-if="googleCalendarSyncInfo.syncs && googleCalendarSyncInfo.syncs.length > 0">
                     <div class="space-y-2 mb-3">
                       <div
                         v-for="sync in googleCalendarSyncInfo.syncs"
                         :key="sync.id"
-                        class="p-3 bg-green-50 rounded-lg border border-green-200"
+                        class="p-3 rounded-soft bg-uguisu-50 dark:bg-uguisu-900 border border-uguisu-200 dark:border-uguisu-800"
                       >
                         <div class="flex items-start justify-between gap-2">
                           <div class="min-w-0 flex-1">
-                            <div class="text-sm font-medium text-brand-text">
-                              {{ sync.shop_name || "—" }}
-                            </div>
-                            <div
-                              class="text-xs text-brand-text-muted mt-0.5 truncate"
-                              :title="sync.google_calendar_id"
-                            >
+                            <div class="text-sm font-medium text-brand-text">{{ sync.shop_name || '—' }}</div>
+                            <div class="text-[11px] text-brand-text-muted mt-0.5 truncate" :title="sync.google_calendar_id">
                               {{ sync.google_calendar_id }}
                             </div>
                           </div>
-                          <a
-                            :href="sync.html_link"
-                            target="_blank"
-                            rel="noopener"
-                            class="shrink-0 text-xs text-brand-primary hover:underline whitespace-nowrap"
-                          >
-                            カレンダーで開く →
+                          <a :href="sync.html_link" target="_blank" rel="noopener" class="shrink-0 text-xs text-brand-primary hover:underline inline-flex items-center gap-1">
+                            開く <ExternalLink :size="11" />
                           </a>
                         </div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      @click="syncGoogleCalendar"
-                      :disabled="googleCalendarSyncForm.processing"
-                      class="w-full px-3 py-2 text-sm font-medium bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 disabled:opacity-50"
-                    >
-                      {{
-                        googleCalendarSyncForm.processing
-                          ? "処理中..."
-                          : "再同期"
-                      }}
-                    </button>
+                    <UiButton variant="subtle" :loading="googleCalendarSyncForm.processing" block @click="syncGoogleCalendar">
+                      <template #leading><RefreshCw :size="13" /></template>
+                      再同期
+                    </UiButton>
                   </div>
 
-                  <!-- 未連携 -->
                   <div v-else>
-                    <div class="mb-3 flex items-center gap-2">
-                      <span
-                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
-                      >
-                        <span
-                          class="w-2 h-2 bg-yellow-500 rounded-full mr-1.5"
-                        ></span>
-                        未連携
-                      </span>
-                    </div>
-                    <p
-                      v-if="googleCalendarSyncInfo.can_sync"
-                      class="text-xs text-brand-text-muted mb-3"
-                    >
+                    <p v-if="googleCalendarSyncInfo.can_sync" class="text-xs text-brand-text-muted mb-3">
                       この予約はまだGoogleカレンダーに登録されていません。
-                      <span
-                        v-if="
-                          googleCalendarSyncInfo.expected_shops &&
-                          googleCalendarSyncInfo.expected_shops.length > 0
-                        "
-                        class="font-medium"
-                      >
-                        {{
-                          googleCalendarSyncInfo.expected_shops
-                            .map((s) => s.name)
-                            .join("、")
-                        }}
+                      <span v-if="googleCalendarSyncInfo.expected_shops && googleCalendarSyncInfo.expected_shops.length > 0" class="font-medium">
+                        {{ googleCalendarSyncInfo.expected_shops.map((s) => s.name).join('、') }}
                       </span>
                       のカレンダーに登録できます。
                     </p>
-                    <p v-else class="text-xs text-red-600 mb-3">
-                      {{
-                        googleCalendarSyncInfo.cannot_sync_reason ||
-                        "連携できない状態です。"
-                      }}
+                    <p v-else class="text-xs text-brand-danger mb-3">
+                      {{ googleCalendarSyncInfo.cannot_sync_reason || '連携できない状態です。' }}
                     </p>
-                    <button
-                      type="button"
+                    <UiButton
+                      variant="primary"
+                      :loading="googleCalendarSyncForm.processing"
+                      :disabled="!googleCalendarSyncInfo.can_sync"
+                      block
                       @click="syncGoogleCalendar"
-                      :disabled="
-                        !googleCalendarSyncInfo.can_sync ||
-                        googleCalendarSyncForm.processing
-                      "
-                      class="w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400 text-sm font-medium"
                     >
-                      {{
-                        googleCalendarSyncForm.processing
-                          ? "連携中..."
-                          : "Googleカレンダーに連携する"
-                      }}
-                    </button>
+                      <template #leading><Calendar :size="13" /></template>
+                      Googleカレンダーに連携する
+                    </UiButton>
                   </div>
-                </div>
-
+                </section>
 
                 <!-- 顧客紐づけ -->
                 <div class="mt-6 pt-6 border-t border-brand-border">
@@ -1182,7 +1029,7 @@
 import AdminLayout from "@/Layouts/AdminLayout.vue";
 import {
     UiPageHeader, UiButton, UiTabs, UiBadge, UiAlert, UiCard,
-    UiDetailSection, UiDetailField,
+    UiDetailSection, UiDetailField, UiFormField, UiSelect, UiInput,
 } from "@/Components/UI";
 import {
     ArrowLeft, Pencil, FileText, Settings, MessageSquare,
@@ -1190,6 +1037,7 @@ import {
     Cake, Building2, GraduationCap, Users, Car, ParkingSquare,
     Sparkles, Book, Info, AlertTriangle, CheckCircle2, Clock, Send,
     Compass, School, Target, Waypoints,
+    ClipboardCheck, UserCog, Ticket, RefreshCw, ExternalLink,
 } from "lucide-vue-next";
 import ActionButton from "@/Components/ActionButton.vue";
 import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
