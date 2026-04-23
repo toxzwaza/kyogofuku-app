@@ -679,20 +679,11 @@
                             {{ latestEmailPreview(thread) }}
                           </p>
                         </div>
-                        <svg
+                        <ChevronDown
+                          :size="18"
                           :class="{ 'rotate-180': isThreadExpanded(thread.id) }"
-                          class="w-5 h-5 text-brand-text-subtle shrink-0 mt-1 transition-transform"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
+                          class="text-brand-text-subtle shrink-0 mt-1 transition-transform"
+                        />
                       </button>
 
                       <!-- 展開時：メールリスト + 返信フォーム -->
@@ -717,14 +708,14 @@
                             <div class="flex items-start justify-between gap-3 mb-2">
                               <div class="flex items-center gap-2 min-w-0 flex-1">
                                 <span
-                                  class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0"
+                                  class="inline-flex items-center justify-center w-7 h-7 rounded-full shrink-0"
                                   :class="
                                     isFromCustomer(email)
-                                      ? 'bg-blue-100 text-blue-700'
-                                      : 'bg-green-100 text-green-700'
+                                      ? 'bg-ai-100 text-ai-700 dark:bg-ai-900 dark:text-ai-200'
+                                      : 'bg-uguisu-100 text-uguisu-700 dark:bg-uguisu-900 dark:text-uguisu-200'
                                   "
                                 >
-                                  {{ isFromCustomer(email) ? "客" : "店" }}
+                                  <component :is="isFromCustomer(email) ? User : StoreIcon" :size="13" />
                                 </span>
                                 <div class="min-w-0 flex-1">
                                   <div class="text-sm font-medium text-brand-text">
@@ -753,17 +744,15 @@
                                   <div v-else class="my-2">
                                     <button
                                       type="button"
+                                      class="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-surface-2 hover:bg-brand-border text-brand-text-muted rounded text-xs transition-colors"
                                       @click.stop="toggleQuote(email.id, bIdx)"
-                                      class="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-surface-2 hover:bg-gray-200 text-brand-text-muted rounded text-xs"
                                     >
-                                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
-                                      </svg>
+                                      <Quote :size="10" />
                                       {{ isQuoteShown(email.id, bIdx) ? "引用を隠す" : "引用を表示" }}
                                     </button>
                                     <div
                                       v-if="isQuoteShown(email.id, bIdx)"
-                                      class="mt-1 pl-3 border-l-2 border-brand-border text-brand-text-muted text-xs whitespace-pre-wrap"
+                                      class="mt-1 pl-3 border-l-2 border-brand-border-strong text-brand-text-muted text-xs whitespace-pre-wrap"
                                     >{{ block.content }}</div>
                                   </div>
                                 </template>
@@ -780,11 +769,9 @@
                                     v-for="att in email.attachments"
                                     :key="att.id"
                                     :href="route('admin.emails.attachments.download', att.id)"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-surface-2 hover:bg-gray-200 text-brand-text rounded-md text-xs font-medium"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-surface-2 hover:bg-brand-border text-brand-text rounded-soft text-xs font-medium transition-colors"
                                   >
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                    </svg>
+                                    <Paperclip :size="13" />
                                     {{ att.filename }}
                                   </a>
                                 </div>
@@ -801,16 +788,10 @@
                         <!-- 返信フォーム（インライン） -->
                         <div class="border-t border-brand-border bg-brand-surface-2 p-3">
                           <div v-if="activeReplyThreadId !== thread.id">
-                            <button
-                              type="button"
-                              @click="openReplyForm(thread.id)"
-                              class="w-full py-2 bg-brand-surface border border-brand-border-strong text-brand-primary hover:bg-brand-surface-2 rounded-md text-sm font-medium flex items-center justify-center gap-1.5"
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                              </svg>
+                            <UiButton variant="subtle" block @click="openReplyForm(thread.id)">
+                              <template #leading><Reply :size="14" /></template>
                               返信する
-                            </button>
+                            </UiButton>
                           </div>
                           <form v-else @submit.prevent="submitInlineReply(thread.id)" class="space-y-2">
                             <div class="text-xs text-brand-text-muted">
@@ -820,28 +801,26 @@
                               v-model="replyForm.message"
                               rows="6"
                               required
-                              class="block w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm font-mono"
+                              class="block w-full rounded-soft border-brand-border-strong bg-brand-surface text-brand-text shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm font-mono"
                               placeholder="返信メッセージを入力してください"
                             ></textarea>
                             <div class="flex gap-2">
-                              <button
+                              <UiButton
+                                variant="primary"
                                 type="submit"
-                                :disabled="replyForm.processing || isSendingEmail"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50"
+                                :loading="replyForm.processing || isSendingEmail"
                               >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                </svg>
+                                <template #leading><Send :size="13" /></template>
                                 {{ (replyForm.processing || isSendingEmail) ? "送信中..." : "送信" }}
-                              </button>
-                              <button
+                              </UiButton>
+                              <UiButton
+                                variant="ghost"
                                 type="button"
-                                @click="cancelReply"
                                 :disabled="replyForm.processing || isSendingEmail"
-                                class="px-4 py-2 bg-brand-surface border border-brand-border text-brand-text rounded-md text-sm font-medium hover:bg-brand-surface-2 disabled:opacity-50"
+                                @click="cancelReply"
                               >
                                 キャンセル
-                              </button>
+                              </UiButton>
                             </div>
                           </form>
                         </div>
@@ -1024,6 +1003,7 @@ import {
     Compass, School, Target, Waypoints,
     ClipboardCheck, UserCog, Ticket, RefreshCw, ExternalLink,
     UserPlus, Search, Loader2, Plus, X,
+    ChevronDown, Paperclip, Quote, Reply, Store as StoreIcon,
 } from "lucide-vue-next";
 import ActionButton from "@/Components/ActionButton.vue";
 import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
