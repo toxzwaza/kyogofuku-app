@@ -1,98 +1,98 @@
 <template>
     <Head title="スタジオ一覧" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">スタジオ一覧</h2>
-                <ActionButton variant="create" label="新規追加" :href="route('admin.photo-studios.create')" />
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: '前撮り' }, { label: 'スタジオ' }]">
+        <UiPageHeader
+            title="スタジオ一覧"
+            description="前撮り撮影スタジオの管理。住所・備考の編集ができます。"
+        >
+            <template #actions>
+                <UiButton variant="primary" :href="route('admin.photo-studios.create')">
+                    <template #leading><Plus :size="14" /></template>
+                    新規追加
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div v-if="$page.props.flash?.success" class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200">
-                    {{ $page.props.flash.success }}
+        <UiDataTable
+            :columns="columns"
+            :rows="photoStudios.data"
+            :pagination="photoStudios"
+            empty-message="スタジオが登録されていません。"
+        >
+            <template #cell-id="{ value }">
+                <span class="text-brand-text-muted tabular-nums">#{{ value }}</span>
+            </template>
+            <template #cell-name="{ value }">
+                <span class="font-medium">{{ value }}</span>
+            </template>
+            <template #cell-address="{ value }">
+                <span class="text-brand-text-muted text-xs">{{ value || '—' }}</span>
+            </template>
+            <template #cell-remarks="{ value }">
+                <span class="text-brand-text-muted text-xs line-clamp-1">{{ value || '—' }}</span>
+            </template>
+            <template #cell-actions="{ row }">
+                <div class="flex items-center justify-end gap-1.5">
+                    <UiButton size="sm" variant="ghost" :href="route('admin.photo-studios.edit', row.id)">
+                        <Pencil :size="13" />
+                    </UiButton>
+                    <UiButton size="sm" variant="ghost" class="text-brand-danger" @click="askDelete(row)">
+                        <Trash2 :size="13" />
+                    </UiButton>
                 </div>
-                <div v-if="$page.props.flash?.error" class="mb-4 p-3 rounded bg-red-100 text-red-800 border border-red-200">
-                    {{ $page.props.flash.error }}
-                </div>
+            </template>
+        </UiDataTable>
 
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-brand-border">
-                                <thead class="bg-brand-surface-2">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">スタジオ名</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">住所</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">備考</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-brand-surface divide-y divide-brand-border">
-                                    <tr v-for="studio in photoStudios.data" :key="studio.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ studio.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ studio.name }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ studio.address || '-' }}</td>
-                                        <td class="px-6 py-4 text-sm text-brand-text">{{ studio.remarks || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <ActionButton variant="edit" label="編集" size="sm" :href="route('admin.photo-studios.edit', studio.id)" />
-                                                <ActionButton variant="delete" label="削除" size="sm" @click="deleteStudio(studio.id)" />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- ページネーション -->
-                        <div v-if="photoStudios.links && photoStudios.links.length > 3" class="mt-4">
-                            <div class="flex justify-center">
-                                <template v-for="link in photoStudios.links" :key="link.label">
-                                    <Link
-                                        v-if="link.url"
-                                        :href="link.url"
-                                        :class="[
-                                            'px-4 py-2 mx-1 rounded-md',
-                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2',
-                                        ]"
-                                    >
-                                        <span v-html="link.label"></span>
-                                    </Link>
-                                    <span
-                                        v-else
-                                        :class="[
-                                            'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
-                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text',
-                                        ]"
-                                        v-html="link.label"
-                                    ></span>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <UiDialog v-model:open="confirmOpen" title="スタジオを削除">
+            <p class="text-sm text-brand-text-muted">
+                <span class="font-medium text-brand-text">{{ target?.name }}</span> を削除します。元に戻せません。
+            </p>
+            <template #footer>
+                <UiButton variant="ghost" @click="confirmOpen = false">キャンセル</UiButton>
+                <UiButton variant="danger" :loading="deleting" @click="confirmDelete">削除する</UiButton>
+            </template>
+        </UiDialog>
     </AdminLayout>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import ActionButton from '@/Components/ActionButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { UiPageHeader, UiButton, UiDataTable, UiDialog } from '@/Components/UI';
+import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
 
 defineProps({
     photoStudios: Object,
 });
 
-const deleteStudio = (id) => {
-    if (confirm('本当に削除しますか？')) {
-        router.delete(route('admin.photo-studios.destroy', id));
-    }
+const columns = [
+    { key: 'id',      label: 'ID',          width: '70px' },
+    { key: 'name',    label: 'スタジオ名',  width: '220px' },
+    { key: 'address', label: '住所',        hideOnMobile: true },
+    { key: 'remarks', label: '備考',        hideOnMobile: true },
+    { key: 'actions', label: '',            align: 'right', width: '100px', noLink: true },
+];
+
+const confirmOpen = ref(false);
+const target = ref(null);
+const deleting = ref(false);
+
+const askDelete = (s) => {
+    target.value = s;
+    confirmOpen.value = true;
+};
+
+const confirmDelete = () => {
+    if (!target.value) return;
+    deleting.value = true;
+    router.delete(route('admin.photo-studios.destroy', target.value.id), {
+        onFinish: () => {
+            deleting.value = false;
+            confirmOpen.value = false;
+            target.value = null;
+        },
+    });
 };
 </script>
-

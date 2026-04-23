@@ -1,109 +1,107 @@
 <template>
     <Head title="開催会場一覧" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">開催会場一覧</h2>
-                <ActionButton variant="create" label="新規追加" :href="route('admin.venues.create')" />
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: 'イベント・予約' }, { label: '開催会場' }]">
+        <UiPageHeader
+            title="開催会場一覧"
+            description="イベント開催会場の管理。住所や連絡先をまとめて確認・編集できます。"
+        >
+            <template #actions>
+                <UiButton variant="primary" :href="route('admin.venues.create')">
+                    <template #leading><Plus :size="14" /></template>
+                    新規追加
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-brand-border">
-                                <thead class="bg-brand-surface-2">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">会場名</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">説明</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">住所</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">電話番号</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">状態</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-brand-surface divide-y divide-brand-border">
-                                    <tr v-for="venue in venues.data" :key="venue.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ venue.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ venue.name }}</td>
-                                        <td class="px-6 py-4 text-sm text-brand-text">
-                                            <div v-if="venue.description" class="max-w-xs truncate" v-html="venue.description"></div>
-                                            <span v-else class="text-brand-text-subtle">-</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ venue.address || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ venue.phone || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 py-1 text-xs rounded-full" :class="venue.is_active ? 'bg-green-100 text-green-800' : 'bg-brand-surface-2 text-brand-text'">
-                                                {{ venue.is_active ? '有効' : '無効' }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <ActionButton variant="edit" label="編集" size="sm" :href="route('admin.venues.edit', venue.id)" />
-                                                <ActionButton variant="delete" label="削除" size="sm" @click="deleteVenue(venue.id)" />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- ページネーション -->
-                        <div v-if="venues.links && venues.links.length > 3" class="mt-4">
-                            <div class="flex justify-center">
-                                <template v-for="link in venues.links" :key="link.label">
-                                    <Link
-                                        v-if="link.url"
-                                        :href="link.url"
-                                        :class="[
-                                            'px-4 py-2 mx-1 rounded-md',
-                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2',
-                                        ]"
-                                    >
-                                        <span v-html="link.label"></span>
-                                    </Link>
-                                    <span
-                                        v-else
-                                        :class="[
-                                            'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
-                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text',
-                                        ]"
-                                        v-html="link.label"
-                                    ></span>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
+        <UiDataTable
+            :columns="columns"
+            :rows="venues.data"
+            :pagination="venues"
+            empty-message="会場が登録されていません。"
+        >
+            <template #cell-id="{ value }">
+                <span class="text-brand-text-muted tabular-nums">#{{ value }}</span>
+            </template>
+            <template #cell-name="{ value }">
+                <span class="font-medium">{{ value }}</span>
+            </template>
+            <template #cell-description="{ value }">
+                <span v-if="value" class="text-brand-text-muted text-xs line-clamp-1" v-html="value" />
+                <span v-else class="text-brand-text-subtle">—</span>
+            </template>
+            <template #cell-address="{ value }">
+                <span class="text-brand-text-muted text-xs">{{ value || '—' }}</span>
+            </template>
+            <template #cell-phone="{ value }">
+                <span class="tabular-nums text-brand-text-muted">{{ value || '—' }}</span>
+            </template>
+            <template #cell-is_active="{ value }">
+                <UiBadge :variant="value ? 'success' : 'neutral'" dot>{{ value ? '有効' : '無効' }}</UiBadge>
+            </template>
+            <template #cell-actions="{ row }">
+                <div class="flex items-center justify-end gap-1.5">
+                    <UiButton size="sm" variant="ghost" :href="route('admin.venues.edit', row.id)">
+                        <Pencil :size="13" />
+                    </UiButton>
+                    <UiButton size="sm" variant="ghost" class="text-brand-danger" @click="askDelete(row)">
+                        <Trash2 :size="13" />
+                    </UiButton>
                 </div>
-            </div>
-        </div>
+            </template>
+        </UiDataTable>
+
+        <UiDialog v-model:open="confirmOpen" title="会場を削除">
+            <p class="text-sm text-brand-text-muted">
+                <span class="font-medium text-brand-text">{{ target?.name }}</span> を削除します。元に戻せません。
+            </p>
+            <template #footer>
+                <UiButton variant="ghost" @click="confirmOpen = false">キャンセル</UiButton>
+                <UiButton variant="danger" :loading="deleting" @click="confirmDelete">削除する</UiButton>
+            </template>
+        </UiDialog>
     </AdminLayout>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import ActionButton from '@/Components/ActionButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { UiPageHeader, UiButton, UiBadge, UiDataTable, UiDialog } from '@/Components/UI';
+import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
 
 defineProps({
     venues: Object,
 });
 
-const deleteVenue = (id) => {
-    if (confirm('本当に削除しますか？')) {
-        router.delete(route('admin.venues.destroy', id));
-    }
+const columns = [
+    { key: 'id',          label: 'ID',      width: '70px' },
+    { key: 'name',        label: '会場名',  width: '200px' },
+    { key: 'description', label: '説明',    hideOnMobile: true },
+    { key: 'address',     label: '住所',    hideOnMobile: true },
+    { key: 'phone',       label: '電話',    hideOnMobile: true, width: '150px' },
+    { key: 'is_active',   label: '状態',    width: '100px' },
+    { key: 'actions',     label: '',        align: 'right', width: '100px', noLink: true },
+];
+
+const confirmOpen = ref(false);
+const target = ref(null);
+const deleting = ref(false);
+
+const askDelete = (v) => {
+    target.value = v;
+    confirmOpen.value = true;
+};
+
+const confirmDelete = () => {
+    if (!target.value) return;
+    deleting.value = true;
+    router.delete(route('admin.venues.destroy', target.value.id), {
+        onFinish: () => {
+            deleting.value = false;
+            confirmOpen.value = false;
+            target.value = null;
+        },
+    });
 };
 </script>
-
-
-
-
-
-
-
-

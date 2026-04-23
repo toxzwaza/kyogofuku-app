@@ -1,79 +1,92 @@
 <template>
     <Head title="勤務属性マスタ" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">勤務属性マスタ</h2>
-                <div class="flex gap-2">
-                    <Link
-                        :href="route('admin.work-attributes.create')"
-                        class="inline-flex items-center px-4 py-2 bg-brand-primary text-white text-sm font-medium rounded-md hover:bg-brand-primary-hover"
-                    >
-                        新規追加
-                    </Link>
-                    <Link :href="route('admin.attendance.index')" class="text-brand-text-muted hover:text-brand-text text-sm">勤怠一覧へ</Link>
-                </div>
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: '勤怠' }, { label: '勤務属性' }]">
+        <UiPageHeader
+            title="勤務属性マスタ"
+            description="勤怠集計に用いる勤務属性（正社員・パート等）を管理します。"
+        >
+            <template #actions>
+                <UiButton variant="ghost" :href="route('admin.attendance.index')">
+                    勤怠一覧へ
+                </UiButton>
+                <UiButton variant="primary" :href="route('admin.work-attributes.create')">
+                    <template #leading><Plus :size="14" /></template>
+                    新規追加
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-                <div v-if="$page.props.flash?.success" class="mb-4 p-3 bg-green-100 text-green-800 rounded-md text-sm">
-                    {{ $page.props.flash.success }}
+        <UiDataTable
+            :columns="columns"
+            :rows="workAttributes || []"
+            empty-message="勤務属性が登録されていません。"
+        >
+            <template #cell-sort_order="{ value }">
+                <span class="text-brand-text-muted tabular-nums">{{ value }}</span>
+            </template>
+            <template #cell-name="{ value }">
+                <span class="font-medium">{{ value }}</span>
+            </template>
+            <template #cell-actions="{ row }">
+                <div class="flex items-center justify-end gap-1.5">
+                    <UiButton size="sm" variant="ghost" :href="route('admin.work-attributes.edit', row.id)">
+                        <Pencil :size="13" />
+                    </UiButton>
+                    <UiButton size="sm" variant="ghost" class="text-brand-danger" @click="askDelete(row)">
+                        <Trash2 :size="13" />
+                    </UiButton>
                 </div>
-                <div v-if="$page.props.flash?.error" class="mb-4 p-3 bg-red-100 text-red-800 rounded-md text-sm">
-                    {{ $page.props.flash.error }}
-                </div>
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 overflow-x-auto">
-                        <table class="min-w-full divide-y divide-brand-border text-sm">
-                            <thead class="bg-brand-surface-2">
-                                <tr>
-                                    <th class="px-4 py-2 text-left font-medium text-brand-text">並び</th>
-                                    <th class="px-4 py-2 text-left font-medium text-brand-text">名称</th>
-                                    <th class="px-4 py-2 text-left font-medium text-brand-text w-40">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-brand-border">
-                                <tr v-for="wa in workAttributes" :key="wa.id" class="hover:bg-brand-surface-2">
-                                    <td class="px-4 py-2">{{ wa.sort_order }}</td>
-                                    <td class="px-4 py-2">{{ wa.name }}</td>
-                                    <td class="px-4 py-2">
-                                        <Link
-                                            :href="route('admin.work-attributes.edit', wa.id)"
-                                            class="text-brand-primary hover:text-brand-primary-hover mr-3"
-                                        >
-                                            編集
-                                        </Link>
-                                        <button type="button" class="text-red-600 hover:text-red-800" @click="destroyWa(wa.id)">
-                                            削除
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="!workAttributes?.length">
-                                    <td colspan="3" class="px-4 py-8 text-center text-brand-text-muted">データがありません</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+            </template>
+        </UiDataTable>
+
+        <UiDialog v-model:open="confirmOpen" title="勤務属性を削除">
+            <p class="text-sm text-brand-text-muted">
+                <span class="font-medium text-brand-text">{{ target?.name }}</span> を削除します。元に戻せません。
+            </p>
+            <template #footer>
+                <UiButton variant="ghost" @click="confirmOpen = false">キャンセル</UiButton>
+                <UiButton variant="danger" :loading="deleting" @click="confirmDelete">削除する</UiButton>
+            </template>
+        </UiDialog>
     </AdminLayout>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { UiPageHeader, UiButton, UiDataTable, UiDialog } from '@/Components/UI';
+import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
 
 defineProps({
     workAttributes: Array,
 });
 
-function destroyWa(id) {
-    if (confirm('この勤務属性を削除しますか？')) {
-        router.delete(route('admin.work-attributes.destroy', id));
-    }
-}
+const columns = [
+    { key: 'sort_order', label: '並び',   width: '80px' },
+    { key: 'name',       label: '名称' },
+    { key: 'actions',    label: '',       align: 'right', width: '100px', noLink: true },
+];
+
+const confirmOpen = ref(false);
+const target = ref(null);
+const deleting = ref(false);
+
+const askDelete = (w) => {
+    target.value = w;
+    confirmOpen.value = true;
+};
+
+const confirmDelete = () => {
+    if (!target.value) return;
+    deleting.value = true;
+    router.delete(route('admin.work-attributes.destroy', target.value.id), {
+        onFinish: () => {
+            deleting.value = false;
+            confirmOpen.value = false;
+            target.value = null;
+        },
+    });
+};
 </script>

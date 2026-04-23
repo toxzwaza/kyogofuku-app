@@ -1,118 +1,108 @@
 <template>
     <Head title="顧客タグ一覧" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">顧客タグ一覧</h2>
-                <ActionButton variant="create" label="新規追加" :href="route('admin.customer-tags.create')" />
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: '顧客' }, { label: '顧客タグ' }]">
+        <UiPageHeader
+            title="顧客タグ一覧"
+            description="顧客を分類するタグの管理。色や有効状態を設定できます。"
+        >
+            <template #actions>
+                <UiButton variant="primary" :href="route('admin.customer-tags.create')">
+                    <template #leading><Plus :size="14" /></template>
+                    新規追加
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div v-if="$page.props.flash?.success" class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200">
-                    {{ $page.props.flash.success }}
+        <UiDataTable
+            :columns="columns"
+            :rows="customerTags.data"
+            :pagination="customerTags"
+            empty-message="タグが登録されていません。"
+        >
+            <template #cell-id="{ value }">
+                <span class="text-brand-text-muted tabular-nums">#{{ value }}</span>
+            </template>
+            <template #cell-name="{ row }">
+                <div class="flex items-center gap-2">
+                    <span
+                        v-if="row.color"
+                        class="w-3 h-3 rounded-full flex-shrink-0 border border-brand-border"
+                        :style="{ background: row.color }"
+                    />
+                    <span class="font-medium truncate">{{ row.name }}</span>
                 </div>
-                <div v-if="$page.props.flash?.error" class="mb-4 p-3 rounded bg-red-100 text-red-800 border border-red-200">
-                    {{ $page.props.flash.error }}
+            </template>
+            <template #cell-description="{ value }">
+                <span class="text-brand-text-muted text-xs">{{ value || '—' }}</span>
+            </template>
+            <template #cell-is_active="{ value }">
+                <UiBadge :variant="value ? 'success' : 'neutral'" dot>{{ value ? '有効' : '無効' }}</UiBadge>
+            </template>
+            <template #cell-actions="{ row }">
+                <div class="flex items-center justify-end gap-1.5">
+                    <UiButton size="sm" variant="ghost" :href="route('admin.customer-tags.show', row.id)">
+                        <Eye :size="13" />
+                    </UiButton>
+                    <UiButton size="sm" variant="ghost" :href="route('admin.customer-tags.edit', row.id)">
+                        <Pencil :size="13" />
+                    </UiButton>
+                    <UiButton size="sm" variant="ghost" class="text-brand-danger" @click="askDelete(row)">
+                        <Trash2 :size="13" />
+                    </UiButton>
                 </div>
+            </template>
+        </UiDataTable>
 
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-brand-border">
-                                <thead class="bg-brand-surface-2">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">タグ名</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">説明</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">色</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">状態</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-brand-surface divide-y divide-brand-border">
-                                    <tr v-for="tag in customerTags.data" :key="tag.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ tag.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ tag.name }}</td>
-                                        <td class="px-6 py-4 text-sm text-brand-text">{{ tag.description || '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                v-if="tag.color"
-                                                class="inline-block w-6 h-6 rounded-full border border-brand-border"
-                                                :style="{ backgroundColor: tag.color }"
-                                                :title="tag.color"
-                                            ></span>
-                                            <span v-else class="text-sm text-brand-text-subtle">-</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                :class="[
-                                                    'px-2 py-1 text-xs font-semibold rounded-full',
-                                                    tag.is_active ? 'bg-green-100 text-green-800' : 'bg-brand-surface-2 text-brand-text'
-                                                ]"
-                                            >
-                                                {{ tag.is_active ? '有効' : '無効' }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <ActionButton variant="detail" label="詳細" size="sm" :href="route('admin.customer-tags.show', tag.id)" />
-                                                <ActionButton variant="edit" label="編集" size="sm" :href="route('admin.customer-tags.edit', tag.id)" />
-                                                <ActionButton variant="delete" label="削除" size="sm" @click="deleteTag(tag.id)" />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- ページネーション -->
-                        <div v-if="customerTags.links && customerTags.links.length > 3" class="mt-4">
-                            <div class="flex justify-center">
-                                <template v-for="link in customerTags.links" :key="link.label">
-                                    <Link
-                                        v-if="link.url"
-                                        :href="link.url"
-                                        :class="[
-                                            'px-4 py-2 mx-1 rounded-md',
-                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2',
-                                        ]"
-                                    >
-                                        <span v-html="link.label"></span>
-                                    </Link>
-                                    <span
-                                        v-else
-                                        :class="[
-                                            'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
-                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text',
-                                        ]"
-                                        v-html="link.label"
-                                    ></span>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <UiDialog v-model:open="confirmOpen" title="タグを削除">
+            <p class="text-sm text-brand-text-muted">
+                <span class="font-medium text-brand-text">{{ target?.name }}</span> を削除します。元に戻せません。
+            </p>
+            <template #footer>
+                <UiButton variant="ghost" @click="confirmOpen = false">キャンセル</UiButton>
+                <UiButton variant="danger" :loading="deleting" @click="confirmDelete">削除する</UiButton>
+            </template>
+        </UiDialog>
     </AdminLayout>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import ActionButton from '@/Components/ActionButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { UiPageHeader, UiButton, UiBadge, UiDataTable, UiDialog } from '@/Components/UI';
+import { Plus, Pencil, Trash2, Eye } from 'lucide-vue-next';
 
 defineProps({
     customerTags: Object,
 });
 
-const deleteTag = (id) => {
-    if (confirm('本当に削除しますか？')) {
-        router.delete(route('admin.customer-tags.destroy', id));
-    }
+const columns = [
+    { key: 'id',          label: 'ID',    width: '70px' },
+    { key: 'name',        label: 'タグ名' },
+    { key: 'description', label: '説明',  hideOnMobile: true },
+    { key: 'is_active',   label: '状態',  width: '100px' },
+    { key: 'actions',     label: '',      align: 'right', width: '130px', noLink: true },
+];
+
+const confirmOpen = ref(false);
+const target = ref(null);
+const deleting = ref(false);
+
+const askDelete = (tag) => {
+    target.value = tag;
+    confirmOpen.value = true;
+};
+
+const confirmDelete = () => {
+    if (!target.value) return;
+    deleting.value = true;
+    router.delete(route('admin.customer-tags.destroy', target.value.id), {
+        onFinish: () => {
+            deleting.value = false;
+            confirmOpen.value = false;
+            target.value = null;
+        },
+    });
 };
 </script>
-
