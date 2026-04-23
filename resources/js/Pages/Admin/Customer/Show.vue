@@ -1,19 +1,30 @@
 <template>
     <Head :title="`顧客詳細 - ${customer.name}`" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">顧客詳細</h2>
-                <div class="flex items-center space-x-3">
-                    <ActionButton variant="delete" label="削除" @click="openDeleteConfirmModal" />
-                    <ActionButton variant="back" label="一覧に戻る" :href="route('admin.customers.index')" />
-                </div>
-            </div>
-        </template>
+    <AdminLayout
+        :breadcrumb="[
+            { label: '顧客', href: route('admin.customers.index') },
+            { label: '顧客一覧', href: route('admin.customers.index') },
+            { label: customer.name || `#${customer.id}` },
+        ]"
+    >
+        <UiPageHeader
+            :title="`顧客詳細 - ${customer.name || `#${customer.id}`}`"
+        >
+            <template #actions>
+                <UiButton variant="ghost" :href="route('admin.customers.index')">
+                    <template #leading><ArrowLeft :size="14" /></template>
+                    一覧に戻る
+                </UiButton>
+                <UiButton variant="danger" @click="openDeleteConfirmModal">
+                    <template #leading><Trash2 :size="14" /></template>
+                    削除
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="mx-auto sm:px-6 lg:px-8">
+        <div>
+            <div class="mx-auto">
                 <div
                     v-if="$page.props.success"
                     class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200"
@@ -2519,12 +2530,14 @@
                 </div>
             </div>
         </transition>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, reactive, computed, nextTick, watch, onBeforeUnmount } from 'vue';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { UiPageHeader, UiButton } from '@/Components/UI';
+import { ArrowLeft, Trash2 } from 'lucide-vue-next';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';

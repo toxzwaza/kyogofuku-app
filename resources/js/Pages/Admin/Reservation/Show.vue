@@ -1,7 +1,12 @@
 <template>
   <Head title="予約詳細" />
 
-  <AuthenticatedLayout>
+  <AdminLayout
+    :breadcrumb="[
+      { label: 'イベント管理', href: route('admin.events.index') },
+      { label: '予約詳細' },
+    ]"
+  >
     <!-- ローディングオーバーレイ -->
     <div
       v-if="isSendingEmail"
@@ -32,25 +37,21 @@
       </div>
     </div>
 
-    <template #header>
-      <div class="flex justify-between items-center">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-          予約詳細
-        </h2>
-        <div class="flex items-center space-x-3">
-          <ActionButton
-            variant="edit"
-            label="編集"
-            :href="route('admin.reservations.edit', reservation.id)"
-          />
-          <ActionButton
-            variant="back"
-            label="予約一覧に戻る"
-            :href="indexBackUrl"
-          />
-        </div>
-      </div>
-    </template>
+    <UiPageHeader
+      :title="`予約詳細 #${reservation.id}`"
+      :description="reservation.name ? `${reservation.name} 様の予約` : '予約の詳細情報と操作'"
+    >
+      <template #actions>
+        <UiButton variant="ghost" :href="indexBackUrl">
+          <template #leading><ArrowLeft :size="14" /></template>
+          予約一覧に戻る
+        </UiButton>
+        <UiButton variant="primary" :href="route('admin.reservations.edit', reservation.id)">
+          <template #leading><Pencil :size="14" /></template>
+          編集
+        </UiButton>
+      </template>
+    </UiPageHeader>
 
     <div
       v-if="$page.props.success"
@@ -1940,11 +1941,13 @@
         </div>
       </div>
     </div>
-  </AuthenticatedLayout>
+  </AdminLayout>
 </template>
 
 <script setup>
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import AdminLayout from "@/Layouts/AdminLayout.vue";
+import { UiPageHeader, UiButton } from "@/Components/UI";
+import { ArrowLeft, Pencil } from "lucide-vue-next";
 import ActionButton from "@/Components/ActionButton.vue";
 import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";

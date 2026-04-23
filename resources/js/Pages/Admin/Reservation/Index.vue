@@ -1,7 +1,13 @@
 <template>
   <Head title="予約一覧" />
 
-  <AuthenticatedLayout>
+  <AdminLayout
+    :breadcrumb="[
+      { label: 'イベント管理', href: route('admin.events.index') },
+      { label: event.title, href: route('admin.events.show', event.id) },
+      { label: '予約一覧' },
+    ]"
+  >
     <!-- フラッシュメッセージ（画面右上に固定・枠増減・キャンセル・キャンセル解除の結果） -->
     <div
       class="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full sm:max-w-md pointer-events-none"
@@ -45,21 +51,20 @@
       </div>
     </div>
 
-    <template #header>
-      <div class="flex justify-between items-center">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-          予約一覧 - {{ event.title }}
-        </h2>
-        <ActionButton
-          variant="back"
-          label="イベント詳細へ戻る"
-          :href="route('admin.events.show', event.id)"
-        />
-      </div>
-    </template>
+    <UiPageHeader
+      :title="`予約一覧 - ${event.title}`"
+      description="このイベントに紐付いた予約の管理。フィルタ・CSV出力・LINE通知などを統合しています。"
+    >
+      <template #actions>
+        <UiButton variant="ghost" :href="route('admin.events.show', event.id)">
+          <template #leading><ArrowLeft :size="14" /></template>
+          イベント詳細へ戻る
+        </UiButton>
+      </template>
+    </UiPageHeader>
 
-    <div class="py-12">
-      <div class="mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div>
+      <div class="mx-auto space-y-6">
         <!-- 成功メッセージ -->
         <div v-if="$page.props.success" class="rounded-md bg-green-50 p-4">
           <div class="flex">
@@ -2308,17 +2313,19 @@
         </div>
       </div>
     </div>
-  </AuthenticatedLayout>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import AdminLayout from "@/Layouts/AdminLayout.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import axios from "axios";
 import { formatDateTimeJa, formatDateJa } from "@/utils/dateFormat";
 import ActionButton from "@/Components/ActionButton.vue";
 import EventNavigation from "@/Components/EventNavigation.vue";
+import { UiPageHeader, UiButton } from "@/Components/UI";
+import { ArrowLeft } from "lucide-vue-next";
 
 const props = defineProps({
   event: Object,

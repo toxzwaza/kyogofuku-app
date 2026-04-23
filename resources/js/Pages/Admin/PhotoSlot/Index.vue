@@ -1,7 +1,7 @@
     <template>
   <Head title="前撮り管理" />
 
-  <AuthenticatedLayout>
+  <AdminLayout>
     <template #header>
       <div class="flex justify-between items-center">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -972,11 +972,11 @@
         </div>
       </div>
     </transition>
-  </AuthenticatedLayout>
+  </AdminLayout>
 </template>
 
 <script setup>
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";

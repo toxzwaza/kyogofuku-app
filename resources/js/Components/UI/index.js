@@ -21,3 +21,4 @@ export { default as UiSkeleton }     from './Skeleton.vue';
 export { default as UiPageHeader }   from './PageHeader.vue';
 export { default as UiToastContainer } from './ToastContainer.vue';
 export { default as UiBreadcrumb }     from './Breadcrumb.vue';
+export { default as UiDataTable }      from './DataTable.vue';

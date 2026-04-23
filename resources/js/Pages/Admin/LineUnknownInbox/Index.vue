@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 
@@ -51,7 +51,7 @@ function showHref(g) {
 <template>
     <Head title="LINE 不明メッセージ" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">LINE 不明メッセージ</h2>
@@ -116,5 +116,5 @@ function showHref(g) {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

@@ -1,16 +1,21 @@
 <template>
     <Head title="顧客一覧" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">顧客一覧</h2>
-                <ActionButton variant="create" label="顧客追加" @click="showAddCustomerModal = true" />
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: '顧客' }, { label: '顧客一覧' }]">
+        <UiPageHeader
+            title="顧客一覧"
+            description="登録顧客の検索・一括操作・追加ができます。"
+        >
+            <template #actions>
+                <UiButton variant="primary" @click="showAddCustomerModal = true">
+                    <template #leading><Plus :size="14" /></template>
+                    顧客追加
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-6 sm:py-8">
-            <div class="mx-auto px-4 sm:px-6 lg:px-8">
+        <div>
+            <div class="mx-auto">
                 <div class="flex flex-col lg:flex-row gap-6 lg:items-start">
                     <!-- 左：検索条件 -->
                     <aside
@@ -978,12 +983,14 @@
                 </div>
             </div>
         </transition>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { UiPageHeader, UiButton } from '@/Components/UI';
+import { Plus } from 'lucide-vue-next';
 import ActionButton from '@/Components/ActionButton.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';

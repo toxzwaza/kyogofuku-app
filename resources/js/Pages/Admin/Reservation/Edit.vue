@@ -1,21 +1,27 @@
 <template>
     <Head title="予約編集" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">予約編集</h2>
-                <Link
-                    :href="route('admin.events.reservations.index', reservation.event_id)"
-                    class="text-indigo-600 hover:text-indigo-900"
-                >
-                    ← 予約一覧に戻る
-                </Link>
-            </div>
-        </template>
+    <AdminLayout
+        :breadcrumb="[
+            { label: 'イベント管理', href: route('admin.events.index') },
+            { label: '予約一覧', href: route('admin.events.reservations.index', reservation.event_id) },
+            { label: `予約編集 #${reservation.id}` },
+        ]"
+    >
+        <UiPageHeader
+            :title="`予約編集 #${reservation.id}`"
+            :description="reservation.name ? `${reservation.name} 様の予約を編集` : '予約情報を編集'"
+        >
+            <template #actions>
+                <UiButton variant="ghost" :href="route('admin.events.reservations.index', reservation.event_id)">
+                    <template #leading><ArrowLeft :size="14" /></template>
+                    予約一覧に戻る
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div>
+            <div class="max-w-4xl mx-auto">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="submit">
@@ -511,12 +517,14 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { UiPageHeader, UiButton } from '@/Components/UI';
+import { ArrowLeft } from 'lucide-vue-next';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { formatDateJaWithWeekday, formatDateInputValueJa } from '@/utils/dateFormat';
 

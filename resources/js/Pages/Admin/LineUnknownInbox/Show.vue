@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
@@ -25,7 +25,7 @@ function submitLink() {
 <template>
     <Head title="LINE 不明メッセージ詳細" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">LINE 不明メッセージ</h2>
@@ -106,5 +106,5 @@ function submitLink() {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

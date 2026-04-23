@@ -1,7 +1,7 @@
 <template>
     <Head title="会社カレンダー" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center flex-wrap gap-2">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">会社カレンダー（A/B/C）</h2>
@@ -156,11 +156,11 @@
                 </div>
             </div>
         </Teleport>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 

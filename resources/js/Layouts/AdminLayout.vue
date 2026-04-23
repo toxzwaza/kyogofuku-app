@@ -81,6 +81,10 @@ const { show: openPalette } = useCommandPalette();
 
             <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6">
                 <UiBreadcrumb v-if="breadcrumb.length" :items="breadcrumb" class="mb-4" />
+                <!-- 互換用: 旧AuthenticatedLayoutの #header スロットを受け取る -->
+                <div v-if="$slots.header" class="mb-4">
+                    <slot name="header" />
+                </div>
                 <slot />
             </main>
         </div>

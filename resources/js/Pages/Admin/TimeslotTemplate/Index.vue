@@ -1,7 +1,7 @@
 <template>
     <Head title="予約枠テンプレート一覧" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">予約枠テンプレート一覧</h2>
@@ -87,11 +87,11 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { formatDateJa } from '@/utils/dateFormat';

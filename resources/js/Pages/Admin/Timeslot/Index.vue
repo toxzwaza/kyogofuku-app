@@ -1,7 +1,7 @@
 <template>
     <Head title="予約枠一覧" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <!-- フラッシュメッセージ（画面右上に固定・枠増減・削除の結果） -->
         <div
             class="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full sm:max-w-md pointer-events-none"
@@ -257,12 +257,12 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import { formatDateTimeJa, formatDateJa } from '@/utils/dateFormat';

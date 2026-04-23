@@ -1,7 +1,7 @@
 <template>
     <Head :title="`追加情報 - ${customer.name}`" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">追加情報（振袖アンケート）</h2>
@@ -369,13 +369,13 @@
                 <p class="mt-3 text-right text-xs text-gray-500">※このデジタル文書は「振袖アンケート（原本）」の記載項目に合わせて作成しています。</p>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     customer: { type: Object, required: true },

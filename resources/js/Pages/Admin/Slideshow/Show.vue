@@ -1,7 +1,7 @@
 <template>
     <Head title="スライドショー詳細" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">スライドショー詳細 - {{ slideshow.name }}</h2>
@@ -363,12 +363,12 @@
                 </div>
             </Transition>
         </Teleport>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, watch, onUnmounted } from 'vue';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import MediaPicker from '@/Components/MediaPicker.vue';
 
