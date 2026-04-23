@@ -22,3 +22,5 @@ export { default as UiPageHeader }   from './PageHeader.vue';
 export { default as UiToastContainer } from './ToastContainer.vue';
 export { default as UiBreadcrumb }     from './Breadcrumb.vue';
 export { default as UiDataTable }      from './DataTable.vue';
+export { default as UiDetailField }    from './DetailField.vue';
+export { default as UiDetailSection }  from './DetailSection.vue';
