@@ -5,9 +5,12 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import {
     UiCard, UiBadge, UiButton, UiPageHeader,
 } from '@/Components/UI';
+import DailyTrendChart from '@/Components/Admin/DailyTrendChart.vue';
+import StatusDistChart from '@/Components/Admin/StatusDistChart.vue';
+import ReservationHeatmap from '@/Components/Admin/ReservationHeatmap.vue';
 import {
     CalendarDays, Users, TrendingUp, TrendingDown, AlertCircle,
-    ArrowRight, Store, Clock,
+    ArrowRight, Store, Clock, BarChart3, PieChart, Grid3x3,
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -15,6 +18,9 @@ const props = defineProps({
     recent_reservations: { type: Array, default: () => [] },
     shop_ranking: { type: Array, default: () => [] },
     week_range: { type: Object, default: () => ({}) },
+    daily_trend: { type: Array, default: () => [] },
+    status_dist: { type: Array, default: () => [] },
+    heatmap: { type: Object, default: () => ({ cells: {}, max: 0 }) },
 });
 
 const statusVariant = (status) => ({
@@ -118,6 +124,39 @@ const maxShopCnt = computed(() =>
             </UiCard>
         </section>
 
+        <!-- チャート -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <UiCard variant="default" class="lg:col-span-2">
+                <template #header>
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-serif text-base">日別の予約数トレンド</h2>
+                        <span class="text-[10px] text-brand-text-muted flex items-center gap-1">
+                            <BarChart3 :size="12" />過去14日〜先14日
+                        </span>
+                    </div>
+                </template>
+                <DailyTrendChart v-if="daily_trend.length" :data="daily_trend" />
+                <div v-else class="h-40 flex items-center justify-center text-brand-text-muted text-sm">
+                    データがありません
+                </div>
+            </UiCard>
+
+            <UiCard variant="default">
+                <template #header>
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-serif text-base">ステータス分布</h2>
+                        <span class="text-[10px] text-brand-text-muted flex items-center gap-1">
+                            <PieChart :size="12" />直近30日
+                        </span>
+                    </div>
+                </template>
+                <StatusDistChart v-if="status_dist.length" :data="status_dist" />
+                <div v-else class="h-32 flex items-center justify-center text-brand-text-muted text-sm">
+                    データがありません
+                </div>
+            </UiCard>
+        </section>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- 最近の予約 -->
@@ -149,6 +188,23 @@ const maxShopCnt = computed(() =>
                         </div>
                         <UiBadge :variant="statusVariant(r.status)" size="sm">{{ r.status }}</UiBadge>
                     </Link>
+                </div>
+            </UiCard>
+
+            <!-- ヒートマップ -->
+            <UiCard variant="default" class="lg:col-span-2">
+                <template #header>
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-serif text-base">予約ヒートマップ</h2>
+                        <span class="text-[10px] text-brand-text-muted flex items-center gap-1">
+                            <Grid3x3 :size="12" />
+                            {{ heatmap.period?.start }} 〜 {{ heatmap.period?.end }}
+                        </span>
+                    </div>
+                </template>
+                <ReservationHeatmap v-if="heatmap.max > 0" :cells="heatmap.cells" :max="heatmap.max" />
+                <div v-else class="py-8 text-center text-sm text-brand-text-muted">
+                    直近4週間に予約実績がありません。
                 </div>
             </UiCard>
 

@@ -31,6 +31,10 @@
                 >
                     {{ $page.props.success }}
                 </div>
+
+                <!-- 顧客サマリーパネル (Phase 4-C) -->
+                <CustomerSummaryPanel :customer="customer" class="mb-6" />
+
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
                     <!-- 左: 顧客タグ・基本情報 -->
                     <div class="lg:col-span-3 space-y-4 min-w-0">
@@ -2538,6 +2542,7 @@ import { ref, reactive, computed, nextTick, watch, onBeforeUnmount } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { UiPageHeader, UiButton } from '@/Components/UI';
 import { ArrowLeft, Trash2 } from 'lucide-vue-next';
+import CustomerSummaryPanel from '@/Components/Admin/CustomerSummaryPanel.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';

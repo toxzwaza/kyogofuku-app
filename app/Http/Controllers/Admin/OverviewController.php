@@ -73,6 +73,62 @@ class OverviewController extends Controller
             ->limit(6)
             ->get(['s.id', 's.name', \DB::raw('COUNT(r.id) as cnt')]);
 
+        // 日別トレンド（過去14日 → 向こう14日）
+        $trendStart = $today->copy()->subDays(13);
+        $trendEnd   = $today->copy()->addDays(14);
+        $dailyRaw   = \DB::table('event_reservations')
+            ->selectRaw('DATE(reservation_datetime) as d, COUNT(*) as cnt')
+            ->whereBetween('reservation_datetime', [$trendStart, $trendEnd->copy()->endOfDay()])
+            ->where('cancel_flg', false)
+            ->groupBy('d')
+            ->pluck('cnt', 'd');
+
+        $daily = [];
+        $cursor = $trendStart->copy();
+        while ($cursor <= $trendEnd) {
+            $k = $cursor->format('Y-m-d');
+            $daily[] = [
+                'date'  => $k,
+                'count' => (int) ($dailyRaw[$k] ?? 0),
+                'is_past'   => $cursor->lt($today),
+                'is_today'  => $cursor->isSameDay($today),
+            ];
+            $cursor->addDay();
+        }
+
+        // ヒートマップ（過去4週間の 曜日×時間帯）
+        $heatStart = $today->copy()->subDays(28);
+        $heatRows  = \DB::table('event_reservations')
+            ->selectRaw('WEEKDAY(reservation_datetime) as dow, HOUR(reservation_datetime) as hr, COUNT(*) as cnt')
+            ->whereBetween('reservation_datetime', [$heatStart, $today->copy()->endOfDay()])
+            ->where('cancel_flg', false)
+            ->groupBy('dow', 'hr')
+            ->get();
+        // MySQL WEEKDAY: 0=月, 6=日
+        $heatmap = [];
+        $maxHeat = 0;
+        foreach ($heatRows as $r) {
+            $heatmap[(int) $r->dow][(int) $r->hr] = (int) $r->cnt;
+            if ((int) $r->cnt > $maxHeat) $maxHeat = (int) $r->cnt;
+        }
+
+        // ステータス別分布
+        $statusDistRaw = EventReservation::where('created_at', '>=', $since)
+            ->selectRaw('status, COUNT(*) as cnt')
+            ->groupBy('status')
+            ->pluck('cnt', 'status');
+        $statusOrder = ['未対応', '確認中', '返信待ち', '対応完了済み', 'キャンセル'];
+        $statusDist = [];
+        foreach ($statusOrder as $st) {
+            $statusDist[] = ['status' => $st, 'count' => (int) ($statusDistRaw[$st] ?? 0)];
+        }
+        // 規定外ステータスも末尾に
+        foreach ($statusDistRaw as $st => $cnt) {
+            if (!in_array($st, $statusOrder, true)) {
+                $statusDist[] = ['status' => (string) $st, 'count' => (int) $cnt];
+            }
+        }
+
         return Inertia::render('Admin/Overview', [
             'stats' => [
                 'today_count'     => $todayCount,
@@ -86,6 +142,16 @@ class OverviewController extends Controller
             'week_range'          => [
                 'start' => $weekStart->format('Y-m-d'),
                 'end'   => $weekEnd->format('Y-m-d'),
+            ],
+            'daily_trend'   => $daily,        // 過去14日＋今日＋先14日
+            'status_dist'   => $statusDist,   // 直近30日のステータス分布
+            'heatmap'       => [
+                'cells'    => $heatmap,       // [dow][hr] = cnt （dow: 0=月〜6=日）
+                'max'      => $maxHeat,
+                'period'   => [
+                    'start' => $heatStart->format('Y-m-d'),
+                    'end'   => $today->format('Y-m-d'),
+                ],
             ],
         ]);
     }
