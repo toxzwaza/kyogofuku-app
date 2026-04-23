@@ -39,331 +39,126 @@
                     <!-- 概要タブ: 顧客タグ・基本情報 -->
                     <template #overview>
                         <div class="space-y-4 max-w-3xl">
-                <!-- 顧客タグ（overflow-visible でツールチップが途切れないようにする） -->
-                <div class="bg-brand-surface overflow-visible shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-brand-text">顧客タグ</h3>
-                            <button
-                                @click="openTagModal"
-                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover text-sm font-medium"
-                            >
-                                タグを追加
-                            </button>
-                        </div>
-                        <div v-if="customer.tags && customer.tags.length > 0" class="flex flex-wrap gap-2">
-                            <div
-                                v-for="tag in customer.tags"
-                                :key="tag.id"
-                                role="button"
-                                tabindex="0"
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-indigo-400/50 transition-shadow"
-                                :class="{ 'relative group cursor-help': tag.pivot?.note }"
-                                :style="{
-                                    backgroundColor: tag.color ? tag.color + '20' : '#f3f4f620',
-                                    color: tag.color || '#6b7280',
-                                    border: `1px solid ${tag.color || '#e5e7eb'}`
-                                }"
-                                @click="openEditTagModal(tag)"
-                                @keydown.enter.prevent="openEditTagModal(tag)"
-                            >
-                                <span>{{ tag.name }}</span>
-                                <!-- タグ付け理由・補足がある場合にコメントアイコンを表示（ホバーはタグ全体でツールチップ表示） -->
-                                <span v-if="tag.pivot?.note" class="inline-flex ml-1 shrink-0" aria-hidden="true">
-                                    <svg class="w-4 h-4 text-brand-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                    </svg>
-                                </span>
-                                <!-- タグ全体ホバーで表示するツールチップ -->
-                                <div
-                                    v-if="tag.pivot?.note"
-                                    class="tag-note-tooltip absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] pointer-events-none"
-                                >
-                                    <div class="tag-note-tooltip__inner">
-                                        <div class="tag-note-tooltip__header">
-                                            <svg class="w-4 h-4 shrink-0 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                            </svg>
-                                            <span>タグ付け理由・補足</span>
-                                        </div>
-                                        <div class="tag-note-tooltip__body">
-                                            <p class="tag-note-tooltip__text">{{ tag.pivot.note }}</p>
-                                        </div>
-                                        <div class="tag-note-tooltip__arrow" aria-hidden="true"></div>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    @click.stop="removeTag(tag.id)"
-                                    class="ml-2 text-brand-text-muted hover:text-red-600 shrink-0"
-                                    title="タグを削除"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div v-else class="text-sm text-brand-text-muted">
-                            タグが設定されていません
-                        </div>
+          <!-- 顧客タグ -->
+          <UiCard variant="default" padding="md" class="overflow-visible">
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                  <Tag :size="15" class="text-brand-primary" />
+                  顧客タグ
+                </h3>
+                <UiButton variant="primary" size="sm" @click="openTagModal">
+                  <template #leading><Plus :size="13" /></template>
+                  タグを追加
+                </UiButton>
+              </div>
+            </template>
+            <div v-if="customer.tags && customer.tags.length > 0" class="flex flex-wrap gap-2">
+              <div
+                v-for="tag in customer.tags"
+                :key="tag.id"
+                role="button"
+                tabindex="0"
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-brand-primary/40 transition-shadow"
+                :class="{ 'relative group cursor-help': tag.pivot?.note }"
+                :style="{
+                  backgroundColor: tag.color ? tag.color + '20' : 'rgb(var(--color-surface-2) / 1)',
+                  color: tag.color || 'rgb(var(--color-text-muted) / 1)',
+                  border: `1px solid ${tag.color || 'rgb(var(--color-border) / 1)'}`,
+                }"
+                @click="openEditTagModal(tag)"
+                @keydown.enter.prevent="openEditTagModal(tag)"
+              >
+                <span>{{ tag.name }}</span>
+                <MessageSquare v-if="tag.pivot?.note" :size="12" class="ml-1 text-brand-text-subtle" />
+                <div
+                  v-if="tag.pivot?.note"
+                  class="tag-note-tooltip absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] pointer-events-none"
+                >
+                  <div class="tag-note-tooltip__inner">
+                    <div class="tag-note-tooltip__header">
+                      <MessageSquare :size="13" class="text-ai-300" />
+                      <span>タグ付け理由・補足</span>
                     </div>
-                </div>
-
-                <!-- 顧客基本情報（overflow-visible でツールチップが途切れないようにする） -->
-                <div class="bg-brand-surface overflow-visible shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xl font-bold text-brand-text flex items-center gap-2">
-                                <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                基本情報
-                            </h3>
-                            <div class="flex items-center gap-2">
-                                <div class="relative group">
-                                    <Link
-                                        :href="route('admin.customers.additional-info', customer.id)"
-                                        class="flex items-center gap-2 border border-brand-border bg-brand-surface text-brand-text px-4 py-2 rounded-lg hover:bg-brand-surface-2 text-sm font-medium shadow-sm transition-colors"
-                                        title="お客様にInformationシートを記入頂き、追加情報を取得します"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        追加情報
-                                    </Link>
-                                    <!-- ホバー時のツールチップ -->
-                                    <div
-                                        class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] pointer-events-none"
-                                    >
-                                        <div class="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg">
-                                            <p>お客様にInformationシートを記入頂き、追加情報を取得します</p>
-                                            <div class="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900" aria-hidden="true"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button
-                                    @click="openEditCustomerModal"
-                                    class="flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-brand-primary-hover text-sm font-medium shadow-sm transition-colors"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                    編集
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 基本情報セクション -->
-                        <div class="mb-6">
-                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                基本情報
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- ID -->
-                                <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-100 md:col-span-2">
-                                    <label class="block text-xs font-semibold text-brand-primary uppercase tracking-wide mb-1">顧客ID</label>
-                                    <p class="text-lg font-bold text-brand-text">{{ customer.id }}</p>
-                                </div>
-                                <!-- 顧客名、ふりがな -->
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        顧客名
-                                    </label>
-                                    <p class="text-lg font-semibold text-brand-text">{{ customer.name }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                        </svg>
-                                        ふりがな
-                                    </label>
-                                    <p class="text-base font-medium text-brand-text">{{ customer.kana || '-' }}</p>
-                                </div>
-                                <!-- 生年月日、成人年度 -->
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        生年月日
-                                    </label>
-                                    <p class="text-base font-medium text-brand-text">{{ customer.birth_date || '-' }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        成人年度
-                                    </label>
-                                    <p class="text-base font-medium text-brand-text">{{ customer.coming_of_age_year || '-' }}</p>
-                                </div>
-                                <!-- 成人エリア、保護者名 -->
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        成人式エリア
-                                    </label>
-                                    <p class="text-base font-semibold text-brand-text">{{ customer.ceremony_area?.name || '-' }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                        </svg>
-                                        保護者名
-                                    </label>
-                                    <p class="text-base font-medium text-brand-text">{{ customer.guardian_name || '-' }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 成人式情報セクション -->
-                        <div class="mb-6">
-                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                </svg>
-                                成人式情報
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">仕度会場（推奨）</label>
-                                    <p class="text-base font-medium text-brand-text">{{ customer.seijin_preparation_venue || '-' }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">時間（推奨）</label>
-                                    <p class="text-base font-medium text-brand-text">{{ customer.seijin_preparation_time || '-' }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">他店お支度</label>
-                                    <p class="text-base font-medium text-brand-text">{{ customer.other_store_preparation ? 'あり' : 'なし' }}</p>
-                                </div>
-                                <template v-if="customer.other_store_preparation">
-                                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">美容室名（推奨）</label>
-                                        <p class="text-base font-medium text-brand-text">{{ customer.other_store_salon_name || '-' }}</p>
-                                    </div>
-                                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">住所</label>
-                                        <p class="text-base font-medium text-brand-text">{{ customer.other_store_salon_address || '-' }}</p>
-                                    </div>
-                                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">電話番号</label>
-                                        <p class="text-base font-medium text-brand-text">{{ customer.other_store_salon_phone || '-' }}</p>
-                                    </div>
-                                    <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                        <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1">着物発送日</label>
-                                        <p class="text-base font-medium text-brand-text">{{ customer.kimono_ship_date ? formatDateJa(customer.kimono_ship_date) : '-' }}</p>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-
-                        <!-- 連絡先情報セクション -->
-                        <div class="mb-6">
-                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                                連絡先情報
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                        </svg>
-                                        電話番号
-                                    </label>
-                                    <p class="text-base font-semibold text-brand-text">{{ customer.phone_number || '-' }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        メールアドレス
-                                    </label>
-                                    <p class="text-base font-medium text-brand-text break-all">{{ customer.email || '-' }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        郵便番号
-                                    </label>
-                                    <p class="text-base font-medium text-brand-text">{{ formatPostalCode(customer.postal_code) }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        住所
-                                    </label>
-                                    <p class="text-base font-medium text-brand-text">{{ customer.address || '-' }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- システム情報セクション -->
-                        <div class="mb-6">
-                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                                システム情報
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        登録日
-                                    </label>
-                                    <p class="text-base font-semibold text-brand-text">{{ formatDateTime(customer.created_at) }}</p>
-                                </div>
-                                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
-                                        最終更新日
-                                    </label>
-                                    <p class="text-base font-semibold text-brand-text">{{ formatDateTime(customer.updated_at) }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 備考セクション -->
-                        <div v-if="customer.remarks" class="mb-6">
-                            <h4 class="text-sm font-semibold text-brand-text-muted uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                備考
-                            </h4>
-                            <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                <p class="text-sm text-brand-text whitespace-pre-wrap leading-relaxed">{{ customer.remarks }}</p>
-                            </div>
-                        </div>
+                    <div class="tag-note-tooltip__body">
+                      <p class="tag-note-tooltip__text">{{ tag.pivot.note }}</p>
                     </div>
+                    <div class="tag-note-tooltip__arrow" aria-hidden="true"></div>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  class="ml-2 text-brand-text-muted hover:text-brand-danger shrink-0"
+                  title="タグを削除"
+                  @click.stop="removeTag(tag.id)"
+                >
+                  <XIcon :size="13" />
+                </button>
+              </div>
+            </div>
+            <div v-else class="text-sm text-brand-text-muted">タグが設定されていません</div>
+          </UiCard>
+
+          <!-- 基本情報 -->
+          <UiCard variant="default" padding="lg">
+            <template #header>
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                  <User :size="15" class="text-brand-primary" />
+                  基本情報
+                </h3>
+                <div class="flex items-center gap-2">
+                  <UiButton variant="ghost" size="sm" :href="route('admin.customers.additional-info', customer.id)">
+                    <template #leading><FileText :size="13" /></template>
+                    追加情報
+                  </UiButton>
+                  <UiButton variant="primary" size="sm" @click="showEditCustomerModal = true">
+                    <template #leading><Pencil :size="13" /></template>
+                    編集
+                  </UiButton>
+                </div>
+              </div>
+            </template>
+
+            <UiDetailSection title="プロフィール" :icon="UserCircle" :cols="2">
+              <UiDetailField label="顧客名" :value="customer.name" :icon="User" highlight />
+              <UiDetailField label="ふりがな" :value="customer.kana || '—'" :icon="Type" />
+              <UiDetailField label="生年月日" :value="customer.birth_date || '—'" :icon="Cake" />
+              <UiDetailField label="成人年度" :value="customer.coming_of_age_year || '—'" :icon="Sparkles" />
+              <UiDetailField label="成人式エリア" :value="customer.ceremony_area?.name || '—'" :icon="MapPin" />
+              <UiDetailField label="保護者名" :value="customer.guardian_name || '—'" :icon="Users" />
+            </UiDetailSection>
+
+            <UiDetailSection title="成人式情報" :icon="Sparkles" :cols="2">
+              <UiDetailField label="仕度会場（推奨）" :value="customer.seijin_preparation_venue || '—'" :icon="MapPin" />
+              <UiDetailField label="時間（推奨）" :value="customer.seijin_preparation_time || '—'" :icon="Clock" />
+              <UiDetailField label="他店お支度" :value="customer.other_store_preparation ? 'あり' : 'なし'" :icon="Info" />
+              <template v-if="customer.other_store_preparation">
+                <UiDetailField label="美容室名（推奨）" :value="customer.other_store_salon_name || '—'" :icon="Building2" />
+                <UiDetailField label="美容室 住所" :value="customer.other_store_salon_address || '—'" :icon="Home" />
+                <UiDetailField label="美容室 電話" :value="customer.other_store_salon_phone || '—'" :icon="Phone" mono />
+                <UiDetailField label="着物発送日" :value="customer.kimono_ship_date ? formatDateJa(customer.kimono_ship_date) : '—'" :icon="Clock" />
+              </template>
+            </UiDetailSection>
+
+            <UiDetailSection title="連絡先" :icon="Phone" :cols="2">
+              <UiDetailField label="電話番号" :value="customer.phone_number || '—'" :icon="Phone" mono />
+              <UiDetailField label="メールアドレス" :value="customer.email || '—'" :icon="Mail" mono />
+              <UiDetailField label="郵便番号" :value="formatPostalCode(customer.postal_code)" :icon="MapPin" />
+              <UiDetailField label="住所" :value="customer.address || '—'" :icon="Home" :span="2" />
+            </UiDetailSection>
+
+            <UiDetailSection title="システム情報" :icon="Clock" :cols="2">
+              <UiDetailField label="登録日" :value="formatDateTime(customer.created_at)" :icon="Clock" />
+              <UiDetailField label="最終更新日" :value="formatDateTime(customer.updated_at)" :icon="Clock" />
+            </UiDetailSection>
+
+            <UiDetailSection v-if="customer.remarks" title="備考" :icon="FileText" :cols="1" tight>
+              <div class="rounded-soft border border-brand-border bg-brand-surface-2 p-4">
+                <p class="text-sm text-brand-text whitespace-pre-wrap leading-relaxed">{{ customer.remarks }}</p>
+              </div>
+            </UiDetailSection>
+          </UiCard>
                         </div>
                     </template>
 
@@ -2546,8 +2341,15 @@
 <script setup>
 import { ref, reactive, computed, nextTick, watch, onBeforeUnmount } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { UiPageHeader, UiButton, UiTabs } from '@/Components/UI';
-import { ArrowLeft, Trash2 } from 'lucide-vue-next';
+import {
+    UiPageHeader, UiButton, UiTabs, UiCard,
+    UiDetailSection, UiDetailField,
+} from '@/Components/UI';
+import {
+    ArrowLeft, Trash2, Plus, Tag, User, UserCircle, Type,
+    Cake, Sparkles, MapPin, Users, Clock, FileText, Pencil,
+    Phone, Mail, Home, Building2, Info, X as XIcon, MessageSquare,
+} from 'lucide-vue-next';
 
 const activeTab = ref('overview');
 const tabs = [
