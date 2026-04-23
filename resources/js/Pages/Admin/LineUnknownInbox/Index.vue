@@ -1,8 +1,11 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import ActionButton from '@/Components/ActionButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import {
+    UiPageHeader, UiButton, UiCard, UiFormField, UiSelect, UiDataTable,
+} from '@/Components/UI';
+import { ArrowLeft, MessageCircle } from 'lucide-vue-next';
 
 const props = defineProps({
     groups: Array,
@@ -10,24 +13,33 @@ const props = defineProps({
     filters: Object,
 });
 
+const columns = [
+    { key: 'shop_name',           label: '店舗',       width: '140px' },
+    { key: 'line_user_id_masked', label: 'LINEユーザー', width: '180px' },
+    { key: 'message_count',       label: '件数',       width: '80px', align: 'right' },
+    { key: 'last_at',             label: '最新',       width: '160px' },
+    { key: 'last_text',           label: 'プレビュー' },
+    { key: 'actions',             label: '',           align: 'right', width: '130px', noLink: true },
+];
+
 function initialShopFilter() {
-    if (props.filters.unassigned) {
-        return '__unassigned__';
-    }
-    if (props.filters.shop_id != null) {
-        return String(props.filters.shop_id);
-    }
+    if (props.filters?.unassigned) return '__unassigned__';
+    if (props.filters?.shop_id != null) return String(props.filters.shop_id);
     return '';
 }
 
 const shopFilter = ref(initialShopFilter());
 
 watch(
-    () => [props.filters.shop_id, props.filters.unassigned],
-    () => {
-        shopFilter.value = initialShopFilter();
-    },
+    () => [props.filters?.shop_id, props.filters?.unassigned],
+    () => { shopFilter.value = initialShopFilter(); },
 );
+
+const shopOptions = computed(() => [
+    { value: '', label: 'すべての店舗' },
+    { value: '__unassigned__', label: '店舗未分類' },
+    ...(props.shops || []).map((s) => ({ value: String(s.id), label: s.name })),
+]);
 
 function applyFilter() {
     const params = {};
@@ -41,80 +53,68 @@ function applyFilter() {
 
 function showHref(g) {
     const q = { line_user_id: g.line_user_id };
-    if (g.shop_id != null) {
-        q.shop_id = g.shop_id;
-    }
+    if (g.shop_id != null) q.shop_id = g.shop_id;
     return route('admin.line-unknown-inbox.show', q);
 }
+
+const fmtDT = (v) => v ? new Date(v).toLocaleString('ja-JP') : '—';
 </script>
 
 <template>
     <Head title="LINE 不明メッセージ" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">LINE 不明メッセージ</h2>
-                <ActionButton variant="back" label="顧客一覧" :href="route('admin.customers.index')" />
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: '顧客' }, { label: 'LINE 不明メッセージ' }]">
+        <UiPageHeader
+            title="LINE 不明メッセージ"
+            description="友だち未登録の LINE ユーザーから受信したメッセージを顧客へ紐づけできます。"
+        >
+            <template #actions>
+                <UiButton variant="ghost" :href="route('admin.customers.index')">
+                    <template #leading><ArrowLeft :size="14" /></template>
+                    顧客一覧
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-brand-surface shadow-sm sm:rounded-lg p-6 mb-6">
-                    <div class="flex flex-wrap items-end gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-brand-text mb-1">店舗</label>
-                            <select
-                                v-model="shopFilter"
-                                class="rounded-md border-brand-border shadow-sm text-sm"
-                                @change="applyFilter"
-                            >
-                                <option value="">すべて</option>
-                                <option value="__unassigned__">店舗未分類</option>
-                                <option v-for="s in shops" :key="s.id" :value="String(s.id)">{{ s.name }}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <p class="mt-3 text-sm text-brand-text-muted">
-                        友だち未登録の LINE ユーザーからの受信がここに溜まります。詳細から顧客へ紐づけできます。
-                    </p>
-                </div>
+        <UiCard variant="default" padding="md" class="mb-4">
+            <UiFormField label="店舗で絞り込み">
+                <UiSelect
+                    v-model="shopFilter"
+                    :options="shopOptions"
+                    size="sm"
+                    class="max-w-xs"
+                    @update:modelValue="applyFilter"
+                />
+            </UiFormField>
+        </UiCard>
 
-                <div class="bg-brand-surface shadow-sm sm:rounded-lg overflow-hidden">
-                    <table class="min-w-full divide-y divide-brand-border">
-                        <thead class="bg-brand-surface-2">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">店舗</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">LINEユーザー</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">件数</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">最新</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-brand-text-muted uppercase">プレビュー</th>
-                                <th class="px-4 py-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-brand-border">
-                            <tr v-for="(g, idx) in groups" :key="idx" class="hover:bg-brand-surface-2">
-                                <td class="px-4 py-3 text-sm text-brand-text">{{ g.shop_name }}</td>
-                                <td class="px-4 py-3 text-sm font-mono text-brand-text">{{ g.line_user_id_masked }}</td>
-                                <td class="px-4 py-3 text-sm text-brand-text-muted">{{ g.message_count }}</td>
-                                <td class="px-4 py-3 text-sm text-brand-text-muted">
-                                    {{ g.last_at ? new Date(g.last_at).toLocaleString('ja-JP') : '—' }}
-                                </td>
-                                <td class="px-4 py-3 text-sm text-brand-text max-w-xs truncate">{{ g.last_text }}</td>
-                                <td class="px-4 py-3 text-right">
-                                    <Link :href="showHref(g)" class="text-brand-primary hover:text-brand-primary-hover text-sm font-medium">
-                                        詳細・紐づけ
-                                    </Link>
-                                </td>
-                            </tr>
-                            <tr v-if="!groups.length">
-                                <td colspan="6" class="px-4 py-8 text-center text-sm text-brand-text-muted">不明メッセージはありません。</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <UiDataTable
+            :columns="columns"
+            :rows="groups || []"
+            :row-key="(r) => `${r.shop_id ?? 'na'}-${r.line_user_id}`"
+            empty-message="不明メッセージはありません。"
+        >
+            <template #cell-shop_name="{ value }">
+                <span class="text-brand-text">{{ value || '—' }}</span>
+            </template>
+            <template #cell-line_user_id_masked="{ value }">
+                <span class="font-mono text-xs text-brand-text-muted">{{ value }}</span>
+            </template>
+            <template #cell-message_count="{ value }">
+                <span class="tabular-nums text-brand-text-muted">{{ value }}</span>
+            </template>
+            <template #cell-last_at="{ value }">
+                <span class="text-brand-text-muted text-xs">{{ fmtDT(value) }}</span>
+            </template>
+            <template #cell-last_text="{ value }">
+                <span class="text-brand-text-muted text-xs line-clamp-1">{{ value || '—' }}</span>
+            </template>
+            <template #cell-actions="{ row }">
+                <UiButton size="sm" variant="primary" :href="showHref(row)">
+                    <template #leading><MessageCircle :size="12" /></template>
+                    詳細・紐づけ
+                </UiButton>
+            </template>
+        </UiDataTable>
     </AdminLayout>
 </template>

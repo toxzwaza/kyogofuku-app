@@ -1,142 +1,157 @@
 <template>
     <Head title="LINE 連携一覧" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">LINE 連携一覧</h2>
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: '顧客' }, { label: 'LINE連携' }]">
+        <UiPageHeader
+            title="LINE 連携一覧"
+            description="LINE ID の紐付け状況（顧客／予約／未紐付）を横断的に確認できます。"
+        />
 
-        <div class="py-6 sm:py-8">
-            <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-                <!-- フィルタ -->
-                <div class="bg-brand-surface rounded-xl border border-brand-border shadow-sm p-4 mb-4">
-                    <form @submit.prevent="search" class="flex flex-wrap gap-3 items-end">
-                        <div class="flex flex-col">
-                            <label class="text-xs font-medium text-brand-text mb-1">種別</label>
-                            <select v-model="form.type" class="rounded-md border-brand-border text-sm">
-                                <option value="all">全て（{{ counts.all }}）</option>
-                                <option value="customer">顧客紐付け（{{ counts.customer }}）</option>
-                                <option value="reservation">予約紐付け（{{ counts.reservation }}）</option>
-                                <option value="unbound">未紐付け（{{ counts.unbound }}）</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-col">
-                            <label class="text-xs font-medium text-brand-text mb-1">店舗</label>
-                            <select v-model="form.shop_id" class="rounded-md border-brand-border text-sm">
-                                <option :value="''">全て</option>
-                                <option v-for="s in shops" :key="s.id" :value="s.id">{{ s.name }}</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-col flex-1 min-w-[200px]">
-                            <label class="text-xs font-medium text-brand-text mb-1">キーワード（名前・カナ・電話・LINE userId・ラベル）</label>
-                            <input v-model="form.q" type="text" class="rounded-md border-brand-border text-sm" placeholder="例) 村上 / ムラカミ / 09012345678" />
-                        </div>
-                        <button type="submit" class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm hover:bg-brand-primary-hover">検索</button>
-                        <button type="button" @click="reset" class="px-3 py-2 bg-brand-surface-2 text-brand-text rounded-md text-sm hover:bg-gray-200">リセット</button>
-                    </form>
+        <!-- 絞り込み -->
+        <UiCard variant="default" padding="md" class="mb-4">
+            <form @submit.prevent="search" class="grid grid-cols-1 md:grid-cols-[auto_auto_1fr_auto_auto] gap-3">
+                <UiFormField label="種別">
+                    <UiSelect
+                        v-model="form.type"
+                        :options="[
+                            { value: 'all',         label: `全て（${counts.all}）` },
+                            { value: 'customer',    label: `顧客紐付け（${counts.customer}）` },
+                            { value: 'reservation', label: `予約紐付け（${counts.reservation}）` },
+                            { value: 'unbound',     label: `未紐付け（${counts.unbound}）` },
+                        ]"
+                        size="sm"
+                    />
+                </UiFormField>
+                <UiFormField label="店舗">
+                    <UiSelect
+                        v-model="form.shop_id"
+                        :options="[{ value: '', label: '全て' }, ...shops.map(s => ({ value: s.id, label: s.name }))]"
+                        size="sm"
+                    />
+                </UiFormField>
+                <UiFormField label="キーワード" hint="名前・カナ・電話・LINE userId・ラベルで横断検索">
+                    <UiInput v-model="form.q" placeholder="例: 村上 / ムラカミ / 09012345678" size="sm" />
+                </UiFormField>
+                <div class="flex items-end gap-2">
+                    <UiButton variant="primary" size="sm" type="submit">
+                        <template #leading><Search :size="13" /></template>
+                        検索
+                    </UiButton>
+                    <UiButton variant="ghost" size="sm" type="button" @click="reset">リセット</UiButton>
                 </div>
+            </form>
+        </UiCard>
 
-                <!-- 件数表示 -->
-                <div class="text-sm text-brand-text-muted mb-2">
-                    <span v-if="contacts.meta.total > 0">
-                        {{ contacts.meta.from }}〜{{ contacts.meta.to }} / {{ contacts.meta.total }} 件
-                    </span>
-                    <span v-else>該当なし</span>
-                </div>
+        <UiDataTable
+            :columns="columns"
+            :rows="contacts.data"
+            :row-key="(r) => r.id"
+            :row-href="(r) => r.target?.detail_url || null"
+            empty-message="該当する LINE 連携が見つかりません。"
+        >
+            <template #cell-kind="{ value }">
+                <UiBadge
+                    :variant="value === 'customer' ? 'primary' : value === 'reservation' ? 'success' : 'neutral'"
+                    size="sm"
+                >
+                    {{ value === 'customer' ? '顧客' : value === 'reservation' ? '予約' : '未紐付' }}
+                </UiBadge>
+            </template>
+            <template #cell-name="{ row }">
+                <span class="font-medium">{{ row.target?.name || '—' }}</span>
+            </template>
+            <template #cell-kana="{ row }">
+                <span class="text-brand-text-muted">{{ row.target?.kana || '—' }}</span>
+            </template>
+            <template #cell-phone="{ row }">
+                <span class="tabular-nums text-brand-text-muted">{{ row.target?.phone || '—' }}</span>
+            </template>
+            <template #cell-shop="{ row }">
+                <span class="text-brand-text-muted">{{ row.shop?.name || '—' }}</span>
+            </template>
+            <template #cell-extra="{ row }">
+                <span v-if="row.kind === 'reservation' && row.target?.event_title" class="text-xs text-brand-text-muted">
+                    {{ row.target.event_title }}
+                </span>
+                <span v-else-if="row.kind === 'unbound'" class="font-mono text-xs text-brand-text-subtle">
+                    {{ shortLineId(row.line_user_id) }}
+                </span>
+                <span v-else></span>
+            </template>
+            <template #cell-label="{ value }">
+                <span class="text-xs text-brand-text-muted">{{ value || '—' }}</span>
+            </template>
+            <template #cell-created_at="{ value }">
+                <span class="text-xs text-brand-text-muted">{{ formatDate(value) }}</span>
+            </template>
+            <template #cell-actions="{ row }">
+                <UiButton size="sm" variant="ghost" class="text-brand-danger" @click.stop="askUnlink(row)">
+                    解除
+                </UiButton>
+            </template>
+        </UiDataTable>
 
-                <!-- テーブル -->
-                <div class="bg-brand-surface rounded-xl border border-brand-border shadow-sm overflow-hidden">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-brand-surface-2 border-b border-brand-border text-brand-text">
-                            <tr>
-                                <th class="px-3 py-2 text-left whitespace-nowrap">種別</th>
-                                <th class="px-3 py-2 text-left whitespace-nowrap">名前</th>
-                                <th class="px-3 py-2 text-left whitespace-nowrap">カナ</th>
-                                <th class="px-3 py-2 text-left whitespace-nowrap">電話番号</th>
-                                <th class="px-3 py-2 text-left whitespace-nowrap">店舗</th>
-                                <th class="px-3 py-2 text-left whitespace-nowrap">追加情報</th>
-                                <th class="px-3 py-2 text-left whitespace-nowrap">表示名</th>
-                                <th class="px-3 py-2 text-left whitespace-nowrap">連携日時</th>
-                                <th class="px-3 py-2 text-right whitespace-nowrap">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="c in contacts.data" :key="c.id" class="hover:bg-indigo-50/50 cursor-pointer" @click="goTo(c)">
-                                <td class="px-3 py-2 whitespace-nowrap">
-                                    <span v-if="c.kind === 'customer'" class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">顧客</span>
-                                    <span v-else-if="c.kind === 'reservation'" class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">予約</span>
-                                    <span v-else class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-brand-surface-2 text-brand-text">未紐付</span>
-                                </td>
-                                <td class="px-3 py-2 whitespace-nowrap font-medium text-brand-text">
-                                    {{ c.target?.name || '—' }}
-                                </td>
-                                <td class="px-3 py-2 whitespace-nowrap text-brand-text-muted">
-                                    {{ c.target?.kana || '—' }}
-                                </td>
-                                <td class="px-3 py-2 whitespace-nowrap text-brand-text-muted">
-                                    {{ c.target?.phone || '—' }}
-                                </td>
-                                <td class="px-3 py-2 whitespace-nowrap text-brand-text-muted">
-                                    {{ c.shop?.name || '—' }}
-                                </td>
-                                <td class="px-3 py-2 whitespace-nowrap text-brand-text-muted">
-                                    <template v-if="c.kind === 'reservation'">
-                                        <span class="text-xs">{{ c.target?.event_title || '' }}</span>
-                                    </template>
-                                    <template v-else-if="c.kind === 'unbound'">
-                                        <span class="text-xs text-brand-text-subtle">{{ shortLineId(c.line_user_id) }}</span>
-                                    </template>
-                                </td>
-                                <td class="px-3 py-2 whitespace-nowrap text-brand-text-muted">{{ c.label || '—' }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-brand-text-muted text-xs">{{ formatDate(c.created_at) }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-right">
-                                    <button type="button"
-                                            @click.stop="unlink(c)"
-                                            class="text-red-600 hover:text-red-800 text-xs font-medium">
-                                        解除
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr v-if="contacts.data.length === 0">
-                                <td colspan="9" class="px-3 py-8 text-center text-brand-text-muted">該当する LINE 連携が見つかりません。</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- ページネーション -->
-                <div v-if="contacts.meta.last_page > 1" class="mt-4 flex flex-wrap gap-1 justify-center">
-                    <Link v-for="(link, idx) in contacts.links"
-                          :key="idx"
-                          :href="link.url || '#'"
-                          v-html="link.label"
-                          class="px-3 py-1 text-sm rounded border"
-                          :class="link.active ? 'bg-brand-primary text-white border-indigo-600' : (link.url ? 'bg-brand-surface text-brand-text hover:bg-brand-surface-2 border-brand-border' : 'text-brand-text-subtle border-brand-border cursor-not-allowed')"
-                          preserve-scroll />
-                </div>
-            </div>
+        <!-- ページネーション（Laravel paginator API resource 形式） -->
+        <div v-if="contacts.meta?.last_page > 1" class="mt-4 flex flex-wrap gap-1 justify-center">
+            <Link
+                v-for="(link, idx) in contacts.links"
+                :key="idx"
+                :href="link.url || '#'"
+                v-html="link.label"
+                class="px-3 py-1 text-sm rounded-soft border"
+                :class="link.active
+                    ? 'bg-brand-primary text-brand-on-primary border-brand-primary'
+                    : (link.url ? 'bg-brand-surface text-brand-text hover:bg-brand-surface-2 border-brand-border' : 'text-brand-text-subtle border-brand-border cursor-not-allowed')"
+                preserve-scroll
+            />
         </div>
+
+        <UiDialog v-model:open="confirmOpen" title="LINE 連携を解除">
+            <p class="text-sm text-brand-text-muted">
+                <span class="font-medium text-brand-text">{{ target?.target?.name || shortLineId(target?.line_user_id) }}</span>
+                の LINE 連携を解除します。
+            </p>
+            <template #footer>
+                <UiButton variant="ghost" @click="confirmOpen = false">キャンセル</UiButton>
+                <UiButton variant="danger" :loading="unlinking" @click="confirmUnlink">解除する</UiButton>
+            </template>
+        </UiDialog>
     </AdminLayout>
 </template>
 
 <script setup>
+import { reactive, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import {
+    UiPageHeader, UiButton, UiBadge, UiCard, UiDataTable, UiDialog,
+    UiFormField, UiInput, UiSelect,
+} from '@/Components/UI';
+import { Search } from 'lucide-vue-next';
 
 const props = defineProps({
     contacts: { type: Object, required: true },
-    filters: { type: Object, required: true },
-    shops: { type: Array, required: true },
-    counts: { type: Object, required: true },
+    filters:  { type: Object, required: true },
+    shops:    { type: Array, required: true },
+    counts:   { type: Object, required: true },
 });
 
+const columns = [
+    { key: 'kind',       label: '種別',   width: '90px' },
+    { key: 'name',       label: '名前',   width: '180px' },
+    { key: 'kana',       label: 'カナ',   hideOnMobile: true, width: '140px' },
+    { key: 'phone',      label: '電話',   hideOnMobile: true, width: '140px' },
+    { key: 'shop',       label: '店舗',   hideOnMobile: true, width: '120px' },
+    { key: 'extra',      label: '追加情報', hideOnMobile: true },
+    { key: 'label',      label: '表示名', hideOnMobile: true, width: '140px' },
+    { key: 'created_at', label: '連携日時', hideOnMobile: true, width: '140px' },
+    { key: 'actions',    label: '',       align: 'right', width: '80px', noLink: true },
+];
+
 const form = reactive({
-    type: props.filters.type || 'all',
+    type:    props.filters.type || 'all',
     shop_id: props.filters.shop_id ?? '',
-    q: props.filters.q || '',
+    q:       props.filters.q || '',
 });
 
 function search() {
@@ -154,17 +169,25 @@ function reset() {
     search();
 }
 
-function goTo(c) {
-    if (c.target?.detail_url) {
-        router.visit(c.target.detail_url);
-    }
+const confirmOpen = ref(false);
+const target = ref(null);
+const unlinking = ref(false);
+
+function askUnlink(c) {
+    target.value = c;
+    confirmOpen.value = true;
 }
 
-function unlink(c) {
-    const targetLabel = c.target?.name ? `${c.target.name} さん` : `LINE userId ${shortLineId(c.line_user_id)}`;
-    if (!confirm(`${targetLabel} の LINE 連携を解除します。よろしいですか？`)) return;
-    router.delete(route('admin.line-contacts.destroy', c.id), {
+function confirmUnlink() {
+    if (!target.value) return;
+    unlinking.value = true;
+    router.delete(route('admin.line-contacts.destroy', target.value.id), {
         preserveScroll: true,
+        onFinish: () => {
+            unlinking.value = false;
+            confirmOpen.value = false;
+            target.value = null;
+        },
     });
 }
 

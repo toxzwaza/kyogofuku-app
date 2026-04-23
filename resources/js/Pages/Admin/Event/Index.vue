@@ -1,249 +1,181 @@
 <template>
     <Head title="イベント一覧" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">イベント一覧</h2>
-                <ActionButton variant="create" label="新規追加" :href="route('admin.events.create')" />
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: 'イベント・予約' }, { label: 'イベント一覧' }]">
+        <UiPageHeader
+            title="イベント一覧"
+            description="予約・問い合わせ・資料請求などイベントページを一元管理します。"
+        >
+            <template #actions>
+                <UiButton variant="primary" :href="route('admin.events.create')">
+                    <template #leading><Plus :size="14" /></template>
+                    新規追加
+                </UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- 絞り込みブロック -->
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-brand-text">絞り込み</h3>
-                            <button @click="resetFilters" class="text-sm text-brand-text-muted hover:text-brand-text">
-                                リセット
-                            </button>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-brand-text mb-1">フォーム種別</label>
-                                <select
-                                    v-model="searchForm.form_type"
-                                    @change="search"
-                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
-                                >
-                                    <option value="">すべて</option>
-                                    <option value="reservation">振袖予約</option>
-                                    <option value="reservation_hakama">袴予約（岡山）</option>
-                                    <option value="document">資料請求</option>
-                                    <option value="contact">問い合わせ</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-brand-text mb-1">担当店舗</label>
-                                <select
-                                    v-model="searchForm.shop_id"
-                                    @change="search"
-                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
-                                >
-                                    <option value="">すべての店舗</option>
-                                    <option v-for="shop in shops" :key="shop.id" :value="shop.id">
-                                        {{ shop.name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-brand-text mb-1">公開状態</label>
-                                <select
-                                    v-model="searchForm.public_status"
-                                    @change="search"
-                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
-                                >
-                                    <option value="active">公開中</option>
-                                    <option value="ended">受付終了</option>
-                                    <option value="private">非公開</option>
-                                    <option value="all">すべて</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex justify-end">
-                            <button
-                                @click="search"
-                                class="bg-brand-primary text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover text-sm"
-                            >
-                                検索
-                            </button>
-                        </div>
-                    </div>
+        <UiCard variant="default" padding="md" class="mb-4">
+            <form @submit.prevent="search" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <UiFormField label="フォーム種別">
+                    <UiSelect
+                        v-model="searchForm.form_type"
+                        :options="[
+                            { value: '',                   label: 'すべて' },
+                            { value: 'reservation',        label: '振袖予約' },
+                            { value: 'reservation_hakama', label: '袴予約（岡山）' },
+                            { value: 'document',           label: '資料請求' },
+                            { value: 'contact',            label: '問い合わせ' },
+                        ]"
+                        size="sm"
+                    />
+                </UiFormField>
+                <UiFormField label="担当店舗">
+                    <UiSelect
+                        v-model="searchForm.shop_id"
+                        :options="[{ value: '', label: 'すべての店舗' }, ...shops.map(s => ({ value: s.id, label: s.name }))]"
+                        size="sm"
+                    />
+                </UiFormField>
+                <UiFormField label="公開状態">
+                    <UiSelect
+                        v-model="searchForm.public_status"
+                        :options="[
+                            { value: 'active',  label: '公開中' },
+                            { value: 'ended',   label: '受付終了' },
+                            { value: 'private', label: '非公開' },
+                            { value: 'all',     label: 'すべて' },
+                        ]"
+                        size="sm"
+                    />
+                </UiFormField>
+                <div class="flex items-end gap-2">
+                    <UiButton variant="primary" size="sm" type="submit">
+                        <template #leading><Search :size="13" /></template>
+                        検索
+                    </UiButton>
+                    <UiButton variant="ghost" size="sm" type="button" @click="resetFilters">リセット</UiButton>
                 </div>
+            </form>
+        </UiCard>
 
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-brand-border">
-                                <thead class="bg-brand-surface-2">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">タイトル</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">フォーム種別</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">受付開始日</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">受付終了日</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">店舗</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">公開状態</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-brand-surface divide-y divide-brand-border">
-                                    <tr v-for="event in events.data" :key="event.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ event.id }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">{{ event.title }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
-                                            <span class="px-2 py-1 text-xs rounded-full" :class="{
-                                                'bg-blue-100 text-blue-800': event.form_type === 'reservation',
-                                                'bg-cyan-100 text-cyan-900': event.form_type === 'reservation_hakama',
-                                                'bg-green-100 text-green-800': event.form_type === 'document',
-                                                'bg-purple-100 text-purple-800': event.form_type === 'contact',
-                                            }">
-                                                {{ getFormTypeLabel(event.form_type) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
-                                            {{ formatDate(event.start_at) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
-                                            {{ formatDate(event.end_at) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-text">
-                                            <span v-for="(shop, index) in event.shops" :key="shop.id">
-                                                {{ shop.name }}<span v-if="index < event.shops.length - 1">, </span>
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 py-1 text-xs rounded-full" :class="getPublicStatusClass(event)">
-                                                {{ getPublicStatusLabel(event) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <ActionButton variant="detail" label="詳細" size="sm" :href="route('admin.events.show', event.id)" />
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- ページネーション -->
-                        <div v-if="events.links && events.links.length > 3" class="mt-4">
-                            <div class="flex justify-center">
-                                <template v-for="link in events.links" :key="link.label">
-                                    <Link
-                                        v-if="link.url"
-                                        :href="link.url"
-                                        :class="[
-                                            'px-4 py-2 mx-1 rounded-md',
-                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2',
-                                        ]"
-                                    >
-                                        <span v-html="link.label"></span>
-                                    </Link>
-                                    <span
-                                        v-else
-                                        :class="[
-                                            'px-4 py-2 mx-1 rounded-md opacity-50 cursor-not-allowed',
-                                            link.active ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text',
-                                        ]"
-                                        v-html="link.label"
-                                    ></span>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
+        <UiDataTable
+            :columns="columns"
+            :rows="events.data"
+            :pagination="events"
+            :row-href="(r) => route('admin.events.show', r.id)"
+            empty-message="該当するイベントが見つかりませんでした。"
+        >
+            <template #cell-id="{ value }">
+                <span class="text-brand-text-muted tabular-nums">#{{ value }}</span>
+            </template>
+            <template #cell-title="{ value }">
+                <span class="font-medium">{{ value }}</span>
+            </template>
+            <template #cell-form_type="{ value }">
+                <UiBadge :variant="formTypeVariant(value)" size="sm">{{ getFormTypeLabel(value) }}</UiBadge>
+            </template>
+            <template #cell-start_at="{ value }">
+                <span class="text-xs text-brand-text-muted">{{ formatDate(value) }}</span>
+            </template>
+            <template #cell-end_at="{ value }">
+                <span class="text-xs text-brand-text-muted">{{ formatDate(value) }}</span>
+            </template>
+            <template #cell-shops="{ row }">
+                <div class="flex flex-wrap gap-1">
+                    <UiBadge v-for="s in row.shops" :key="s.id" variant="neutral" size="sm">{{ s.name }}</UiBadge>
                 </div>
-            </div>
-        </div>
+            </template>
+            <template #cell-status="{ row }">
+                <UiBadge :variant="getPublicStatusVariant(row)" dot>{{ getPublicStatusLabel(row) }}</UiBadge>
+            </template>
+            <template #cell-actions="{ row }">
+                <UiButton size="sm" variant="ghost" :href="route('admin.events.show', row.id)">
+                    <Eye :size="13" />
+                </UiButton>
+            </template>
+        </UiDataTable>
     </AdminLayout>
 </template>
 
 <script setup>
 import { reactive } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import ActionButton from '@/Components/ActionButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import {
+    UiPageHeader, UiButton, UiBadge, UiCard, UiDataTable,
+    UiFormField, UiSelect,
+} from '@/Components/UI';
+import { Plus, Search, Eye } from 'lucide-vue-next';
 import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
-    events: Object,
-    shops: Array,
+    events:  Object,
+    shops:   Array,
     filters: Object,
 });
 
+const columns = [
+    { key: 'id',        label: 'ID',           width: '70px' },
+    { key: 'title',     label: 'タイトル' },
+    { key: 'form_type', label: 'フォーム種別', width: '140px', hideOnMobile: true },
+    { key: 'start_at',  label: '受付開始',     width: '120px', hideOnMobile: true },
+    { key: 'end_at',    label: '受付終了',     width: '120px', hideOnMobile: true },
+    { key: 'shops',     label: '店舗',         hideOnMobile: true },
+    { key: 'status',    label: '公開状態',     width: '120px' },
+    { key: 'actions',   label: '',             align: 'right', width: '60px', noLink: true },
+];
+
 const searchForm = reactive({
-    form_type: props.filters?.form_type || '',
-    shop_id: props.filters?.shop_id || '',
+    form_type:     props.filters?.form_type || '',
+    shop_id:       props.filters?.shop_id || '',
     public_status: props.filters?.public_status || 'active',
 });
 
 const search = () => {
     router.get(route('admin.events.index'), {
         form_type: searchForm.form_type || undefined,
-        shop_id: searchForm.shop_id || undefined,
+        shop_id:   searchForm.shop_id || undefined,
         public_status: searchForm.public_status !== 'all' ? searchForm.public_status : undefined,
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-    });
+    }, { preserveState: true, preserveScroll: true });
 };
 
 const resetFilters = () => {
     searchForm.form_type = '';
     searchForm.shop_id = '';
     searchForm.public_status = 'active';
-    router.get(route('admin.events.index'), {
-        public_status: 'active',
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-    });
+    router.get(route('admin.events.index'), { public_status: 'active' }, { preserveState: true, preserveScroll: true });
 };
 
-const getFormTypeLabel = (formType) => {
-    const labels = {
-        reservation: '振袖予約',
-        reservation_hakama: '袴予約（岡山）',
-        document: '資料請求',
-        contact: '問い合わせ',
-    };
-    return labels[formType] || formType;
-};
+const getFormTypeLabel = (t) => ({
+    reservation: '振袖予約',
+    reservation_hakama: '袴予約（岡山）',
+    document: '資料請求',
+    contact: '問い合わせ',
+}[t] || t);
 
-const formatDate = (date) => {
-    if (!date) {
-        return '常時受付中';
-    }
-    return formatDateJa(date);
+const formTypeVariant = (t) => ({
+    reservation: 'primary',
+    reservation_hakama: 'accent',
+    document: 'success',
+    contact: 'warning',
+}[t] || 'neutral');
+
+const formatDate = (d) => d ? formatDateJa(d) : '常時受付中';
+
+const isEnded = (event) => {
+    if (!event.end_at) return false;
+    const today = formatDateInputValueJa(new Date().toISOString());
+    const end = formatDateInputValueJa(event.end_at);
+    return end && today && end < today;
 };
 
 const getPublicStatusLabel = (event) => {
-    if (!event.is_public) {
-        return '非公開';
-    }
-    if (event.end_at) {
-        const todayTokyo = formatDateInputValueJa(new Date().toISOString());
-        const endTokyo = formatDateInputValueJa(event.end_at);
-        if (endTokyo && todayTokyo && endTokyo < todayTokyo) {
-            return '受付終了';
-        }
-    }
-    return '公開';
+    if (!event.is_public) return '非公開';
+    return isEnded(event) ? '受付終了' : '公開中';
 };
 
-const getPublicStatusClass = (event) => {
-    if (!event.is_public) {
-        return 'bg-brand-surface-2 text-brand-text';
-    }
-    if (event.end_at) {
-        const todayTokyo = formatDateInputValueJa(new Date().toISOString());
-        const endTokyo = formatDateInputValueJa(event.end_at);
-        if (endTokyo && todayTokyo && endTokyo < todayTokyo) {
-            return 'bg-orange-100 text-orange-800';
-        }
-    }
-    return 'bg-green-100 text-green-800';
+const getPublicStatusVariant = (event) => {
+    if (!event.is_public) return 'neutral';
+    return isEnded(event) ? 'warning' : 'success';
 };
 </script>
-
