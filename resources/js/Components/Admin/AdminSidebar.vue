@@ -70,15 +70,20 @@ const safeRoute = (name) => {
                         <Link
                             :href="safeRoute(item.route)"
                             :class="[
-                                'flex items-center gap-2.5 rounded mx-2 text-sm transition-colors group',
+                                'relative flex items-center gap-2.5 rounded mx-2 text-sm transition-colors group',
                                 collapsed ? 'justify-center px-2 py-2' : 'px-2.5 py-2',
                                 isItemActive(item)
-                                    ? 'bg-ai-600 text-white'
-                                    : 'text-sumi-200 hover:bg-sumi-800 hover:text-white',
+                                    ? 'bg-sumi-800 text-white'
+                                    : 'text-sumi-200 hover:bg-sumi-800/70 hover:text-white',
                             ]"
                             :title="collapsed ? item.label : undefined"
                         >
-                            <component :is="item.icon" :size="16" class="flex-shrink-0" />
+                            <span
+                                v-if="isItemActive(item)"
+                                class="absolute -left-2 top-1 bottom-1 w-0.5 rounded-r-full bg-unohana-300"
+                                aria-hidden="true"
+                            />
+                            <component :is="item.icon" :size="16" class="flex-shrink-0" :class="isItemActive(item) ? 'text-unohana-200' : ''" />
                             <span v-if="!collapsed" class="truncate">{{ item.label }}</span>
                         </Link>
                     </li>

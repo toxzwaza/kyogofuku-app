@@ -20,11 +20,9 @@
             </template>
         </UiPageHeader>
 
-        <div>
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <form @submit.prevent="submit">
+        <div class="max-w-4xl mx-auto">
+            <UiCard variant="default" padding="lg">
+                <form @submit.prevent="submit">
                             <div class="space-y-4">
                                 <!-- 共通フィールド -->
                                 <div>
@@ -496,26 +494,18 @@
                                     <div v-if="form.errors.inquiry_message" class="mt-1 text-sm text-red-600">{{ form.errors.inquiry_message }}</div>
                                 </div>
 
-                                <div class="flex justify-end space-x-4 pt-4">
-                                    <Link
-                                        :href="route('admin.events.reservations.index', reservation.event_id)"
-                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
-                                    >
+                                <div class="flex justify-end gap-2 pt-4 border-t border-brand-border">
+                                    <UiButton variant="ghost" :href="route('admin.events.reservations.index', reservation.event_id)">
                                         キャンセル
-                                    </Link>
-                                    <button
-                                        type="submit"
-                                        :disabled="form.processing"
-                                        class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
-                                    >
-                                        {{ form.processing ? '更新中...' : '更新' }}
-                                    </button>
+                                    </UiButton>
+                                    <UiButton variant="primary" type="submit" :loading="form.processing">
+                                        <template #leading><Save :size="14" /></template>
+                                        {{ form.processing ? '更新中...' : '更新する' }}
+                                    </UiButton>
                                 </div>
                             </div>
                         </form>
-                    </div>
-                </div>
-            </div>
+            </UiCard>
         </div>
     </AdminLayout>
 </template>
@@ -523,8 +513,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { UiPageHeader, UiButton } from '@/Components/UI';
-import { ArrowLeft } from 'lucide-vue-next';
+import { UiPageHeader, UiButton, UiCard } from '@/Components/UI';
+import { ArrowLeft, Save } from 'lucide-vue-next';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { formatDateJaWithWeekday, formatDateInputValueJa } from '@/utils/dateFormat';
 
