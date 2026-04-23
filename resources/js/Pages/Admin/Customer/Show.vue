@@ -35,9 +35,10 @@
                 <!-- 顧客サマリーパネル (Phase 4-C) -->
                 <CustomerSummaryPanel :customer="customer" class="mb-6" />
 
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-                    <!-- 左: 顧客タグ・基本情報 -->
-                    <div class="lg:col-span-3 space-y-4 min-w-0">
+                <UiTabs v-model="activeTab" :tabs="tabs">
+                    <!-- 概要タブ: 顧客タグ・基本情報 -->
+                    <template #overview>
+                        <div class="space-y-4 max-w-3xl">
                 <!-- 顧客タグ（overflow-visible でツールチップが途切れないようにする） -->
                 <div class="bg-brand-surface overflow-visible shadow-sm sm:rounded-lg">
                     <div class="p-6">
@@ -363,10 +364,12 @@
                         </div>
                     </div>
                 </div>
-                    </div>
+                        </div>
+                    </template>
 
-                    <!-- 中央: 追加情報・参加イベント・成約・制約・前撮り・顧客写真 -->
-                    <div class="lg:col-span-6 space-y-4 min-w-0">
+                    <!-- 詳細情報タブ: 追加情報・参加イベント・成約・制約・前撮り・顧客写真 -->
+                    <template #info>
+                        <div class="space-y-4 max-w-5xl">
                         <!-- 追加情報セクション（振袖アンケート）※customerの項目はcustomerから、それ以外はadditional_infoから表示 -->
                         <div v-if="hasAdditionalInfo" class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
@@ -991,10 +994,12 @@
                         </div>
                     </div>
                 </div>
-                    </div>
+                        </div>
+                    </template>
 
-                    <!-- 右: LINE 連携・メッセージ・メモ -->
-                    <div class="lg:col-span-3 space-y-4 min-w-0">
+                    <!-- 連絡・メモタブ: LINE 連携・メッセージ・メモ -->
+                    <template #comm>
+                        <div class="space-y-4 max-w-4xl">
                         <CustomerLineSection :customer="customer" :shops="shops" />
                         <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
@@ -1058,8 +1063,9 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                        </div>
+                    </template>
+                </UiTabs>
             </div>
         </div>
 
@@ -2540,8 +2546,15 @@
 <script setup>
 import { ref, reactive, computed, nextTick, watch, onBeforeUnmount } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { UiPageHeader, UiButton } from '@/Components/UI';
+import { UiPageHeader, UiButton, UiTabs } from '@/Components/UI';
 import { ArrowLeft, Trash2 } from 'lucide-vue-next';
+
+const activeTab = ref('overview');
+const tabs = [
+    { id: 'overview', label: '概要' },
+    { id: 'info',     label: '詳細情報' },
+    { id: 'comm',     label: '連絡・メモ' },
+];
 import CustomerSummaryPanel from '@/Components/Admin/CustomerSummaryPanel.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
