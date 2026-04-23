@@ -507,7 +507,7 @@
       <!-- 連絡・履歴タブ -->
       <template #comm>
         <div class="max-w-4xl space-y-4">
-            <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
+            <UiCard variant="default" padding="none">
               <div
                 class="flex border-b border-brand-border gap-1 px-1 pt-1"
                 role="tablist"
@@ -874,9 +874,9 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </UiCard>
 
-            <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
+            <UiCard variant="default" padding="none">
               <div class="p-6">
                 <div
                   class="flex border-b border-brand-border mb-4 -mt-1 gap-1"
@@ -1018,7 +1018,7 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </UiCard>
         </div>
       </template>
     </UiTabs>
