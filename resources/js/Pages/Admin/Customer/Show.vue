@@ -2820,9 +2820,7 @@ const closeConstraintFileEditModal = () => {
 const openConstraintFileEditModal = async (cc) => {
     constraintFileEditTarget.value = cc;
     const signedAt = cc.signed_at
-        ? typeof cc.signed_at === 'string'
-            ? cc.signed_at.split('T')[0]
-            : cc.signed_at
+        ? formatDateInputValueJa(cc.signed_at)
         : getTodayDateString();
     constraintFileEditForm.signed_at = signedAt;
     constraintFileEditForm.explainer_user_id = cc.explainer_user_id ?? cc.explainerUserId ?? null;
@@ -2892,9 +2890,7 @@ const goToConstraintSignFromFileEdit = () => {
     const tplId = cc.constraint_template_id ?? cc.constraintTemplate?.id ?? cc.constraintTemplateId;
     const checkValues = cc.check_values || cc.checkValues || {};
     const signedAt = cc.signed_at
-        ? typeof cc.signed_at === 'string'
-            ? cc.signed_at.split('T')[0]
-            : cc.signed_at
+        ? formatDateInputValueJa(cc.signed_at)
         : getTodayDateString();
     const explainerId = cc.explainer_user_id ?? cc.explainerUserId ?? '';
     closeConstraintFileEditModal();
@@ -3441,7 +3437,7 @@ const openEditConstraintModal = (cc) => {
     // 編集時は署名ページへ直接遷移
     const tplId = cc.constraint_template_id ?? cc.constraintTemplateId;
     const checkValues = cc.check_values || cc.checkValues || {};
-    const signedAt = cc.signed_at ? (typeof cc.signed_at === 'string' ? cc.signed_at.split('T')[0] : cc.signed_at) : getTodayDateString();
+    const signedAt = cc.signed_at ? formatDateInputValueJa(cc.signed_at) : getTodayDateString();
     const explainerId = cc.explainer_user_id ?? cc.explainerUserId ?? '';
 
     // 署名ページへ遷移（編集の場合も同じページで既存情報を表示）
