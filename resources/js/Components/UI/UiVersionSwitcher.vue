@@ -1,8 +1,7 @@
 <script setup>
 import { useUiVersion } from '@/Composables/useUiVersion';
-import { router } from '@inertiajs/vue3';
 
-const props = defineProps({
+defineProps({
     variant: { type: String, default: 'button' }, // 'button' | 'compact'
 });
 
@@ -10,10 +9,8 @@ const { isLegacy, setVersion } = useUiVersion();
 
 const switchTo = (target) => {
     setVersion(target);
-    // Cookieが書き込まれた直後にリロードして、サーバ側でviewFor()が新しいCookieを参照する
-    router.reload({ preserveScroll: false, preserveState: false });
-    // Inertiaのreloadでは表示用Vueファイルが切り替わらないのでフルリロードする
-    setTimeout(() => window.location.reload(), 50);
+    // Cookie 反映のためフルリロード（Inertia のSPA遷移ではVueファイル種別が切り替わらない）
+    window.location.reload();
 };
 </script>
 
