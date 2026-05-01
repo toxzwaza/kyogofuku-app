@@ -7,6 +7,7 @@ use App\Models\EventReservation;
 use App\Models\StaffSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 /**
@@ -17,6 +18,8 @@ use Inertia\Inertia;
  */
 class OverviewController extends Controller
 {
+    use ResolvesUiView;
+
     public function index(Request $request)
     {
         $today       = Carbon::today();
@@ -129,7 +132,7 @@ class OverviewController extends Controller
             }
         }
 
-        return Inertia::render('Admin/Overview', [
+        return Inertia::render($this->viewFor('Admin/Overview'), [
             'stats' => [
                 'today_count'     => $todayCount,
                 'week_count'      => $thisWeekCount,

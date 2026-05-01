@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
@@ -18,6 +19,8 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class EventImageController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * イベント画像一覧を表示
      */
@@ -64,7 +67,7 @@ class EventImageController extends Controller
             ->values()
             ->toArray();
 
-        return Inertia::render('Admin/EventImage/Index', [
+        return Inertia::render($this->viewFor('Admin/EventImage/Index'), [
             'event' => $event,
             'images' => $images,
             'slideshows' => $slideshows,
@@ -78,7 +81,7 @@ class EventImageController extends Controller
      */
     public function create(Event $event)
     {
-        return Inertia::render('Admin/EventImage/Create', [
+        return Inertia::render($this->viewFor('Admin/EventImage/Create'), [
             'event' => $event,
         ]);
     }

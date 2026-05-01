@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
                 'line_liff_link_url' => $request->session()->get('line_liff_link_url'),
             ],
             'csrf_token' => csrf_token(),
+            'uiVersion' => $request->cookie('ui_version') === 'legacy' ? 'legacy' : 'modern',
         ]);
 
         // GTMタグIDを特定のルートでのみ取得

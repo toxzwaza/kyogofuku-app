@@ -9,10 +9,13 @@ use App\Models\User;
 use App\Models\TaskExpenseMapping;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class ScheduleController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * スケジュール管理ページを表示
      */
@@ -26,7 +29,7 @@ class ScheduleController extends Controller
             ->orderBy('shops.name')
             ->get() : collect();
 
-        return Inertia::render('Admin/Schedule/Index', [
+        return Inertia::render($this->viewFor('Admin/Schedule/Index'), [
             'shops' => $shops,
             'currentUser' => $currentUser ? [
                 'id' => $currentUser->id,

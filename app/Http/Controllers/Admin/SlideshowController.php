@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
@@ -17,6 +18,8 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class SlideshowController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * スライドショー一覧を表示
      */
@@ -24,7 +27,7 @@ class SlideshowController extends Controller
     {
         $slideshows = Slideshow::with('images')->orderBy('created_at', 'desc')->get();
 
-        return Inertia::render('Admin/Slideshow/Index', [
+        return Inertia::render($this->viewFor('Admin/Slideshow/Index'), [
             'slideshows' => $slideshows,
         ]);
     }
@@ -34,7 +37,7 @@ class SlideshowController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Slideshow/Create');
+        return Inertia::render($this->viewFor('Admin/Slideshow/Create'));
     }
 
     /**
@@ -50,7 +53,7 @@ class SlideshowController extends Controller
             return $item;
         })->values()->all();
 
-        return Inertia::render('Admin/Slideshow/Show', [
+        return Inertia::render($this->viewFor('Admin/Slideshow/Show'), [
             'slideshow' => $slideshowForInertia,
         ]);
     }

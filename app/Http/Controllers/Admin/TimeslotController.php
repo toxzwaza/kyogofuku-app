@@ -8,10 +8,13 @@ use App\Models\EventTimeslot;
 use App\Models\TimeslotTemplate;
 use App\Models\Venue;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class TimeslotController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * 予約枠一覧を表示
      */
@@ -40,7 +43,7 @@ class TimeslotController extends Controller
                 return $timeslot;
             });
 
-        return Inertia::render('Admin/Timeslot/Index', [
+        return Inertia::render($this->viewFor('Admin/Timeslot/Index'), [
             'event' => $event,
             'timeslots' => $timeslots,
         ]);
@@ -80,7 +83,7 @@ class TimeslotController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        return Inertia::render('Admin/Timeslot/Create', [
+        return Inertia::render($this->viewFor('Admin/Timeslot/Create'), [
             'event' => $event,
             'venues' => $venues,
             'duplicateTimeslot' => $duplicateTimeslot,
@@ -251,7 +254,7 @@ class TimeslotController extends Controller
         $reservationCount = $reservationQuery->count();
         $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
 
-        return Inertia::render('Admin/Timeslot/Edit', [
+        return Inertia::render($this->viewFor('Admin/Timeslot/Edit'), [
             'timeslot' => $timeslot,
             'venues' => $venues,
         ]);

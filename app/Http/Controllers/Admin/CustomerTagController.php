@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerTag;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class CustomerTagController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * 顧客タグ一覧を表示
      */
@@ -16,7 +19,7 @@ class CustomerTagController extends Controller
     {
         $customerTags = CustomerTag::orderBy('created_at', 'desc')->paginate(20);
 
-        return Inertia::render('Admin/CustomerTag/Index', [
+        return Inertia::render($this->viewFor('Admin/CustomerTag/Index'), [
             'customerTags' => $customerTags,
         ]);
     }
@@ -26,7 +29,7 @@ class CustomerTagController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/CustomerTag/Create');
+        return Inertia::render($this->viewFor('Admin/CustomerTag/Create'));
     }
 
     /**
@@ -56,7 +59,7 @@ class CustomerTagController extends Controller
     {
         $customerTag->load('customers');
 
-        return Inertia::render('Admin/CustomerTag/Show', [
+        return Inertia::render($this->viewFor('Admin/CustomerTag/Show'), [
             'customerTag' => $customerTag,
         ]);
     }
@@ -66,7 +69,7 @@ class CustomerTagController extends Controller
      */
     public function edit(CustomerTag $customerTag)
     {
-        return Inertia::render('Admin/CustomerTag/Edit', [
+        return Inertia::render($this->viewFor('Admin/CustomerTag/Edit'), [
             'customerTag' => $customerTag,
         ]);
     }

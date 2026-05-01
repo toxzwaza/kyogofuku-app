@@ -12,10 +12,13 @@ use App\Models\StaffSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class PhotoSlotController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * 前撮り枠一覧を表示
      */
@@ -44,7 +47,7 @@ class PhotoSlotController extends Controller
             ->pluck('photo_slot_id')
             ->toArray();
 
-        return Inertia::render('Admin/PhotoSlot/Index', [
+        return Inertia::render($this->viewFor('Admin/PhotoSlot/Index'), [
             'photoSlots' => $photoSlots,
             'photoStudios' => $photoStudios,
             'shops' => $shops,
@@ -76,7 +79,7 @@ class PhotoSlotController extends Controller
             ->orderBy('shops.name')
             ->get() : collect();
 
-        return Inertia::render('Admin/PhotoSlot/Create', [
+        return Inertia::render($this->viewFor('Admin/PhotoSlot/Create'), [
             'photoStudios' => $photoStudios,
             'shops' => $shops,
             'photoSlotsWithShops' => $photoSlotsWithShops,

@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\ConstraintTemplate;
 use App\Models\Shop;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class ConstraintTemplateController extends Controller
 {
+    use ResolvesUiView;
+
     public function index()
     {
         $constraintTemplates = ConstraintTemplate::with('shops')
@@ -17,7 +20,7 @@ class ConstraintTemplateController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('Admin/ConstraintTemplate/Index', [
+        return Inertia::render($this->viewFor('Admin/ConstraintTemplate/Index'), [
             'constraintTemplates' => $constraintTemplates,
         ]);
     }
@@ -26,7 +29,7 @@ class ConstraintTemplateController extends Controller
     {
         $shops = Shop::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('Admin/ConstraintTemplate/Create', [
+        return Inertia::render($this->viewFor('Admin/ConstraintTemplate/Create'), [
             'shops' => $shops,
         ]);
     }
@@ -74,7 +77,7 @@ class ConstraintTemplateController extends Controller
         $constraintTemplate->load('shops');
         $shops = Shop::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('Admin/ConstraintTemplate/Edit', [
+        return Inertia::render($this->viewFor('Admin/ConstraintTemplate/Edit'), [
             'constraintTemplate' => $constraintTemplate,
             'shops' => $shops,
         ]);
@@ -183,7 +186,7 @@ class ConstraintTemplateController extends Controller
             $backUrl = route('admin.constraint-templates.edit', $t);
         }
 
-        return Inertia::render('Admin/Customer/ConstraintSign', [
+        return Inertia::render($this->viewFor('Admin/Customer/ConstraintSign'), [
             'customer' => ['id' => 0, 'name' => 'プレビュー', 'kana' => ''],
             'template' => $template,
             'staff' => [],

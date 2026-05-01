@@ -7,10 +7,13 @@ use App\Models\CompanyCalendarDay;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class CompanyCalendarController extends Controller
 {
+    use ResolvesUiView;
+
     private function ensureAttendanceManager(Request $request): void
     {
         if (!$request->user()->isAttendanceManager()) {
@@ -46,7 +49,7 @@ class CompanyCalendarController extends Controller
             ];
         }
 
-        return Inertia::render('Admin/Attendance/CompanyCalendar', [
+        return Inertia::render($this->viewFor('Admin/Attendance/CompanyCalendar'), [
             'yearMonth' => $yearMonth,
             'days' => $days,
         ]);

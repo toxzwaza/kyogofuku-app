@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class ShopController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * 店舗一覧を表示
      */
@@ -17,7 +20,7 @@ class ShopController extends Controller
     {
         $shops = Shop::orderBy('created_at', 'desc')->paginate(20);
 
-        return Inertia::render('Admin/Shop/Index', [
+        return Inertia::render($this->viewFor('Admin/Shop/Index'), [
             'shops' => $shops,
         ]);
     }
@@ -27,7 +30,7 @@ class ShopController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Shop/Create', [
+        return Inertia::render($this->viewFor('Admin/Shop/Create'), [
             'app_url' => rtrim(config('app.url'), '/'),
             'line_messaging_webhook_url' => url('/webhook/line/messaging'),
         ]);
@@ -65,7 +68,7 @@ class ShopController extends Controller
      */
     public function edit(Shop $shop)
     {
-        return Inertia::render('Admin/Shop/Edit', [
+        return Inertia::render($this->viewFor('Admin/Shop/Edit'), [
             'shop' => $shop,
             'app_url' => rtrim(config('app.url'), '/'),
             'line_messaging_webhook_url' => url('/webhook/line/messaging'),

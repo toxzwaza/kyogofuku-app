@@ -14,10 +14,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class EventController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * イベント一覧を表示
      */
@@ -77,7 +80,7 @@ class EventController extends Controller
 
         $shops = Shop::where('is_active', true)->get();
 
-        return Inertia::render('Admin/Event/Index', [
+        return Inertia::render($this->viewFor('Admin/Event/Index'), [
             'events' => $events,
             'shops' => $shops,
             'filters' => [
@@ -146,7 +149,7 @@ class EventController extends Controller
             ];
         }
 
-        return Inertia::render('Admin/Event/Create', [
+        return Inertia::render($this->viewFor('Admin/Event/Create'), [
             'shops' => $shops,
             'venues' => $venues,
             'documents' => $documents,
@@ -311,7 +314,7 @@ class EventController extends Controller
         $allDocuments = Document::orderBy('created_at', 'desc')->get();
         $utmSources = UtmSource::where('is_active', true)->orderBy('sort_order')->get();
 
-        return Inertia::render('Admin/Event/Show', [
+        return Inertia::render($this->viewFor('Admin/Event/Show'), [
             'event' => $event,
             'allVenues' => $allVenues,
             'allShops' => $allShops,

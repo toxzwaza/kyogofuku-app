@@ -8,10 +8,13 @@ use App\Models\BlockedIp;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class ActivityLogController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * アクティビティログ一覧を表示
      */
@@ -86,7 +89,7 @@ class ActivityLogController extends Controller
                 ];
             });
 
-        return Inertia::render('Admin/ActivityLog/Index', [
+        return Inertia::render($this->viewFor('Admin/ActivityLog/Index'), [
             'activityLogs' => $activityLogs,
             'filterOptions' => $filterOptions,
             'blockedIps' => $blockedIps,
@@ -116,7 +119,7 @@ class ActivityLogController extends Controller
                 ->first();
         }
 
-        return Inertia::render('Admin/ActivityLog/Show', [
+        return Inertia::render($this->viewFor('Admin/ActivityLog/Show'), [
             'activityLog' => $activityLog,
             'blockedIp' => $blockedIp,
         ]);
