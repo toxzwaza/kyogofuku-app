@@ -48,6 +48,7 @@ class EventReservation extends Model
         'cancel_flg',
         'customer_id',
         'utm_source',
+        'form_data',
     ];
 
     protected $casts = [
@@ -66,6 +67,7 @@ class EventReservation extends Model
         'visit_reasons' => 'array',
         'privacy_agreed' => 'boolean',
         'cancel_flg' => 'boolean',
+        'form_data' => 'array',
     ];
 
     /**

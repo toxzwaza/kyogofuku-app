@@ -36,6 +36,7 @@ class Event extends Model
         'cta_color_type',
         'lp_design_slug',
         'lp_theme_tokens',
+        'form_schema',
     ];
 
     protected $casts = [
@@ -46,6 +47,7 @@ class Event extends Model
         'background_image_enabled' => 'boolean',
         'slug_aliases' => 'array',
         'lp_theme_tokens' => 'array',
+        'form_schema' => 'array',
     ];
 
     protected $appends = [
@@ -214,6 +216,31 @@ class Event extends Model
         }
 
         return $slug;
+    }
+
+    /**
+     * Blade テンプレ方式の LP を使うか
+     * config/lp_designs.php の templates.<slug>.render_type === 'blade' で判定
+     */
+    public function usesBladeLp(): bool
+    {
+        $slug = $this->lp_design_slug;
+        if (!$slug) {
+            return false;
+        }
+        return (config('lp_designs.templates.'.$slug.'.render_type') ?? 'inertia') === 'blade';
+    }
+
+    /**
+     * Blade LP のビュー名（render_type=blade のときのみ有効）
+     */
+    public function bladeLpView(): ?string
+    {
+        if (!$this->usesBladeLp()) {
+            return null;
+        }
+        $view = config('lp_designs.templates.'.$this->lp_design_slug.'.blade_view');
+        return is_string($view) && $view !== '' ? $view : null;
     }
 
     /**
