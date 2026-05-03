@@ -138,6 +138,73 @@
                         + 選択肢を追加
                     </button>
                 </div>
+
+                <!-- 条件付き表示（show_if） -->
+                <div class="border-t border-dashed border-brand-border pt-3">
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                            type="checkbox"
+                            :checked="!!field.show_if"
+                            @change="toggleShowIf(field, $event.target.checked, idx)"
+                            class="rounded border-brand-border text-brand-primary"
+                        >
+                        <span class="font-medium">条件付き表示にする</span>
+                        <span class="text-xs text-brand-text-muted">— 他のフィールドの値に応じて表示／非表示</span>
+                    </label>
+
+                    <div v-if="field.show_if" class="mt-3 ml-6 p-3 bg-brand-surface-2 rounded space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-brand-text mb-1">依存するフィールド</label>
+                            <select v-model="field.show_if.key" class="block w-full rounded border-brand-border text-sm">
+                                <option value="">— 選択してください —</option>
+                                <option
+                                    v-for="other in otherFields(idx)"
+                                    :key="other.key"
+                                    :value="other.key"
+                                >{{ other.label || '(無題)' }}（{{ other.key }} / {{ typeLabel(other.type) }}）</option>
+                            </select>
+                            <p v-if="field.show_if.key && !otherFields(idx).some(o => o.key === field.show_if.key)"
+                                class="text-xs text-amber-700 mt-1">
+                                ⚠ 依存先 '{{ field.show_if.key }}' が見つかりません（フィールドが削除された可能性）
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-brand-text mb-1">条件</label>
+                            <select v-model="field.show_if.op" class="block w-full rounded border-brand-border text-sm">
+                                <option value="not_empty">値が入力されているとき</option>
+                                <option value="equals">特定の値と一致するとき</option>
+                            </select>
+                        </div>
+
+                        <div v-if="field.show_if.op === 'equals'">
+                            <label class="block text-xs font-medium text-brand-text mb-1">一致させる値</label>
+                            <select
+                                v-if="dependentOptions(field.show_if.key).length > 0"
+                                v-model="field.show_if.value"
+                                class="block w-full rounded border-brand-border text-sm"
+                            >
+                                <option value="">— 選択してください —</option>
+                                <option
+                                    v-for="opt in dependentOptions(field.show_if.key)"
+                                    :key="opt"
+                                    :value="opt"
+                                >{{ opt }}</option>
+                            </select>
+                            <input
+                                v-else
+                                v-model="field.show_if.value"
+                                type="text"
+                                class="block w-full rounded border-brand-border text-sm"
+                                placeholder="この値と一致したときに表示"
+                            >
+                        </div>
+
+                        <p class="text-xs text-brand-text-muted">
+                            この条件に合わない間は、表示されず未入力扱いになります。
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -247,7 +314,42 @@ function stripField(f) {
         out.options = f.options.map(o => String(o)).filter(o => o !== '');
         if (out.options.length === 0) delete out.options;
     }
+    if (f.show_if && typeof f.show_if === 'object' && f.show_if.key) {
+        const si = { key: String(f.show_if.key), op: f.show_if.op === 'equals' ? 'equals' : 'not_empty' };
+        if (si.op === 'equals' && f.show_if.value !== undefined && f.show_if.value !== '') {
+            si.value = String(f.show_if.value);
+        }
+        out.show_if = si;
+    }
     return out;
+}
+
+function otherFields(idx) {
+    return fields.value
+        .filter((_, i) => i !== idx)
+        .filter(f => f.key)
+        .map(f => ({ key: f.key, label: f.label, type: f.type }));
+}
+
+function dependentOptions(depKey) {
+    if (!depKey) return [];
+    const dep = fields.value.find(f => f.key === depKey);
+    if (!dep || !Array.isArray(dep.options)) return [];
+    return dep.options.filter(o => o !== '');
+}
+
+function toggleShowIf(field, on, idx) {
+    if (on) {
+        // 直前のフィールドをデフォルト依存先として提案（自分以外）
+        const candidates = otherFields(idx);
+        field.show_if = {
+            key: candidates.length > 0 ? candidates[Math.max(0, idx - 1)]?.key || candidates[0].key : '',
+            op: 'not_empty',
+        };
+    } else {
+        delete field.show_if;
+    }
+    emitChange();
 }
 
 function addField() {

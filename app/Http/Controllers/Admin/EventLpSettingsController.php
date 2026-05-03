@@ -241,7 +241,33 @@ class EventLpSettingsController extends Controller
                 }
                 $entry['options'] = array_values(array_map('strval', $field['options']));
             }
+
+            // show_if: 他フィールドの値に応じた条件付き表示
+            if (isset($field['show_if']) && is_array($field['show_if'])) {
+                $depKey = $field['show_if']['key'] ?? null;
+                $op = $field['show_if']['op'] ?? 'not_empty';
+                if (is_string($depKey) && $depKey !== '' && in_array($op, ['not_empty', 'equals'], true)) {
+                    $showIf = ['key' => $depKey, 'op' => $op];
+                    if ($op === 'equals' && array_key_exists('value', $field['show_if'])) {
+                        $showIf['value'] = (string) $field['show_if']['value'];
+                    }
+                    $entry['show_if'] = $showIf;
+                }
+            }
+
             $out[] = $entry;
+        }
+
+        // show_if の依存先 key が実在するか検証
+        $allKeys = array_flip(array_column($out, 'key'));
+        foreach ($out as $i => $f) {
+            if (!isset($f['show_if'])) continue;
+            if (!isset($allKeys[$f['show_if']['key']])) {
+                return ['value' => null, 'error' => "{$i} 番目: 条件付き表示の依存先 '{$f['show_if']['key']}' が見つかりません。"];
+            }
+            if ($f['show_if']['key'] === $f['key']) {
+                return ['value' => null, 'error' => "{$i} 番目: 条件付き表示の依存先に自分自身を指定できません。"];
+            }
         }
 
         return ['value' => $out, 'error' => null];
