@@ -49,6 +49,15 @@ return [
             'requires_form_schema' => true,
             'default_tokens' => [],
         ],
+
+        'daisougyousai' => [
+            'label' => '大創業祭（伝統・販促）',
+            'render_type' => 'blade',
+            'blade_view' => 'event.lp.templates.daisougyousai',
+            'allowed_form_types' => null,
+            'requires_form_schema' => true,
+            'default_tokens' => [],
+        ],
     ],
 
     /**

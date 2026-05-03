@@ -69,6 +69,8 @@
         .kc-section { padding: 40px 0; }
         .kc-form { padding: 20px; }
     }
+
+    [x-cloak] { display: none !important; }
 </style>
 @endsection
 
@@ -124,18 +126,42 @@
                 フォームが設定されていません。
             </p>
         @else
+            @php
+                $alpineInit = collect($formSchema)->mapWithKeys(function ($f) {
+                    $key = $f['key'] ?? '';
+                    $isMulti = ($f['type'] ?? null) === 'checkbox' && !empty($f['options']);
+                    return [$key => $isMulti ? [] : ''];
+                })->toArray();
+            @endphp
             <form
                 class="kc-form"
                 method="POST"
                 action="{{ route('blade-lp.reserve', $event) }}"
-                x-data="{ submitting: false }"
+                x-data="{ submitting: false, values: @js($alpineInit) }"
                 @submit="submitting = true"
                 novalidate
             >
                 @csrf
 
                 @foreach($formSchema as $field)
-                    <x-lp-form.field :field="$field" />
+                    @php
+                        $showIf = $field['show_if'] ?? null;
+                        $wrapAttrs = '';
+                        if (is_array($showIf) && !empty($showIf['key'])) {
+                            $depKey = $showIf['key'];
+                            $op = $showIf['op'] ?? 'not_empty';
+                            $value = $showIf['value'] ?? null;
+                            if ($op === 'equals' && $value !== null) {
+                                $expr = "values['{$depKey}'] === ".json_encode($value);
+                            } else {
+                                $expr = "values['{$depKey}'] !== '' && values['{$depKey}'] !== null && !(Array.isArray(values['{$depKey}']) && values['{$depKey}'].length === 0)";
+                            }
+                            $wrapAttrs = ' x-show="'.htmlspecialchars($expr, ENT_QUOTES).'" x-cloak';
+                        }
+                    @endphp
+                    <div{!! $wrapAttrs !!}>
+                        <x-lp-form.field :field="$field" />
+                    </div>
                 @endforeach
 
                 <button type="submit" class="kc-submit" :disabled="submitting">

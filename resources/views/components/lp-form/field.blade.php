@@ -13,8 +13,14 @@
     $errorClass = $errors->has($key) ? ' lp-field--error' : '';
 @endphp
 
+@php
+    // 親 form の x-data に "values" オブジェクトがある場合に Alpine と双方向同期する。
+    // values が無くても Alpine は黙って無視するため安全。
+    $xModel = "values['".addslashes($key)."']";
+@endphp
+
 @if($type === 'hidden')
-    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+    <input type="hidden" name="{{ $key }}" value="{{ $value }}" x-model="{{ $xModel }}">
 @else
 <div class="lp-field{{ $errorClass }}">
     @if($type !== 'checkbox' || !empty($options))
@@ -29,6 +35,7 @@
             <textarea
                 id="lp-{{ $key }}"
                 name="{{ $key }}"
+                x-model="{{ $xModel }}"
                 @if($placeholder) placeholder="{{ $placeholder }}" @endif
                 @if($required) required @endif
                 rows="{{ $field['rows'] ?? 4 }}"
@@ -40,6 +47,7 @@
             <select
                 id="lp-{{ $key }}"
                 name="{{ $key }}"
+                x-model="{{ $xModel }}"
                 @if($required) required @endif
                 class="lp-field__input lp-field__select"
             >
@@ -57,6 +65,7 @@
                         <input type="radio"
                             name="{{ $key }}"
                             value="{{ $opt }}"
+                            x-model="{{ $xModel }}"
                             @checked((string) $value === (string) $opt)
                             @if($required) required @endif>
                         <span>{{ $opt }}</span>
@@ -74,6 +83,7 @@
                             <input type="checkbox"
                                 name="{{ $key }}[]"
                                 value="{{ $opt }}"
+                                x-model="{{ $xModel }}"
                                 @checked(in_array((string) $opt, $values, true))>
                             <span>{{ $opt }}</span>
                         </label>
@@ -86,6 +96,7 @@
                         id="lp-{{ $key }}"
                         name="{{ $key }}"
                         value="1"
+                        x-model="{{ $xModel }}"
                         @checked((string) $value === '1' || $value === true)
                         @if($required) required @endif>
                     <span>{{ $label }}@if($required)<span class="lp-field__required">必須</span>@endif</span>
@@ -98,6 +109,7 @@
                 id="lp-{{ $key }}"
                 name="{{ $key }}"
                 value="{{ $value }}"
+                x-model="{{ $xModel }}"
                 @if($placeholder) placeholder="{{ $placeholder }}" @endif
                 @if($required) required @endif
                 @if(isset($field['min'])) min="{{ $field['min'] }}" @endif
