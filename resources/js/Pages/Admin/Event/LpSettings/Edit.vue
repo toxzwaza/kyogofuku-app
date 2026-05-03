@@ -66,27 +66,23 @@
                             </div>
 
                             <div v-if="isBladeTemplate">
-                                <label class="block text-sm font-medium text-brand-text mb-2">
-                                    フォーム定義（form_schema・JSON）
-                                    <span class="ml-2 text-xs text-amber-700">Blade テンプレ用</span>
-                                </label>
-                                <p class="text-xs text-brand-text-muted mb-2">
-                                    各フィールドを <code>{ key, label, type, required, options? }</code> の配列で定義します。
-                                    type: text, tel, email, textarea, number, url, date, datetime-local, time, select, radio, checkbox, hidden
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-sm font-medium text-brand-text">
+                                        フォーム定義（form_schema）
+                                        <span class="ml-2 text-xs text-amber-700">Blade テンプレ用</span>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        @click="insertFormSchemaSample"
+                                        class="text-xs text-brand-primary hover:underline"
+                                    >
+                                        サンプルを挿入
+                                    </button>
+                                </div>
+                                <p class="text-xs text-brand-text-muted mb-3">
+                                    フィールドを追加・編集・並び替え・削除できます。下の「JSON を表示」で生 JSON も確認・編集できます。
                                 </p>
-                                <textarea
-                                    v-model="lpDesignForm.form_schema_json"
-                                    rows="14"
-                                    class="block w-full font-mono text-sm rounded-md border-brand-border shadow-sm"
-                                    :placeholder="formSchemaPlaceholder"
-                                />
-                                <button
-                                    type="button"
-                                    @click="insertFormSchemaSample"
-                                    class="mt-2 text-xs text-brand-primary hover:underline"
-                                >
-                                    サンプルを挿入
-                                </button>
+                                <FormSchemaEditor v-model="formSchemaFields" />
                             </div>
                             <button
                                 type="submit"
@@ -271,11 +267,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
 import MediaPicker from '@/Components/MediaPicker.vue';
+import FormSchemaEditor from '@/Components/Admin/FormSchemaEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -330,18 +327,27 @@ const selectedTemplate = computed(() =>
 );
 const isBladeTemplate = computed(() => selectedTemplate.value?.render_type === 'blade');
 
-const formSchemaPlaceholder = `[
-  { "key": "name",  "label": "お名前",     "type": "text",     "required": true },
-  { "key": "tel",   "label": "電話番号",   "type": "tel",      "required": true },
-  { "key": "email", "label": "メール",     "type": "email",    "required": false },
-  { "key": "interest", "label": "ご興味のある商品", "type": "checkbox",
-    "options": ["振袖", "袴", "訪問着", "小物"] }
-]`;
+// FormSchemaEditor 用の配列ステート（双方向で form_schema_json と同期）
+const formSchemaFields = ref(
+    Array.isArray(props.event.form_schema) ? JSON.parse(JSON.stringify(props.event.form_schema)) : []
+);
+watch(formSchemaFields, (val) => {
+    lpDesignForm.form_schema_json = JSON.stringify(val ?? [], null, 2);
+}, { deep: true });
+
+const SAMPLE_SCHEMA = [
+    { key: 'name',     label: 'お名前',         type: 'text',  required: true,  placeholder: '山田 花子' },
+    { key: 'phone',    label: '電話番号',        type: 'tel',   required: true,  placeholder: '090-1234-5678' },
+    { key: 'email',    label: 'メール',         type: 'email', required: false },
+    { key: 'interest', label: 'ご興味のある商品',  type: 'checkbox', options: ['振袖', '袴', '訪問着', '小物'] },
+    { key: 'message',  label: 'ご要望・ご質問',   type: 'textarea', rows: 4 },
+];
 
 function insertFormSchemaSample() {
-    if (!lpDesignForm.form_schema_json) {
-        lpDesignForm.form_schema_json = formSchemaPlaceholder;
+    if (formSchemaFields.value.length > 0) {
+        if (!confirm('既存のフィールドを上書きします。よろしいですか？')) return;
     }
+    formSchemaFields.value = JSON.parse(JSON.stringify(SAMPLE_SCHEMA));
 }
 
 function handleMediaSelect(selectedMedia) {
