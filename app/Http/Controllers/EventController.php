@@ -23,6 +23,10 @@ class EventController extends Controller
             return $event;
         }
 
+        if ($event->usesBladeLp()) {
+            return app(BladeLpController::class)->show($request, $event);
+        }
+
         $utmSource = $request->input('utm_source') ?: 'NONE';
         $request->session()->put('event_utm_sources.'.$event->id, $utmSource);
 
