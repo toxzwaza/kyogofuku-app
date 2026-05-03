@@ -25,6 +25,8 @@ class EventLpSettingsController extends Controller
                 'slug' => $key,
                 'label' => $cfg['label'] ?? $key,
                 'allowed_form_types' => $cfg['allowed_form_types'] ?? [],
+                'render_type' => $cfg['render_type'] ?? 'inertia',
+                'requires_form_schema' => (bool) ($cfg['requires_form_schema'] ?? false),
             ])
             ->values()
             ->all();
@@ -52,6 +54,7 @@ class EventLpSettingsController extends Controller
         if ($request->boolean('include_lp_design')) {
             $rules['lp_design_slug'] = 'nullable|string|max:100';
             $rules['lp_theme_tokens_json'] = 'nullable|string|max:20000';
+            $rules['form_schema_json'] = 'nullable|string|max:50000';
         }
         $request->validate($rules);
 
@@ -66,6 +69,7 @@ class EventLpSettingsController extends Controller
             if ($slug === null || $slug === '') {
                 $updates['lp_design_slug'] = null;
                 $updates['lp_theme_tokens'] = null;
+                $updates['form_schema'] = null;
             } else {
                 $tpl = config('lp_designs.templates.'.$slug);
                 if (!is_array($tpl)) {
@@ -81,6 +85,24 @@ class EventLpSettingsController extends Controller
                 }
                 $updates['lp_design_slug'] = $slug;
                 $updates['lp_theme_tokens'] = $this->parseLpThemeTokens($request->input('lp_theme_tokens_json'));
+
+                $renderType = $tpl['render_type'] ?? 'inertia';
+                if ($renderType === 'blade') {
+                    $parsed = $this->parseFormSchema($request->input('form_schema_json'));
+                    if ($parsed['error']) {
+                        return redirect()->back()
+                            ->withErrors(['form_schema_json' => $parsed['error']])
+                            ->withInput();
+                    }
+                    $updates['form_schema'] = $parsed['value'];
+                    if (!empty($tpl['requires_form_schema']) && empty($parsed['value'])) {
+                        return redirect()->back()
+                            ->withErrors(['form_schema_json' => 'このテンプレートではフォーム定義（form_schema）が必須です。'])
+                            ->withInput();
+                    }
+                } else {
+                    $updates['form_schema'] = null;
+                }
             }
         }
 
@@ -158,6 +180,71 @@ class EventLpSettingsController extends Controller
         if (Storage::disk($disk)->exists($path)) {
             Storage::disk($disk)->delete($path);
         }
+    }
+
+    /**
+     * form_schema_json を検証して配列に変換する。
+     * 期待する形式: 各要素が { key, label, type, required?, options?, placeholder?, help?, default?, ... }
+     *
+     * @return array{value: array<int, array<string, mixed>>|null, error: string|null}
+     */
+    private function parseFormSchema(?string $json): array
+    {
+        if ($json === null || trim($json) === '') {
+            return ['value' => null, 'error' => null];
+        }
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) {
+            return ['value' => null, 'error' => 'JSONの形式が不正です。配列として解釈できません。'];
+        }
+
+        $allowedTypes = \App\Services\BladeLp\FormSchemaValidator::SUPPORTED_TYPES;
+        $usedKeys = [];
+        $out = [];
+        foreach ($decoded as $i => $field) {
+            if (!is_array($field)) {
+                return ['value' => null, 'error' => "{$i} 番目の要素がオブジェクト形式ではありません。"];
+            }
+            $key = $field['key'] ?? null;
+            $type = $field['type'] ?? 'text';
+            $label = $field['label'] ?? null;
+
+            if (!is_string($key) || !preg_match('/^[a-zA-Z][a-zA-Z0-9_]{0,63}$/', $key)) {
+                return ['value' => null, 'error' => "{$i} 番目: key は英数字・アンダースコアで始まる識別子（最大64文字）にしてください。"];
+            }
+            if (isset($usedKeys[$key])) {
+                return ['value' => null, 'error' => "key '{$key}' が重複しています。"];
+            }
+            $usedKeys[$key] = true;
+
+            if (!in_array($type, $allowedTypes, true)) {
+                return ['value' => null, 'error' => "{$i} 番目: type '{$type}' はサポートされていません。"];
+            }
+            if (!is_string($label) || $label === '') {
+                return ['value' => null, 'error' => "{$i} 番目: label を設定してください。"];
+            }
+
+            $entry = [
+                'key' => $key,
+                'type' => $type,
+                'label' => $label,
+                'required' => (bool) ($field['required'] ?? false),
+            ];
+            foreach (['placeholder', 'help', 'default', 'min', 'max', 'pattern', 'rows'] as $optKey) {
+                if (array_key_exists($optKey, $field)) {
+                    $entry[$optKey] = $field[$optKey];
+                }
+            }
+            if (in_array($type, ['select', 'radio', 'checkbox'], true) && isset($field['options'])) {
+                if (!is_array($field['options'])) {
+                    return ['value' => null, 'error' => "{$i} 番目: options は配列にしてください。"];
+                }
+                $entry['options'] = array_values(array_map('strval', $field['options']));
+            }
+            $out[] = $entry;
+        }
+
+        return ['value' => $out, 'error' => null];
     }
 
     /**

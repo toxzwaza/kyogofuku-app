@@ -50,7 +50,7 @@
                                     このイベントのフォーム種別では利用できるテンプレートがありません。
                                 </p>
                             </div>
-                            <div>
+                            <div v-if="!isBladeTemplate">
                                 <label class="block text-sm font-medium text-brand-text mb-2">
                                     デザイントークン（JSON・任意）
                                 </label>
@@ -63,6 +63,30 @@
                                     class="block w-full font-mono text-sm rounded-md border-brand-border shadow-sm"
                                     placeholder='例: { "--pink": "#e8729a", "--radius-soft": "24px" }'
                                 />
+                            </div>
+
+                            <div v-if="isBladeTemplate">
+                                <label class="block text-sm font-medium text-brand-text mb-2">
+                                    フォーム定義（form_schema・JSON）
+                                    <span class="ml-2 text-xs text-amber-700">Blade テンプレ用</span>
+                                </label>
+                                <p class="text-xs text-brand-text-muted mb-2">
+                                    各フィールドを <code>{ key, label, type, required, options? }</code> の配列で定義します。
+                                    type: text, tel, email, textarea, number, url, date, datetime-local, time, select, radio, checkbox, hidden
+                                </p>
+                                <textarea
+                                    v-model="lpDesignForm.form_schema_json"
+                                    rows="14"
+                                    class="block w-full font-mono text-sm rounded-md border-brand-border shadow-sm"
+                                    :placeholder="formSchemaPlaceholder"
+                                />
+                                <button
+                                    type="button"
+                                    @click="insertFormSchemaSample"
+                                    class="mt-2 text-xs text-brand-primary hover:underline"
+                                >
+                                    サンプルを挿入
+                                </button>
                             </div>
                             <button
                                 type="submit"
@@ -296,7 +320,29 @@ const lpDesignForm = useForm({
     lp_theme_tokens_json: props.event.lp_theme_tokens
         ? JSON.stringify(props.event.lp_theme_tokens, null, 2)
         : '',
+    form_schema_json: props.event.form_schema
+        ? JSON.stringify(props.event.form_schema, null, 2)
+        : '',
 });
+
+const selectedTemplate = computed(() =>
+    (props.lpTemplates || []).find((t) => t.slug === lpDesignForm.lp_design_slug) || null
+);
+const isBladeTemplate = computed(() => selectedTemplate.value?.render_type === 'blade');
+
+const formSchemaPlaceholder = `[
+  { "key": "name",  "label": "お名前",     "type": "text",     "required": true },
+  { "key": "tel",   "label": "電話番号",   "type": "tel",      "required": true },
+  { "key": "email", "label": "メール",     "type": "email",    "required": false },
+  { "key": "interest", "label": "ご興味のある商品", "type": "checkbox",
+    "options": ["振袖", "袴", "訪問着", "小物"] }
+]`;
+
+function insertFormSchemaSample() {
+    if (!lpDesignForm.form_schema_json) {
+        lpDesignForm.form_schema_json = formSchemaPlaceholder;
+    }
+}
 
 function handleMediaSelect(selectedMedia) {
     if (!selectedMedia || selectedMedia.length === 0) return;
