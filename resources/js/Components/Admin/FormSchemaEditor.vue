@@ -261,6 +261,7 @@ const TYPES = [
     { value: 'select',         label: 'select — プルダウン' },
     { value: 'radio',          label: 'radio — ラジオ' },
     { value: 'checkbox',       label: 'checkbox — チェックボックス' },
+    { value: 'timeslot',       label: 'timeslot — 予約枠（イベント連動）' },
     { value: 'hidden',         label: 'hidden — 非表示' },
 ];
 const TYPE_LABEL_MAP = Object.fromEntries(TYPES.map(t => [t.value, t.label.split(' — ')[0]]));

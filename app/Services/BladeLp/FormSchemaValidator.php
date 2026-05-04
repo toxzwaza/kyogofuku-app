@@ -17,6 +17,7 @@ class FormSchemaValidator
         'text', 'tel', 'email', 'textarea', 'number', 'url',
         'date', 'datetime-local', 'time',
         'select', 'radio', 'checkbox', 'hidden',
+        'timeslot',
     ];
 
     /**
@@ -99,6 +100,10 @@ class FormSchemaValidator
                 case 'checkbox':
                     // 単独 checkbox（options 無し）は boolean 扱い
                     $fieldRules[] = 'boolean';
+                    break;
+                case 'timeslot':
+                    $fieldRules[] = 'integer';
+                    $fieldRules[] = 'exists:event_timeslots,id';
                     break;
                 case 'hidden':
                 case 'text':

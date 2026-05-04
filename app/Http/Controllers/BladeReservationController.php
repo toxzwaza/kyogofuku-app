@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventReservation;
+use App\Models\EventTimeslot;
 use App\Services\BladeLp\FormSchemaValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -49,13 +50,55 @@ class BladeReservationController extends Controller
         $email = is_string($validated['email'] ?? null) ? $validated['email'] : null;
         $phone = is_string($validated['phone'] ?? null) ? $validated['phone'] : null;
 
+        // timeslot 型のフィールドがあれば、その値で予約枠検証 → 残席チェック → 日時/会場を導出
+        $reservationDatetime = null;
+        $venueId = null;
+        foreach ($schema as $f) {
+            if (($f['type'] ?? '') !== 'timeslot') continue;
+            $tsKey = $f['key'] ?? null;
+            if (!$tsKey || empty($validated[$tsKey])) continue;
+
+            $slot = EventTimeslot::where('event_id', $event->id)
+                ->where('id', $validated[$tsKey])
+                ->where('is_active', true)
+                ->first();
+            if (!$slot) {
+                throw ValidationException::withMessages([
+                    $tsKey => ['選択された予約枠が見つかりません。'],
+                ]);
+            }
+
+            $startAt = $slot->start_at->format('Y-m-d H:i:s');
+            $countQ = EventReservation::where('event_id', $event->id)
+                ->where('cancel_flg', false)
+                ->where('reservation_datetime', $startAt);
+            if ($slot->venue_id) {
+                $countQ->where('venue_id', $slot->venue_id);
+            } else {
+                $countQ->whereNull('venue_id');
+            }
+            if ($countQ->count() >= $slot->capacity) {
+                throw ValidationException::withMessages([
+                    $tsKey => ['この予約枠は満席です。別の時間帯をお選びください。'],
+                ]);
+            }
+
+            $reservationDatetime = $startAt;
+            $venueId = $slot->venue_id;
+            // form_data に表示用ラベルも添える
+            $validated[$tsKey.'_label'] = $slot->start_at->format('Y/n/j（D） H:i');
+            break; // 最初の timeslot 型のみ採用
+        }
+
         $reservation = EventReservation::create([
-            'event_id'   => $event->id,
-            'name'       => $name  ?? '',
-            'email'      => $email ?? '',
-            'phone'      => $phone ?? '',
-            'form_data'  => $validated,
-            'utm_source' => $request->input('utm_source')
+            'event_id'             => $event->id,
+            'name'                 => $name  ?? '',
+            'email'                => $email ?? '',
+            'phone'                => $phone ?? '',
+            'reservation_datetime' => $reservationDatetime,
+            'venue_id'             => $venueId,
+            'form_data'            => $validated,
+            'utm_source'           => $request->input('utm_source')
                 ?? $request->session()->get('event_utm_sources.'.$event->id),
         ]);
 

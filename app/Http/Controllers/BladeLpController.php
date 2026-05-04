@@ -33,7 +33,11 @@ class BladeLpController extends Controller
 
         $isEnded = $event->end_at && Carbon::today()->gt($event->end_at);
 
-        $event->load(['images', 'shops', 'venues']);
+        $event->load(['images', 'shops', 'venues', 'timeslots']);
+        // 予約枠の残席計算用に、現在予約中（キャンセル除く）の予約のみロード
+        $event->load(['reservations' => function ($q) {
+            $q->where('cancel_flg', false);
+        }]);
 
         return view($view, [
             'event' => $event,

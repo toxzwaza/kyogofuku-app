@@ -160,7 +160,7 @@
                         }
                     @endphp
                     <div{!! $wrapAttrs !!}>
-                        <x-lp-form.field :field="$field" />
+                        <x-lp-form.field :field="$field" :event="$event" />
                     </div>
                 @endforeach
 
