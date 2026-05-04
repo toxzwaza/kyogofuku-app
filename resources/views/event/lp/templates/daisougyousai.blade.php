@@ -530,40 +530,44 @@ a { color: var(--ds-akane); }
 }
 .lp-slot__date-icon { color: var(--ds-akane); font-size: .95em; }
 .lp-slot__grid {
-    display: grid; gap: 10px;
-    grid-template-columns: repeat(2, 1fr);
-}
-@media (min-width: 600px) {
-    .lp-slot__grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
-}
-@media (min-width: 880px) {
-    .lp-slot__grid { grid-template-columns: repeat(4, 1fr); }
+    display: flex; flex-direction: column; gap: 8px;
 }
 .lp-slot__btn {
     background: #fff; border: 2px solid var(--ds-line); border-radius: 8px;
-    padding: 12px 10px; cursor: pointer; transition: all .2s;
-    font-family: inherit; text-align: center;
-    display: flex; flex-direction: column; gap: 4px; min-height: 92px;
+    padding: 14px 18px; cursor: pointer; transition: all .2s;
+    font-family: inherit; text-align: left;
+    display: flex; align-items: center; gap: 14px; width: 100%;
     color: var(--ds-sumi);
+    position: relative;
 }
 .lp-slot__btn:hover:not([disabled]) {
     border-color: var(--ds-akane-l);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(176,54,65,.12);
+    box-shadow: 0 4px 14px rgba(176,54,65,.12);
     background: #fffaef;
 }
+.lp-slot__btn:hover:not([disabled]) .lp-slot__chevron {
+    transform: translateX(3px); color: var(--ds-akane);
+}
 .lp-slot__btn.is-selected {
-    border-color: var(--ds-akane); background: linear-gradient(180deg, #fff 0%, #fdf0eb 100%);
+    border-color: var(--ds-akane); background: linear-gradient(90deg, #fdf0eb 0%, #fff 100%);
     box-shadow: 0 0 0 3px rgba(163,38,48,.18);
 }
+.lp-slot__btn.is-selected .lp-slot__chevron { color: var(--ds-akane); }
 .lp-slot__btn[disabled] {
     background: #f5f0e8; color: #aaa; cursor: not-allowed;
-    border-color: var(--ds-line); opacity: .7;
+    border-color: var(--ds-line); opacity: .75;
 }
-.lp-slot__badges { min-height: 22px; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.lp-slot__time {
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    font-size: 1.18rem; margin: 0; color: var(--ds-sumi);
+    flex-shrink: 0; min-width: 130px;
+}
+.lp-slot__btn[disabled] .lp-slot__time { color: #999; }
+.lp-slot__center { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lp-slot__badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .lp-slot__badge {
-    display: inline-flex; align-items: center; padding: 2px 10px;
-    border-radius: 999px; font-size: .68rem; font-weight: 700; white-space: nowrap;
+    display: inline-flex; align-items: center; padding: 3px 12px;
+    border-radius: 999px; font-size: .75rem; font-weight: 700; white-space: nowrap;
     font-family: 'Noto Sans JP', sans-serif; letter-spacing: .03em;
 }
 .lp-slot__badge--full {
@@ -577,15 +581,23 @@ a { color: var(--ds-akane); }
     background: linear-gradient(90deg, #f4d68a, #e0b14a); color: #6b4c00;
     box-shadow: 0 2px 6px rgba(201,169,97,.3);
 }
-.lp-slot__time {
-    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
-    font-size: 1.15rem; margin: 0; color: var(--ds-sumi);
-}
-.lp-slot__btn[disabled] .lp-slot__time { color: #999; }
 .lp-slot__remaining {
-    font-size: .78rem; color: var(--ds-sumi-soft); margin: 0;
+    font-size: .9rem; color: var(--ds-sumi-soft); margin: 0;
+    font-family: 'Shippori Mincho B1', serif; font-weight: 600;
+    flex-shrink: 0; text-align: right;
 }
 .lp-slot__btn[disabled] .lp-slot__remaining { color: #aaa; }
+.lp-slot__chevron {
+    color: var(--ds-line); font-size: 1rem;
+    transition: transform .2s, color .2s; flex-shrink: 0;
+}
+.lp-slot__btn[disabled] .lp-slot__chevron { display: none; }
+@media (max-width: 480px) {
+    .lp-slot__btn { padding: 12px 14px; gap: 10px; }
+    .lp-slot__time { font-size: 1.05rem; min-width: 110px; }
+    .lp-slot__remaining { font-size: .82rem; }
+    .lp-slot__badge { font-size: .7rem; padding: 2px 9px; }
+}
 
 .ds-submit { display: block; width: 100%; padding: 19px; background: var(--ds-akane);
     color: #fff; border: 0; font-family: 'Shippori Mincho B1', serif; font-size: 1.18rem;

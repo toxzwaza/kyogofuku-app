@@ -113,23 +113,24 @@
                                     @if($isFull) disabled @endif
                                     @click="{{ $xModel }} = '{{ $slot->id }}'"
                                 >
-                                    <div class="lp-slot__badges">
-                                        @if($isFull)
-                                            <span class="lp-slot__badge lp-slot__badge--full">🔒 受付終了</span>
-                                        @elseif($badge === 'nokori')
-                                            <span class="lp-slot__badge lp-slot__badge--nokori">✨ 残りわずか</span>
-                                        @elseif($badge === 'nerai')
-                                            <span class="lp-slot__badge lp-slot__badge--nerai">★ ねらい目</span>
-                                        @endif
-                                    </div>
-                                    <p class="lp-slot__time">{{ $startAt->format('H:i') }}</p>
-                                    <p class="lp-slot__remaining">
-                                        @if($isFull)
-                                            満枠
-                                        @else
-                                            残り{{ $remaining }}枠
-                                        @endif
+                                    <p class="lp-slot__time">
+                                        {{ $startAt->format('H:i') }} 〜 {{ $startAt->copy()->addHour()->format('H:i') }}
                                     </p>
+                                    <div class="lp-slot__center">
+                                        <div class="lp-slot__badges">
+                                            @if($isFull)
+                                                <span class="lp-slot__badge lp-slot__badge--full">🔒 受付終了</span>
+                                            @elseif($badge === 'nokori')
+                                                <span class="lp-slot__badge lp-slot__badge--nokori">✨ 残りわずか</span>
+                                            @elseif($badge === 'nerai')
+                                                <span class="lp-slot__badge lp-slot__badge--nerai">★ ねらい目</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <p class="lp-slot__remaining">
+                                        @if($isFull) 満枠 @else 残り{{ $remaining }}枠 @endif
+                                    </p>
+                                    <span class="lp-slot__chevron" aria-hidden="true">▶</span>
                                 </button>
                             @endforeach
                         </div>
