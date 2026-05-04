@@ -519,18 +519,48 @@ a { color: var(--ds-akane); }
 .lp-field__help { color: var(--ds-sumi-soft); font-size: .85rem; margin: 6px 0 0; }
 .lp-field__error { color: var(--ds-akane-d); font-size: .85rem; margin: 6px 0 0; font-weight: 700; }
 .lp-field--error .lp-field__input { border-color: var(--ds-akane); background: #fff5f5; }
-/* 予約枠グリッド */
-.lp-slot__day { margin-bottom: 22px; }
-.lp-slot__day:last-child { margin-bottom: 0; }
-.lp-slot__date {
-    display: flex; align-items: center; gap: 8px;
-    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
-    font-size: 1.02rem; color: var(--ds-sumi); margin: 0 0 12px;
-    padding-bottom: 8px; border-bottom: 1px solid var(--ds-line);
+/* 予約枠（トグル） */
+.lp-slot__day {
+    background: #fff; border: 1px solid var(--ds-line); border-radius: 8px;
+    overflow: hidden; margin-bottom: 10px; transition: box-shadow .2s;
 }
-.lp-slot__date-icon { color: var(--ds-akane); font-size: .95em; }
+.lp-slot__day:last-child { margin-bottom: 0; }
+.lp-slot__day[open] { box-shadow: 0 6px 20px rgba(125,28,37,.08); }
+.lp-slot__date {
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    font-size: 1.05rem; color: var(--ds-sumi);
+    padding: 16px 20px; cursor: pointer; list-style: none;
+    background: linear-gradient(90deg, var(--ds-paper) 0%, #fff 100%);
+    transition: background .2s;
+}
+.lp-slot__date::-webkit-details-marker { display: none; }
+.lp-slot__date:hover { background: #fffaef; }
+.lp-slot__day[open] .lp-slot__date {
+    background: linear-gradient(90deg, #fdf0eb 0%, #fffaef 100%);
+    border-bottom: 1px solid var(--ds-line);
+}
+.lp-slot__date-icon { color: var(--ds-akane); font-size: .95em; flex-shrink: 0; }
+.lp-slot__date-text { flex-shrink: 0; }
+.lp-slot__date-meta {
+    flex: 1; text-align: right; font-family: 'Noto Sans JP', sans-serif;
+    font-size: .82rem; font-weight: 500; color: var(--ds-akane);
+    white-space: nowrap;
+}
+.lp-slot__date-meta--full { color: #888; }
+.lp-slot__date-toggle {
+    width: 26px; height: 26px; display: inline-flex; align-items: center;
+    justify-content: center; border-radius: 50%; background: var(--ds-paper);
+    border: 1px solid var(--ds-line); color: var(--ds-akane); flex-shrink: 0;
+    font-weight: 700; font-size: 1rem; transition: transform .2s, background .2s;
+}
+.lp-slot__day[open] .lp-slot__date-toggle {
+    transform: rotate(45deg); background: var(--ds-akane); color: #fff;
+    border-color: var(--ds-akane);
+}
 .lp-slot__grid {
     display: flex; flex-direction: column; gap: 8px;
+    padding: 16px 14px;
 }
 .lp-slot__btn {
     background: #fff; border: 2px solid var(--ds-line); border-radius: 8px;
