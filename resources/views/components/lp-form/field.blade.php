@@ -111,7 +111,14 @@
                                     class="lp-slot__btn"
                                     :class="{ 'is-selected': {{ $xModel }} === '{{ $slot->id }}' }"
                                     @if($isFull) disabled @endif
-                                    @click="{{ $xModel }} = '{{ $slot->id }}'"
+                                    @click="
+                                        {{ $xModel }} = '{{ $slot->id }}';
+                                        $nextTick(() => {
+                                            const w = $el.closest('.lp-field');
+                                            const next = w?.parentElement?.nextElementSibling;
+                                            if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        });
+                                    "
                                 >
                                     <p class="lp-slot__time">
                                         {{ $startAt->format('H:i') }} 〜 {{ $startAt->copy()->addHour()->format('H:i') }}
