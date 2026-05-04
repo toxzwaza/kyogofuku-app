@@ -43,7 +43,54 @@ body {
     font-family: 'Noto Sans JP', 'Hiragino Sans', system-ui, sans-serif;
     line-height: 1.85;
     -webkit-font-smoothing: antialiased;
+    /* 日本語の禁則処理：単語境界の改行 + 句読点の文頭禁止 */
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    line-break: strict;
 }
+
+/* 強調インライン要素は塊として扱い、内部で改行させない */
+.ds-problem h2 em,
+.ds-care-importance__title em,
+.ds-takedori__title em,
+.ds-soudan__title em,
+.ds-final-cta h2 em,
+.ds-bonus__title strong,
+.ds-hero__points li strong,
+.ds-soudan__body strong,
+.ds-care-importance__body strong {
+    display: inline-block;
+}
+
+/* CTA／日付など、絶対に折り返してはいけない要素 */
+.ds-cta-button,
+.ds-soudan__cta-button,
+.ds-hero__period-date,
+.ds-hero__period-venue,
+.ds-soudan__highlight,
+.ds-bonus__label,
+.ds-sukui__label,
+.ds-price-card__badge,
+.ds-eyebrow,
+.ds-care-importance__eyebrow,
+.ds-soudan__eyebrow,
+.ds-hero__eyebrow,
+.ds-pearl-text__eyebrow,
+.ds-hero__cta-note,
+.ds-soudan__cta-note,
+.ds-flow-step__title {
+    white-space: nowrap;
+}
+
+/* 価格表示は単位とセットで改行制御 */
+.ds-price-card__price,
+.ds-price-card__price--negotiate,
+.ds-price-card__regular {
+    white-space: nowrap;
+}
+
+/* 汎用：内部で改行させたくない部分にスポット適用 */
+.ds-nobr { white-space: nowrap; }
 img { max-width: 100%; display: block; }
 a { color: var(--ds-akane); }
 [x-cloak] { display: none !important; }
@@ -189,8 +236,9 @@ a { color: var(--ds-akane); }
 
 .ds-section__heading {
     text-align: center; margin: 0 0 50px; font-family: 'Shippori Mincho B1', serif;
-    font-weight: 700; font-size: clamp(1.45rem, 3.5vw, 1.95rem); color: var(--ds-sumi);
-    position: relative; display: flex; align-items: center; justify-content: center; gap: 18px;
+    font-weight: 700; font-size: clamp(1.2rem, 3.5vw, 1.95rem); color: var(--ds-sumi);
+    position: relative; display: flex; align-items: center; justify-content: center; gap: 14px;
+    flex-wrap: nowrap; white-space: nowrap;
 }
 .ds-section__heading::before, .ds-section__heading::after {
     content: ""; flex: 0 0 auto; width: 44px; height: 1px;
@@ -483,18 +531,25 @@ a { color: var(--ds-akane); }
 .ds-faq__item { background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 6px;
     margin-bottom: 12px; overflow: hidden; transition: box-shadow .2s; }
 .ds-faq__item[open] { box-shadow: 0 6px 20px rgba(0,0,0,.05); }
-.ds-faq__q { padding: 20px 26px; font-family: 'Shippori Mincho B1', serif;
+.ds-faq__q { padding: 18px 44px 18px 18px; font-family: 'Shippori Mincho B1', serif;
     font-weight: 700; cursor: pointer; list-style: none; position: relative;
-    padding-right: 56px; color: var(--ds-sumi); }
+    color: var(--ds-sumi); font-size: .95rem; line-height: 1.7; }
 .ds-faq__q::-webkit-details-marker { display: none; }
-.ds-faq__q::before { content: "Q."; color: var(--ds-akane); margin-right: 10px; font-weight: 800; }
-.ds-faq__q::after { content: "+"; position: absolute; right: 22px; top: 50%; transform: translateY(-50%);
+.ds-faq__q::before { content: "Q."; color: var(--ds-akane); margin-right: 8px; font-weight: 800;
+    display: inline-block; }
+.ds-faq__q::after { content: "+"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
     font-size: 1.4rem; color: var(--ds-akane); transition: transform .2s; }
 .ds-faq__item[open] .ds-faq__q::after { transform: translateY(-50%) rotate(45deg); }
-.ds-faq__a { padding: 0 26px 22px 56px; color: var(--ds-sumi-soft); font-family: 'Shippori Mincho B1', serif;
-    line-height: 2; font-size: .95rem; position: relative; }
-.ds-faq__a::before { content: "A."; position: absolute; left: 26px; top: 0;
+.ds-faq__a { padding: 0 18px 18px 46px; color: var(--ds-sumi-soft); font-family: 'Shippori Mincho B1', serif;
+    line-height: 2; font-size: .92rem; position: relative; }
+.ds-faq__a::before { content: "A."; position: absolute; left: 18px; top: 0;
     color: var(--ds-gold); font-weight: 800; }
+@media (min-width: 600px) {
+    .ds-faq__q { padding: 20px 56px 20px 26px; font-size: 1rem; }
+    .ds-faq__q::after { right: 22px; }
+    .ds-faq__a { padding: 0 26px 22px 56px; font-size: .95rem; }
+    .ds-faq__a::before { left: 26px; }
+}
 
 /* ====== アクセス ====== */
 .ds-access { max-width: 760px; margin: 0 auto; background: var(--ds-paper);
@@ -507,8 +562,8 @@ a { color: var(--ds-akane); }
 /* ====== 最終CTA・フッター ====== */
 .ds-final-cta { padding: 80px 0; text-align: center;
     background: linear-gradient(135deg, var(--ds-akane) 0%, var(--ds-akane-d) 100%); color: #fff; }
-.ds-final-cta h2 { font-family: 'Yuji Syuku', serif; font-size: clamp(1.8rem, 5vw, 2.6rem);
-    margin: 0 0 16px; letter-spacing: .1em; }
+.ds-final-cta h2 { font-family: 'Yuji Syuku', serif; font-size: clamp(1.55rem, 5vw, 2.6rem);
+    margin: 0 0 16px; letter-spacing: .06em; line-height: 1.3; }
 .ds-final-cta p { margin: 0 0 30px; font-family: 'Shippori Mincho B1', serif; opacity: .92; }
 .ds-final-cta .ds-cta-button { background: #fff; color: var(--ds-akane);
     border-color: var(--ds-gold); box-shadow: 0 12px 30px rgba(0,0,0,.25); }
@@ -607,7 +662,8 @@ a { color: var(--ds-akane); }
         </h2>
         <p class="ds-care-importance__body">
             いつまでも大切に着ていただきたいから、<br>
-            <strong>着物のクリーニングも 京呉服 平田にお任せください。</strong>
+            着物のクリーニングも、<br>
+            <strong>京呉服 平田にお任せください。</strong>
         </p>
     </div>
 </section>
@@ -622,7 +678,7 @@ a { color: var(--ds-akane); }
         </p>
 
         <div class="ds-offer-cleaning__hero">
-            <p>京呉服 平田の確かな手仕事で、</p>
+            <p><span class="ds-nobr">京呉服 平田</span>の確かな手仕事で、</p>
             <h3>眠らせていた一枚を、<br>もう一度 輝く一枚へ。</h3>
         </div>
 
@@ -689,7 +745,7 @@ a { color: var(--ds-akane); }
             </h2>
             <p class="ds-soudan__body">
                 どこを直せばいいか、 何にお金をかけるべきか。<br>
-                判断が難しい品物こそ、京呉服 平田の職人が じっくり拝見いたします。<br>
+                判断が難しい品物こそ、<span class="ds-nobr">京呉服 平田</span>の職人がじっくり拝見いたします。<br>
                 ご相談だけのご来店も、 心より歓迎しております。
             </p>
             <div class="ds-soudan__highlight">
@@ -766,7 +822,7 @@ a { color: var(--ds-akane); }
             <div>
                 <span class="ds-sukui__label">ひなたまごー</span>
                 <h3 class="ds-sukui__title">どど〜んと、 すくった数だけ プレゼント！</h3>
-                <p class="ds-sukui__sub">ご来場の皆さまへ、 京呉服 平田からのささやかなお礼。</p>
+                <p class="ds-sukui__sub">ご来場の皆さまへ、<span class="ds-nobr">京呉服 平田</span>からのささやかなお礼。</p>
                 <p>新鮮なたまごを、 思い切ってすくってお持ち帰りください。<br>
                 ご家族の楽しいひと時にもなれば 幸いです。</p>
             </div>
@@ -888,7 +944,7 @@ a { color: var(--ds-akane); }
                 </div>
             </details>
             <details class="ds-faq__item">
-                <summary class="ds-faq__q">事前持込はいつまでに伺えばよいですか？</summary>
+                <summary class="ds-faq__q">事前持込はいつまで受け付けていますか？</summary>
                 <div class="ds-faq__a">
                     会期前日（5/21）までに店頭にお持ち込みください。 開催期間中の持込もお受けしますが、
                     特典「トリマス」プレゼントは <strong>事前持込</strong> が対象となります。
@@ -927,13 +983,13 @@ a { color: var(--ds-akane); }
                 <dt>会場</dt>
                 <dd>京呉服 平田 福井店</dd>
                 <dt>会期</dt>
-                <dd>2026年 5月22日（金） 〜 5月25日（月）</dd>
+                <dd>2026年 5月22日（金）<br>〜 5月25日（月）</dd>
                 <dt>開催時間</dt>
-                <dd>10:00 〜 18:00 <small style="color:var(--ds-sumi-soft);">（最終日は17:00まで）</small></dd>
+                <dd>10:00 〜 18:00<br><small style="color:var(--ds-sumi-soft);">最終日は 17:00 まで</small></dd>
                 <dt>住所</dt>
-                <dd>※ 詳細はご予約後にご案内いたします</dd>
+                <dd>ご予約後にご案内いたします</dd>
                 <dt>お問い合わせ</dt>
-                <dd>京呉服 平田 福井店 まで</dd>
+                <dd>京呉服 平田 福井店</dd>
             </dl>
         </div>
     </div>
@@ -942,12 +998,12 @@ a { color: var(--ds-akane); }
 {{-- ============== 最終CTA ============== --}}
 <section class="ds-final-cta">
     <div class="ds-wrap">
-        <h2>大創業祭、 はじまります。</h2>
+        <h2>大創業祭、はじまります。</h2>
         <p>
             タンスのきものとジュエリー、まるごと整理。<br>
-            この4日間で、眠っていた美しさを ふたたび。
+            この4日間で、眠っていた美しさをふたたび。
         </p>
-        <a href="#reserve" class="ds-cta-button">ご来場予約はこちらから</a>
+        <a href="#reserve" class="ds-cta-button">ご来場予約はこちら</a>
     </div>
 </section>
 
