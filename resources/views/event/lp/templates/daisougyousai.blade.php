@@ -519,6 +519,74 @@ a { color: var(--ds-akane); }
 .lp-field__help { color: var(--ds-sumi-soft); font-size: .85rem; margin: 6px 0 0; }
 .lp-field__error { color: var(--ds-akane-d); font-size: .85rem; margin: 6px 0 0; font-weight: 700; }
 .lp-field--error .lp-field__input { border-color: var(--ds-akane); background: #fff5f5; }
+/* 予約枠グリッド */
+.lp-slot__day { margin-bottom: 22px; }
+.lp-slot__day:last-child { margin-bottom: 0; }
+.lp-slot__date {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    font-size: 1.02rem; color: var(--ds-sumi); margin: 0 0 12px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--ds-line);
+}
+.lp-slot__date-icon { color: var(--ds-akane); font-size: .95em; }
+.lp-slot__grid {
+    display: grid; gap: 10px;
+    grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 600px) {
+    .lp-slot__grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+}
+@media (min-width: 880px) {
+    .lp-slot__grid { grid-template-columns: repeat(4, 1fr); }
+}
+.lp-slot__btn {
+    background: #fff; border: 2px solid var(--ds-line); border-radius: 8px;
+    padding: 12px 10px; cursor: pointer; transition: all .2s;
+    font-family: inherit; text-align: center;
+    display: flex; flex-direction: column; gap: 4px; min-height: 92px;
+    color: var(--ds-sumi);
+}
+.lp-slot__btn:hover:not([disabled]) {
+    border-color: var(--ds-akane-l);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(176,54,65,.12);
+    background: #fffaef;
+}
+.lp-slot__btn.is-selected {
+    border-color: var(--ds-akane); background: linear-gradient(180deg, #fff 0%, #fdf0eb 100%);
+    box-shadow: 0 0 0 3px rgba(163,38,48,.18);
+}
+.lp-slot__btn[disabled] {
+    background: #f5f0e8; color: #aaa; cursor: not-allowed;
+    border-color: var(--ds-line); opacity: .7;
+}
+.lp-slot__badges { min-height: 22px; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.lp-slot__badge {
+    display: inline-flex; align-items: center; padding: 2px 10px;
+    border-radius: 999px; font-size: .68rem; font-weight: 700; white-space: nowrap;
+    font-family: 'Noto Sans JP', sans-serif; letter-spacing: .03em;
+}
+.lp-slot__badge--full {
+    background: linear-gradient(90deg, #9a9a9a, #707070); color: #fff;
+}
+.lp-slot__badge--nokori {
+    background: linear-gradient(90deg, #d96477, #a32630); color: #fff;
+    box-shadow: 0 2px 6px rgba(163,38,48,.3);
+}
+.lp-slot__badge--nerai {
+    background: linear-gradient(90deg, #f4d68a, #e0b14a); color: #6b4c00;
+    box-shadow: 0 2px 6px rgba(201,169,97,.3);
+}
+.lp-slot__time {
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    font-size: 1.15rem; margin: 0; color: var(--ds-sumi);
+}
+.lp-slot__btn[disabled] .lp-slot__time { color: #999; }
+.lp-slot__remaining {
+    font-size: .78rem; color: var(--ds-sumi-soft); margin: 0;
+}
+.lp-slot__btn[disabled] .lp-slot__remaining { color: #aaa; }
+
 .ds-submit { display: block; width: 100%; padding: 19px; background: var(--ds-akane);
     color: #fff; border: 0; font-family: 'Shippori Mincho B1', serif; font-size: 1.18rem;
     font-weight: 700; cursor: pointer; border-radius: 4px; letter-spacing: .25em;

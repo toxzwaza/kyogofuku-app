@@ -62,43 +62,80 @@
             @php
                 $weekdayMap = ['Mon'=>'月','Tue'=>'火','Wed'=>'水','Thu'=>'木','Fri'=>'金','Sat'=>'土','Sun'=>'日'];
                 $slots = $event ? $event->timeslots->where('is_active', true)->sortBy('start_at') : collect();
-                // 予約済み数を日時+venueでカウント
                 $reservedCounts = $event
                     ? $event->reservations->where('cancel_flg', false)
                         ->groupBy(function ($r) {
                             $dt = $r->reservation_datetime;
-                            $key = is_string($dt) ? $dt : optional($dt)->format('Y-m-d H:i:s');
-                            return $key.'|'.($r->venue_id ?? 'null');
+                            $k = is_string($dt) ? $dt : optional($dt)->format('Y-m-d H:i:s');
+                            return $k.'|'.($r->venue_id ?? 'null');
                         })
                         ->map->count()
                     : collect();
+                $byDate = $slots->groupBy(fn($s) => $s->start_at->format('Y-m-d'));
             @endphp
-            <select
-                id="lp-{{ $key }}"
-                name="{{ $key }}"
-                x-model="{{ $xModel }}"
-                @if($required) required @endif
-                class="lp-field__input lp-field__select"
-            >
-                <option value="">{{ $placeholder ?: 'ご来店希望日時をお選びください' }}</option>
-                @foreach($slots as $slot)
+
+            <input type="hidden" name="{{ $key }}" x-model="{{ $xModel }}" @if($required) required @endif>
+
+            <div class="lp-slot">
+                @foreach($byDate as $date => $daySlots)
                     @php
-                        $startAt = $slot->start_at;
-                        $endAt = $startAt->copy()->addHour();
-                        $wd = $weekdayMap[$startAt->format('D')] ?? '';
-                        $label = $startAt->format('n月j日').'（'.$wd.'）'.$startAt->format('H:i').' 〜 '.$endAt->format('H:i');
-                        $countKey = $startAt->format('Y-m-d H:i:s').'|'.($slot->venue_id ?? 'null');
-                        $reserved = (int) ($reservedCounts[$countKey] ?? 0);
-                        $remaining = max(0, $slot->capacity - $reserved);
-                        $isFull = $remaining <= 0;
+                        $dateObj = \Carbon\Carbon::parse($date);
+                        $wd = $weekdayMap[$dateObj->format('D')] ?? '';
                     @endphp
-                    <option value="{{ $slot->id }}"
-                        @if($isFull) disabled @endif
-                        @selected((string) $value === (string) $slot->id)>
-                        {{ $label }}{{ $isFull ? '【満席】' : '（残'.$remaining.'席）' }}
-                    </option>
+                    <div class="lp-slot__day">
+                        <h4 class="lp-slot__date">
+                            <span class="lp-slot__date-icon">📅</span>
+                            {{ $dateObj->format('n月j日') }}（{{ $wd }}）
+                        </h4>
+                        <div class="lp-slot__grid">
+                            @foreach($daySlots as $slot)
+                                @php
+                                    $startAt = $slot->start_at;
+                                    $countKey = $startAt->format('Y-m-d H:i:s').'|'.($slot->venue_id ?? 'null');
+                                    $reserved = (int) ($reservedCounts[$countKey] ?? 0);
+                                    $remaining = max(0, $slot->capacity - $reserved);
+                                    $isFull = $remaining <= 0;
+                                    $rate = $slot->capacity > 0 ? ($reserved / $slot->capacity) : 0;
+                                    // バッジ判定（残りわずか > ねらい目）
+                                    $badge = null;
+                                    if (!$isFull) {
+                                        if ($remaining >= 1 && $remaining <= 2) {
+                                            $badge = 'nokori';
+                                        } elseif ($remaining >= 3 && $rate >= 0.4 && $rate < 0.7) {
+                                            $badge = 'nerai';
+                                        }
+                                    }
+                                @endphp
+                                <button
+                                    type="button"
+                                    class="lp-slot__btn"
+                                    :class="{ 'is-selected': {{ $xModel }} === '{{ $slot->id }}' }"
+                                    @if($isFull) disabled @endif
+                                    @click="{{ $xModel }} = '{{ $slot->id }}'"
+                                >
+                                    <div class="lp-slot__badges">
+                                        @if($isFull)
+                                            <span class="lp-slot__badge lp-slot__badge--full">🔒 受付終了</span>
+                                        @elseif($badge === 'nokori')
+                                            <span class="lp-slot__badge lp-slot__badge--nokori">✨ 残りわずか</span>
+                                        @elseif($badge === 'nerai')
+                                            <span class="lp-slot__badge lp-slot__badge--nerai">★ ねらい目</span>
+                                        @endif
+                                    </div>
+                                    <p class="lp-slot__time">{{ $startAt->format('H:i') }}</p>
+                                    <p class="lp-slot__remaining">
+                                        @if($isFull)
+                                            満枠
+                                        @else
+                                            残り{{ $remaining }}枠
+                                        @endif
+                                    </p>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
                 @endforeach
-            </select>
+            </div>
             @break
 
         @case('radio')
