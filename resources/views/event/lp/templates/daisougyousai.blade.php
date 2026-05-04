@@ -241,22 +241,46 @@ a { color: var(--ds-akane); }
 .ds-problem__quote::before { top: -8px; left: 12px; }
 .ds-problem__quote::after { content: '〟'; bottom: -28px; right: 12px; }
 
-/* ====== SOLUTION / 4企画一覧 ====== */
-.ds-overview { max-width: 880px; margin: 0 auto; text-align: center; }
-.ds-overview__title { font-family: 'Yuji Syuku', serif; font-weight: 400;
-    font-size: clamp(1.6rem, 4vw, 2.3rem); color: var(--ds-akane); margin: 0 0 20px; letter-spacing: .08em; }
-.ds-overview__lead { font-family: 'Shippori Mincho B1', serif; color: var(--ds-sumi-soft);
-    margin: 0 0 40px; font-size: 1rem; }
-.ds-grid-4 { display: grid; gap: 18px; grid-template-columns: repeat(2, 1fr); }
-@media (min-width: 768px) { .ds-grid-4 { grid-template-columns: repeat(4, 1fr); } }
-.ds-overview-card { background: var(--ds-paper); border: 1px solid var(--ds-line);
-    border-radius: 6px; padding: 24px 16px; text-align: center; transition: transform .2s, box-shadow .2s; }
-.ds-overview-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,.06); }
-.ds-overview-card__num { font-family: 'Yuji Syuku', serif; color: var(--ds-akane);
-    font-size: 1.6rem; margin-bottom: 6px; }
-.ds-overview-card__title { font-family: 'Shippori Mincho B1', serif; font-weight: 700;
-    font-size: 1rem; color: var(--ds-sumi); margin: 4px 0 6px; }
-.ds-overview-card__desc { font-size: .82rem; color: var(--ds-sumi-soft); margin: 0; line-height: 1.5; }
+/* ====== お手入れの必要性（背景: 振袖画像） ====== */
+.ds-care-importance {
+    position: relative; padding: 120px 0; overflow: hidden;
+    background: #2b1d1d;
+}
+.ds-care-importance__bg {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    background-image: url('{{ $imgBase }}/kimono_quiet.png');
+    filter: brightness(.78) saturate(.95);
+}
+.ds-care-importance__bg::after {
+    content: ""; position: absolute; inset: 0;
+    background:
+        linear-gradient(180deg, rgba(43,29,29,.55) 0%, rgba(43,29,29,.35) 50%, rgba(43,29,29,.65) 100%),
+        radial-gradient(ellipse at 30% 50%, rgba(125,28,37,.25), transparent 60%);
+}
+.ds-care-importance__inner { position: relative; text-align: center; color: #fff;
+    max-width: 760px; margin: 0 auto; padding: 0 22px; }
+.ds-care-importance__eyebrow {
+    font-family: 'Shippori Mincho B1', serif; letter-spacing: .55em;
+    font-size: .85rem; color: #f5d4dc; margin: 0 0 22px;
+    text-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+.ds-care-importance__title {
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    font-size: clamp(1.4rem, 3.5vw, 2.05rem); margin: 0 0 26px;
+    line-height: 1.85; letter-spacing: .04em;
+    text-shadow: 0 2px 14px rgba(0,0,0,.6);
+}
+.ds-care-importance__title em { font-style: normal; color: #ffd9a0; font-weight: 700;
+    border-bottom: 1px solid rgba(255,217,160,.5); padding-bottom: 2px; }
+.ds-care-importance__body {
+    font-family: 'Shippori Mincho B1', serif; font-size: 1.02rem;
+    line-height: 2.05; color: #f5e9d3; margin: 0;
+    text-shadow: 0 2px 10px rgba(0,0,0,.5);
+}
+.ds-care-importance__body strong { color: #fff; font-weight: 700; }
+@media (max-width: 600px) {
+    .ds-care-importance { padding: 80px 0; }
+}
 
 /* ====== オファー1: お手入れ ====== */
 .ds-offer-cleaning__hero {
@@ -274,13 +298,18 @@ a { color: var(--ds-akane); }
 .ds-pricing { display: grid; gap: 18px; margin: 0 auto 40px; max-width: 880px; }
 @media (min-width: 768px) { .ds-pricing { grid-template-columns: repeat(3, 1fr); } }
 .ds-price-card { background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 6px;
-    padding: 28px 22px; box-shadow: 0 6px 20px rgba(0,0,0,.04); position: relative; overflow: hidden; }
+    box-shadow: 0 6px 20px rgba(0,0,0,.04); position: relative; overflow: hidden;
+    display: flex; flex-direction: column; }
 .ds-price-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-    background: linear-gradient(90deg, var(--ds-akane), var(--ds-gold), var(--ds-akane)); }
+    background: linear-gradient(90deg, var(--ds-akane), var(--ds-gold), var(--ds-akane));
+    z-index: 2; }
 .ds-price-card--main { background: linear-gradient(180deg, #fff 0%, #fdf0eb 100%); border-color: var(--ds-akane); }
+.ds-price-card__img { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: var(--ds-bg-2); }
+.ds-price-card__img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ds-price-card__body { padding: 24px 22px; flex: 1; display: flex; flex-direction: column; }
 .ds-price-card__badge { display: inline-block; padding: 3px 12px; background: var(--ds-akane);
     color: #fff; font-family: 'Shippori Mincho B1', serif; font-size: .78rem;
-    letter-spacing: .15em; border-radius: 2px; margin-bottom: 14px; }
+    letter-spacing: .15em; border-radius: 2px; margin-bottom: 14px; align-self: flex-start; }
 .ds-price-card__title { font-family: 'Shippori Mincho B1', serif; font-weight: 700;
     font-size: 1.18rem; color: var(--ds-sumi); margin: 0 0 12px; }
 .ds-price-card__price { font-family: 'Shippori Mincho B1', serif; color: var(--ds-akane);
@@ -315,6 +344,59 @@ a { color: var(--ds-akane); }
     font-size: clamp(1.2rem, 3.4vw, 1.55rem); color: var(--ds-sumi); margin: 0 0 8px; line-height: 1.6; }
 .ds-bonus__title strong { color: var(--ds-akane); font-size: 1.2em; }
 .ds-bonus__sub { color: var(--ds-sumi-soft); font-family: 'Shippori Mincho B1', serif; margin: 0; }
+
+/* ====== 相談ハードル下げ ====== */
+.ds-soudan {
+    max-width: 760px; margin: 0 auto; text-align: center;
+    background: linear-gradient(180deg, #fff 0%, var(--ds-bg) 100%);
+    border: 1px solid var(--ds-gold); border-radius: 6px;
+    padding: 56px 36px; box-shadow: 0 14px 40px rgba(125,28,37,.08);
+    position: relative; overflow: hidden;
+}
+.ds-soudan::before, .ds-soudan::after {
+    content: "❀"; position: absolute; color: var(--ds-akane); opacity: .12;
+    font-size: 8rem; font-family: serif;
+}
+.ds-soudan::before { top: -20px; left: -10px; }
+.ds-soudan::after { bottom: -40px; right: -10px; transform: rotate(180deg); }
+.ds-soudan__eyebrow {
+    font-family: 'Shippori Mincho B1', serif; letter-spacing: .55em;
+    font-size: .82rem; color: var(--ds-akane-d); margin: 0 0 14px;
+    position: relative;
+}
+.ds-soudan__title {
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    font-size: clamp(1.3rem, 3.4vw, 1.8rem); color: var(--ds-sumi);
+    margin: 0 0 24px; line-height: 1.65; position: relative;
+}
+.ds-soudan__title em { font-style: normal; color: var(--ds-akane);
+    background: linear-gradient(transparent 65%, #ffe8a8 65%); padding: 0 4px; }
+.ds-soudan__body {
+    font-family: 'Shippori Mincho B1', serif; color: var(--ds-sumi-soft);
+    font-size: 1rem; line-height: 2; margin: 0 0 24px; position: relative;
+}
+.ds-soudan__body strong { color: var(--ds-akane); font-weight: 700; }
+.ds-soudan__highlight {
+    display: inline-block; padding: 14px 28px;
+    background: var(--ds-paper); border: 1px dashed var(--ds-akane); border-radius: 4px;
+    font-family: 'Shippori Mincho B1', serif; color: var(--ds-akane-d);
+    font-weight: 700; margin: 0 auto 28px;
+    position: relative;
+}
+.ds-soudan__cta { position: relative; }
+.ds-soudan__cta-button {
+    display: inline-block; padding: 16px 44px; background: var(--ds-akane); color: #fff;
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700; font-size: 1.05rem;
+    letter-spacing: .25em; text-decoration: none; border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(125,28,37,.3); transition: all .25s;
+    border: 1px solid var(--ds-gold);
+}
+.ds-soudan__cta-button:hover { background: var(--ds-akane-d); transform: translateY(-2px); }
+.ds-soudan__cta-button::after { content: " ▶"; font-size: .8em; margin-left: 4px; }
+.ds-soudan__cta-note {
+    display: block; margin-top: 12px; font-family: 'Shippori Mincho B1', serif;
+    color: var(--ds-sumi-soft); font-size: .85rem;
+}
 
 /* ====== オファー2: 紫真珠 ====== */
 .ds-pearl-section { display: grid; gap: 36px; align-items: center;
@@ -541,39 +623,19 @@ a { color: var(--ds-akane); }
     </div>
 </section>
 
-{{-- ============== SOLUTION ============== --}}
-<section class="ds-section ds-section--paper">
-    <div class="ds-wrap">
-        <div class="ds-overview">
-            <p class="ds-eyebrow">— SOLUTION —</p>
-            <h2 class="ds-overview__title">大創業祭、 4日間。</h2>
-            <p class="ds-overview__lead">
-                創業よりお客様への感謝を込めた、年に一度の特別な4日間。<br>
-                眠っていた品々に、ふたたび光を当てる4つの企画をご用意しました。
-            </p>
-            <div class="ds-grid-4">
-                <div class="ds-overview-card">
-                    <div class="ds-overview-card__num">壱</div>
-                    <h3 class="ds-overview-card__title">お手入れ</h3>
-                    <p class="ds-overview-card__desc">丸洗い・しみ抜き・汗取りを特別価格で。</p>
-                </div>
-                <div class="ds-overview-card">
-                    <div class="ds-overview-card__num">弐</div>
-                    <h3 class="ds-overview-card__title">紫真珠</h3>
-                    <p class="ds-overview-card__desc">真珠の王様、紫真珠の特別企画。</p>
-                </div>
-                <div class="ds-overview-card">
-                    <div class="ds-overview-card__num">参</div>
-                    <h3 class="ds-overview-card__title">高価下取り</h3>
-                    <p class="ds-overview-card__desc">眠るジュエリーを次の輝きへ。</p>
-                </div>
-                <div class="ds-overview-card">
-                    <div class="ds-overview-card__num">四</div>
-                    <h3 class="ds-overview-card__title">すくい取り</h3>
-                    <p class="ds-overview-card__desc">ご来場記念の楽しいプレゼント。</p>
-                </div>
-            </div>
-        </div>
+{{-- ============== お手入れの必要性 ============== --}}
+<section class="ds-care-importance">
+    <div class="ds-care-importance__bg" role="presentation"></div>
+    <div class="ds-care-importance__inner">
+        <p class="ds-care-importance__eyebrow">— なぜ、お手入れが必要なのか —</p>
+        <h2 class="ds-care-importance__title">
+            着物の寿命は、<br>
+            <em>"上手なお手入れ"</em> と <em>"上手な保管"</em> で決まります。
+        </h2>
+        <p class="ds-care-importance__body">
+            いつまでも大切に着ていただきたいから、<br>
+            <strong>着物のクリーニングも 京呉服 平田にお任せください。</strong>
+        </p>
     </div>
 </section>
 
@@ -593,54 +655,77 @@ a { color: var(--ds-akane); }
 
         <div class="ds-pricing">
             <div class="ds-price-card ds-price-card--main">
-                <span class="ds-price-card__badge">MAIN</span>
-                <h3 class="ds-price-card__title">丸洗い</h3>
-                <p class="ds-price-card__regular">通常 4,950円〜</p>
-                <p class="ds-price-card__price"><strong>3,300</strong><small>円（税込）／ 1点</small></p>
-                <p class="ds-price-card__desc">
-                    有機溶剤によるドライクリーニング。<br>
-                    油性の汚れ・埃などの除去に有効。<br>
-                    <strong style="color:var(--ds-akane);">何枚でも 同一価格。</strong>
-                </p>
+                <div class="ds-price-card__img">
+                    <img src="{{ $imgBase }}/maruarai.png" alt="着物の丸洗い" loading="lazy">
+                </div>
+                <div class="ds-price-card__body">
+                    <span class="ds-price-card__badge">MAIN</span>
+                    <h3 class="ds-price-card__title">丸洗い</h3>
+                    <p class="ds-price-card__regular">通常 4,950円〜</p>
+                    <p class="ds-price-card__price"><strong>3,300</strong><small>円（税込）／ 1点</small></p>
+                    <p class="ds-price-card__desc">
+                        有機溶剤によるドライクリーニング。<br>
+                        油性の汚れ・埃などの除去に有効。<br>
+                        <strong style="color:var(--ds-akane);">何枚でも 同一価格。</strong>
+                    </p>
+                </div>
             </div>
 
             <div class="ds-price-card">
-                <span class="ds-price-card__badge">CARE</span>
-                <h3 class="ds-price-card__title">しみ抜き加工</h3>
-                <p class="ds-price-card__regular">通常 ご相談</p>
-                <p class="ds-price-card__price ds-price-card__price--negotiate">特別価格でご提供</p>
-                <p class="ds-price-card__desc">
-                    食事や汗ジミなど、部分的に付いてしまった汚れを丁寧に落とします。
-                </p>
+                <div class="ds-price-card__img">
+                    <img src="{{ $imgBase }}/shimi.png" alt="しみ抜き加工" loading="lazy">
+                </div>
+                <div class="ds-price-card__body">
+                    <span class="ds-price-card__badge">CARE</span>
+                    <h3 class="ds-price-card__title">しみ抜き加工</h3>
+                    <p class="ds-price-card__regular">通常 ご相談</p>
+                    <p class="ds-price-card__price ds-price-card__price--negotiate">特別価格でご提供</p>
+                    <p class="ds-price-card__desc">
+                        食事や汗ジミなど、部分的に付いてしまった汚れを丁寧に落とします。
+                    </p>
+                </div>
             </div>
 
             <div class="ds-price-card">
-                <span class="ds-price-card__badge">CARE</span>
-                <h3 class="ds-price-card__title">汗取り加工</h3>
-                <p class="ds-price-card__regular">通常 ご相談</p>
-                <p class="ds-price-card__price ds-price-card__price--negotiate">特別価格でご提供</p>
-                <p class="ds-price-card__desc">
-                    きものを傷めぬよう、水を使った 手仕事 で しっかりと汗を取り除きます。
-                </p>
+                <div class="ds-price-card__img">
+                    <img src="{{ $imgBase }}/ase.png" alt="汗取り加工" loading="lazy">
+                </div>
+                <div class="ds-price-card__body">
+                    <span class="ds-price-card__badge">CARE</span>
+                    <h3 class="ds-price-card__title">汗取り加工</h3>
+                    <p class="ds-price-card__regular">通常 ご相談</p>
+                    <p class="ds-price-card__price ds-price-card__price--negotiate">特別価格でご提供</p>
+                    <p class="ds-price-card__desc">
+                        きものを傷めぬよう、水を使った 手仕事 で しっかりと汗を取り除きます。
+                    </p>
+                </div>
             </div>
         </div>
+    </div>
+</section>
 
-        <div class="ds-process">
-            <h4 class="ds-process__title">— 京呉服 平田の 6つの工程 —</h4>
-            <div class="ds-steps">
-                <div class="ds-step"><div class="ds-step__num">壱</div><div class="ds-step__label">予洗い</div></div>
-                <div class="ds-step"><div class="ds-step__num">弐</div><div class="ds-step__label">洗浄</div></div>
-                <div class="ds-step"><div class="ds-step__num">参</div><div class="ds-step__label">乾燥</div></div>
-                <div class="ds-step"><div class="ds-step__num">四</div><div class="ds-step__label">確認</div></div>
-                <div class="ds-step"><div class="ds-step__num">伍</div><div class="ds-step__label">シミ処理</div></div>
-                <div class="ds-step"><div class="ds-step__num">六</div><div class="ds-step__label">仕上げ</div></div>
+{{-- ============== 相談ハードル下げ ============== --}}
+<section class="ds-section ds-section--paper">
+    <div class="ds-wrap">
+        <div class="ds-soudan">
+            <p class="ds-soudan__eyebrow">— お気軽にどうぞ —</p>
+            <h2 class="ds-soudan__title">
+                「お手入れが必要かどうか、<br>
+                わからない」 そんな方こそ、<br>
+                <em>一度お持ち寄りください。</em>
+            </h2>
+            <p class="ds-soudan__body">
+                どこを直せばいいか、 何にお金をかけるべきか。<br>
+                判断が難しい品物こそ、京呉服 平田の職人が じっくり拝見いたします。<br>
+                ご相談だけのご来店も、 心より歓迎しております。
+            </p>
+            <div class="ds-soudan__highlight">
+                ❀ ご診断・お見積もり 無料 ❀
             </div>
-        </div>
-
-        <div class="ds-bonus">
-            <span class="ds-bonus__label">SPECIAL GIFT</span>
-            <p class="ds-bonus__title">事前に <strong>3点以上</strong> お持ち込み頂いた方へ<br>「<strong>トリマス</strong>」プレゼント！</p>
-            <p class="ds-bonus__sub">※ 期間中の事前持込のみ対象となります。</p>
+            <div class="ds-soudan__cta">
+                <a href="#reserve" class="ds-soudan__cta-button">まずは相談する</a>
+                <small class="ds-soudan__cta-note">ご予約フォームに「ご相談のみ」でも大丈夫です</small>
+            </div>
         </div>
     </div>
 </section>
