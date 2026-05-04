@@ -79,9 +79,9 @@ a { color: var(--ds-akane); }
 .ds-header__brand-jp { font-family: 'Yuji Syuku', serif; font-size: 1.3rem;
     color: var(--ds-akane); margin-top: 2px; letter-spacing: .15em; }
 
-/* ====== ヒーロー（ポスター画像中心） ====== */
+/* ====== ヒーロー（ポスター画像中心・余白なし大きく） ====== */
 .ds-hero {
-    position: relative; padding: 40px 0 60px; overflow: hidden;
+    position: relative; padding: 0 0 56px; overflow: hidden;
     background:
         radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,247,222,1) 0%, transparent 70%),
         radial-gradient(circle at 12% 30%, rgba(245,212,220,.35), transparent 35%),
@@ -89,40 +89,27 @@ a { color: var(--ds-akane); }
         linear-gradient(180deg, var(--ds-bg) 0%, var(--ds-bg-2) 100%);
 }
 .ds-hero__inner {
-    position: relative; padding: 0 22px;
-    max-width: 720px; margin: 0 auto; text-align: center;
-}
-@media (min-width: 880px) {
-    .ds-hero__inner {
-        max-width: 1080px; display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 56px; align-items: center; text-align: left;
-    }
-    .ds-hero__poster-wrap { display: flex; justify-content: center; }
-    .ds-hero__copy { padding-right: 8px; }
+    position: relative; max-width: 100%; margin: 0 auto; text-align: center;
 }
 
+.ds-hero__poster-wrap {
+    display: block; line-height: 0; margin: 0 0 32px;
+}
 .ds-hero__poster {
-    position: relative; display: inline-block; max-width: 100%;
-    margin: 0 auto;
-    border-radius: 6px;
-    box-shadow:
-        0 4px 0 rgba(0,0,0,.03),
-        0 30px 70px rgba(125,28,37,.22),
-        0 12px 28px rgba(125,28,37,.14);
-    border: 6px solid #fffaef;
-    outline: 1px solid rgba(201,169,97,.55);
-    outline-offset: 0;
-    transition: transform .3s ease;
+    display: block; width: 100%; padding: 0; margin: 0;
+    border: 0; outline: none; box-shadow: none; background: transparent;
 }
-.ds-hero__poster:hover { transform: translateY(-2px); }
 .ds-hero__poster img {
-    display: block; width: auto; max-width: 440px; max-height: 78vh; height: auto;
-    border-radius: 2px;
+    display: block; width: 100%; max-width: 720px; height: auto;
+    margin: 0 auto; padding: 0; border: 0;
 }
-@media (max-width: 600px) {
-    .ds-hero__poster { border-width: 4px; }
-    .ds-hero__poster img { max-width: 100%; max-height: none; }
+
+.ds-hero__copy {
+    padding: 0 22px; max-width: 640px; margin: 0 auto; text-align: center;
+}
+.ds-hero__hidden {
+    position: absolute; left: -9999px; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0,0,0,0);
 }
 
 .ds-hero__eyebrow {
@@ -175,11 +162,8 @@ a { color: var(--ds-akane); }
 
 .ds-hero__cta { display: flex; flex-direction: column; gap: 10px;
     align-items: center; }
-@media (min-width: 880px) {
-    .ds-hero__cta { align-items: flex-start; }
-    .ds-hero__period-box { align-items: flex-start; }
-    .ds-hero__points { align-items: flex-start; }
-}
+.ds-hero__period-box { margin-left: auto; margin-right: auto; }
+.ds-hero__points { align-items: center; max-width: 480px; margin-left: auto; margin-right: auto; }
 .ds-hero__cta-note { font-family: 'Shippori Mincho B1', serif;
     color: var(--ds-sumi-soft); font-size: .85rem; }
 
@@ -574,24 +558,13 @@ a { color: var(--ds-akane); }
                 <img src="{{ $imgBase }}/poster.png" alt="大創業祭 5月22日(金)〜25日(月) 京呉服 平田" loading="eager">
             </div>
         </div>
+        <h1 class="ds-hero__hidden">大創業祭 — 京呉服 平田 福井店</h1>
         <div class="ds-hero__copy">
-            <p class="ds-hero__eyebrow">FUKUI 2026 — SPRING</p>
-            <h1 class="ds-hero__title">大創業祭</h1>
-            <p class="ds-hero__lead">
-                タンスの<strong>きもの</strong>と<strong>ジュエリー</strong>、<br>
-                まるごと整理する 4 日間。
-            </p>
             <div class="ds-hero__period-box">
                 <p class="ds-hero__period-label">— 開催期間 —</p>
                 <p class="ds-hero__period-date">2026年 5月22日（金）〜 25日（月）</p>
                 <p class="ds-hero__period-venue">京呉服 平田 福井店</p>
             </div>
-            <ul class="ds-hero__points">
-                <li>着物丸洗い <strong>3,300円</strong>（しみ抜き・汗取りも特別価格）</li>
-                <li>事前持込 3点以上で <strong>「トリマス」プレゼント</strong></li>
-                <li>紫真珠 特別企画／ジュエリー <strong>高価下取り</strong></li>
-                <li>ご来場記念 <strong>すくい取り</strong>（おたまご）</li>
-            </ul>
             <div class="ds-hero__cta">
                 <a href="#reserve" class="ds-cta-button">ご来場予約はこちら</a>
                 <small class="ds-hero__cta-note">▼ 30秒で完了 ／ 事前予約優先でご案内</small>
