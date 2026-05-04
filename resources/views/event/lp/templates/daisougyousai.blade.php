@@ -631,13 +631,41 @@ a { color: var(--ds-akane); }
     .ds-faq__a::before { left: 26px; }
 }
 
-/* ====== アクセス ====== */
-.ds-access { max-width: 760px; margin: 0 auto; background: var(--ds-paper);
-    border: 1px solid var(--ds-line); border-radius: 6px; padding: 36px 32px; }
-.ds-access dl { display: grid; grid-template-columns: 110px 1fr; gap: 14px 20px; margin: 0;
-    font-family: 'Shippori Mincho B1', serif; }
-.ds-access dt { color: var(--ds-akane); font-weight: 700; }
-.ds-access dd { margin: 0; color: var(--ds-sumi); }
+/* ====== 会場 ====== */
+.ds-venue {
+    background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 6px;
+    overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+}
+.ds-venue:last-child { margin-bottom: 0; }
+.ds-venue__img { width: 100%; aspect-ratio: 16/9; overflow: hidden; background: var(--ds-bg-2); }
+.ds-venue__img img { width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform .4s ease; }
+.ds-venue:hover .ds-venue__img img { transform: scale(1.02); }
+.ds-venue__body { padding: 28px 32px; }
+.ds-venue__name {
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    font-size: 1.3rem; color: var(--ds-akane); margin: 0 0 12px;
+}
+.ds-venue__desc {
+    color: var(--ds-sumi-soft); font-size: .95rem;
+    margin: 0 0 18px; font-family: 'Shippori Mincho B1', serif; line-height: 1.85;
+}
+.ds-venue__meta {
+    display: grid; grid-template-columns: 110px 1fr; gap: 12px 20px; margin: 0;
+    font-family: 'Shippori Mincho B1', serif;
+}
+.ds-venue__meta dt { color: var(--ds-akane); font-weight: 700; font-size: .92rem; }
+.ds-venue__meta dd { margin: 0; color: var(--ds-sumi); font-size: .96rem; line-height: 1.7; }
+.ds-venue__tel { color: var(--ds-akane); font-weight: 700; text-decoration: none;
+    border-bottom: 1px dashed var(--ds-akane); }
+.ds-venue__tel:hover { color: var(--ds-akane-d); border-bottom-style: solid; }
+@media (max-width: 600px) {
+    .ds-venue__body { padding: 22px 20px; }
+    .ds-venue__meta { grid-template-columns: 80px 1fr; gap: 10px 14px; }
+    .ds-venue__meta dt { font-size: .88rem; }
+    .ds-venue__meta dd { font-size: .92rem; }
+}
 
 /* ====== 最終CTA・フッター ====== */
 .ds-final-cta { padding: 80px 0; text-align: center;
@@ -1054,26 +1082,44 @@ a { color: var(--ds-akane); }
     </div>
 </section>
 
-{{-- ============== アクセス ============== --}}
+{{-- ============== 会場のご案内 ============== --}}
+@if($event->venues->isNotEmpty())
 <section class="ds-section">
     <div class="ds-wrap ds-wrap--narrow">
         <h2 class="ds-section__heading">会場のご案内</h2>
-        <div class="ds-access">
-            <dl>
-                <dt>会場</dt>
-                <dd>京呉服 平田 福井店</dd>
-                <dt>会期</dt>
-                <dd>2026年 5月22日（金）<br>〜 5月25日（月）</dd>
-                <dt>開催時間</dt>
-                <dd>10:00 〜 18:00<br><small style="color:var(--ds-sumi-soft);">最終日は 17:00 まで</small></dd>
-                <dt>住所</dt>
-                <dd>ご予約後にご案内いたします</dd>
-                <dt>お問い合わせ</dt>
-                <dd>京呉服 平田 福井店</dd>
-            </dl>
-        </div>
+
+        @foreach($event->venues as $venue)
+            <div class="ds-venue">
+                @if($venue->image_url)
+                    <div class="ds-venue__img">
+                        <img src="{{ $venue->image_url }}" alt="{{ $venue->name }}" loading="lazy">
+                    </div>
+                @endif
+                <div class="ds-venue__body">
+                    <h3 class="ds-venue__name">{{ $venue->name }}</h3>
+                    @if($venue->description)
+                        <p class="ds-venue__desc">{{ $venue->description }}</p>
+                    @endif
+                    <dl class="ds-venue__meta">
+                        @if($venue->address)
+                            <dt>住所</dt>
+                            <dd>{{ $venue->address }}</dd>
+                        @endif
+                        @if($venue->phone)
+                            <dt>電話番号</dt>
+                            <dd>
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $venue->phone) }}" class="ds-venue__tel">
+                                    {{ $venue->phone }}
+                                </a>
+                            </dd>
+                        @endif
+                    </dl>
+                </div>
+            </div>
+        @endforeach
     </div>
 </section>
+@endif
 
 {{-- ============== 最終CTA ============== --}}
 <section class="ds-final-cta">
