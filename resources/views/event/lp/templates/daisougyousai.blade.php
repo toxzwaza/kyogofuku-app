@@ -12,14 +12,15 @@
 <link href="https://fonts.bunny.net/css?family=noto-serif-jp:400,500,700,900|noto-sans-jp:400,500,700|shippori-mincho-b1:400,500,600,700,800|yuji-syuku:400&display=swap" rel="stylesheet">
 <style>
 :root {
-    --ds-bg:        #fdf6f0;
-    --ds-bg-2:      #f7e6d4;
-    --ds-paper:     #fffdf9;
+    --ds-bg:        #fbf3df;  /* 温かいクリーム（チラシ背景に近い） */
+    --ds-bg-2:      #f3e2bc;  /* 深めのクリーム */
+    --ds-bg-3:      #efd8a5;  /* 縁飾り部分 */
+    --ds-paper:     #fffaef;  /* 紙白 */
     --ds-pink:      #f5d4dc;
     --ds-pink-2:    #e8a3b8;
-    --ds-akane:     #b03641;
-    --ds-akane-d:   #8a2730;
-    --ds-akane-l:   #d96477;
+    --ds-akane:     #a32630;  /* チラシのタイトル色に合わせた濃い茜 */
+    --ds-akane-d:   #7d1c25;
+    --ds-akane-l:   #c34250;
     --ds-gold:      #c9a961;
     --ds-gold-d:    #9c8240;
     --ds-sumi:      #2b1d1d;
@@ -34,8 +35,9 @@ html { scroll-behavior: smooth; }
 body {
     margin: 0;
     background:
-        radial-gradient(circle at 12% 18%, rgba(245,212,220,.5), transparent 42%),
-        radial-gradient(circle at 88% 78%, rgba(232,163,184,.32), transparent 50%),
+        radial-gradient(circle at 8% 12%, rgba(245,212,220,.45), transparent 38%),
+        radial-gradient(circle at 92% 84%, rgba(232,163,184,.28), transparent 46%),
+        radial-gradient(circle at 50% 50%, rgba(201,169,97,.06), transparent 70%),
         var(--ds-bg);
     color: var(--ds-sumi);
     font-family: 'Noto Sans JP', 'Hiragino Sans', system-ui, sans-serif;
@@ -49,6 +51,27 @@ a { color: var(--ds-akane); }
 .ds-wrap { max-width: 960px; margin: 0 auto; padding: 0 22px; }
 .ds-wrap--narrow { max-width: 720px; }
 
+/* ====== Sticky CTA（モバイル限定） ====== */
+.ds-sticky-cta { display: none; }
+@media (max-width: 879px) {
+    .ds-sticky-cta {
+        display: block; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+        background: rgba(255,250,239,.96); border-top: 1px solid var(--ds-gold);
+        padding: 10px 14px env(safe-area-inset-bottom, 10px);
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 -6px 24px rgba(125,28,37,.12);
+    }
+    .ds-sticky-cta a {
+        display: block; text-align: center; padding: 14px;
+        background: var(--ds-akane); color: #fff;
+        font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+        text-decoration: none; border-radius: 4px; letter-spacing: .2em;
+        font-size: 1rem; box-shadow: 0 6px 18px rgba(125,28,37,.32);
+    }
+    .ds-sticky-cta a::after { content: " ▶"; font-size: .8em; margin-left: 6px; }
+    body { padding-bottom: 76px; }
+}
+
 /* ====== ヘッダ ====== */
 .ds-header { padding: 16px 0; text-align: center; }
 .ds-header__brand { font-family: 'Shippori Mincho B1', serif; font-size: .82rem;
@@ -56,47 +79,109 @@ a { color: var(--ds-akane); }
 .ds-header__brand-jp { font-family: 'Yuji Syuku', serif; font-size: 1.3rem;
     color: var(--ds-akane); margin-top: 2px; letter-spacing: .15em; }
 
-/* ====== ヒーロー ====== */
-.ds-hero { position: relative; min-height: 86vh; display: flex; align-items: center;
-    justify-content: center; overflow: hidden; padding: 60px 0; }
-.ds-hero__bg { position: absolute; inset: 0; background-size: cover; background-position: center;
-    background-image: url('{{ $imgBase }}/hero.png'); filter: brightness(.78) saturate(1.05); }
-.ds-hero__bg::after { content: ""; position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,.45) 70%, rgba(43,29,29,.65) 100%); }
-.ds-hero__inner { position: relative; text-align: center; color: #fff; padding: 0 22px; max-width: 880px; }
+/* ====== ヒーロー（ポスター画像中心） ====== */
+.ds-hero {
+    position: relative; padding: 40px 0 60px; overflow: hidden;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,247,222,1) 0%, transparent 70%),
+        radial-gradient(circle at 12% 30%, rgba(245,212,220,.35), transparent 35%),
+        radial-gradient(circle at 88% 70%, rgba(232,163,184,.3), transparent 35%),
+        linear-gradient(180deg, var(--ds-bg) 0%, var(--ds-bg-2) 100%);
+}
+.ds-hero__inner {
+    position: relative; padding: 0 22px;
+    max-width: 720px; margin: 0 auto; text-align: center;
+}
+@media (min-width: 880px) {
+    .ds-hero__inner {
+        max-width: 1080px; display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 56px; align-items: center; text-align: left;
+    }
+    .ds-hero__poster-wrap { display: flex; justify-content: center; }
+    .ds-hero__copy { padding-right: 8px; }
+}
+
+.ds-hero__poster {
+    position: relative; display: inline-block; max-width: 100%;
+    margin: 0 auto;
+    border-radius: 6px;
+    box-shadow:
+        0 4px 0 rgba(0,0,0,.03),
+        0 30px 70px rgba(125,28,37,.22),
+        0 12px 28px rgba(125,28,37,.14);
+    border: 6px solid #fffaef;
+    outline: 1px solid rgba(201,169,97,.55);
+    outline-offset: 0;
+    transition: transform .3s ease;
+}
+.ds-hero__poster:hover { transform: translateY(-2px); }
+.ds-hero__poster img {
+    display: block; width: auto; max-width: 440px; max-height: 78vh; height: auto;
+    border-radius: 2px;
+}
+@media (max-width: 600px) {
+    .ds-hero__poster { border-width: 4px; }
+    .ds-hero__poster img { max-width: 100%; max-height: none; }
+}
+
 .ds-hero__eyebrow {
-    font-family: 'Shippori Mincho B1', serif; font-size: .9rem; letter-spacing: .55em;
-    color: var(--ds-pink); margin: 0 0 26px; text-shadow: 0 2px 8px rgba(0,0,0,.4);
+    font-family: 'Shippori Mincho B1', serif; font-size: .82rem; letter-spacing: .55em;
+    color: var(--ds-akane-d); margin: 0 0 18px;
 }
 .ds-hero__title {
     font-family: 'Yuji Syuku', serif; font-weight: 400;
-    font-size: clamp(3rem, 9vw, 5.5rem); margin: 0 0 8px;
-    color: #fff; letter-spacing: .12em; line-height: 1.05;
-    text-shadow: 0 4px 18px rgba(0,0,0,.5), 0 0 40px rgba(176,54,65,.4);
+    font-size: clamp(2.4rem, 6vw, 3.4rem); margin: 0 0 14px;
+    color: var(--ds-akane); letter-spacing: .12em; line-height: 1.15;
 }
-.ds-hero__title-mark { display: inline-block; padding: 0 8px; }
-.ds-hero__period {
-    display: inline-flex; align-items: baseline; gap: 16px; margin-top: 28px;
-    font-family: 'Shippori Mincho B1', serif; font-size: 1.05rem; color: #fff;
-    background: rgba(43,29,29,.55); border: 1px solid var(--ds-gold); border-radius: 999px;
-    padding: 13px 32px; backdrop-filter: blur(4px);
+.ds-hero__lead {
+    font-family: 'Shippori Mincho B1', serif; font-weight: 600;
+    font-size: clamp(1.05rem, 2.4vw, 1.25rem); color: var(--ds-sumi);
+    margin: 0 0 22px; line-height: 1.85;
 }
-.ds-hero__period strong { font-size: 1.7rem; color: var(--ds-pink); font-weight: 700;
-    text-shadow: 0 2px 6px rgba(0,0,0,.3); }
-.ds-hero__catch {
-    margin-top: 36px; font-family: 'Shippori Mincho B1', serif; font-weight: 600;
-    font-size: clamp(1.2rem, 3.4vw, 1.75rem); color: #fff; line-height: 1.6;
-    text-shadow: 0 2px 10px rgba(0,0,0,.5);
+.ds-hero__lead strong { color: var(--ds-akane); }
+.ds-hero__period-box {
+    display: inline-flex; flex-direction: column; align-items: flex-start;
+    background: var(--ds-paper); border: 1px solid var(--ds-gold);
+    border-radius: 4px; padding: 14px 22px; margin: 0 0 24px;
+    box-shadow: 0 6px 18px rgba(125,28,37,.08);
 }
-.ds-hero__catch span { color: var(--ds-pink-2); font-weight: 700; }
-.ds-hero__catch-emp {
-    display: inline-block; margin-top: 18px; padding: 8px 36px;
-    background: var(--ds-akane); color: #fff; font-size: 1.45em; font-weight: 900;
-    font-family: 'Shippori Mincho B1', serif; letter-spacing: .18em;
-    clip-path: polygon(5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%, 0% 50%);
-    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+.ds-hero__period-label {
+    font-family: 'Shippori Mincho B1', serif; font-size: .8rem;
+    letter-spacing: .35em; color: var(--ds-sumi-soft); margin: 0 0 6px;
 }
-.ds-hero__cta { margin-top: 40px; }
+.ds-hero__period-date {
+    font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    color: var(--ds-akane); font-size: clamp(1.05rem, 2.4vw, 1.35rem); line-height: 1.25;
+    letter-spacing: .04em; margin: 0;
+}
+.ds-hero__period-venue {
+    font-family: 'Shippori Mincho B1', serif; font-size: .85rem;
+    color: var(--ds-sumi-soft); margin: 6px 0 0; font-weight: 500;
+}
+.ds-hero__points {
+    list-style: none; padding: 0; margin: 0 0 28px;
+    display: flex; flex-direction: column; gap: 8px;
+}
+.ds-hero__points li {
+    font-family: 'Shippori Mincho B1', serif; color: var(--ds-sumi);
+    font-size: .98rem; padding-left: 28px; position: relative;
+}
+.ds-hero__points li::before {
+    content: "❀"; position: absolute; left: 0; top: 0;
+    color: var(--ds-akane); font-size: 1.05em;
+}
+.ds-hero__points li strong { color: var(--ds-akane); font-weight: 700; }
+
+.ds-hero__cta { display: flex; flex-direction: column; gap: 10px;
+    align-items: center; }
+@media (min-width: 880px) {
+    .ds-hero__cta { align-items: flex-start; }
+    .ds-hero__period-box { align-items: flex-start; }
+    .ds-hero__points { align-items: flex-start; }
+}
+.ds-hero__cta-note { font-family: 'Shippori Mincho B1', serif;
+    color: var(--ds-sumi-soft); font-size: .85rem; }
 
 .ds-cta-button {
     display: inline-block; padding: 18px 56px; background: var(--ds-akane); color: #fff;
@@ -386,6 +471,11 @@ a { color: var(--ds-akane); }
 
 @section('content')
 
+{{-- ============== Sticky CTA（モバイル時のみ表示） ============== --}}
+<div class="ds-sticky-cta">
+    <a href="#reserve">ご来場予約はこちら</a>
+</div>
+
 {{-- ============== ヘッダ ============== --}}
 <header class="ds-header">
     <div class="ds-wrap">
@@ -394,21 +484,36 @@ a { color: var(--ds-akane); }
     </div>
 </header>
 
-{{-- ============== ヒーロー ============== --}}
+{{-- ============== ヒーロー（チラシ画像 + コピー横並び） ============== --}}
 <section class="ds-hero">
-    <div class="ds-hero__bg" role="presentation"></div>
     <div class="ds-hero__inner">
-        <p class="ds-hero__eyebrow">FUKUI 2026 — SPRING</p>
-        <h1 class="ds-hero__title"><span class="ds-hero__title-mark">大創業祭</span></h1>
-        <p class="ds-hero__period">
-            <strong>5/22</strong>(金) — <strong>5/25</strong>(月)
-        </p>
-        <p class="ds-hero__catch">
-            タンスの<span>きもの</span>と<span>ジュエリー</span><br>
-            <span class="ds-hero__catch-emp">まるごと整理！</span>
-        </p>
-        <div class="ds-hero__cta">
-            <a href="#reserve" class="ds-cta-button">ご来場予約はこちら</a>
+        <div class="ds-hero__poster-wrap">
+            <div class="ds-hero__poster">
+                <img src="{{ $imgBase }}/poster.png" alt="大創業祭 5月22日(金)〜25日(月) 京呉服 平田" loading="eager">
+            </div>
+        </div>
+        <div class="ds-hero__copy">
+            <p class="ds-hero__eyebrow">FUKUI 2026 — SPRING</p>
+            <h1 class="ds-hero__title">大創業祭</h1>
+            <p class="ds-hero__lead">
+                タンスの<strong>きもの</strong>と<strong>ジュエリー</strong>、<br>
+                まるごと整理する 4 日間。
+            </p>
+            <div class="ds-hero__period-box">
+                <p class="ds-hero__period-label">— 開催期間 —</p>
+                <p class="ds-hero__period-date">2026年 5月22日（金）〜 25日（月）</p>
+                <p class="ds-hero__period-venue">京呉服 平田 福井店</p>
+            </div>
+            <ul class="ds-hero__points">
+                <li>着物丸洗い <strong>3,300円</strong>（しみ抜き・汗取りも特別価格）</li>
+                <li>事前持込 3点以上で <strong>「トリマス」プレゼント</strong></li>
+                <li>紫真珠 特別企画／ジュエリー <strong>高価下取り</strong></li>
+                <li>ご来場記念 <strong>すくい取り</strong>（おたまご）</li>
+            </ul>
+            <div class="ds-hero__cta">
+                <a href="#reserve" class="ds-cta-button">ご来場予約はこちら</a>
+                <small class="ds-hero__cta-note">▼ 30秒で完了 ／ 事前予約優先でご案内</small>
+            </div>
         </div>
     </div>
 </section>
