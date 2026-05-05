@@ -759,6 +759,23 @@ a { color: var(--ds-akane); }
     </div>
 </section>
 
+{{-- ============== 紹介動画（自動ループ・音声なし） ============== --}}
+<section class="ds-section">
+    <div class="ds-wrap">
+        <div class="ds-intro-video">
+            <video
+                src="{{ $imgBase }}/intro.mp4"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                aria-label="大創業祭 紹介動画"
+            ></video>
+        </div>
+    </div>
+</section>
+
 {{-- ============== PROBLEM / 痛み喚起 ============== --}}
 <section class="ds-section">
     <div class="ds-wrap">
@@ -960,23 +977,6 @@ a { color: var(--ds-akane); }
             <div class="ds-sukui__img">
                 <img src="{{ $imgBase }}/egg.png" alt="ひなたまこっこ すくい取り">
             </div>
-        </div>
-    </div>
-</section>
-
-{{-- ============== 紹介動画（自動ループ・音声なし） ============== --}}
-<section class="ds-section ds-section--accent">
-    <div class="ds-wrap">
-        <div class="ds-intro-video">
-            <video
-                src="{{ $imgBase }}/intro.mp4"
-                autoplay
-                muted
-                loop
-                playsinline
-                preload="metadata"
-                aria-label="大創業祭 紹介動画"
-            ></video>
         </div>
     </div>
 </section>
