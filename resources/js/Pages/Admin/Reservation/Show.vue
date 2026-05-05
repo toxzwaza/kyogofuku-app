@@ -154,6 +154,27 @@
               </UiDetailSection>
             </template>
 
+            <!-- フォーム取得情報（form_schema 駆動の Blade LP 用） -->
+            <template v-if="hasCustomFormData">
+              <UiDetailSection title="フォーム取得情報" :icon="ListChecks" :cols="2">
+                <UiDetailField
+                  v-for="field in customFormFieldsExceptTextarea"
+                  :key="field.key"
+                  :label="field.label"
+                  :value="formatFormDataValue(field)"
+                  :icon="getFormFieldIcon(field.type)"
+                  :span="field.type === 'timeslot' ? 2 : 1"
+                  :highlight="field.type === 'timeslot'"
+                />
+                <template v-for="field in customFormFieldsTextarea" :key="`fd-ta-${field.key}`">
+                  <div class="col-span-2 rounded-soft border border-brand-border bg-brand-surface-2 p-4">
+                    <p class="text-xs text-brand-text-muted mb-2 font-medium">{{ field.label }}</p>
+                    <p class="text-sm text-brand-text whitespace-pre-wrap leading-relaxed">{{ reservation.form_data?.[field.key] || '—' }}</p>
+                  </div>
+                </template>
+              </UiDetailSection>
+            </template>
+
             <UiDetailSection v-if="reservation.inquiry_message" title="お問い合わせ内容" :icon="MessageSquare" :cols="1">
               <div class="rounded-soft border border-brand-border bg-brand-surface-2 p-4">
                 <p class="text-sm text-brand-text whitespace-pre-wrap leading-relaxed">{{ reservation.inquiry_message }}</p>
@@ -1004,6 +1025,7 @@ import {
     ClipboardCheck, UserCog, Ticket, RefreshCw, ExternalLink,
     UserPlus, Search, Loader2, Plus, X,
     ChevronDown, Paperclip, Quote, Reply, Store as StoreIcon,
+    ListChecks, AlignLeft,
 } from "lucide-vue-next";
 import ActionButton from "@/Components/ActionButton.vue";
 import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
@@ -1149,6 +1171,75 @@ const props = defineProps({
     }),
   },
 });
+
+// === Blade LP の form_schema 駆動の form_data を表示するためのユーティリティ ===
+// 既存の「お客様情報」「予約情報」セクション等で表示済みのキーは重複表示しない
+const DUPLICATED_KEYS = new Set([
+    'name', 'furigana', 'email', 'phone',
+    'address', 'birth_date',
+    'visit_slot', 'visit_slot_label',     // → 予約日時 / 会場
+    'reservation_datetime', 'venue_id',
+]);
+
+const customFormFields = computed(() => {
+    const schema = props.event?.form_schema;
+    if (!Array.isArray(schema)) return [];
+    return schema.filter(f =>
+        f && f.type !== 'hidden' && f.key && !DUPLICATED_KEYS.has(f.key)
+    );
+});
+
+const hasCustomFormData = computed(() => {
+    if (customFormFields.value.length === 0) return false;
+    const fd = props.reservation?.form_data;
+    if (!fd || typeof fd !== 'object') return false;
+    return Object.keys(fd).length > 0;
+});
+
+const formatFormDataValue = (field) => {
+    const data = props.reservation?.form_data;
+    if (!data) return '—';
+    const value = data[field.key];
+    if (value === null || value === undefined || value === '') return '—';
+    if (field.type === 'timeslot') {
+        return data[field.key + '_label'] || `#${value}`;
+    }
+    if (Array.isArray(value)) {
+        return value.length > 0 ? value.join('、') : '—';
+    }
+    if (field.type === 'checkbox' && (!field.options || field.options.length === 0)) {
+        if (value === '0' || value === 0 || value === false) return 'いいえ';
+        if (value === '1' || value === 1 || value === true) return 'はい';
+    }
+    if (field.type === 'date' || field.type === 'datetime-local') {
+        return String(value);
+    }
+    return String(value);
+};
+
+const getFormFieldIcon = (type) => {
+    const map = {
+        timeslot: Calendar,
+        date: Calendar,
+        'datetime-local': Calendar,
+        time: Clock,
+        email: Mail,
+        tel: Phone,
+        textarea: AlignLeft,
+        checkbox: CheckCircle2,
+        select: ListChecks,
+        radio: ListChecks,
+        number: Hash,
+    };
+    return map[type] || Info;
+};
+
+const customFormFieldsExceptTextarea = computed(() =>
+    customFormFields.value.filter(f => f.type !== 'textarea')
+);
+const customFormFieldsTextarea = computed(() =>
+    customFormFields.value.filter(f => f.type === 'textarea')
+);
 
 const lineCustomerForLineSection = computed(() => {
   if (!props.line_section || props.line_section.context !== "customer") {

@@ -31,6 +31,8 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VenueController as AdminVenueController;
 use App\Http\Controllers\Admin\WorkAttributeController as AdminWorkAttributeController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BladeLpController;
+use App\Http\Controllers\BladeReservationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventReservationController;
@@ -113,6 +115,10 @@ Route::get('/event/{slug}', [EventController::class, 'show'])->name('event.show'
 Route::get('/event/{slug}/reserve', [EventController::class, 'reserve'])->name('event.reserve.page');
 Route::post('/event/{event}/reserve', [EventReservationController::class, 'store'])->name('event.reserve');
 Route::get('/event/{event}/reserve/success/{text?}', [EventReservationController::class, 'success'])->name('event.reserve.success');
+
+// Blade テンプレ方式 LP（render_type=blade のイベント用）
+Route::post('/event/{event}/blade-reserve', [BladeReservationController::class, 'store'])->name('blade-lp.reserve');
+Route::get('/event/{event}/blade-reserve/thanks', [BladeReservationController::class, 'thanks'])->name('blade-lp.thanks');
 Route::get('/api/postal-code/search', [PostalCodeController::class, 'search'])->name('api.postal-code.search');
 
 // 資料表示

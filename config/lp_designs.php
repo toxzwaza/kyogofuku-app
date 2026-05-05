@@ -3,13 +3,18 @@
 /**
  * 公開イベント LP テンプレート定義
  *
- * default_tokens: CSS カスタムプロパティ名 => 値（lp_theme_tokens で部分上書き）
- * allowed_token_keys: 管理画面・API で許可するキー（ホワイトリスト）
+ * 各テンプレートは以下のいずれかのレンダリング方式を指定する：
+ *  - render_type = 'inertia' : Vue/Inertia ページ（inertia_show / inertia_reserve）
+ *  - render_type = 'blade'   : Blade ビュー（blade_view）
+ *
+ * default_tokens / allowed_token_keys（グローバル）: Inertia 系の既存テーマトークン仕様。
+ * Blade 系では Blade 側で自由に CSS を組めるため、必須ではない。
  */
 return [
     'templates' => [
         'pastel_fest' => [
             'label' => 'パステルフェス（lp_design サンプル）',
+            'render_type' => 'inertia',
             'allowed_form_types' => ['reservation'],
             'inertia_show' => 'Event/Lp/PastelFestShow',
             'inertia_reserve' => 'Event/Lp/PastelFestReserve',
@@ -35,10 +40,28 @@ return [
                 '--shadow-dreamy' => '0 8px 40px rgba(232,114,154,.12)',
             ],
         ],
+
+        'kimono_classic' => [
+            'label' => '和モダン クラシック（Blade テンプレ）',
+            'render_type' => 'blade',
+            'blade_view' => 'event.lp.templates.kimono_classic',
+            'allowed_form_types' => null,
+            'requires_form_schema' => true,
+            'default_tokens' => [],
+        ],
+
+        'daisougyousai' => [
+            'label' => '大創業祭（伝統・販促）',
+            'render_type' => 'blade',
+            'blade_view' => 'event.lp.templates.daisougyousai',
+            'allowed_form_types' => null,
+            'requires_form_schema' => true,
+            'default_tokens' => [],
+        ],
     ],
 
     /**
-     * すべてのテンプレで許可するトークンキー（上記 default_tokens のキーと一致させる）
+     * すべてのテンプレで許可するトークンキー（pastel_fest の default_tokens のキーと一致）
      */
     'allowed_token_keys' => [
         '--pink',

@@ -18,9 +18,20 @@ class EventController extends Controller
      */
     public function show(Request $request, string $slug)
     {
-        $event = $this->resolvePublicEventBySlug($slug, 'event.show');
+        // start_at の未来チェックなしで取得（Blade LP は事前告知できるよう）
+        $event = $this->resolvePublicEventBySlug($slug, 'event.show', false);
         if ($event instanceof \Illuminate\Http\RedirectResponse) {
             return $event;
+        }
+
+        if ($event->usesBladeLp()) {
+            return app(BladeLpController::class)->show($request, $event);
+        }
+
+        // Inertia 系では従来通り、開始前は 404
+        $today = now()->startOfDay();
+        if ($event->start_at && $today->lt($event->start_at)) {
+            abort(404);
         }
 
         $utmSource = $request->input('utm_source') ?: 'NONE';
@@ -62,7 +73,7 @@ class EventController extends Controller
     /**
      * @return Event|\Illuminate\Http\RedirectResponse
      */
-    private function resolvePublicEventBySlug(string $slug, string $canonicalRouteName)
+    private function resolvePublicEventBySlug(string $slug, string $canonicalRouteName, bool $checkStartAt = true)
     {
         $event = Event::with(['images', 'timeslots', 'shops', 'venues', 'documents'])
             ->where('slug', $slug)
@@ -87,10 +98,11 @@ class EventController extends Controller
             abort(404);
         }
 
-        $now = now();
-        $today = $now->copy()->startOfDay();
-        if ($event->start_at && $today->lt($event->start_at)) {
-            abort(404);
+        if ($checkStartAt) {
+            $today = now()->startOfDay();
+            if ($event->start_at && $today->lt($event->start_at)) {
+                abort(404);
+            }
         }
 
         return $event;

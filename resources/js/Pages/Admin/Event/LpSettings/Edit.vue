@@ -50,7 +50,7 @@
                                     このイベントのフォーム種別では利用できるテンプレートがありません。
                                 </p>
                             </div>
-                            <div>
+                            <div v-if="!isBladeTemplate">
                                 <label class="block text-sm font-medium text-brand-text mb-2">
                                     デザイントークン（JSON・任意）
                                 </label>
@@ -63,6 +63,26 @@
                                     class="block w-full font-mono text-sm rounded-md border-brand-border shadow-sm"
                                     placeholder='例: { "--pink": "#e8729a", "--radius-soft": "24px" }'
                                 />
+                            </div>
+
+                            <div v-if="isBladeTemplate">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-sm font-medium text-brand-text">
+                                        フォーム定義（form_schema）
+                                        <span class="ml-2 text-xs text-amber-700">Blade テンプレ用</span>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        @click="insertFormSchemaSample"
+                                        class="text-xs text-brand-primary hover:underline"
+                                    >
+                                        サンプルを挿入
+                                    </button>
+                                </div>
+                                <p class="text-xs text-brand-text-muted mb-3">
+                                    フィールドを追加・編集・並び替え・削除できます。下の「JSON を表示」で生 JSON も確認・編集できます。
+                                </p>
+                                <FormSchemaEditor v-model="formSchemaFields" />
                             </div>
                             <button
                                 type="submit"
@@ -247,11 +267,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
 import MediaPicker from '@/Components/MediaPicker.vue';
+import FormSchemaEditor from '@/Components/Admin/FormSchemaEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -296,7 +317,38 @@ const lpDesignForm = useForm({
     lp_theme_tokens_json: props.event.lp_theme_tokens
         ? JSON.stringify(props.event.lp_theme_tokens, null, 2)
         : '',
+    form_schema_json: props.event.form_schema
+        ? JSON.stringify(props.event.form_schema, null, 2)
+        : '',
 });
+
+const selectedTemplate = computed(() =>
+    (props.lpTemplates || []).find((t) => t.slug === lpDesignForm.lp_design_slug) || null
+);
+const isBladeTemplate = computed(() => selectedTemplate.value?.render_type === 'blade');
+
+// FormSchemaEditor 用の配列ステート（双方向で form_schema_json と同期）
+const formSchemaFields = ref(
+    Array.isArray(props.event.form_schema) ? JSON.parse(JSON.stringify(props.event.form_schema)) : []
+);
+watch(formSchemaFields, (val) => {
+    lpDesignForm.form_schema_json = JSON.stringify(val ?? [], null, 2);
+}, { deep: true });
+
+const SAMPLE_SCHEMA = [
+    { key: 'name',     label: 'お名前',         type: 'text',  required: true,  placeholder: '山田 花子' },
+    { key: 'phone',    label: '電話番号',        type: 'tel',   required: true,  placeholder: '090-1234-5678' },
+    { key: 'email',    label: 'メール',         type: 'email', required: false },
+    { key: 'interest', label: 'ご興味のある商品',  type: 'checkbox', options: ['振袖', '袴', '訪問着', '小物'] },
+    { key: 'message',  label: 'ご要望・ご質問',   type: 'textarea', rows: 4 },
+];
+
+function insertFormSchemaSample() {
+    if (formSchemaFields.value.length > 0) {
+        if (!confirm('既存のフィールドを上書きします。よろしいですか？')) return;
+    }
+    formSchemaFields.value = JSON.parse(JSON.stringify(SAMPLE_SCHEMA));
+}
 
 function handleMediaSelect(selectedMedia) {
     if (!selectedMedia || selectedMedia.length === 0) return;
