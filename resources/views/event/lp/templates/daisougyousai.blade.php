@@ -483,18 +483,17 @@ a { color: var(--ds-akane); }
     font-size: 1.05rem; margin: 0 0 8px; }
 .ds-sukui p { font-family: 'Shippori Mincho B1', serif; color: var(--ds-sumi-soft); }
 
-/* ====== ご来場の流れ ====== */
-.ds-flow { display: grid; gap: 24px; max-width: 880px; margin: 0 auto;
-    grid-template-columns: 1fr; }
-@media (min-width: 768px) { .ds-flow { grid-template-columns: repeat(4, 1fr); } }
-.ds-flow-step { background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 6px;
-    padding: 26px 20px; text-align: center; position: relative; }
-.ds-flow-step__num { display: inline-flex; align-items: center; justify-content: center;
-    width: 44px; height: 44px; border-radius: 50%; background: var(--ds-akane); color: #fff;
-    font-family: 'Yuji Syuku', serif; font-size: 1.2rem; margin-bottom: 12px; }
-.ds-flow-step__title { font-family: 'Shippori Mincho B1', serif; font-weight: 700;
-    font-size: 1rem; color: var(--ds-sumi); margin: 0 0 8px; }
-.ds-flow-step__desc { font-size: .85rem; color: var(--ds-sumi-soft); margin: 0; line-height: 1.7; }
+/* ====== 紹介動画 ====== */
+.ds-intro-video {
+    max-width: 880px; margin: 0 auto;
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--ds-line);
+    background: #000;
+    box-shadow: 0 16px 40px rgba(125,28,37,.12);
+}
+.ds-intro-video video {
+    display: block; width: 100%; height: auto;
+}
 
 /* ====== フォーム ====== */
 .ds-form { background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 6px;
@@ -965,33 +964,19 @@ a { color: var(--ds-akane); }
     </div>
 </section>
 
-{{-- ============== ご来場の流れ ============== --}}
+{{-- ============== 紹介動画（自動ループ・音声なし） ============== --}}
 <section class="ds-section ds-section--accent">
     <div class="ds-wrap">
-        <h2 class="ds-section__heading">ご来場の流れ</h2>
-        <p class="ds-section__lead">スムーズなご対応のため、 事前のご予約をおすすめしております。</p>
-
-        <div class="ds-flow">
-            <div class="ds-flow-step">
-                <div class="ds-flow-step__num">壱</div>
-                <h3 class="ds-flow-step__title">Web 予約</h3>
-                <p class="ds-flow-step__desc">下のフォームより、ご来場希望をご予約ください。</p>
-            </div>
-            <div class="ds-flow-step">
-                <div class="ds-flow-step__num">弐</div>
-                <h3 class="ds-flow-step__title">事前お持込</h3>
-                <p class="ds-flow-step__desc">お手入れご希望のお品物を、会期前に店頭へ。</p>
-            </div>
-            <div class="ds-flow-step">
-                <div class="ds-flow-step__num">参</div>
-                <h3 class="ds-flow-step__title">ご来場</h3>
-                <p class="ds-flow-step__desc">5/22-25 のご都合の良い日にお越しください。</p>
-            </div>
-            <div class="ds-flow-step">
-                <div class="ds-flow-step__num">四</div>
-                <h3 class="ds-flow-step__title">ご相談・お受取</h3>
-                <p class="ds-flow-step__desc">下取りのご相談、紫真珠のご拝見など。</p>
-            </div>
+        <div class="ds-intro-video">
+            <video
+                src="{{ $imgBase }}/intro.mp4"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                aria-label="大創業祭 紹介動画"
+            ></video>
         </div>
     </div>
 </section>
