@@ -1,5 +1,5 @@
 <script setup>
-import { useUiVersion } from '@/Composables/useUiVersion';
+import { useUiVersion } from '@/composables/useUiVersion';
 
 defineProps({
     variant: { type: String, default: 'button' }, // 'button' | 'compact'
