@@ -56,7 +56,22 @@
                             <div class="grid grid-cols-2 gap-6 mb-6 print:gap-2 print:mb-2">
                                 <div>
                                     <label class="block text-sm font-medium text-brand-text mb-1" :style="dsFontStyle">日付</label>
-                                    <p class="text-brand-text font-semibold" :style="dsFontStyle">{{ formatDateJa(form.signed_at) }}</p>
+                                    <p
+                                        v-if="isPreviewMode"
+                                        class="text-brand-text font-semibold"
+                                        :style="dsFontStyle"
+                                    >{{ formatDateJa(form.signed_at) }}</p>
+                                    <template v-else>
+                                        <input
+                                            v-model="form.signed_at"
+                                            type="date"
+                                            class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm print:hidden"
+                                        />
+                                        <p
+                                            class="hidden print:block text-brand-text font-semibold"
+                                            :style="dsFontStyle"
+                                        >{{ formatDateJa(form.signed_at) }}</p>
+                                    </template>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-brand-text mb-1" :style="dsFontStyle">規約説明者</label>
