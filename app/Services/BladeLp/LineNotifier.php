@@ -21,7 +21,8 @@ class LineNotifier
      */
     public function notify(Event $event, EventReservation $reservation): void
     {
-        $event->loadMissing(['shops', 'venue']);
+        $event->loadMissing(['shops']);
+        $reservation->loadMissing(['venue']);
         $shops = $event->shops;
         $line = new LineWebhookController;
 
