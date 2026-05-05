@@ -541,13 +541,7 @@ a { color: var(--ds-akane); }
     border-bottom: 1px solid var(--ds-line);
 }
 .lp-slot__date-icon { color: var(--ds-akane); font-size: .95em; flex-shrink: 0; }
-.lp-slot__date-text { flex-shrink: 0; }
-.lp-slot__date-meta {
-    flex: 1; text-align: right; font-family: 'Noto Sans JP', sans-serif;
-    font-size: .82rem; font-weight: 500; color: var(--ds-akane);
-    white-space: nowrap;
-}
-.lp-slot__date-meta--full { color: #888; }
+.lp-slot__date-text { flex: 1; }
 .lp-slot__date-toggle {
     width: 26px; height: 26px; display: inline-flex; align-items: center;
     justify-content: center; border-radius: 50%; background: var(--ds-paper);

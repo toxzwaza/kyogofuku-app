@@ -81,27 +81,12 @@
                     @php
                         $dateObj = \Carbon\Carbon::parse($date);
                         $wd = $weekdayMap[$dateObj->format('D')] ?? '';
-                        // 残席合計と満枠合計
-                        $dayRemaining = 0;
-                        foreach ($daySlots as $s) {
-                            $ck = $s->start_at->format('Y-m-d H:i:s').'|'.($s->venue_id ?? 'null');
-                            $r = (int) ($reservedCounts[$ck] ?? 0);
-                            $dayRemaining += max(0, $s->capacity - $r);
-                        }
-                        $isAllFull = $dayRemaining === 0;
                     @endphp
                     <details class="lp-slot__day">
                         <summary class="lp-slot__date">
                             <span class="lp-slot__date-icon">📅</span>
                             <span class="lp-slot__date-text">
                                 {{ $dateObj->format('n月j日') }}（{{ $wd }}）
-                            </span>
-                            <span class="lp-slot__date-meta">
-                                @if($isAllFull)
-                                    <span class="lp-slot__date-meta--full">満枠</span>
-                                @else
-                                    残り {{ $dayRemaining }} 枠
-                                @endif
                             </span>
                             <span class="lp-slot__date-toggle" aria-hidden="true">＋</span>
                         </summary>
