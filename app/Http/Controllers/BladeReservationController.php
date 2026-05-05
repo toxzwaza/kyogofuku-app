@@ -6,7 +6,9 @@ use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
 use App\Services\BladeLp\FormSchemaValidator;
+use App\Services\EventReservationScheduleBootstrapService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -101,6 +103,18 @@ class BladeReservationController extends Controller
             'utm_source'           => $request->input('utm_source')
                 ?? $request->session()->get('event_utm_sources.'.$event->id),
         ]);
+
+        // Google カレンダー連携（既存 EventReservationController と同じ Service を呼ぶ）
+        // reservation_datetime（visit_slot から導出）の予定のみ作成。bring_date は連携しない。
+        try {
+            $reservation->load(['event', 'venue']);
+            app(EventReservationScheduleBootstrapService::class)->bootstrapIfApplicable($reservation);
+        } catch (\Throwable $e) {
+            Log::error('[BladeReservation] Google カレンダー連携に失敗', [
+                'reservation_id' => $reservation->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $request->session()->put('blade_lp_form_data.'.$event->id, $validated);
 
