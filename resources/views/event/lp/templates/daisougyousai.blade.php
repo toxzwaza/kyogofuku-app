@@ -483,16 +483,105 @@ a { color: var(--ds-akane); }
     font-size: 1.05rem; margin: 0 0 8px; }
 .ds-sukui p { font-family: 'Shippori Mincho B1', serif; color: var(--ds-sumi-soft); }
 
-/* ====== 紹介動画 ====== */
+/* ====== 紹介動画セクション ====== */
+.ds-section--video {
+    position: relative;
+    background:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(245,212,220,.45), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 50% 100%, rgba(232,163,184,.35), transparent 60%),
+        linear-gradient(180deg, var(--ds-bg) 0%, var(--ds-paper) 50%, var(--ds-bg-2) 100%);
+    overflow: hidden;
+}
+.ds-section--video::before, .ds-section--video::after {
+    content: ""; position: absolute; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ds-gold), transparent);
+}
+.ds-section--video::before { top: 32px; }
+.ds-section--video::after  { bottom: 32px; }
+
+.ds-video-eyebrow {
+    text-align: center;
+    font-family: 'Shippori Mincho B1', serif;
+    letter-spacing: .55em;
+    font-size: .82rem;
+    color: var(--ds-akane-d);
+    margin: 0 0 14px;
+}
+.ds-video-title {
+    text-align: center;
+    font-family: 'Yuji Syuku', serif;
+    font-weight: 400;
+    font-size: clamp(1.45rem, 4vw, 2.1rem);
+    color: var(--ds-akane);
+    margin: 0 0 8px;
+    letter-spacing: .12em;
+    line-height: 1.4;
+}
+.ds-video-sub {
+    text-align: center;
+    font-family: 'Shippori Mincho B1', serif;
+    color: var(--ds-sumi-soft);
+    font-size: 1rem;
+    margin: 0 0 36px;
+}
+
 .ds-intro-video {
     max-width: 880px; margin: 0 auto;
-    border-radius: 8px; overflow: hidden;
-    border: 1px solid var(--ds-line);
+    position: relative;
+    padding: 14px;
+    background:
+        linear-gradient(135deg, #fffaef 0%, #fdf0eb 50%, #fffaef 100%);
+    border: 1px solid var(--ds-gold);
+    border-radius: 8px;
+    box-shadow:
+        0 4px 0 rgba(0,0,0,.03),
+        0 24px 56px rgba(125,28,37,.18),
+        0 8px 16px rgba(125,28,37,.10);
+}
+/* 四隅の金色コーナーマーク */
+.ds-intro-video::before, .ds-intro-video::after {
+    content: ""; position: absolute; width: 28px; height: 28px;
+    border: 2px solid var(--ds-akane); pointer-events: none;
+}
+.ds-intro-video::before {
+    top: 6px; left: 6px;
+    border-right: none; border-bottom: none;
+}
+.ds-intro-video::after {
+    bottom: 6px; right: 6px;
+    border-left: none; border-top: none;
+}
+.ds-intro-video__frame {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
     background: #000;
-    box-shadow: 0 16px 40px rgba(125,28,37,.12);
+}
+.ds-intro-video__frame::before {
+    content: ""; position: absolute; inset: 0;
+    border: 1px solid rgba(201,169,97,.45);
+    border-radius: 4px;
+    pointer-events: none; z-index: 2;
 }
 .ds-intro-video video {
     display: block; width: 100%; height: auto;
+}
+
+.ds-video-divider {
+    display: flex; align-items: center; justify-content: center;
+    margin: 36px auto 0; max-width: 320px; gap: 16px;
+    color: var(--ds-akane); font-size: 1.2rem; opacity: .8;
+}
+.ds-video-divider::before, .ds-video-divider::after {
+    content: ""; flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ds-gold), transparent);
+}
+
+@media (max-width: 600px) {
+    .ds-intro-video { padding: 10px; }
+    .ds-intro-video::before, .ds-intro-video::after { width: 20px; height: 20px; }
+    .ds-section--video::before { top: 16px; }
+    .ds-section--video::after  { bottom: 16px; }
 }
 
 /* ====== フォーム ====== */
@@ -760,19 +849,27 @@ a { color: var(--ds-akane); }
 </section>
 
 {{-- ============== 紹介動画（自動ループ・音声なし） ============== --}}
-<section class="ds-section">
+<section class="ds-section ds-section--video">
     <div class="ds-wrap">
+        <p class="ds-video-eyebrow">— OUR STORY —</p>
+        <h2 class="ds-video-title">きものに、 ふたたびの息吹を。</h2>
+        <p class="ds-video-sub">— 京呉服 平田の手仕事と、よみがえる物語 —</p>
+
         <div class="ds-intro-video">
-            <video
-                src="{{ $imgBase }}/intro.mp4"
-                autoplay
-                muted
-                loop
-                playsinline
-                preload="metadata"
-                aria-label="大創業祭 紹介動画"
-            ></video>
+            <div class="ds-intro-video__frame">
+                <video
+                    src="{{ $imgBase }}/intro.mp4"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    preload="metadata"
+                    aria-label="大創業祭 紹介動画"
+                ></video>
+            </div>
         </div>
+
+        <div class="ds-video-divider">❀</div>
     </div>
 </section>
 
