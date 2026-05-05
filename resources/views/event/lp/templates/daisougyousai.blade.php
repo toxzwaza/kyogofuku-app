@@ -877,7 +877,7 @@ a { color: var(--ds-akane); }
             </h2>
             <p class="ds-soudan__body">
                 どこを直せばいいか、 何にお金をかけるべきか。<br>
-                判断が難しい品物こそ、<span class="ds-nobr">京呉服 平田</span>の職人がじっくり拝見いたします。<br>
+                判断が難しい品物こそ、<span class="ds-nobr">京呉服 平田</span>の職人が<span class="ds-nobr">じっくり拝見いたします</span>。<br>
                 ご相談だけのご来店も、 心より歓迎しております。
             </p>
             <div class="ds-soudan__highlight">
