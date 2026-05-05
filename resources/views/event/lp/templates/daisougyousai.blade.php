@@ -952,14 +952,14 @@ a { color: var(--ds-akane); }
 
         <div class="ds-sukui">
             <div>
-                <span class="ds-sukui__label">ひなたまごー</span>
+                <span class="ds-sukui__label">ひなたまこっこ</span>
                 <h3 class="ds-sukui__title">どど〜んと、 すくった数だけ プレゼント！</h3>
                 <p class="ds-sukui__sub">ご来場の皆さまへ、<span class="ds-nobr">京呉服 平田</span>からのささやかなお礼。</p>
                 <p>新鮮なたまごを、 思い切ってすくってお持ち帰りください。<br>
                 ご家族の楽しいひと時にもなれば 幸いです。</p>
             </div>
             <div class="ds-sukui__img">
-                <img src="{{ $imgBase }}/egg.png" alt="ひなたまごー すくい取り">
+                <img src="{{ $imgBase }}/egg.png" alt="ひなたまこっこ すくい取り">
             </div>
         </div>
     </div>
