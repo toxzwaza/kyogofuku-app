@@ -1173,10 +1173,20 @@ const props = defineProps({
 });
 
 // === Blade LP の form_schema 駆動の form_data を表示するためのユーティリティ ===
+// 既存の「お客様情報」「予約情報」セクション等で表示済みのキーは重複表示しない
+const DUPLICATED_KEYS = new Set([
+    'name', 'furigana', 'email', 'phone',
+    'address', 'birth_date',
+    'visit_slot', 'visit_slot_label',     // → 予約日時 / 会場
+    'reservation_datetime', 'venue_id',
+]);
+
 const customFormFields = computed(() => {
     const schema = props.event?.form_schema;
     if (!Array.isArray(schema)) return [];
-    return schema.filter(f => f && f.type !== 'hidden' && f.key);
+    return schema.filter(f =>
+        f && f.type !== 'hidden' && f.key && !DUPLICATED_KEYS.has(f.key)
+    );
 });
 
 const hasCustomFormData = computed(() => {

@@ -230,7 +230,7 @@ class EventLpSettingsController extends Controller
                 'label' => $label,
                 'required' => (bool) ($field['required'] ?? false),
             ];
-            foreach (['placeholder', 'help', 'default', 'min', 'max', 'pattern', 'rows'] as $optKey) {
+            foreach (['placeholder', 'help', 'default', 'min', 'max', 'pattern', 'rows', 'auto_options'] as $optKey) {
                 if (array_key_exists($optKey, $field)) {
                     $entry[$optKey] = $field[$optKey];
                 }

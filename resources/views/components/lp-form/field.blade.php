@@ -44,6 +44,32 @@
             @break
 
         @case('select')
+            @php
+                $autoOpts = $field['auto_options'] ?? null;
+                $resolvedOptions = $options;
+
+                // auto_options: イベント開催前日まで、定休日(火・水)を除き、10-17時の1時間枠
+                if ($autoOpts === 'business_hours_until_event' && $event) {
+                    $resolvedOptions = [];
+                    $today = \Carbon\Carbon::today();
+                    $endDate = $event->start_at
+                        ? \Carbon\Carbon::parse($event->start_at)->subDay()
+                        : $today->copy()->addDays(60);
+                    $current = $today->copy();
+                    $wdMap = ['Mon'=>'月','Tue'=>'火','Wed'=>'水','Thu'=>'木','Fri'=>'金','Sat'=>'土','Sun'=>'日'];
+                    while ($current->lte($endDate)) {
+                        // 火・水は定休日のためスキップ
+                        if (!in_array($current->dayOfWeek, [\Carbon\Carbon::TUESDAY, \Carbon\Carbon::WEDNESDAY], true)) {
+                            $wd = $wdMap[$current->format('D')] ?? '';
+                            foreach ([10,11,12,13,14,15,16] as $h) {
+                                $resolvedOptions[] = $current->format('n月j日').'（'.$wd.'）'
+                                    . sprintf(' %02d:00', $h).' 〜 '.sprintf('%02d:00', $h+1);
+                            }
+                        }
+                        $current->addDay();
+                    }
+                }
+            @endphp
             <select
                 id="lp-{{ $key }}"
                 name="{{ $key }}"
@@ -52,7 +78,7 @@
                 class="lp-field__input lp-field__select"
             >
                 <option value="">{{ $placeholder ?: '選択してください' }}</option>
-                @foreach($options as $opt)
+                @foreach($resolvedOptions as $opt)
                     <option value="{{ $opt }}" @selected((string) $value === (string) $opt)>{{ $opt }}</option>
                 @endforeach
             </select>

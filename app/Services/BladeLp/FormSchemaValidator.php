@@ -93,7 +93,10 @@ class FormSchemaValidator
                 case 'select':
                 case 'radio':
                     $fieldRules[] = 'string';
-                    if (!empty($field['options']) && is_array($field['options'])) {
+                    $fieldRules[] = 'max:255';
+                    // auto_options が指定されている場合は in: を付けない（動的生成のため）
+                    if (empty($field['auto_options'])
+                        && !empty($field['options']) && is_array($field['options'])) {
                         $fieldRules[] = 'in:'.implode(',', array_map('strval', $field['options']));
                     }
                     break;

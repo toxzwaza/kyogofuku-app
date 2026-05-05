@@ -17,11 +17,8 @@ class BladeLpController extends Controller
             abort(404);
         }
 
-        $now = now();
-        $today = $now->copy()->startOfDay();
-        if ($event->start_at && $today->lt($event->start_at)) {
-            abort(404);
-        }
+        // Blade テンプレ方式の LP は事前告知用途を前提とするため、
+        // start_at が未来日付でも公開する（is_public のみで制御）。
 
         $view = $event->bladeLpView();
         if (!$view) {
