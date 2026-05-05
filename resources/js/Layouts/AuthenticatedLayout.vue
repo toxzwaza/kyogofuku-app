@@ -5,6 +5,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import UiToastContainer from '@/Components/UI/ToastContainer.vue';
+import UiVersionSwitcher from '@/Components/UI/UiVersionSwitcher.vue';
 import { Link, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
@@ -314,6 +315,8 @@ const menuItems = [
                         </div>
 
                         <div class="hidden sm:flex sm:items-center sm:ml-6">
+                            <!-- UI Version Switcher（端末ごと） -->
+                            <UiVersionSwitcher variant="compact" />
                             <!-- Settings Dropdown -->
                             <div class="ml-3 relative">
                                 <Dropdown align="right" width="48">

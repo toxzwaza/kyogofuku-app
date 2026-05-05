@@ -1,7 +1,7 @@
 <template>
     <Head title="ダッシュボード" />
 
-    <AuthenticatedLayout>
+    <component :is="layoutComponent">
         <template #header>
       <h2 class="font-semibold text-xl text-gray-800 leading-tight">
         ダッシュボード
@@ -2552,12 +2552,17 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </component>
 </template>
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import AuthenticatedLayoutLegacy from "@/Layouts/AuthenticatedLayoutLegacy.vue";
+import { useUiVersion } from "@/composables/useUiVersion";
+
+const { isLegacy } = useUiVersion();
+const layoutComponent = computed(() => isLegacy.value ? AuthenticatedLayoutLegacy : AuthenticatedLayout);
 import DigitalClock from "@/Components/DigitalClock.vue";
 import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
