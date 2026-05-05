@@ -524,6 +524,47 @@
                     </div>
                   </template>
 
+                  <!-- フォーム取得情報セクション（form_schema 駆動の Blade LP 用） -->
+                  <div v-if="hasCustomFormData" class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                      </svg>
+                      フォーム取得情報
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div
+                        v-for="field in customFormFieldsExceptTextarea"
+                        :key="field.key"
+                        :class="[
+                          'rounded-lg p-4 border',
+                          field.type === 'timeslot'
+                            ? 'md:col-span-2 bg-indigo-50 border-indigo-200'
+                            : 'bg-gray-50 border-gray-200'
+                        ]"
+                      >
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+                          {{ field.label }}
+                        </label>
+                        <p class="text-base font-medium text-gray-900 whitespace-pre-wrap">
+                          {{ formatFormDataValue(field) }}
+                        </p>
+                      </div>
+                      <div
+                        v-for="field in customFormFieldsTextarea"
+                        :key="`ta-${field.key}`"
+                        class="md:col-span-2 bg-gray-50 rounded-lg p-4 border border-gray-200"
+                      >
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                          {{ field.label }}
+                        </label>
+                        <p class="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
+                          {{ reservation.form_data?.[field.key] || '—' }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- お問い合わせ内容セクション -->
                   <div v-if="reservation.inquiry_message" class="mb-6">
                     <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
@@ -2072,6 +2113,53 @@ const props = defineProps({
     }),
   },
 });
+
+// === Blade LP の form_schema 駆動の form_data 表示ロジック（新UI Show.vue と同期） ===
+const DUPLICATED_FORM_KEYS = new Set([
+  'name', 'furigana', 'email', 'phone',
+  'address', 'birth_date',
+  'visit_slot', 'visit_slot_label',
+  'reservation_datetime', 'venue_id',
+]);
+
+const customFormFields = computed(() => {
+  const schema = props.event?.form_schema;
+  if (!Array.isArray(schema)) return [];
+  return schema.filter(f =>
+    f && f.type !== 'hidden' && f.key && !DUPLICATED_FORM_KEYS.has(f.key)
+  );
+});
+
+const hasCustomFormData = computed(() => {
+  if (customFormFields.value.length === 0) return false;
+  const fd = props.reservation?.form_data;
+  return !!fd && typeof fd === 'object' && Object.keys(fd).length > 0;
+});
+
+const formatFormDataValue = (field) => {
+  const data = props.reservation?.form_data;
+  if (!data) return '—';
+  const value = data[field.key];
+  if (value === null || value === undefined || value === '') return '—';
+  if (field.type === 'timeslot') {
+    return data[field.key + '_label'] || `#${value}`;
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.join('、') : '—';
+  }
+  if (field.type === 'checkbox' && (!field.options || field.options.length === 0)) {
+    if (value === '0' || value === 0 || value === false) return 'いいえ';
+    if (value === '1' || value === 1 || value === true) return 'はい';
+  }
+  return String(value);
+};
+
+const customFormFieldsExceptTextarea = computed(() =>
+  customFormFields.value.filter(f => f.type !== 'textarea')
+);
+const customFormFieldsTextarea = computed(() =>
+  customFormFields.value.filter(f => f.type === 'textarea')
+);
 
 const lineCustomerForLineSection = computed(() => {
   if (!props.line_section || props.line_section.context !== "customer") {
