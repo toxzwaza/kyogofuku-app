@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CustomerLineContact;
 use App\Models\Shop;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 /**
@@ -13,6 +14,8 @@ use Inertia\Inertia;
  */
 class LineContactListController extends Controller
 {
+    use ResolvesUiView;
+
     public function index(Request $request)
     {
         $type = (string) $request->input('type', 'all');         // all / customer / reservation / unbound
@@ -104,7 +107,7 @@ class LineContactListController extends Controller
             return $base + ['target' => null];
         })->values();
 
-        return Inertia::render('Admin/LineContacts/Index', [
+        return Inertia::render($this->viewFor('Admin/LineContacts/Index'), [
             'contacts' => [
                 'data' => $items,
                 'links' => $paginator->linkCollection(),

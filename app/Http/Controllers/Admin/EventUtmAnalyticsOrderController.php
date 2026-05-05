@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class EventUtmAnalyticsOrderController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * UTM分析APIに含めるイベントの並び順管理画面を表示
      */
@@ -19,7 +22,7 @@ class EventUtmAnalyticsOrderController extends Controller
             ->orderByDesc('created_at')
             ->get(['id', 'title', 'utm_analytics_sort_order']);
 
-        return Inertia::render('Admin/Event/UtmAnalyticsOrder', [
+        return Inertia::render($this->viewFor('Admin/Event/UtmAnalyticsOrder'), [
             'events' => $events,
         ]);
     }

@@ -24,6 +24,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
@@ -31,6 +32,8 @@ use Intervention\Image\ImageManager;
 
 class CustomerController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * 顧客一覧を表示
      */
@@ -257,7 +260,7 @@ class CustomerController extends Controller
             }
         }
 
-        return Inertia::render('Admin/Customer/Index', [
+        return Inertia::render($this->viewFor('Admin/Customer/Index'), [
             'customers' => $customers,
             'ceremonyAreas' => $ceremonyAreas,
             'shops' => $shops,
@@ -516,7 +519,7 @@ class CustomerController extends Controller
             ];
         })->values()->all();
 
-        return Inertia::render('Admin/Customer/Show', [
+        return Inertia::render($this->viewFor('Admin/Customer/Show'), [
             'customer' => $customerForInertia,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'ceremonyAreas' => $ceremonyAreas,
@@ -580,7 +583,7 @@ class CustomerController extends Controller
         $initial = $this->buildAdditionalInfoInitial($customer);
         $initial['staff_name'] = auth()->user()?->name ?? '';
 
-        return Inertia::render('Admin/Customer/AdditionalInfo', [
+        return Inertia::render($this->viewFor('Admin/Customer/AdditionalInfo'), [
             'customer' => $customer->only('id', 'name', 'kana'),
             'initial' => $initial,
         ]);
@@ -800,7 +803,7 @@ class CustomerController extends Controller
      */
     public function additionalInfoThanks(Customer $customer)
     {
-        return Inertia::render('Admin/Customer/AdditionalInfoThanks', [
+        return Inertia::render($this->viewFor('Admin/Customer/AdditionalInfoThanks'), [
             'customer' => $customer->only('id', 'name'),
         ]);
     }
@@ -1395,7 +1398,7 @@ class CustomerController extends Controller
             }
         }
 
-        return Inertia::render('Admin/Customer/ConstraintSign', [
+        return Inertia::render($this->viewFor('Admin/Customer/ConstraintSign'), [
             'customer' => $customer->only('id', 'name', 'kana'),
             'template' => [
                 'id' => $template->id,

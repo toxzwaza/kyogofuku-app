@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\TimeslotTemplate;
 use App\Models\TimeslotTemplateSlot;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class TimeslotTemplateController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * テンプレートグループ一覧を表示
      */
@@ -19,7 +22,7 @@ class TimeslotTemplateController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return Inertia::render('Admin/TimeslotTemplate/Index', [
+        return Inertia::render($this->viewFor('Admin/TimeslotTemplate/Index'), [
             'templates' => $templates,
         ]);
     }
@@ -29,7 +32,7 @@ class TimeslotTemplateController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/TimeslotTemplate/Create');
+        return Inertia::render($this->viewFor('Admin/TimeslotTemplate/Create'));
     }
 
     /**
@@ -69,7 +72,7 @@ class TimeslotTemplateController extends Controller
     {
         $timeslotTemplate->load('slots');
 
-        return Inertia::render('Admin/TimeslotTemplate/Edit', [
+        return Inertia::render($this->viewFor('Admin/TimeslotTemplate/Edit'), [
             'template' => $timeslotTemplate,
         ]);
     }

@@ -9,12 +9,15 @@ use App\Models\EventReservation;
 use App\Models\Shop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EventReservationExportController extends Controller
 {
+    use ResolvesUiView;
+
     private const STATUSES = ['未対応', '確認中', '返信待ち', '対応完了済み', 'キャンセル済み'];
 
     private const COLUMN_LABELS = [
@@ -145,7 +148,7 @@ class EventReservationExportController extends Controller
                 ->withQueryString();
         }
 
-        return Inertia::render('Admin/Event/ReservationExport', [
+        return Inertia::render($this->viewFor('Admin/Event/ReservationExport'), [
             'shops' => $shops,
             'events' => $events,
             'statuses' => self::STATUSES,

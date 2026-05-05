@@ -7,10 +7,13 @@ use App\Models\WorkAttribute;
 use App\Models\WorkAttributePatternTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class WorkAttributeController extends Controller
 {
+    use ResolvesUiView;
+
     private function ensureAttendanceManager(Request $request): void
     {
         if (!$request->user()->isAttendanceManager()) {
@@ -27,7 +30,7 @@ class WorkAttributeController extends Controller
             ->orderBy('id')
             ->get();
 
-        return Inertia::render('Admin/WorkAttribute/Index', [
+        return Inertia::render($this->viewFor('Admin/WorkAttribute/Index'), [
             'workAttributes' => $attributes,
         ]);
     }
@@ -36,7 +39,7 @@ class WorkAttributeController extends Controller
     {
         $this->ensureAttendanceManager($request);
 
-        return Inertia::render('Admin/WorkAttribute/Create');
+        return Inertia::render($this->viewFor('Admin/WorkAttribute/Create'));
     }
 
     public function store(Request $request)
@@ -64,7 +67,7 @@ class WorkAttributeController extends Controller
         $workAttribute->load('patternTimes');
         $matrix = $this->buildPatternMatrix($workAttribute);
 
-        return Inertia::render('Admin/WorkAttribute/Edit', [
+        return Inertia::render($this->viewFor('Admin/WorkAttribute/Edit'), [
             'workAttribute' => $workAttribute,
             'patternMatrix' => $matrix,
         ]);

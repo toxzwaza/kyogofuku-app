@@ -10,10 +10,13 @@ use App\Models\LineUnknownInboundMessage;
 use App\Models\Shop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class LineUnknownInboxController extends Controller
 {
+    use ResolvesUiView;
+
     public function index(Request $request)
     {
         $unassignedOnly = $request->boolean('unassigned');
@@ -54,7 +57,7 @@ class LineUnknownInboxController extends Controller
             return strcmp((string) $b['last_at'], (string) $a['last_at']);
         });
 
-        return Inertia::render('Admin/LineUnknownInbox/Index', [
+        return Inertia::render($this->viewFor('Admin/LineUnknownInbox/Index'), [
             'groups' => $groups,
             'shops' => Shop::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'filters' => [
@@ -88,7 +91,7 @@ class LineUnknownInboxController extends Controller
             ? Shop::query()->find($validated['shop_id'])
             : null;
 
-        return Inertia::render('Admin/LineUnknownInbox/Show', [
+        return Inertia::render($this->viewFor('Admin/LineUnknownInbox/Show'), [
             'shop' => $shop ? ['id' => $shop->id, 'name' => $shop->name] : null,
             'line_user_id' => $validated['line_user_id'],
             'line_user_id_masked' => $this->maskUserId($validated['line_user_id']),

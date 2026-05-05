@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PhotoStudio;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class PhotoStudioController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * スタジオ一覧を表示
      */
@@ -16,7 +19,7 @@ class PhotoStudioController extends Controller
     {
         $photoStudios = PhotoStudio::orderBy('name')->paginate(20);
 
-        return Inertia::render('Admin/PhotoStudio/Index', [
+        return Inertia::render($this->viewFor('Admin/PhotoStudio/Index'), [
             'photoStudios' => $photoStudios,
         ]);
     }
@@ -26,7 +29,7 @@ class PhotoStudioController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/PhotoStudio/Create');
+        return Inertia::render($this->viewFor('Admin/PhotoStudio/Create'));
     }
 
     /**
@@ -51,7 +54,7 @@ class PhotoStudioController extends Controller
      */
     public function edit(PhotoStudio $photoStudio)
     {
-        return Inertia::render('Admin/PhotoStudio/Edit', [
+        return Inertia::render($this->viewFor('Admin/PhotoStudio/Edit'), [
             'photoStudio' => $photoStudio,
         ]);
     }

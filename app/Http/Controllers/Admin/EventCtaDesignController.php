@@ -8,6 +8,7 @@ use App\Models\MediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
@@ -15,12 +16,14 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class EventCtaDesignController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * CTAデザイン設定画面を表示
      */
     public function edit(Event $event)
     {
-        return Inertia::render('Admin/Event/CtaDesign/Edit', [
+        return Inertia::render($this->viewFor('Admin/Event/CtaDesign/Edit'), [
             'event' => $event,
         ]);
     }
