@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
 use App\Services\BladeLp\FormSchemaValidator;
+use App\Services\BladeLp\LineNotifier;
 use App\Services\EventReservationScheduleBootstrapService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -111,6 +112,16 @@ class BladeReservationController extends Controller
             app(EventReservationScheduleBootstrapService::class)->bootstrapIfApplicable($reservation);
         } catch (\Throwable $e) {
             Log::error('[BladeReservation] Google カレンダー連携に失敗', [
+                'reservation_id' => $reservation->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // LINE グループ通知（紐づく shops の line_group_id すべてに送信）
+        try {
+            app(LineNotifier::class)->notify($event, $reservation);
+        } catch (\Throwable $e) {
+            Log::error('[BladeReservation] LINE 通知失敗', [
                 'reservation_id' => $reservation->id,
                 'error' => $e->getMessage(),
             ]);
