@@ -13,11 +13,14 @@ use App\Services\AttendanceScopeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * 勤怠管理一覧（管理者: 自店舗 / 勤怠管理者: 全店舗）
      */
@@ -85,7 +88,7 @@ class AttendanceController extends Controller
                 ->all();
         }
 
-        return Inertia::render('Admin/Attendance/Index', [
+        return Inertia::render($this->viewFor('Admin/Attendance/Index'), [
             'records' => ['data' => $enriched->values()->all()],
             'shops' => $shops,
             'users' => $users,

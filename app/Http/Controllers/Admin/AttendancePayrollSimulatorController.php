@@ -9,10 +9,13 @@ use App\Models\WorkAttributePatternTime;
 use App\Services\AttendancePayrollTimeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class AttendancePayrollSimulatorController extends Controller
 {
+    use ResolvesUiView;
+
     public function index(Request $request)
     {
         if (!$request->user()->isAttendanceManager()) {
@@ -39,7 +42,7 @@ class AttendancePayrollSimulatorController extends Controller
 
         $lastResult = $request->session()->pull('payroll_simulator_result');
 
-        return Inertia::render('Admin/Attendance/PayrollSimulator', [
+        return Inertia::render($this->viewFor('Admin/Attendance/PayrollSimulator'), [
             'patternMatrix' => $matrix,
             'lastResult' => $lastResult,
         ]);

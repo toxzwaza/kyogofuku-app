@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
@@ -17,6 +18,8 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class MediaFileController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * メディアライブラリ一覧
      */
@@ -58,7 +61,7 @@ class MediaFileController extends Controller
             ->sort()
             ->values();
 
-        return Inertia::render('Admin/Media/Index', [
+        return Inertia::render($this->viewFor('Admin/Media/Index'), [
             'mediaFiles' => $mediaFiles,
             'allTags' => $allTags,
             'filters' => [

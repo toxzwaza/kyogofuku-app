@@ -5,6 +5,7 @@ import {
     Search, Sun, Moon, Bell, HelpCircle, ChevronDown, LogOut, User as UserIcon, Menu, Sparkles,
 } from 'lucide-vue-next';
 import { UiDropdown, UiDropdownItem } from '@/Components/UI';
+import UiVersionSwitcher from '@/Components/UI/UiVersionSwitcher.vue';
 import { useDarkMode } from '@/composables/useDarkMode.js';
 
 defineProps({
@@ -53,6 +54,7 @@ const logout = () => {
 
         <!-- Actions -->
         <div class="flex items-center gap-1">
+            <UiVersionSwitcher variant="compact" class="mr-1" />
             <button
                 type="button"
                 class="p-2 rounded hover:bg-brand-surface-2 text-brand-text-muted hover:text-brand-text transition-colors"

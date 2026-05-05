@@ -8,10 +8,13 @@ use App\Models\Shop;
 use App\Models\WorkAttribute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * スタッフ一覧を表示
      */
@@ -53,7 +56,7 @@ class UserController extends Controller
 
         $shops = Shop::where('is_active', true)->get();
 
-        return Inertia::render('Admin/User/Index', [
+        return Inertia::render($this->viewFor('Admin/User/Index'), [
             'users' => $users,
             'shops' => $shops,
             'filters' => [
@@ -72,7 +75,7 @@ class UserController extends Controller
         $shops = Shop::where('is_active', true)->get();
         $workAttributes = WorkAttribute::query()->orderBy('sort_order')->orderBy('id')->get(['id', 'name']);
 
-        return Inertia::render('Admin/User/Create', [
+        return Inertia::render($this->viewFor('Admin/User/Create'), [
             'shops' => $shops,
             'workAttributes' => $workAttributes,
         ]);
@@ -135,7 +138,7 @@ class UserController extends Controller
         $mainShop = $user->shops->firstWhere('pivot.main', true);
         $mainShopId = $mainShop ? $mainShop->id : null;
 
-        return Inertia::render('Admin/User/Edit', [
+        return Inertia::render($this->viewFor('Admin/User/Edit'), [
             'user' => $user,
             'shops' => $shops,
             'workAttributes' => $workAttributes,

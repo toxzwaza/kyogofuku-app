@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AttendancePayrollSetting;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class AttendancePayrollSettingController extends Controller
 {
+    use ResolvesUiView;
+
     private function ensureAttendanceManager(Request $request): void
     {
         if (!$request->user()->isAttendanceManager()) {
@@ -22,7 +25,7 @@ class AttendancePayrollSettingController extends Controller
 
         $setting = AttendancePayrollSetting::query()->orderBy('id')->firstOrFail();
 
-        return Inertia::render('Admin/Attendance/PayrollSettings', [
+        return Inertia::render($this->viewFor('Admin/Attendance/PayrollSettings'), [
             'setting' => $setting,
         ]);
     }

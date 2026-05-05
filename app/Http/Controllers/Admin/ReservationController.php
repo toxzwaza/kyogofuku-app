@@ -25,10 +25,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class ReservationController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * イベント別予約一覧を表示
      */
@@ -293,7 +296,7 @@ class ReservationController extends Controller
             ];
         }
 
-        return Inertia::render('Admin/Reservation/Index', [
+        return Inertia::render($this->viewFor('Admin/Reservation/Index'), [
             'event' => $event,
             'reservations' => $reservations,
             'timeslotStats' => $timeslotStats,
@@ -532,7 +535,7 @@ class ReservationController extends Controller
             ];
         }
 
-        return Inertia::render('Admin/Reservation/Show', [
+        return Inertia::render($this->viewFor('Admin/Reservation/Show'), [
             'reservation' => $reservation,
             'event' => $reservation->event,
             'indexFilters' => $indexFilters,
@@ -674,7 +677,7 @@ class ReservationController extends Controller
             })->values();
         }
 
-        return Inertia::render('Admin/Reservation/Edit', [
+        return Inertia::render($this->viewFor('Admin/Reservation/Edit'), [
             'reservation' => $reservation,
             'event' => $event,
             'venues' => $venues->map(fn ($v) => ['id' => $v->id, 'name' => $v->name]),

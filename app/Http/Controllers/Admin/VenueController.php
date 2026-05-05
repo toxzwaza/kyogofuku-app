@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
@@ -16,6 +17,8 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class VenueController extends Controller
 {
+    use ResolvesUiView;
+
     /**
      * 会場一覧を表示
      */
@@ -23,7 +26,7 @@ class VenueController extends Controller
     {
         $venues = Venue::orderBy('created_at', 'desc')->paginate(20);
 
-        return Inertia::render('Admin/Venue/Index', [
+        return Inertia::render($this->viewFor('Admin/Venue/Index'), [
             'venues' => $venues,
         ]);
     }
@@ -33,7 +36,7 @@ class VenueController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Venue/Create');
+        return Inertia::render($this->viewFor('Admin/Venue/Create'));
     }
 
     /**
@@ -43,7 +46,7 @@ class VenueController extends Controller
     {
         $venue->load('events');
 
-        return Inertia::render('Admin/Venue/Show', [
+        return Inertia::render($this->viewFor('Admin/Venue/Show'), [
             'venue' => $venue,
         ]);
     }
@@ -53,7 +56,7 @@ class VenueController extends Controller
      */
     public function edit(Venue $venue)
     {
-        return Inertia::render('Admin/Venue/Edit', [
+        return Inertia::render($this->viewFor('Admin/Venue/Edit'), [
             'venue' => $venue,
         ]);
     }
