@@ -326,6 +326,17 @@ class EventReservationController extends Controller
             }
         }
 
+        // Blade テンプレ方式 LP（render_type=blade）の場合は Blade view を返す
+        if ($event->usesBladeLp()) {
+            $view = $event->bladeLpView().'_thanks';
+            $thanksView = view()->exists($view) ? $view : 'event.lp.thanks';
+
+            return view($thanksView, [
+                'event' => $event,
+                'formData' => $request->session()->get('blade_lp_form_data.'.$event->id, []),
+            ]);
+        }
+
         // セッションから送信データを取得
         $formData = $request->session()->get('formData');
 

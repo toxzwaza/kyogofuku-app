@@ -117,8 +117,9 @@ Route::post('/event/{event}/reserve', [EventReservationController::class, 'store
 Route::get('/event/{event}/reserve/success/{text?}', [EventReservationController::class, 'success'])->name('event.reserve.success');
 
 // Blade テンプレ方式 LP（render_type=blade のイベント用）
+// thanks ページは Vue 版と同じ event.reserve.success ルートを共有し、
+// EventReservationController::success() 内で Blade 版を判定して分岐する。
 Route::post('/event/{event}/blade-reserve', [BladeReservationController::class, 'store'])->name('blade-lp.reserve');
-Route::get('/event/{event}/blade-reserve/thanks', [BladeReservationController::class, 'thanks'])->name('blade-lp.thanks');
 Route::get('/api/postal-code/search', [PostalCodeController::class, 'search'])->name('api.postal-code.search');
 
 // 資料表示

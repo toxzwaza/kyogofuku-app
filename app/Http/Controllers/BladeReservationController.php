@@ -53,9 +53,20 @@ class BladeReservationController extends Controller
         $email = is_string($validated['email'] ?? null) ? $validated['email'] : null;
         $phone = is_string($validated['phone'] ?? null) ? $validated['phone'] : null;
 
+        // venue_id (options_from='event_venues' の select) があれば確保
+        $explicitVenueId = null;
+        foreach ($schema as $f) {
+            if (($f['type'] ?? '') === 'select'
+                && ($f['options_from'] ?? null) === 'event_venues'
+                && !empty($validated[$f['key']])) {
+                $explicitVenueId = (int) $validated[$f['key']];
+                break;
+            }
+        }
+
         // timeslot 型のフィールドがあれば、その値で予約枠検証 → 残席チェック → 日時/会場を導出
         $reservationDatetime = null;
-        $venueId = null;
+        $venueId = $explicitVenueId;
         foreach ($schema as $f) {
             if (($f['type'] ?? '') !== 'timeslot') continue;
             $tsKey = $f['key'] ?? null;
@@ -69,6 +80,15 @@ class BladeReservationController extends Controller
                 throw ValidationException::withMessages([
                     $tsKey => ['選択された予約枠が見つかりません。'],
                 ]);
+            }
+
+            // venue 連動チェック: filter_by_venue_field 指定があれば、選択 venue とスロットの venue が一致する必要
+            if (!empty($f['filter_by_venue_field']) && $explicitVenueId !== null) {
+                if ((int) $slot->venue_id !== $explicitVenueId) {
+                    throw ValidationException::withMessages([
+                        $tsKey => ['選択された店舗とご来店日時の組み合わせが正しくありません。'],
+                    ]);
+                }
             }
 
             $startAt = $slot->start_at->format('Y-m-d H:i:s');
@@ -87,10 +107,9 @@ class BladeReservationController extends Controller
             }
 
             $reservationDatetime = $startAt;
-            $venueId = $slot->venue_id;
-            // form_data に表示用ラベルも添える
+            $venueId = $slot->venue_id; // スロットの venue_id を最終値として採用
             $validated[$tsKey.'_label'] = $slot->start_at->format('Y/n/j（D） H:i');
-            break; // 最初の timeslot 型のみ採用
+            break;
         }
 
         $reservation = EventReservation::create([
@@ -129,24 +148,14 @@ class BladeReservationController extends Controller
 
         $request->session()->put('blade_lp_form_data.'.$event->id, $validated);
 
-        return redirect()->route('blade-lp.thanks', ['event' => $event->id])
-            ->with('reservation_id', $reservation->id);
-    }
-
-    public function thanks(Request $request, Event $event)
-    {
-        if (!$event->is_public || !$event->usesBladeLp()) {
-            abort(404);
+        // Vue 版と同じ event.reserve.success ルートにリダイレクトする。
+        // success() 側で usesBladeLp() を判定して Blade テンプレを返す。
+        if ($event->success_text) {
+            return redirect()->route('event.reserve.success', [$event->id, $event->success_text])
+                ->with('reservation_id', $reservation->id);
         }
 
-        $view = $event->bladeLpView().'_thanks';
-
-        // 専用 thanks ビューが無ければ汎用 thanks にフォールバック
-        $thanksView = view()->exists($view) ? $view : 'event.lp.thanks';
-
-        return view($thanksView, [
-            'event' => $event,
-            'formData' => $request->session()->get('blade_lp_form_data.'.$event->id, []),
-        ]);
+        return redirect()->route('event.reserve.success', $event->id)
+            ->with('reservation_id', $reservation->id);
     }
 }
