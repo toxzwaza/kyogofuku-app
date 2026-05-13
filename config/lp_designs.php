@@ -58,6 +58,15 @@ return [
             'requires_form_schema' => true,
             'default_tokens' => [],
         ],
+
+        'shop_visit' => [
+            'label' => '店舗ご来店予約（白・ベージュ・ピンク／気軽さ訴求）',
+            'render_type' => 'blade',
+            'blade_view' => 'event.lp.templates.shop_visit',
+            'allowed_form_types' => null,
+            'requires_form_schema' => true,
+            'default_tokens' => [],
+        ],
     ],
 
     /**

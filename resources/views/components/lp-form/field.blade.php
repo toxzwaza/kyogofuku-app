@@ -46,10 +46,20 @@
         @case('select')
             @php
                 $autoOpts = $field['auto_options'] ?? null;
-                $resolvedOptions = $options;
+                $optionsFrom = $field['options_from'] ?? null;
+                // [value => label] 形式に統一
+                $resolvedOptions = [];
+                foreach ($options as $opt) { $resolvedOptions[(string) $opt] = (string) $opt; }
 
+                // options_from: event_venues — event の venues から動的生成
+                if ($optionsFrom === 'event_venues' && $event) {
+                    $resolvedOptions = [];
+                    foreach ($event->venues as $v) {
+                        $resolvedOptions[(string) $v->id] = $v->name;
+                    }
+                }
                 // auto_options: イベント開催前日まで、定休日(火・水)を除き、10-17時の1時間枠
-                if ($autoOpts === 'business_hours_until_event' && $event) {
+                elseif ($autoOpts === 'business_hours_until_event' && $event) {
                     $resolvedOptions = [];
                     $today = \Carbon\Carbon::today();
                     $endDate = $event->start_at
@@ -58,12 +68,12 @@
                     $current = $today->copy();
                     $wdMap = ['Mon'=>'月','Tue'=>'火','Wed'=>'水','Thu'=>'木','Fri'=>'金','Sat'=>'土','Sun'=>'日'];
                     while ($current->lte($endDate)) {
-                        // 火・水は定休日のためスキップ
                         if (!in_array($current->dayOfWeek, [\Carbon\Carbon::TUESDAY, \Carbon\Carbon::WEDNESDAY], true)) {
                             $wd = $wdMap[$current->format('D')] ?? '';
                             foreach ([10,11,12,13,14,15,16] as $h) {
-                                $resolvedOptions[] = $current->format('n月j日').'（'.$wd.'）'
+                                $opt = $current->format('n月j日').'（'.$wd.'）'
                                     . sprintf(' %02d:00', $h).' 〜 '.sprintf('%02d:00', $h+1);
+                                $resolvedOptions[$opt] = $opt;
                             }
                         }
                         $current->addDay();
@@ -78,8 +88,8 @@
                 class="lp-field__input lp-field__select"
             >
                 <option value="">{{ $placeholder ?: '選択してください' }}</option>
-                @foreach($resolvedOptions as $opt)
-                    <option value="{{ $opt }}" @selected((string) $value === (string) $opt)>{{ $opt }}</option>
+                @foreach($resolvedOptions as $val => $label)
+                    <option value="{{ $val }}" @selected((string) $value === (string) $val)>{{ $label }}</option>
                 @endforeach
             </select>
             @break
@@ -87,7 +97,14 @@
         @case('timeslot')
             @php
                 $weekdayMap = ['Mon'=>'月','Tue'=>'火','Wed'=>'水','Thu'=>'木','Fri'=>'金','Sat'=>'土','Sun'=>'日'];
-                $slots = $event ? $event->timeslots->where('is_active', true)->sortBy('start_at') : collect();
+                $today = \Carbon\Carbon::today();
+                // 本日以降の予約枠のみ表示（過去日は予約できないため非表示）
+                $slots = $event
+                    ? $event->timeslots
+                        ->where('is_active', true)
+                        ->filter(fn($s) => $s->start_at && $s->start_at->gte($today))
+                        ->sortBy('start_at')
+                    : collect();
                 $reservedCounts = $event
                     ? $event->reservations->where('cancel_flg', false)
                         ->groupBy(function ($r) {
@@ -97,10 +114,107 @@
                         })
                         ->map->count()
                     : collect();
-                $byDate = $slots->groupBy(fn($s) => $s->start_at->format('Y-m-d'));
+
+                // venue 連動フィルタ: 別フィールドの値で venue_id を絞る
+                $venueFieldKey = $field['filter_by_venue_field'] ?? null;
+
+                if ($venueFieldKey) {
+                    // venue ごとに → 日付ごとにグループ
+                    $byVenueDate = $slots->groupBy(fn($s) => (string) ($s->venue_id ?? ''))->map(
+                        fn($vSlots) => $vSlots->groupBy(fn($s) => $s->start_at->format('Y-m-d'))
+                    );
+                } else {
+                    $byDate = $slots->groupBy(fn($s) => $s->start_at->format('Y-m-d'));
+                }
             @endphp
 
             <input type="hidden" name="{{ $key }}" x-model="{{ $xModel }}" @if($required) required @endif>
+
+            @if($venueFieldKey)
+                <div class="lp-slot">
+                    {{-- venue 未選択ガイド --}}
+                    <p class="lp-slot__guard"
+                       x-show="!values['{{ $venueFieldKey }}']"
+                       x-transition.opacity>
+                        ↑ まずご希望の店舗をお選びください
+                    </p>
+
+                    @foreach($byVenueDate as $venueId => $byDate)
+                        <div x-show="String(values['{{ $venueFieldKey }}']) === '{{ $venueId }}'"
+                             x-transition.opacity x-cloak>
+                            @foreach($byDate as $date => $daySlots)
+                                @php
+                                    $dateObj = \Carbon\Carbon::parse($date);
+                                    $wd = $weekdayMap[$dateObj->format('D')] ?? '';
+                                @endphp
+                                <details class="lp-slot__day">
+                                    <summary class="lp-slot__date">
+                                        <span class="lp-slot__date-icon">📅</span>
+                                        <span class="lp-slot__date-text">
+                                            {{ $dateObj->format('n月j日') }}（{{ $wd }}）
+                                        </span>
+                                        <span class="lp-slot__date-toggle" aria-hidden="true">＋</span>
+                                    </summary>
+                                    <div class="lp-slot__grid">
+                                        @foreach($daySlots as $slot)
+                                            @php
+                                                $startAt = $slot->start_at;
+                                                $countKey = $startAt->format('Y-m-d H:i:s').'|'.($slot->venue_id ?? 'null');
+                                                $reserved = (int) ($reservedCounts[$countKey] ?? 0);
+                                                $remaining = max(0, $slot->capacity - $reserved);
+                                                $isFull = $remaining <= 0;
+                                                $rate = $slot->capacity > 0 ? ($reserved / $slot->capacity) : 0;
+                                                $badge = null;
+                                                if (!$isFull) {
+                                                    if ($remaining >= 1 && $remaining <= 2) {
+                                                        $badge = 'nokori';
+                                                    } elseif ($remaining >= 3 && $rate >= 0.4 && $rate < 0.7) {
+                                                        $badge = 'nerai';
+                                                    }
+                                                }
+                                            @endphp
+                                            <button
+                                                type="button"
+                                                class="lp-slot__btn"
+                                                :class="{ 'is-selected': {{ $xModel }} === '{{ $slot->id }}' }"
+                                                @if($isFull) disabled @endif
+                                                @click="
+                                                    {{ $xModel }} = '{{ $slot->id }}';
+                                                    $nextTick(() => {
+                                                        const w = $el.closest('.lp-field');
+                                                        const next = w?.parentElement?.nextElementSibling;
+                                                        if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    });
+                                                "
+                                            >
+                                                <p class="lp-slot__time">
+                                                    {{ $startAt->format('H:i') }} 〜 {{ $startAt->copy()->addHour()->format('H:i') }}
+                                                </p>
+                                                <div class="lp-slot__center">
+                                                    <div class="lp-slot__badges">
+                                                        @if($isFull)
+                                                            <span class="lp-slot__badge lp-slot__badge--full">🔒 受付終了</span>
+                                                        @elseif($badge === 'nokori')
+                                                            <span class="lp-slot__badge lp-slot__badge--nokori">✨ 残りわずか</span>
+                                                        @elseif($badge === 'nerai')
+                                                            <span class="lp-slot__badge lp-slot__badge--nerai">★ ねらい目</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                <p class="lp-slot__remaining">
+                                                    @if($isFull) 満枠 @else 残り{{ $remaining }}枠 @endif
+                                                </p>
+                                                <span class="lp-slot__chevron" aria-hidden="true">▶</span>
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </details>
+                            @endforeach
+                        </div>
+                    @endforeach
+                </div>
+                @break
+            @endif
 
             <div class="lp-slot">
                 @foreach($byDate as $date => $daySlots)

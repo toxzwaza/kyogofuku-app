@@ -92,6 +92,12 @@ class FormSchemaValidator
                     break;
                 case 'select':
                 case 'radio':
+                    // options_from='event_venues' の場合は venue.id (integer) を期待
+                    if (($field['options_from'] ?? null) === 'event_venues') {
+                        $fieldRules[] = 'integer';
+                        $fieldRules[] = 'exists:venues,id';
+                        break;
+                    }
                     $fieldRules[] = 'string';
                     $fieldRules[] = 'max:255';
                     // auto_options が指定されている場合は in: を付けない（動的生成のため）
