@@ -1,7 +1,7 @@
 @extends('event.lp.layouts.base')
 
 @section('title', '大創業祭｜京呉服 平田 福井店')
-@section('description', 'タンスのきものとジュエリー、まるごと整理。京呉服 平田 大創業祭 5/22(金)〜5/25(月) 福井店にて開催。事前持込で着物丸洗い3,300円、しみ抜き・汗取り、紫真珠特別企画、ジュエリー高価下取り、たまごすくい取り。')
+@section('description', 'タンスのきものとジュエリー、まるごと整理。京呉服 平田 大創業祭 5/22(金)〜5/25(月) 福井店にて開催。事前持込で着物丸洗い3,300円、しみ抜き・汗取り、ジュエリー高価下取り。')
 
 @php
     $imgBase = asset('images/lp/daisougyousai');
@@ -69,13 +69,11 @@ body {
 .ds-hero__period-venue,
 .ds-soudan__highlight,
 .ds-bonus__label,
-.ds-sukui__label,
 .ds-price-card__badge,
 .ds-eyebrow,
 .ds-care-importance__eyebrow,
 .ds-soudan__eyebrow,
 .ds-hero__eyebrow,
-.ds-pearl-text__eyebrow,
 .ds-hero__cta-note,
 .ds-soudan__cta-note,
 .ds-flow-step__title {
@@ -102,20 +100,28 @@ a { color: var(--ds-akane); }
 .ds-sticky-cta { display: none; }
 @media (max-width: 879px) {
     .ds-sticky-cta {
-        display: block; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
         background: rgba(255,250,239,.96); border-top: 1px solid var(--ds-gold);
         padding: 10px 14px env(safe-area-inset-bottom, 10px);
         backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         box-shadow: 0 -6px 24px rgba(125,28,37,.12);
     }
     .ds-sticky-cta a {
-        display: block; text-align: center; padding: 14px;
-        background: var(--ds-akane); color: #fff;
+        display: block; text-align: center; padding: 12px 8px;
         font-family: 'Shippori Mincho B1', serif; font-weight: 700;
-        text-decoration: none; border-radius: 4px; letter-spacing: .2em;
-        font-size: 1rem; box-shadow: 0 6px 18px rgba(125,28,37,.32);
+        text-decoration: none; border-radius: 4px; letter-spacing: .18em;
+        font-size: .95rem;
     }
-    .ds-sticky-cta a::after { content: " ▶"; font-size: .8em; margin-left: 6px; }
+    .ds-sticky-cta__web {
+        background: var(--ds-akane); color: #fff;
+        box-shadow: 0 6px 18px rgba(125,28,37,.32);
+    }
+    .ds-sticky-cta__web::after { content: " ▶"; font-size: .8em; margin-left: 4px; }
+    .ds-sticky-cta__phone {
+        background: #fff; color: var(--ds-akane);
+        border: 1px solid var(--ds-akane);
+    }
     body { padding-bottom: 76px; }
 }
 
@@ -214,19 +220,87 @@ a { color: var(--ds-akane); }
 .ds-hero__cta-note { font-family: 'Shippori Mincho B1', serif;
     color: var(--ds-sumi-soft); font-size: .85rem; }
 
+/* ====== CTAボタン（WEB / 電話 共通サイズ） ====== */
 .ds-cta-button {
-    display: inline-block; padding: 18px 56px; background: var(--ds-akane); color: #fff;
-    font-family: 'Shippori Mincho B1', serif; font-weight: 700; font-size: 1.12rem;
-    letter-spacing: .25em; text-decoration: none; border-radius: 4px;
-    box-shadow: 0 10px 28px rgba(176,54,65,.45); transition: all .25s;
-    border: 1px solid var(--ds-gold); position: relative;
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+    box-sizing: border-box; min-width: 320px; min-height: 72px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, var(--ds-akane) 0%, var(--ds-akane-d) 100%);
+    color: #fff; font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+    font-size: 1.05rem; letter-spacing: .25em; line-height: 1.35;
+    text-align: center; text-decoration: none;
+    border: 1px solid var(--ds-gold); border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(176,54,65,.42), inset 0 1px 0 rgba(255,255,255,.22);
+    position: relative; overflow: hidden;
+    transition: transform .25s ease, box-shadow .25s ease, background .35s ease;
 }
-.ds-cta-button:hover { background: var(--ds-akane-d); transform: translateY(-2px);
-    box-shadow: 0 14px 36px rgba(176,54,65,.55); }
-.ds-cta-button::after { content: " ▶"; font-size: .8em; margin-left: 6px; }
+.ds-cta-button::before {
+    content: ""; position: absolute; top: 0; left: -120%; width: 60%; height: 100%;
+    background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.22) 50%, transparent 100%);
+    transform: skewX(-20deg); transition: left .9s ease;
+    pointer-events: none;
+}
+.ds-cta-button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, var(--ds-akane-d) 0%, #5d141c 100%);
+    box-shadow: 0 18px 40px rgba(176,54,65,.55), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.ds-cta-button:hover::before { left: 130%; }
+.ds-cta-button:active { transform: translateY(0); box-shadow: 0 8px 20px rgba(176,54,65,.4); }
+.ds-cta-button__label { display: inline-flex; align-items: center; gap: 8px; }
+.ds-cta-button__label::after { content: "▶"; font-size: .72em; opacity: .9; }
+
 .ds-cta-button--ghost { background: transparent; color: #fff;
     box-shadow: 0 4px 14px rgba(0,0,0,.2); border-color: #fff; }
 .ds-cta-button--ghost:hover { background: rgba(255,255,255,.12); }
+
+/* 電話予約ボタン（白背景の上で使う想定） */
+.ds-cta-button--phone {
+    background: linear-gradient(180deg, #fffaf3 0%, #fff 100%);
+    color: var(--ds-akane);
+    border: 1.5px solid var(--ds-akane);
+    box-shadow: 0 10px 26px rgba(125,28,37,.18), inset 0 1px 0 #fff;
+}
+.ds-cta-button--phone:hover {
+    background: linear-gradient(180deg, #fff 0%, var(--ds-paper) 100%);
+    color: var(--ds-akane-d);
+    border-color: var(--ds-akane-d);
+    box-shadow: 0 16px 32px rgba(125,28,37,.24), inset 0 1px 0 #fff;
+}
+.ds-cta-button--phone .ds-cta-button__label::after { content: ""; }
+.ds-cta-button__num {
+    display: block; margin-top: 6px;
+    font-size: 1.18rem; letter-spacing: .08em; font-weight: 800;
+    font-feature-settings: "tnum" 1;
+}
+.ds-cta-button__num::before {
+    content: "TEL."; font-size: .62em; letter-spacing: .25em;
+    margin-right: 8px; padding: 2px 6px; border-radius: 3px;
+    background: var(--ds-akane); color: #fff; vertical-align: 2px;
+    font-weight: 700;
+}
+
+/* 最終CTA（akane背景）の上では透過＋白縁の電話ボタン */
+.ds-final-cta .ds-cta-button--phone {
+    background: transparent; color: #fff;
+    border-color: rgba(255,255,255,.85);
+    box-shadow: 0 6px 18px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.ds-final-cta .ds-cta-button--phone:hover {
+    background: rgba(255,255,255,.12); color: #fff; border-color: #fff;
+    box-shadow: 0 10px 24px rgba(0,0,0,.28);
+}
+.ds-final-cta .ds-cta-button--phone .ds-cta-button__num::before {
+    background: #fff; color: var(--ds-akane);
+}
+.ds-final-cta__buttons {
+    display: flex; flex-direction: column; gap: 16px;
+    align-items: center; justify-content: center; flex-wrap: wrap;
+}
+@media (min-width: 640px) {
+    .ds-final-cta__buttons { flex-direction: row; align-items: stretch; }
+    .ds-final-cta__buttons .ds-cta-button { min-height: 88px; }
+}
 
 /* ====== セクション共通 ====== */
 .ds-section { padding: 80px 0; position: relative; }
@@ -430,23 +504,7 @@ a { color: var(--ds-akane); }
     color: var(--ds-sumi-soft); font-size: .85rem;
 }
 
-/* ====== オファー2: 紫真珠 ====== */
-.ds-pearl-section { display: grid; gap: 36px; align-items: center;
-    grid-template-columns: 1fr; max-width: 960px; margin: 0 auto; }
-@media (min-width: 800px) { .ds-pearl-section { grid-template-columns: 1fr 1fr; } }
-.ds-pearl-img { border-radius: 6px; overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0,0,0,.4); aspect-ratio: 16/10; }
-.ds-pearl-img img { width: 100%; height: 100%; object-fit: cover; }
-.ds-pearl-text__eyebrow { font-family: 'Shippori Mincho B1', serif; letter-spacing: .55em;
-    font-size: .82rem; color: var(--ds-pink); margin: 0 0 16px; }
-.ds-pearl-text__title { font-family: 'Yuji Syuku', serif; font-weight: 400;
-    font-size: clamp(2.2rem, 5vw, 3rem); color: #fff; margin: 0 0 6px; letter-spacing: .12em; }
-.ds-pearl-text__title small { display: block; font-family: 'Shippori Mincho B1', serif;
-    font-size: .32em; letter-spacing: .4em; margin-top: 6px; opacity: .8; font-weight: 500; }
-.ds-pearl-text__body { margin-top: 22px; line-height: 2.05; opacity: .92; font-size: 1rem; }
-.ds-pearl-text__body strong { color: #fff; font-weight: 600; }
-
-/* ====== オファー3: 下取り ====== */
+/* ====== オファー2: 下取り ====== */
 .ds-takedori { display: grid; gap: 36px; align-items: center;
     grid-template-columns: 1fr; max-width: 920px; margin: 0 auto; }
 @media (min-width: 800px) { .ds-takedori { grid-template-columns: 1fr 1fr; } }
@@ -465,23 +523,6 @@ a { color: var(--ds-akane); }
     font-family: 'Shippori Mincho B1', serif; }
 .ds-takedori__points li::before { content: "❀"; color: var(--ds-akane);
     position: absolute; left: 0; top: 6px; }
-
-/* ====== オファー4: すくい取り ====== */
-.ds-sukui { display: grid; gap: 36px; align-items: center;
-    grid-template-columns: 1fr; max-width: 920px; margin: 0 auto; }
-@media (min-width: 800px) { .ds-sukui { grid-template-columns: 1fr 1fr; } }
-.ds-sukui__img { border-radius: 6px; overflow: hidden; aspect-ratio: 16/10;
-    box-shadow: 0 14px 36px rgba(0,0,0,.12); }
-.ds-sukui__img img { width: 100%; height: 100%; object-fit: cover; }
-.ds-sukui__label { display: inline-block; padding: 4px 16px; background: var(--ds-gold);
-    color: #fff; font-family: 'Shippori Mincho B1', serif; font-size: .85rem;
-    letter-spacing: .2em; border-radius: 2px; margin-bottom: 14px; }
-.ds-sukui__title { font-family: 'Shippori Mincho B1', serif; font-weight: 700;
-    font-size: clamp(1.5rem, 4vw, 2rem); color: var(--ds-sumi); margin: 0 0 14px;
-    line-height: 1.5; }
-.ds-sukui__sub { color: var(--ds-akane); font-weight: 700; font-family: 'Shippori Mincho B1', serif;
-    font-size: 1.05rem; margin: 0 0 8px; }
-.ds-sukui p { font-family: 'Shippori Mincho B1', serif; color: var(--ds-sumi-soft); }
 
 /* ====== 紹介動画セクション ====== */
 .ds-section--video {
@@ -814,7 +855,8 @@ a { color: var(--ds-akane); }
 
 {{-- ============== Sticky CTA（モバイル時のみ表示） ============== --}}
 <div class="ds-sticky-cta">
-    <a href="#reserve">ご来場予約はこちら</a>
+    <a href="#reserve" class="ds-sticky-cta__web">WEBで予約</a>
+    <a href="tel:0776-34-1529" class="ds-sticky-cta__phone">お電話で予約</a>
 </div>
 
 {{-- ============== ヘッダ ============== --}}
@@ -841,7 +883,13 @@ a { color: var(--ds-akane); }
                 <p class="ds-hero__period-venue">京呉服 平田 福井店</p>
             </div>
             <div class="ds-hero__cta">
-                <a href="#reserve" class="ds-cta-button">ご来場予約はこちら</a>
+                <a href="#reserve" class="ds-cta-button">
+                    <span class="ds-cta-button__label">WEBで予約する</span>
+                </a>
+                <a href="tel:0776-34-1529" class="ds-cta-button ds-cta-button--phone">
+                    <span class="ds-cta-button__label">お電話で予約する</span>
+                    <span class="ds-cta-button__num">0776-34-1529</span>
+                </a>
                 <small class="ds-hero__cta-note">▼ 30秒で完了 ／ 事前予約優先でご案内</small>
             </div>
         </div>
@@ -1004,39 +1052,9 @@ a { color: var(--ds-akane); }
     </div>
 </section>
 
-{{-- ============== オファー2: 紫真珠 ============== --}}
-<section class="ds-section ds-section--dark">
-    <div class="ds-wrap">
-        <p class="ds-eyebrow">— 企画 弐 —</p>
-        <h2 class="ds-section__heading" style="color:#f4eaf5;">特別企画</h2>
-        <p class="ds-section__lead">— 今がチャンス —</p>
-
-        <div class="ds-pearl-section">
-            <div class="ds-pearl-img">
-                <img src="{{ $imgBase }}/pearl.png" alt="紫真珠">
-            </div>
-            <div class="ds-pearl-text">
-                <p class="ds-pearl-text__eyebrow">SUPER PURPLE PEARL</p>
-                <h3 class="ds-pearl-text__title">
-                    紫真珠
-                    <small>Murasaki Shinju</small>
-                </h3>
-                <p class="ds-pearl-text__body">
-                    <strong>天然の紫を宿す、真珠の中の真珠。</strong><br>
-                    透き通る艶やかさのなかに、 深く静かな紫が息づきます。<br>
-                    "真珠の王様" とも称えられる、 希少なる一粒。<br>
-                    あなたの装いに、 揺るぎない気品をそえる名宝を、<br>
-                    この機会にぜひ、お手にとってご覧くださいませ。
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-{{-- ============== オファー3: 高価下取り ============== --}}
+{{-- ============== オファー2: 高価下取り ============== --}}
 <section class="ds-section">
     <div class="ds-wrap">
-        <p class="ds-eyebrow">— 企画 参 —</p>
         <h2 class="ds-section__heading">ジュエリー 高価下取り</h2>
         <p class="ds-section__lead">タンスの中で眠る、思い出の品。 もう一度 輝かせる時です。</p>
 
@@ -1052,27 +1070,6 @@ a { color: var(--ds-akane); }
                     <li>金・プラチナ・真珠・宝石類 全般</li>
                     <li>新たなお品物への お充当も承ります</li>
                 </ul>
-            </div>
-        </div>
-    </div>
-</section>
-
-{{-- ============== オファー4: すくい取り ============== --}}
-<section class="ds-section ds-section--paper">
-    <div class="ds-wrap">
-        <p class="ds-eyebrow">— 企画 四 / ご来場記念 —</p>
-        <h2 class="ds-section__heading">たまご すくい取り</h2>
-
-        <div class="ds-sukui">
-            <div>
-                <span class="ds-sukui__label">ひなたまこっこ</span>
-                <h3 class="ds-sukui__title">どど〜んと、 すくった数だけ プレゼント！</h3>
-                <p class="ds-sukui__sub">ご来場の皆さまへ、<span class="ds-nobr">京呉服 平田</span>からのささやかなお礼。</p>
-                <p>新鮮なたまごを、 思い切ってすくってお持ち帰りください。<br>
-                ご家族の楽しいひと時にもなれば 幸いです。</p>
-            </div>
-            <div class="ds-sukui__img">
-                <img src="{{ $imgBase }}/egg.png" alt="ひなたまこっこ すくい取り">
             </div>
         </div>
     </div>
@@ -1178,12 +1175,6 @@ a { color: var(--ds-akane); }
                     お持ちいただくだけでも結構ですので、お気軽にお越しください。
                 </div>
             </details>
-            <details class="ds-faq__item">
-                <summary class="ds-faq__q">紫真珠は当日お持ち帰りできますか？</summary>
-                <div class="ds-faq__a">
-                    在庫状況により異なります。 詳しくは店頭にてご相談ください。
-                </div>
-            </details>
         </div>
     </div>
 </section>
@@ -1235,7 +1226,15 @@ a { color: var(--ds-akane); }
             タンスのきものとジュエリー、まるごと整理。<br>
             この4日間で、眠っていた美しさをふたたび。
         </p>
-        <a href="#reserve" class="ds-cta-button">ご来場予約はこちら</a>
+        <div class="ds-final-cta__buttons">
+            <a href="#reserve" class="ds-cta-button">
+                <span class="ds-cta-button__label">WEBで予約する</span>
+            </a>
+            <a href="tel:0776-34-1529" class="ds-cta-button ds-cta-button--phone">
+                <span class="ds-cta-button__label">お電話で予約する</span>
+                <span class="ds-cta-button__num">0776-34-1529</span>
+            </a>
+        </div>
     </div>
 </section>
 

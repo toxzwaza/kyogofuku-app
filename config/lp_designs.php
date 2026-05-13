@@ -59,6 +59,15 @@ return [
             'default_tokens' => [],
         ],
 
+        'daisougyousai_okayama' => [
+            'label' => '大創業祭 岡山版（京呉服 好一・岡山店/城東店）',
+            'render_type' => 'blade',
+            'blade_view' => 'event.lp.templates.daisougyousai_okayama',
+            'allowed_form_types' => null,
+            'requires_form_schema' => true,
+            'default_tokens' => [],
+        ],
+
         'shop_visit' => [
             'label' => '店舗ご来店予約（白・ベージュ・ピンク／気軽さ訴求）',
             'render_type' => 'blade',
