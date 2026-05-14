@@ -463,6 +463,10 @@
         box-shadow: 0 10px 24px rgba(196,106,126,.28); }
     .sv-submit:hover:not([disabled]) { background: var(--sv-accent-d); transform: translateY(-1px); }
     .sv-submit[disabled] { opacity: .6; cursor: not-allowed; }
+    .sv-submit__hint {
+        margin: 10px 0 0; text-align: center; color: var(--sv-accent-d);
+        font-family: 'Shippori Mincho B1', serif; font-size: .9rem;
+    }
 
     /* === 予約枠（lp-slot 共通スタイル：上書き） === */
     .lp-slot__guard {
@@ -929,10 +933,14 @@
                     </div>
                 @endforeach
 
-                <button type="submit" class="sv-submit" :disabled="submitting">
+                <button type="submit" class="sv-submit"
+                    :disabled="submitting || ('privacy_agreed' in values && !values.privacy_agreed)">
                     <span x-show="!submitting">予約する</span>
                     <span x-show="submitting" x-cloak>送信中...</span>
                 </button>
+                <p class="sv-submit__hint" x-show="'privacy_agreed' in values && !values.privacy_agreed" x-cloak>
+                    ↑ 個人情報の取り扱いに同意するとご予約いただけます
+                </p>
             </form>
         @endif
     </div>

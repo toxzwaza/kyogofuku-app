@@ -41,7 +41,13 @@ class BladeReservationController extends Controller
         $rules = $this->schemaValidator->rulesFromSchema($schema);
         $attrs = $this->schemaValidator->attributesFromSchema($schema);
 
-        $validator = Validator::make($request->all(), $rules, [], $attrs);
+        $messages = [
+            'accepted' => ':attribute にチェックを入れてください。',
+            'required' => ':attribute は必須項目です。',
+            'email'    => ':attribute は有効なメールアドレスを入力してください。',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages, $attrs);
         if ($validator->fails()) {
             throw ValidationException::withMessages($validator->errors()->toArray());
         }

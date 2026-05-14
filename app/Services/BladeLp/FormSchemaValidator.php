@@ -107,8 +107,13 @@ class FormSchemaValidator
                     }
                     break;
                 case 'checkbox':
-                    // 単独 checkbox（options 無し）は boolean 扱い
-                    $fieldRules[] = 'boolean';
+                    // 単独 checkbox（options 無し）
+                    if ($required) {
+                        // required=true は「チェック必須」として扱う（hidden=0 のすり抜けを防ぐ）
+                        $fieldRules = ['accepted'];
+                    } else {
+                        $fieldRules[] = 'boolean';
+                    }
                     break;
                 case 'timeslot':
                     $fieldRules[] = 'integer';
