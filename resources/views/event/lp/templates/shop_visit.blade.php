@@ -18,6 +18,9 @@
     $brandJp = $isHirata ? '京呉服 平田' : '京呉服 好一';
     $brandEn = $isHirata ? 'KYOGOFUKU HIRATA' : 'KYOGOFUKU KOUICHI';
 
+    // 代表店舗の電話番号（CTA用）：福井=福井店、岡山=岡山店
+    $ctaPhone = $isHirata ? '0776-34-1529' : '086-242-1529';
+
     // 振袖プレビュー：固定の7枚（運用で追加の振袖画像を増やしたい場合は配列を編集）
     $previewImages = [
         ['url' => $imgBase.'/furisode_01.webp', 'alt' => '振袖 01'],
@@ -105,14 +108,27 @@
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             box-shadow: 0 -6px 20px rgba(196,106,126,.12);
         }
+        .sv-sticky-cta__row {
+            display: flex; gap: 8px; align-items: stretch;
+        }
         .sv-sticky-cta a {
-            display: block; text-align: center; padding: 14px;
+            flex: 1 1 0; min-width: 0;
+            display: inline-flex; flex-direction: column; align-items: center;
+            justify-content: center; text-align: center;
+            padding: 10px 12px; min-height: 52px; box-sizing: border-box;
             background: var(--sv-accent); color: #fff;
             font-family: 'Shippori Mincho B1', serif; font-weight: 700;
-            text-decoration: none; border-radius: 999px; letter-spacing: .15em;
-            font-size: 1rem; box-shadow: 0 6px 14px rgba(196,106,126,.3);
+            text-decoration: none; border-radius: 999px; letter-spacing: .12em;
+            font-size: .95rem; line-height: 1.2;
+            box-shadow: 0 6px 14px rgba(196,106,126,.3);
         }
-        .sv-sticky-cta a::after { content: " ▶"; font-size: .8em; margin-left: 6px; }
+        .sv-sticky-cta a.sv-sticky-cta__phone {
+            background: #fff; color: var(--sv-accent-d);
+            border: 2px solid var(--sv-accent);
+        }
+        .sv-sticky-cta a.sv-sticky-cta__phone .sv-sticky-cta__num {
+            font-size: .95rem; letter-spacing: .04em;
+        }
         body { padding-bottom: 76px; }
     }
 
@@ -182,6 +198,37 @@
         box-shadow: 0 16px 36px rgba(196,106,126,.42);
     }
     .sv-hero__cta-button::after { content: " ▶"; font-size: .8em; margin-left: 6px; }
+    /* 電話ボタン（CTA第二ボタン） */
+    .sv-hero__cta-button--phone {
+        background: #fff; color: var(--sv-accent-d);
+        border: 2px solid var(--sv-accent);
+        box-shadow: 0 8px 22px rgba(196,106,126,.18);
+    }
+    .sv-hero__cta-button--phone:hover {
+        background: var(--sv-pink); color: var(--sv-accent-d);
+        box-shadow: 0 12px 28px rgba(196,106,126,.28);
+    }
+    .sv-hero__cta-button--phone::after { content: none; }
+    .sv-hero__cta-button__num {
+        font-family: 'Shippori Mincho B1', serif; font-weight: 700;
+        font-size: 1.05rem; letter-spacing: .08em; color: var(--sv-accent-d);
+        line-height: 1.2;
+    }
+    /* CTAボタン縦並び（WEB + 電話）— 共通サイズ */
+    .sv-hero__cta-group {
+        display: flex; flex-direction: column; align-items: stretch; gap: 12px;
+        max-width: 360px; margin: 0 auto;
+    }
+    .sv-hero__cta-group .sv-hero__cta-button {
+        width: 100%; box-sizing: border-box;
+        padding: 16px 28px; min-height: 64px;
+        display: inline-flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 2px;
+        line-height: 1.25; letter-spacing: .2em;
+    }
+    .sv-hero__cta-group .sv-hero__cta-button::after {
+        content: none;
+    }
     .sv-hero__cta-note { display: block; margin-top: 12px;
         color: var(--sv-text-soft); font-size: .85rem;
         font-family: 'Shippori Mincho B1', serif; }
@@ -519,11 +566,11 @@
     }
     .sv-final-cta p { margin: 0 0 28px; color: var(--sv-text-soft);
         font-family: 'Shippori Mincho B1', serif; }
-    .sv-final-cta .sv-hero__cta-button {
+    .sv-final-cta .sv-hero__cta-button:not(.sv-hero__cta-button--phone) {
         background: var(--sv-paper); color: var(--sv-accent);
         box-shadow: 0 10px 24px rgba(0,0,0,.10);
     }
-    .sv-final-cta .sv-hero__cta-button:hover { background: #fff; color: var(--sv-accent-d); }
+    .sv-final-cta .sv-hero__cta-button:not(.sv-hero__cta-button--phone):hover { background: #fff; color: var(--sv-accent-d); }
 
     .sv-footer { padding: 32px 0 24px; text-align: center;
         color: var(--sv-text-soft); font-family: 'Shippori Mincho B1', serif;
@@ -541,7 +588,13 @@
 
 {{-- ========== Sticky CTA（モバイル） ========== --}}
 <div class="sv-sticky-cta">
-    <a href="#reserve">ご来店予約はこちら</a>
+    <div class="sv-sticky-cta__row">
+        <a href="#reserve">WEBで予約する</a>
+        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $ctaPhone) }}" class="sv-sticky-cta__phone">
+            <span>お電話で予約</span>
+            <span class="sv-sticky-cta__num">{{ $ctaPhone }}</span>
+        </a>
+    </div>
 </div>
 
 {{-- ========== ヘッダ ========== --}}
@@ -564,7 +617,13 @@
                 「料金感だけ知りたい」<br>
                 <strong>そんな方こそ、 ぜひお気軽に。</strong>
             </p>
-            <a href="#reserve" class="sv-hero__cta-button">ご来店予約はこちら</a>
+            <div class="sv-hero__cta-group">
+                <a href="#reserve" class="sv-hero__cta-button">WEBで予約する</a>
+                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $ctaPhone) }}" class="sv-hero__cta-button sv-hero__cta-button--phone">
+                    <span>お電話で予約する</span>
+                    <span class="sv-hero__cta-button__num">{{ $ctaPhone }}</span>
+                </a>
+            </div>
             <small class="sv-hero__cta-note">▼ 30秒で完了 ／ ご相談のみも歓迎です</small>
         </div>
     </div>
@@ -832,6 +891,17 @@
                 method="POST"
                 action="{{ route('blade-lp.reserve', $event) }}"
                 x-data="{ submitting: false, values: @js($alpineInit) }"
+                x-init="$watch('values.birth_date', (v) => {
+                    if (!v || !('seijin_year' in values)) return;
+                    const d = new Date(String(v));
+                    if (Number.isNaN(d.getTime())) return;
+                    const y = d.getFullYear();
+                    const m = d.getMonth() + 1;
+                    const day = d.getDate();
+                    const isEarly = (m < 4) || (m === 4 && day === 1);
+                    const seijinYear = isEarly ? (y + 20) : (y + 21);
+                    values.seijin_year = String(seijinYear);
+                })"
                 @submit="submitting = true"
                 novalidate
             >
@@ -912,7 +982,13 @@
     <div class="sv-wrap">
         <h2>お話だけでも、 歓迎しております。</h2>
         <p>少しでも気になったら、 まずはお気軽にどうぞ。</p>
-        <a href="#reserve" class="sv-hero__cta-button">ご来店予約はこちら</a>
+        <div class="sv-hero__cta-group">
+            <a href="#reserve" class="sv-hero__cta-button">WEBで予約する</a>
+            <a href="tel:{{ preg_replace('/[^0-9+]/', '', $ctaPhone) }}" class="sv-hero__cta-button sv-hero__cta-button--phone">
+                <span>お電話で予約する</span>
+                <span class="sv-hero__cta-button__num">{{ $ctaPhone }}</span>
+            </a>
+        </div>
     </div>
 </section>
 
