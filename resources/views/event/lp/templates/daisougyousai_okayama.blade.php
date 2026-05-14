@@ -1,7 +1,7 @@
 @extends('event.lp.layouts.base')
 
 @section('title', '大創業祭｜京呉服 好一 岡山店・城東店')
-@section('description', 'タンスのきものとジュエリー、まるごと整理。京呉服 好一 大創業祭、岡山店 5/28(木)〜5/30(土)・城東店 5/31(日)〜6/1(月) で開催。事前持込で着物丸洗い3,300円、しみ抜き・汗取り、ジュエリー高価下取り。')
+@section('description', 'タンスのきもの、まるごと整理。京呉服 好一 大創業祭、岡山店 5/28(木)〜5/30(土)・城東店 5/31(日)〜6/1(月) で開催。事前持込で着物丸洗い3,300円、しみ抜き・汗取りを特別価格でご提供。')
 
 @php
     $imgBase = asset('images/lp/daisougyousai_okayama');
@@ -52,7 +52,6 @@ body {
 /* 強調インライン要素は塊として扱い、内部で改行させない */
 .ds-problem h2 em,
 .ds-care-importance__title em,
-.ds-takedori__title em,
 .ds-soudan__title em,
 .ds-final-cta h2 em,
 .ds-bonus__title strong,
@@ -504,26 +503,6 @@ a { color: var(--ds-akane); }
     color: var(--ds-sumi-soft); font-size: .85rem;
 }
 
-/* ====== オファー2: 下取り ====== */
-.ds-takedori { display: grid; gap: 36px; align-items: center;
-    grid-template-columns: 1fr; max-width: 920px; margin: 0 auto; }
-@media (min-width: 800px) { .ds-takedori { grid-template-columns: 1fr 1fr; } }
-.ds-takedori__img { border-radius: 6px; overflow: hidden; aspect-ratio: 16/10;
-    box-shadow: 0 14px 36px rgba(0,0,0,.12); }
-.ds-takedori__img img { width: 100%; height: 100%; object-fit: cover; }
-.ds-takedori__title { font-family: 'Shippori Mincho B1', serif; font-weight: 700;
-    font-size: clamp(1.4rem, 3.5vw, 1.9rem); color: var(--ds-akane); margin: 0 0 14px;
-    line-height: 1.5; }
-.ds-takedori__title em { font-style: normal; color: var(--ds-akane-d);
-    background: linear-gradient(transparent 65%, #ffe8a8 65%); padding: 0 4px; }
-.ds-takedori p { color: var(--ds-sumi); font-family: 'Shippori Mincho B1', serif;
-    line-height: 2; margin: 0 0 12px; }
-.ds-takedori__points { list-style: none; padding: 0; margin: 16px 0 0; }
-.ds-takedori__points li { padding: 6px 0 6px 28px; position: relative;
-    font-family: 'Shippori Mincho B1', serif; }
-.ds-takedori__points li::before { content: "❀"; color: var(--ds-akane);
-    position: absolute; left: 0; top: 6px; }
-
 /* ====== フォーム ====== */
 .ds-form { background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 6px;
     padding: 40px 36px; box-shadow: 0 14px 40px rgba(176,54,65,.08); max-width: 640px;
@@ -804,7 +783,7 @@ a { color: var(--ds-akane); }
             <p>
                 お母様から譲り受けた着物、<br>
                 成人式で一度袖を通した着物。<br>
-                押し入れの奥に仕舞われた、思い出のジュエリー、
+                押し入れの奥に、 そっと仕舞い込まれた一枚。
             </p>
             <p>
                 美しい品々は、 手をかけるほどに、永くお傍にいてくれます。<br>
@@ -926,29 +905,6 @@ a { color: var(--ds-akane); }
     </div>
 </section>
 
-{{-- ============== オファー2: 高価下取り ============== --}}
-<section class="ds-section">
-    <div class="ds-wrap">
-        <h2 class="ds-section__heading">ジュエリー 高価下取り</h2>
-        <p class="ds-section__lead">タンスの中で眠る、思い出の品。 もう一度 輝かせる時です。</p>
-
-        <div class="ds-takedori">
-            <div class="ds-takedori__img">
-                <img src="{{ $imgBase }}/jewelry.png" alt="ヴィンテージジュエリーボックス">
-            </div>
-            <div>
-                <h3 class="ds-takedori__title">眠るジュエリーを <em>高価下取り</em> いたします</h3>
-                <p>真贋確認・査定はその場でお伝えいたします。下取り価格はお気軽にご相談ください。</p>
-                <ul class="ds-takedori__points">
-                    <li>査定はその場で・無料</li>
-                    <li>金・プラチナ・真珠・宝石類 全般</li>
-                    <li>新たなお品物への お充当も承ります</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</section>
-
 {{-- ============== 予約フォーム ============== --}}
 <section class="ds-section" id="reserve">
     <div class="ds-wrap">
@@ -1037,17 +993,10 @@ a { color: var(--ds-akane); }
                 </div>
             </details>
             <details class="ds-faq__item">
-                <summary class="ds-faq__q">着物以外の品物も対象になりますか？</summary>
+                <summary class="ds-faq__q">対象となるお品物は？</summary>
                 <div class="ds-faq__a">
-                    着物のお手入れ（丸洗い・しみ抜き・汗取り）、 真珠・ジュエリーの下取りが対象です。
+                    着物のお手入れ（丸洗い・しみ抜き・汗取り）が対象です。
                     その他のお品物につきましても、 お気軽にご相談ください。
-                </div>
-            </details>
-            <details class="ds-faq__item">
-                <summary class="ds-faq__q">下取りに費用はかかりますか？</summary>
-                <div class="ds-faq__a">
-                    査定は <strong>無料</strong> でその場でお伝えいたします。
-                    お持ちいただくだけでも結構ですので、お気軽にお越しください。
                 </div>
             </details>
         </div>
@@ -1098,7 +1047,7 @@ a { color: var(--ds-akane); }
     <div class="ds-wrap">
         <h2>大創業祭、はじまります。</h2>
         <p>
-            タンスのきものとジュエリー、まるごと整理。<br>
+            タンスのきもの、まるごと整理。<br>
             この5日間で、眠っていた美しさをふたたび。
         </p>
         <div class="ds-final-cta__buttons">
