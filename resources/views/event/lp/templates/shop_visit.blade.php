@@ -6,12 +6,16 @@
 @php
     $imgBase = asset('images/lp/shop_visit');
 
-    // ヒーローポスター画像（slug でブランドを判定）
-    $posterImg = match (true) {
+    // ヒーローポスター画像
+    // 優先: 管理画面でイベント画像として登録した先頭1枚（メディアライブラリ選択方式）
+    // 無ければ slug でのブランド判定で静的画像にフォールバック
+    $heroImage = $event->images->first();
+    $posterImg = $heroImage?->url ?: match (true) {
         str_contains($event->slug, 'kouichi') => $imgBase.'/poster_kouichi.png',
         str_contains($event->slug, 'hirata')  => $imgBase.'/poster_hirata.png',
         default => $imgBase.'/hero.png',
     };
+    $posterAlt = $heroImage?->alt ?: $event->title;
 
     // ブランド名（ヘッダ・フッタ）
     $isHirata = str_contains($event->slug, 'hirata');
@@ -613,7 +617,7 @@
 <section class="sv-hero">
     <div class="sv-hero__inner">
         <h1 class="sv-hero__poster">
-            <img src="{{ $posterImg }}" alt="{{ $event->title }}" loading="eager">
+            <img src="{{ $posterImg }}" alt="{{ $posterAlt }}" loading="eager">
         </h1>
         <div class="sv-hero__copy">
             <p class="sv-hero__lead">

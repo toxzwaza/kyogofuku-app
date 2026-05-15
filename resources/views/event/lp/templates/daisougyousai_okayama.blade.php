@@ -5,6 +5,13 @@
 
 @php
     $imgBase = asset('images/lp/daisougyousai_okayama');
+
+    // ヒーローポスター画像
+    // 優先: 管理画面でイベント画像として登録した先頭1枚（メディアライブラリ選択方式）
+    // 無ければ静的画像にフォールバック
+    $heroImage = $event->images->first();
+    $posterImg = $heroImage?->url ?: $imgBase.'/poster.png';
+    $posterAlt = $heroImage?->alt ?: '大創業祭 5月28日(木)〜6月1日(月) 京呉服 好一';
 @endphp
 
 @section('styles')
@@ -750,7 +757,7 @@ a { color: var(--ds-akane); }
     <div class="ds-hero__inner">
         <div class="ds-hero__poster-wrap">
             <div class="ds-hero__poster">
-                <img src="{{ $imgBase }}/poster.png" alt="大創業祭 5月28日(木)〜6月1日(月) 京呉服 好一" loading="eager">
+                <img src="{{ $posterImg }}" alt="{{ $posterAlt }}" loading="eager">
             </div>
         </div>
         <h1 class="ds-hero__hidden">大創業祭 — 京呉服 好一 岡山店・城東店</h1>
