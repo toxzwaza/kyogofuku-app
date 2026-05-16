@@ -37,7 +37,7 @@ const safeRoute = (name, params) => {
 <template>
     <aside
         :class="[
-            'flex flex-col bg-sumi-900 dark:bg-sumi-950 text-sumi-100 transition-all duration-200',
+            'h-full flex flex-col bg-sumi-900 dark:bg-sumi-950 text-sumi-100 transition-all duration-200',
             'border-r border-sumi-800 dark:border-sumi-900',
             collapsed ? 'w-16' : 'w-60',
         ]"
