@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesUiView;
 use App\Models\AttendanceBreak;
 use App\Models\AttendancePayrollSetting;
 use App\Models\AttendanceRecord;
@@ -16,6 +17,89 @@ use Inertia\Inertia;
 
 class AttendanceController extends Controller
 {
+    use ResolvesUiView;
+
+    /**
+     * 打刻トップ（新UI）
+     */
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $today = Carbon::today();
+
+        $userShops = $user->shops()
+            ->where('shops.is_active', true)
+            ->select('shops.id', 'shops.name', 'shop_user.main')
+            ->orderByDesc('shop_user.main')
+            ->orderBy('shops.name')
+            ->get();
+
+        $attendanceStatus = [
+            'isWorking' => false,
+            'isOnBreak' => false,
+            'clockInAt' => null,
+            'breakStartAt' => null,
+            'todayRecord' => null,
+            'cancellableAction' => null,
+        ];
+
+        $todayRecord = AttendanceRecord::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->with('breaks')
+            ->first();
+
+        if ($todayRecord) {
+            $attendanceStatus['todayRecord'] = [
+                'id' => $todayRecord->id,
+                'date' => $todayRecord->date->format('Y-m-d'),
+                'shop_id' => $todayRecord->shop_id,
+                'clock_in_at' => $todayRecord->clock_in_at?->toIso8601String(),
+                'clock_out_at' => $todayRecord->clock_out_at?->toIso8601String(),
+                'status' => $todayRecord->status,
+                'breaks' => $todayRecord->breaks->map(fn ($b) => [
+                    'id' => $b->id,
+                    'start_at' => $b->start_at?->toIso8601String(),
+                    'end_at' => $b->end_at?->toIso8601String(),
+                ])->values()->all(),
+            ];
+            $attendanceStatus['isWorking'] = $todayRecord->isWorking();
+            $attendanceStatus['isOnBreak'] = $todayRecord->isOnBreak();
+            $attendanceStatus['clockInAt'] = $todayRecord->clock_in_at?->toIso8601String();
+            $activeBreak = $todayRecord->breaks()->whereNull('end_at')->first();
+            $attendanceStatus['breakStartAt'] = $activeBreak?->start_at?->toIso8601String();
+            $attendanceStatus['cancellableAction'] = $this->getCancellableActionForRecord($todayRecord);
+        }
+
+        return Inertia::render($this->viewFor('Attendance/Index'), [
+            'attendanceStatus' => $attendanceStatus,
+            'userShops' => $userShops,
+            'currentUser' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'canManageAttendance' => $user->canManageAttendance(),
+            ],
+            'attendanceManualUrl' => config('attendance.manual_url', ''),
+            'attendanceManualUrlManager' => config('attendance.manual_url_manager', ''),
+        ]);
+    }
+
+    /**
+     * 勤怠マニュアル
+     */
+    public function manual(Request $request)
+    {
+        $user = $request->user();
+
+        return Inertia::render('Attendance/Manual', [
+            'currentUser' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'canManageAttendance' => $user->canManageAttendance(),
+                'isAttendanceManager' => $user->isAttendanceManager(),
+            ],
+        ]);
+    }
+
     /**
      * 出勤（サーバー時間、即時 approved）
      */
@@ -232,7 +316,7 @@ class AttendanceController extends Controller
         $user = $request->user();
         $userShops = $user->shops()->where('shops.is_active', true)->get(['shops.id', 'shops.name']);
 
-        return Inertia::render('Attendance/ProvisionalForm', [
+        return Inertia::render($this->viewFor('Attendance/ProvisionalForm'), [
             'userShops' => $userShops,
         ]);
     }
@@ -252,7 +336,7 @@ class AttendanceController extends Controller
         $record->load(['shop:id,name', 'breaks']);
         $userShops = $request->user()->shops()->where('shops.is_active', true)->get(['shops.id', 'shops.name']);
 
-        return Inertia::render('Attendance/ProvisionalForm', [
+        return Inertia::render($this->viewFor('Attendance/ProvisionalForm'), [
             'record' => [
                 'id' => $record->id,
                 'date' => $record->date->format('Y-m-d'),
@@ -446,7 +530,7 @@ class AttendanceController extends Controller
         $records = $query->paginate(20)->withQueryString();
         $this->enrichAttendancePaginatorWithShiftAndPayroll($records, true);
 
-        return Inertia::render('Attendance/History', [
+        return Inertia::render($this->viewFor('Attendance/History'), [
             'records' => $records,
             'filters' => [
                 'from' => $from,
@@ -506,7 +590,7 @@ class AttendanceController extends Controller
         $records = $query->orderBy('date')->orderBy('created_at')->paginate(20)->withQueryString();
         $this->enrichAttendancePaginatorWithShiftAndPayroll($records, false);
 
-        return Inertia::render('Attendance/ApprovalIndex', [
+        return Inertia::render($this->viewFor('Attendance/ApprovalIndex'), [
             'records' => $records,
         ]);
     }

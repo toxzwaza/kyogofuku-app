@@ -23,9 +23,16 @@ class DashboardController extends Controller
 {
     /**
      * ダッシュボードを表示
+     *
+     * 新UI（cookie ui_version != 'legacy'）の場合は新UIオーバービューへリダイレクト。
+     * サイドバー「従来ダッシュボード」リンクからは ?force_legacy=1 で上書き可能。
      */
     public function index(Request $request)
     {
+        if (!$request->boolean('force_legacy') && $request->cookie('ui_version') !== 'legacy') {
+            return redirect()->route('admin.overview');
+        }
+
         $today = Carbon::today();
         $thisMonthStart = Carbon::now()->startOfMonth();
         $thisMonthEnd = Carbon::now()->endOfMonth();

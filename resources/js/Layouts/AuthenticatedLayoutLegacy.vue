@@ -158,6 +158,15 @@ const menuItems = [
                                     >
                                         <div class="bg-white rounded-md shadow-lg py-1 border border-gray-200">
                                             <Link
+                                                :href="route('attendance.index')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('attendance.index') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                打刻
+                                            </Link>
+                                            <Link
                                                 :href="route('attendance.history')"
                                                 :class="[
                                                     'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
@@ -174,6 +183,15 @@ const menuItems = [
                                                 ]"
                                             >
                                                 仮登録
+                                            </Link>
+                                            <Link
+                                                :href="route('attendance.manual')"
+                                                :class="[
+                                                    'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors',
+                                                    route().current('attendance.manual') ? 'theme-active-sub-link' : ''
+                                                ]"
+                                            >
+                                                勤怠マニュアル
                                             </Link>
                                             <Link
                                                 v-if="$page.props.auth?.user?.canManageAttendance"
@@ -399,11 +417,17 @@ const menuItems = [
                         <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             勤怠管理
                         </div>
+                        <ResponsiveNavLink :href="route('attendance.index')" :active="route().current('attendance.index')" class="pl-8">
+                            打刻
+                        </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('attendance.history')" :active="route().current('attendance.history')" class="pl-8">
                             勤怠履歴
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('attendance.provisional.create')" :active="route().current('attendance.provisional.*')" class="pl-8">
                             仮登録
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('attendance.manual')" :active="route().current('attendance.manual')" class="pl-8">
+                            勤怠マニュアル
                         </ResponsiveNavLink>
                         <ResponsiveNavLink v-if="$page.props.auth?.user?.canManageAttendance" :href="route('attendance.approvals')" :active="route().current('attendance.approvals')" class="pl-8">
                             承認依頼

@@ -25,9 +25,9 @@ const filteredGroups = computed(() => {
         .filter((g) => g.items.length > 0);
 });
 
-const safeRoute = (name) => {
+const safeRoute = (name, params) => {
     try {
-        return route(name);
+        return route(name, params || {});
     } catch {
         return '#';
     }
@@ -68,7 +68,7 @@ const safeRoute = (name) => {
                 <ul class="space-y-0.5">
                     <li v-for="item in g.items" :key="item.route">
                         <Link
-                            :href="safeRoute(item.route)"
+                            :href="safeRoute(item.route, item.routeParams)"
                             :class="[
                                 'relative flex items-center gap-2.5 rounded mx-2 text-sm transition-colors group',
                                 collapsed ? 'justify-center px-2 py-2' : 'px-2.5 py-2',

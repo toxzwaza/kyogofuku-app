@@ -4,8 +4,8 @@ import {
     Ticket, MapPin, Images, Film, Download,
     Camera, Building2,
     Store, Settings,
-    Clock, History, CheckCircle2, Briefcase, DollarSign, Calculator,
-    FileText, Sparkles, BookOpen,
+    Clock, History, CheckCircle2, Briefcase, DollarSign, Calculator, AlarmClock,
+    FileText, Sparkles, BookOpen, LifeBuoy,
 } from 'lucide-vue-next';
 
 /**
@@ -22,7 +22,7 @@ export function useAdminNav() {
             group: 'ホーム',
             items: [
                 { label: 'オーバービュー', route: 'admin.overview',  icon: LayoutDashboard, activePatterns: ['admin.overview'] },
-                { label: '従来ダッシュボード',  route: 'dashboard',      icon: Home,            activePatterns: ['dashboard'] },
+                { label: '従来ダッシュボード',  route: 'dashboard',      icon: Home,            activePatterns: ['dashboard'], routeParams: { force_legacy: 1 } },
             ],
         },
         {
@@ -61,10 +61,11 @@ export function useAdminNav() {
         },
         {
             group: '勤怠',
-            permission: 'canManageAttendance',
             items: [
+                { label: '打刻',           route: 'attendance.index',            icon: AlarmClock,   activePatterns: ['attendance.index'] },
                 { label: '勤怠履歴',       route: 'attendance.history',          icon: History,      activePatterns: ['attendance.history'] },
                 { label: '仮登録',         route: 'attendance.provisional.create', icon: FileText,    activePatterns: ['attendance.provisional.*'] },
+                { label: '勤怠マニュアル', route: 'attendance.manual',           icon: LifeBuoy,     activePatterns: ['attendance.manual'] },
                 { label: '承認依頼',       route: 'attendance.approvals',        icon: CheckCircle2, activePatterns: ['attendance.approvals*'], permission: 'canManageAttendance' },
                 { label: '勤怠管理',       route: 'admin.attendance.index',      icon: Clock,        activePatterns: ['admin.attendance.*'], permission: 'canManageAttendance' },
                 { label: '勤務属性',       route: 'admin.work-attributes.index', icon: Briefcase,    activePatterns: ['admin.work-attributes.*'], permission: 'isAttendanceManager' },
