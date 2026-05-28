@@ -130,13 +130,9 @@ class PhotoSlotController extends Controller
         $allErrors = [];
 
         foreach ($validated['slot_groups'] as $groupIndex => $group) {
-            $result = $this->processSingleGroup($request, $group);
-            // processSingleGroup は redirect を返すため、結果を集約する方式に変更
-            // 代わりに、ループ内で直接処理を行う
             $createdCount = 0;
             $skippedCount = 0;
             $errors = [];
-            $firstCreatedSlot = null;
 
             foreach ($group['shoot_times'] as $shootTime) {
                 $existingSlot = PhotoSlot::where('photo_studio_id', $group['photo_studio_id'])
@@ -160,14 +156,8 @@ class PhotoSlotController extends Controller
                     $photoSlot->shops()->attach($group['shop_ids']);
                 }
 
-                if ($firstCreatedSlot === null) {
-                    $firstCreatedSlot = $photoSlot;
-                }
+                $this->createStaffScheduleForSlot($request, $photoSlot);
                 $createdCount++;
-            }
-
-            if ($firstCreatedSlot !== null) {
-                $this->createStaffScheduleForGroup($request, $firstCreatedSlot, $group['shoot_times']);
             }
 
             $totalCreatedCount += $createdCount;
@@ -198,7 +188,6 @@ class PhotoSlotController extends Controller
         $createdCount = 0;
         $skippedCount = 0;
         $errors = [];
-        $firstCreatedSlot = null;
 
         foreach ($validated['shoot_times'] as $shootTime) {
             $existingSlot = PhotoSlot::where('photo_studio_id', $validated['photo_studio_id'])
@@ -222,14 +211,8 @@ class PhotoSlotController extends Controller
                 $photoSlot->shops()->attach($validated['shop_ids']);
             }
 
-            if ($firstCreatedSlot === null) {
-                $firstCreatedSlot = $photoSlot;
-            }
+            $this->createStaffScheduleForSlot($request, $photoSlot);
             $createdCount++;
-        }
-
-        if ($firstCreatedSlot !== null) {
-            $this->createStaffScheduleForGroup($request, $firstCreatedSlot, $validated['shoot_times']);
         }
 
         $message = "{$createdCount}件の前撮り枠を追加しました。";
@@ -248,35 +231,34 @@ class PhotoSlotController extends Controller
     }
 
     /**
-     * グループ用のスタッフスケジュールを作成
+     * 1 photo_slot = 1 StaffSchedule を作成し、Googleカレンダーへ同期
+     * 顧客未割当時は「[前撮り] 未予約（会場名）」のグレー表示、
+     * 後日 customer_id がセットされたら PhotoSlotObserver が再同期する。
      */
-    protected function createStaffScheduleForGroup(Request $request, PhotoSlot $firstCreatedSlot, array $shootTimes): void
+    protected function createStaffScheduleForSlot(Request $request, PhotoSlot $slot): void
     {
-        $firstCreatedSlot->load(['studio', 'shops.users']);
-        $studioName = $firstCreatedSlot->studio ? $firstCreatedSlot->studio->name : '未設定';
-        $shootDate = Carbon::parse($firstCreatedSlot->shoot_date);
+        $slot->load(['studio', 'customer', 'shops.users']);
+        $studioName = $slot->studio ? trim($slot->studio->name) : '会場未定';
+        $title = $slot->customer
+            ? "[前撮り] {$slot->customer->name}（{$studioName}）"
+            : "[前撮り] 未予約（{$studioName}）";
 
-        $sortedTimes = collect($shootTimes)->sort()->values();
-        $earliestTime = $sortedTimes->first();
-        $latestTime = $sortedTimes->last();
-
-        [$startHour, $startMinute] = explode(':', $earliestTime);
-        $startAt = $shootDate->copy()->setTime((int)$startHour, (int)$startMinute, 0);
-
-        [$endHour, $endMinute] = explode(':', $latestTime);
-        $endAt = $shootDate->copy()->setTime((int)$endHour, (int)$endMinute, 0);
+        $startAt = Carbon::parse($slot->shoot_date . ' ' . $slot->shoot_time);
+        $endAt = $startAt->copy()->addHour();
 
         $schedule = StaffSchedule::create([
             'user_id' => $request->user()->id,
-            'photo_slot_id' => $firstCreatedSlot->id,
-            'title' => '[前撮り]' . $studioName,
+            'photo_slot_id' => $slot->id,
+            'title' => $title,
             'start_at' => $startAt,
             'end_at' => $endAt,
-            'all_day' => true,
+            'all_day' => false,
+            'is_public' => true,
+            'sync_to_google_calendar' => true,
         ]);
 
         $participantUserIds = [];
-        foreach ($firstCreatedSlot->shops as $shop) {
+        foreach ($slot->shops as $shop) {
             foreach ($shop->users as $user) {
                 $participantUserIds[] = $user->id;
             }
@@ -285,7 +267,15 @@ class PhotoSlotController extends Controller
             $schedule->participantUsers()->sync(array_unique($participantUserIds));
         }
 
-        app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
+        try {
+            app(\App\Services\GoogleCalendarSyncService::class)->syncScheduleToShopCalendars($schedule);
+        } catch (\Throwable $e) {
+            Log::error('[PhotoSlot] Google同期失敗（処理は継続）', [
+                'slot_id' => $slot->id,
+                'schedule_id' => $schedule->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -429,14 +419,14 @@ class PhotoSlotController extends Controller
     }
 
     /**
-     * 前撮り枠を削除
+     * 前撮り枠を削除（顧客紐付けが無い場合のみ）
      */
     public function destroy(PhotoSlot $photoSlot)
     {
-        // 顧客が紐づいている場合は削除できない
+        // 顧客が紐づいている場合は削除できない（先に解除する）
         if ($photoSlot->customer_id !== null) {
             return back()->withErrors([
-                'error' => '顧客が紐づいている前撮り枠は削除できません。',
+                'error' => '顧客が紐づいている前撮り枠は削除できません。先に「解除」を実行してください。',
             ]);
         }
 
@@ -444,6 +434,29 @@ class PhotoSlotController extends Controller
 
         return redirect()->route('admin.photo-slots.index')
             ->with('success', '前撮り枠を削除しました。');
+    }
+
+    /**
+     * 前撮り枠から顧客紐付けを解除する。
+     * customer_id を NULL にし、関連属性もクリアする。
+     * Observer が StaffSchedule タイトルを「未予約」に変え、Google カレンダーも自動でグレーに戻る。
+     */
+    public function releaseCustomer(PhotoSlot $photoSlot)
+    {
+        if ($photoSlot->customer_id === null) {
+            return back()->withErrors(['error' => 'この前撮り枠には顧客が紐づいていません。']);
+        }
+
+        $photoSlot->update([
+            'customer_id' => null,
+            'assignment_label' => null,
+            'user_id' => null,
+            'plan_id' => null,
+            'remarks' => null,
+        ]);
+
+        return redirect()->route('admin.photo-slots.index')
+            ->with('success', '顧客の紐付けを解除しました。');
     }
 
     public function createSchedule(Request $request)

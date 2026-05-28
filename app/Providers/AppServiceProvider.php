@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Models\Customer;
 use App\Models\EventReservation;
+use App\Models\PhotoSlot;
 use App\Models\StaffSchedule;
 use App\Observers\CustomerObserver;
 use App\Observers\EventReservationObserver;
+use App\Observers\PhotoSlotObserver;
 use App\Observers\StaffScheduleObserver;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,5 +34,6 @@ class AppServiceProvider extends ServiceProvider
         StaffSchedule::observe(StaffScheduleObserver::class);
         EventReservation::observe(EventReservationObserver::class);
         Customer::observe(CustomerObserver::class);
+        PhotoSlot::observe(PhotoSlotObserver::class);
     }
 }

@@ -117,6 +117,62 @@
           </div>
         </div>
 
+        <!-- 年・月タブ -->
+        <div v-if="availableYears.length > 0" class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg mb-6 divide-y divide-brand-border">
+          <!-- 年タブ -->
+          <div class="px-6 py-3 flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-brand-text-muted font-medium mr-1">年で絞込:</span>
+            <button
+              @click="clearYears"
+              :class="selectedYears.size === 0
+                ? 'bg-brand-primary text-brand-on-primary shadow-soft-sm'
+                : 'bg-brand-surface-2 text-brand-text-muted hover:bg-sumi-100 hover:text-brand-text'"
+              class="px-3 py-1 text-sm rounded-soft font-medium transition-all"
+            >
+              すべて
+              <span class="ml-1 text-xs opacity-80 tabular-nums">{{ totalCount }}</span>
+            </button>
+            <button
+              v-for="year in availableYears"
+              :key="year"
+              @click="toggleYear(year)"
+              :class="selectedYears.has(year)
+                ? 'bg-brand-primary text-brand-on-primary shadow-soft-sm'
+                : 'bg-brand-surface-2 text-brand-text-muted hover:bg-sumi-100 hover:text-brand-text'"
+              class="px-3 py-1 text-sm rounded-soft tabular-nums font-medium transition-all"
+            >
+              {{ year }}年
+              <span class="ml-1 text-xs opacity-80 tabular-nums">{{ countByYear(year) }}</span>
+            </button>
+          </div>
+
+          <!-- 月タブ -->
+          <div v-if="availableMonths.length > 0" class="px-6 py-3 flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-brand-text-muted font-medium mr-1">月で絞込:</span>
+            <button
+              @click="clearMonths"
+              :class="selectedMonths.size === 0
+                ? 'bg-brand-primary text-brand-on-primary shadow-soft-sm'
+                : 'bg-brand-surface-2 text-brand-text-muted hover:bg-sumi-100 hover:text-brand-text'"
+              class="px-3 py-1 text-sm rounded-soft font-medium transition-all"
+            >
+              すべて
+            </button>
+            <button
+              v-for="month in availableMonths"
+              :key="month"
+              @click="toggleMonth(month)"
+              :class="selectedMonths.has(month)
+                ? 'bg-brand-primary text-brand-on-primary shadow-soft-sm'
+                : 'bg-brand-surface-2 text-brand-text-muted hover:bg-sumi-100 hover:text-brand-text'"
+              class="px-3 py-1 text-sm rounded-soft tabular-nums font-medium transition-all"
+            >
+              {{ formatMonth(month) }}
+              <span class="ml-1 text-xs opacity-80 tabular-nums">{{ countByMonth(month) }}</span>
+            </button>
+          </div>
+        </div>
+
         <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <!-- 日付ごとにグルーピング表示（アコーディオン） -->
@@ -241,196 +297,166 @@
                   </div>
                 </div>
 
-                <!-- 展開された内容 -->
+                <!-- 展開された内容（店舗別データテーブル） -->
                 <div
                   v-if="expandedDates.has(date)"
-                  class="p-4 bg-brand-surface space-y-3"
+                  class="bg-brand-surface"
                 >
-                  <template v-for="(slot, index) in dateGroup" :key="slot.id">
-                    <!-- 店舗が切り替わる際の区切り線 -->
-                    <div
-                      v-if="
-                        index > 0 &&
-                        getMinShopId(slot) !==
-                          getMinShopId(dateGroup[index - 1])
-                      "
-                      class="my-8 border-t-2 border-gray-400"
-                    ></div>
-                    <!-- 最初の枠または店舗が切り替わる際の店舗名表示 -->
-                    <div
-                      v-if="
-                        index === 0 ||
-                        getMinShopId(slot) !==
-                          getMinShopId(dateGroup[index - 1])
-                      "
-                      class="mb-2"
-                    >
-                      <div class="text-sm font-semibold text-brand-text">
-                        {{ getShopName(slot) }}
-                      </div>
-                    </div>
-                    <div
-                      class="border border-brand-border rounded-lg overflow-hidden"
-                    >
-                      <!-- 時間枠ヘッダー -->
-                      <div
-                        class="bg-brand-surface-2 px-4 py-2 border-b border-brand-border"
+                  <div
+                    v-for="(shopGroup, sgIdx) in groupSlotsByShop(dateGroup)"
+                    :key="shopGroup.shop_id"
+                    :class="sgIdx > 0 ? 'border-t-4 border-brand-bg' : ''"
+                  >
+                    <!-- 店舗ヘッダー -->
+                    <div class="px-4 py-2 flex items-center gap-3 bg-brand-surface-2 border-b border-brand-border">
+                      <span
+                        class="px-2.5 py-0.5 rounded-soft-sm text-xs font-bold tracking-wide"
+                        :class="getShopBadgeClass(shopGroup.shop_name)"
                       >
-                        <div class="flex justify-between items-center">
-                          <div class="flex items-center space-x-4">
-                            <span
-                              class="text-base font-semibold text-brand-text"
-                              >{{ formatTime(slot.shoot_time) }}</span
-                            >
-                            <span class="text-sm text-brand-text-muted">
-                              スタジオ: {{ slot.studio?.name || "-" }}
-                            </span>
-                            <span
-                              v-if="slot.shops && slot.shops.length > 0"
-                              class="text-sm text-brand-text-muted"
-                            >
-                              店舗:
-                              <span
-                                v-for="(shop, index) in slot.shops"
-                                :key="shop.id"
-                              >
-                                {{ shop.name
-                                }}<span v-if="index < slot.shops.length - 1"
-                                  >,
-                                </span>
-                              </span>
-                            </span>
-                          </div>
-                          <div class="flex items-center space-x-2">
-                            <span
-                              :class="[
-                                'px-2 py-1 text-xs rounded-full',
-                                slot.customer
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-brand-surface-2 text-brand-text',
-                              ]"
-                            >
-                              {{ slot.customer ? "予約済み" : "空き" }}
-                            </span>
-                            <button
-                              v-if="slot.customer"
-                              @click="openEditModal(slot)"
-                              class="px-3 py-1 bg-brand-primary text-white text-sm rounded-md hover:bg-brand-primary-hover"
-                            >
-                              編集
-                            </button>
-                            <button
-                              v-if="slot.customer && slot.user && !isSlotScheduled(slot.id)"
-                              @click="createSlotSchedule(slot)"
-                              :disabled="creatingSlotSchedule === slot.id"
-                              class="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                            >
-                              <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                              </svg>
-                              {{ creatingSlotSchedule === slot.id ? "登録中..." : "カレンダー追加" }}
-                            </button>
-                            <span
-                              v-if="slot.customer && slot.user && isSlotScheduled(slot.id)"
-                              class="px-3 py-1 bg-gray-200 text-brand-text-muted text-sm rounded-md flex items-center gap-1"
-                            >
-                              <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                              </svg>
-                              登録済
-                            </span>
-                            <button
-                              v-else
-                              @click="confirmDelete(slot)"
-                              class="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
-                            >
-                              削除
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                        {{ shopGroup.shop_name }}
+                      </span>
+                      <span class="text-xs text-brand-text-muted tabular-nums">
+                        {{ shopGroup.slots.length }} 枠
+                      </span>
+                      <span class="flex items-center gap-2 text-xs">
+                        <span class="inline-flex items-center gap-1 text-uguisu-700">
+                          <span class="w-2 h-2 bg-uguisu-500 rounded-full"></span>
+                          予約 <span class="tabular-nums font-semibold">{{ countReserved(shopGroup.slots) }}</span>
+                        </span>
+                        <span class="inline-flex items-center gap-1 text-brand-text-muted">
+                          <span class="w-2 h-2 bg-sumi-300 rounded-full"></span>
+                          空き <span class="tabular-nums font-semibold">{{ countAvailable(shopGroup.slots) }}</span>
+                        </span>
+                      </span>
+                    </div>
 
-                      <!-- 詳細情報（簡潔版） -->
-                      <div
-                        v-if="
-                          slot.customer ||
-                          slot.assignment_label ||
-                          slot.user ||
-                          slot.plan ||
-                          slot.remarks
-                        "
-                        class="p-3 bg-brand-surface"
-                      >
-                        <div
-                          class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm"
-                        >
-                          <div v-if="slot.customer">
-                            <span class="text-brand-text-muted font-medium">顧客:</span>
-                            <span class="ml-2 text-brand-text">
-                              {{ slot.customer.name
-                              }}<span
-                                v-if="
-                                  slot.customer.name_kana &&
-                                  slot.customer.name_kana.trim()
-                                "
-                                >（{{ slot.customer.name_kana }}）</span
-                              >
-                            </span>
-                          </div>
-                          <div v-if="slot.assignment_label">
-                            <span class="text-brand-text-muted font-medium"
-                              >ラベル:</span
-                            >
-                            <span class="ml-2 text-brand-text">{{
-                              slot.assignment_label
-                            }}</span>
-                          </div>
-                          <div v-if="slot.user">
-                            <span class="text-brand-text-muted font-medium"
-                              >担当者:</span
-                            >
-                            <span class="ml-2 text-brand-text">{{
-                              slot.user.name
-                            }}</span>
-                          </div>
-                          <div v-if="slot.plan">
-                            <span class="text-brand-text-muted font-medium"
-                              >プラン:</span
-                            >
-                            <span class="ml-2 text-brand-text">{{
-                              slot.plan.name
-                            }}</span>
-                          </div>
-                          <div v-if="slot.remarks" class="md:col-span-2">
-                            <span class="text-brand-text-muted font-medium">備考:</span>
-                            <span class="ml-2 text-brand-text">{{
-                              slot.remarks
-                            }}</span>
-                          </div>
-                        </div>
-                      </div>
+                    <!-- データテーブル -->
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-sm">
+                        <thead class="text-xs text-brand-text-muted bg-brand-surface">
+                          <tr class="border-b border-brand-border">
+                            <th class="w-1 p-0"></th>
+                            <th class="px-2 py-2 text-left font-medium tabular-nums">時刻</th>
+                            <th class="px-2 py-2 text-left font-medium">スタジオ</th>
+                            <th class="px-2 py-2 text-left font-medium">氏名</th>
+                            <th class="px-2 py-2 text-left font-medium">保護者</th>
+                            <th class="px-2 py-2 text-left font-medium">電話</th>
+                            <th class="px-2 py-2 text-left font-medium">住所</th>
+                            <th class="px-2 py-2 text-left font-medium">担当・備考</th>
+                            <th class="px-2 py-2 text-right font-medium">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            v-for="slot in shopGroup.slots"
+                            :key="slot.id"
+                            class="border-b border-brand-border/60 hover:bg-ai-50/50 transition-colors group"
+                          >
+                            <!-- 状態色のレフトバー -->
+                            <td class="p-0" :class="slot.customer ? 'bg-uguisu-500' : 'bg-sumi-200'"></td>
+
+                            <!-- 時刻 -->
+                            <td class="px-2 py-2 tabular-nums font-semibold text-brand-text whitespace-nowrap">
+                              {{ formatTime(slot.shoot_time) }}
+                            </td>
+
+                            <!-- スタジオ -->
+                            <td class="px-2 py-2 text-brand-text whitespace-nowrap">
+                              {{ slot.studio?.name?.trim() || '—' }}
+                            </td>
+
+                            <!-- 氏名 -->
+                            <td class="px-2 py-2">
+                              <template v-if="slot.customer">
+                                <div class="font-semibold text-brand-text leading-tight">
+                                  {{ slot.customer.name }}
+                                </div>
+                                <div v-if="slot.customer.kana" class="text-xs text-brand-text-muted leading-tight">
+                                  {{ slot.customer.kana }}
+                                </div>
+                              </template>
+                              <span v-else class="text-brand-text-subtle italic">未予約</span>
+                            </td>
+
+                            <!-- 保護者 -->
+                            <td class="px-2 py-2 text-brand-text">
+                              {{ slot.customer?.guardian_name || '—' }}
+                            </td>
+
+                            <!-- 電話 -->
+                            <td class="px-2 py-2 tabular-nums whitespace-nowrap">
+                              <a
+                                v-if="slot.customer?.phone_number"
+                                :href="'tel:' + slot.customer.phone_number"
+                                class="text-brand-primary hover:underline"
+                              >{{ slot.customer.phone_number }}</a>
+                              <span v-else class="text-brand-text-subtle">—</span>
+                            </td>
+
+                            <!-- 住所 -->
+                            <td class="px-2 py-2 text-brand-text max-w-xs">
+                              <template v-if="slot.customer?.postal_code || slot.customer?.address">
+                                <div v-if="slot.customer?.postal_code" class="text-xs text-brand-text-muted tabular-nums">
+                                  〒{{ slot.customer.postal_code }}
+                                </div>
+                                <div v-if="slot.customer?.address" class="truncate" :title="slot.customer.address">
+                                  {{ slot.customer.address }}
+                                </div>
+                              </template>
+                              <span v-else class="text-brand-text-subtle">—</span>
+                            </td>
+
+                            <!-- 担当・備考 -->
+                            <td class="px-2 py-2 text-xs text-brand-text-muted max-w-xs">
+                              <div v-if="slot.user" class="truncate">担当: {{ slot.user.name }}</div>
+                              <div v-if="slot.plan" class="truncate">プラン: {{ slot.plan.name }}</div>
+                              <div v-if="slot.assignment_label" class="truncate text-brand-text">{{ slot.assignment_label }}</div>
+                              <div v-if="slot.remarks" class="truncate italic" :title="slot.remarks">{{ slot.remarks }}</div>
+                              <span v-if="!slot.user && !slot.plan && !slot.assignment_label && !slot.remarks" class="text-brand-text-subtle">—</span>
+                            </td>
+
+                            <!-- 操作 -->
+                            <td class="px-2 py-2 text-right whitespace-nowrap">
+                              <div class="inline-flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                                <a
+                                  v-if="slot.customer"
+                                  :href="route('admin.customers.show', slot.customer.id)"
+                                  class="p-1.5 rounded-soft-sm hover:bg-ai-100 text-brand-primary"
+                                  title="顧客詳細を開く"
+                                >
+                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                </a>
+                                <button
+                                  v-if="slot.customer"
+                                  @click="openEditModal(slot)"
+                                  class="p-1.5 rounded-soft-sm hover:bg-sumi-100 text-brand-text-muted"
+                                  title="編集"
+                                >
+                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </button>
+                                <button
+                                  v-if="slot.customer"
+                                  @click="confirmRelease(slot)"
+                                  class="p-1.5 rounded-soft-sm hover:bg-natane-100 text-natane-700"
+                                  title="顧客の紐付けを解除"
+                                >
+                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                </button>
+                                <button
+                                  v-else
+                                  @click="confirmDelete(slot)"
+                                  class="p-1.5 rounded-soft-sm hover:bg-akane-100 text-akane-600"
+                                  title="前撮り枠を削除"
+                                >
+                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"/></svg>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
-                  </template>
+                  </div>
                 </div>
               </div>
             </div>
@@ -758,9 +784,19 @@
           class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
         >
           <div class="p-6">
-            <h3 class="text-lg font-bold text-brand-text mb-4">削除確認</h3>
-            <p class="text-sm text-brand-text-muted mb-6">
-              この前撮り枠を削除してもよろしいですか？この操作は取り消せません。
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-brand-text">前撮り枠を削除</h3>
+            </div>
+            <p class="text-sm text-brand-text-muted mb-2">
+              この前撮り枠を削除してもよろしいですか？
+            </p>
+            <p class="text-xs text-red-600 mb-6">
+              ※ Googleカレンダーのイベントも削除されます。この操作は取り消せません。
             </p>
             <div class="flex justify-end space-x-3">
               <button
@@ -773,7 +809,52 @@
                 @click="deletePhotoSlot"
                 class="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
               >
-                削除
+                削除する
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 解除確認モーダル -->
+    <transition name="modal">
+      <div
+        v-if="showReleaseModal"
+        class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto z-50 flex items-center justify-center p-4"
+        @click.self="showReleaseModal = false"
+      >
+        <div
+          class="relative bg-brand-surface rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+        >
+          <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-brand-text">顧客紐付けを解除</h3>
+            </div>
+            <p class="text-sm text-brand-text-muted mb-2" v-if="selectedSlot?.customer">
+              <span class="font-semibold">{{ selectedSlot.customer.name }}</span> さんの紐付けを解除します。
+            </p>
+            <p class="text-xs text-orange-600 mb-6">
+              ※ 枠自体は残ります（未予約状態に戻る）。Googleカレンダーは「未予約」表示・グレーに変わります。<br>
+              削除する場合は、解除した後に「削除」ボタンから実行してください。
+            </p>
+            <div class="flex justify-end space-x-3">
+              <button
+                @click="showReleaseModal = false"
+                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
+              >
+                キャンセル
+              </button>
+              <button
+                @click="releasePhotoSlot"
+                class="px-4 py-2 bg-orange-500 text-white rounded-md text-sm font-medium hover:bg-orange-600"
+              >
+                解除する
               </button>
             </div>
           </div>
@@ -979,7 +1060,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import axios from "axios";
 import { formatDateJa, formatDateJaWithWeekday } from "@/utils/dateFormat";
 
@@ -995,6 +1076,7 @@ const props = defineProps({
 
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
+const showReleaseModal = ref(false);
 const showDateEditModal = ref(false);
 const selectedSlot = ref(null);
 const selectedDateGroupSlots = ref([]);
@@ -1068,6 +1150,24 @@ const filteredSlots = computed(() => {
   if (filters.value.end_date) {
     filtered = filtered.filter(
       (slot) => slot.shoot_date <= filters.value.end_date
+    );
+  }
+
+  // 年タブでフィルタリング（複数選択時はOR）
+  if (selectedYears.value.size > 0) {
+    filtered = filtered.filter(
+      (slot) =>
+        slot.shoot_date &&
+        selectedYears.value.has(String(slot.shoot_date).substring(0, 4))
+    );
+  }
+
+  // 月タブでフィルタリング（複数選択時はOR）
+  if (selectedMonths.value.size > 0) {
+    filtered = filtered.filter(
+      (slot) =>
+        slot.shoot_date &&
+        selectedMonths.value.has(String(slot.shoot_date).substring(0, 7))
     );
   }
 
@@ -1165,6 +1265,125 @@ const getShopName = (slot) => {
   return sortedShops.map((shop) => shop.name).join("・");
 };
 
+// dateGroup を店舗別にグルーピング
+const groupSlotsByShop = (slots) => {
+  const groups = {};
+  for (const slot of slots) {
+    const shopId = getMinShopId(slot);
+    const shopName = getShopName(slot);
+    if (!groups[shopId]) {
+      groups[shopId] = { shop_id: shopId, shop_name: shopName, slots: [] };
+    }
+    groups[shopId].slots.push(slot);
+  }
+  return Object.values(groups).sort((a, b) => a.shop_id - b.shop_id);
+};
+
+// 店舗バッジの色クラス（和色パレット）
+const getShopBadgeClass = (shopName) => {
+  if (shopName?.includes("岡山")) return "bg-natane-100 text-natane-800";
+  if (shopName?.includes("城東")) return "bg-ai-100 text-ai-800";
+  if (shopName?.includes("浜")) return "bg-uguisu-100 text-uguisu-800";
+  if (shopName?.includes("福井")) return "bg-enji-100 text-enji-800";
+  return "bg-sumi-100 text-sumi-800";
+};
+
+const countReserved = (slots) => slots.filter((s) => s.customer).length;
+const countAvailable = (slots) => slots.filter((s) => !s.customer).length;
+
+// 年・月タブ用
+const selectedYears = ref(new Set());
+const selectedMonths = ref(new Set());
+
+const availableYears = computed(() => {
+  const set = new Set();
+  for (const slot of props.photoSlots ?? []) {
+    if (slot.shoot_date) set.add(String(slot.shoot_date).substring(0, 4));
+  }
+  return [...set].sort();
+});
+
+// 月タブは選択中の年のみに絞る（年が選択されていなければ全月）
+const availableMonths = computed(() => {
+  const set = new Set();
+  for (const slot of props.photoSlots ?? []) {
+    if (!slot.shoot_date) continue;
+    const year = String(slot.shoot_date).substring(0, 4);
+    if (selectedYears.value.size > 0 && !selectedYears.value.has(year)) continue;
+    set.add(String(slot.shoot_date).substring(0, 7));
+  }
+  return [...set].sort();
+});
+
+const totalCount = computed(() => (props.photoSlots ?? []).length);
+
+const countByYear = (year) =>
+  (props.photoSlots ?? []).filter(
+    (s) => s.shoot_date && String(s.shoot_date).startsWith(year)
+  ).length;
+
+const countByMonth = (month) =>
+  (props.photoSlots ?? []).filter(
+    (s) => s.shoot_date && String(s.shoot_date).startsWith(month)
+  ).length;
+
+const formatMonth = (month) => {
+  const [y, m] = month.split("-");
+  return `${m}月`;
+};
+
+const toggleYear = (year) => {
+  const next = new Set(selectedYears.value);
+  if (next.has(year)) next.delete(year);
+  else next.add(year);
+  selectedYears.value = next;
+  // 月選択は年が変わったらクリア（選択中の月が他年に属している可能性があるため）
+  selectedMonths.value = new Set();
+};
+
+const clearYears = () => {
+  selectedYears.value = new Set();
+  selectedMonths.value = new Set();
+};
+
+const toggleMonth = (month) => {
+  const next = new Set(selectedMonths.value);
+  if (next.has(month)) next.delete(month);
+  else next.add(month);
+  selectedMonths.value = next;
+};
+
+const clearMonths = () => {
+  selectedMonths.value = new Set();
+};
+
+// 年・月のデフォルトを設定（今月→今年、無ければ最新年）
+const applyDefaultYearMonth = () => {
+  const years = availableYears.value;
+  if (years.length === 0) {
+    selectedYears.value = new Set();
+    selectedMonths.value = new Set();
+    return;
+  }
+  const now = new Date();
+  const currentYear = String(now.getFullYear());
+  const currentMonth = `${currentYear}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  // 年: 今年がデータにあれば今年、無ければ最新年
+  selectedYears.value = years.includes(currentYear)
+    ? new Set([currentYear])
+    : new Set([years[years.length - 1]]);
+
+  // 月: 今月がデータにあれば今月、無ければ未選択
+  selectedMonths.value = availableMonths.value.includes(currentMonth)
+    ? new Set([currentMonth])
+    : new Set();
+};
+
+onMounted(() => {
+  applyDefaultYearMonth();
+});
+
 // 絞り込み条件をリセット
 const resetFilters = () => {
   filters.value = {
@@ -1174,6 +1393,8 @@ const resetFilters = () => {
     start_date: "",
     end_date: "",
   };
+  // 年・月タブはデフォルト（今年・今月）に戻す
+  applyDefaultYearMonth();
 };
 
 const formatTime = (time) => {
@@ -1401,6 +1622,29 @@ const deletePhotoSlot = () => {
       selectedSlot.value = null;
     },
   });
+};
+
+// 解除確認
+const confirmRelease = (slot) => {
+  selectedSlot.value = slot;
+  showReleaseModal.value = true;
+};
+
+// 顧客紐付けを解除
+const releasePhotoSlot = () => {
+  if (!selectedSlot.value) return;
+
+  router.patch(
+    route("admin.photo-slots.release-customer", selectedSlot.value.id),
+    {},
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        showReleaseModal.value = false;
+        selectedSlot.value = null;
+      },
+    }
+  );
 };
 
 // 日付グループ編集モーダルを開く

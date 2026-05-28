@@ -254,6 +254,10 @@ class GoogleCalendarSyncService
                 if (!$shop->is_active) {
                     continue;
                 }
+                // google_calendar_id が空の店舗は同期対象外（primary への意図しないフォールバックを防ぐ）
+                if (trim((string) $shop->google_calendar_id) === '') {
+                    continue;
+                }
                 $shopsMap[$shop->id] = $shop;
             }
         }
@@ -415,8 +419,9 @@ class GoogleCalendarSyncService
         $descriptionParts = [];
 
         // 担当者（schedule_participants）を説明の先頭に目立つ形で表示
+        // 前撮り由来（photo_slot_id 付き）は担当者表示を省略
         $schedule->loadMissing('participantUsers');
-        if ($schedule->participantUsers->isNotEmpty()) {
+        if ($schedule->participantUsers->isNotEmpty() && empty($schedule->photo_slot_id)) {
             $descriptionParts[] = '【担当者】' . $schedule->participantUsers->pluck('name')->join('、');
             $descriptionParts[] = '';
         }
@@ -442,6 +447,54 @@ class GoogleCalendarSyncService
             $source = new EventSource();
             $source->setTitle('予約詳細');
             $source->setUrl($reservationUrl);
+            $event->setSource($source);
+        }
+
+        // 前撮り由来のスケジュールの場合、タイトル・詳細・色を設定
+        if ($schedule->photo_slot_id) {
+            $schedule->loadMissing('photoSlot.studio', 'photoSlot.customer');
+            $slot = $schedule->photoSlot;
+            $customer = $slot?->customer;
+            $studioName = $slot?->studio?->name ? trim($slot->studio->name) : '会場未定';
+
+            if ($customer) {
+                // 予約済み: セージ（緑）+ 顧客情報
+                $event->setSummary("[前撮り] {$customer->name}（{$studioName}）");
+                $event->setColorId('2');
+            } else {
+                // 未予約: グラファイト（薄いグレー）
+                $event->setSummary("[前撮り] 未予約（{$studioName}）");
+                $event->setColorId('8');
+            }
+
+            $descriptionParts[] = '';
+            $descriptionParts[] = '【スタジオ】' . $studioName;
+            $start = $schedule->start_at?->format('Y-m-d H:i');
+            $end = $schedule->end_at?->format('H:i');
+            $descriptionParts[] = '【時間】' . ($start ? $start . ($end ? ' 〜 ' . $end : '') : '未定');
+
+            if ($customer) {
+                $descriptionParts[] = '';
+                $descriptionParts[] = '【顧客情報】';
+                $descriptionParts[] = '  氏名: ' . $customer->name;
+                if (!empty($customer->guardian_name)) $descriptionParts[] = '  保護者: ' . $customer->guardian_name;
+                if (!empty($customer->phone_number)) $descriptionParts[] = '  電話: ' . $customer->phone_number;
+                if (!empty($customer->email)) $descriptionParts[] = '  メール: ' . $customer->email;
+                if (!empty($customer->postal_code)) $descriptionParts[] = '  〒' . $customer->postal_code;
+                if (!empty($customer->address)) $descriptionParts[] = '  住所: ' . $customer->address;
+            }
+
+            $photoSlotUrl = URL::route('admin.photo-slots.index', [], true);
+            $descriptionParts[] = '';
+            $descriptionParts[] = '前撮り枠詳細: ' . $photoSlotUrl;
+            if ($customer) {
+                $customerUrl = URL::route('admin.customers.show', $customer->id, true);
+                $descriptionParts[] = '顧客詳細: ' . $customerUrl;
+            }
+
+            $source = new EventSource();
+            $source->setTitle('前撮り枠詳細');
+            $source->setUrl($photoSlotUrl);
             $event->setSource($source);
         }
 
