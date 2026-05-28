@@ -75,6 +75,14 @@ export function useAdminNav() {
             ],
         },
         {
+            group: '業務マニュアル',
+            items: [
+                // 旧マニュアル（顧客／前撮り／イベント予約／周辺機能）はメニュー上は非表示。
+                // ファイル本体はサーバ側に残しており、URL 直打ち（/admin/manuals/customer 等）でアクセス可能。
+                { label: '簡易マニュアル 2026-05-29', route: 'admin.manuals.simple-20260529', icon: BookOpen, activePatterns: ['admin.manuals.simple-20260529'] },
+            ],
+        },
+        {
             group: 'システム',
             items: [
                 { label: 'ログ',       route: 'admin.activity-logs.index', icon: FileText, activePatterns: ['admin.activity-logs.*'] },

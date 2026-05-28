@@ -5,6 +5,7 @@ import {
     BookOpen, Clock, FileEdit, History, CheckCircle2,
     Settings, Calendar, DollarSign, Calculator, Briefcase,
     HelpCircle, AlertTriangle, Info, Layers,
+    Download, Printer,
 } from 'lucide-vue-next';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { UiCard, UiPageHeader, UiBadge, UiAlert } from '@/Components/UI';
@@ -77,7 +78,30 @@ const img = (file) => `/images/manual/attendance/${file}`;
         <UiPageHeader
             title="勤怠マニュアル"
             description="出勤・休憩・退勤の打刻、仮登録、申請から、管理者向けの承認・閾値設定まで、本システムの勤怠機能の使い方をまとめています。"
-        />
+        >
+            <template #actions>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <a
+                        href="/manuals/勤怠マニュアル.pdf"
+                        target="_blank"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-white text-sm rounded hover:opacity-90 transition"
+                        title="A4印刷向けPDFをダウンロード"
+                    >
+                        <Download :size="14" />
+                        PDFをダウンロード
+                    </a>
+                    <button
+                        type="button"
+                        @click="window.print()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-brand-border text-sm rounded hover:bg-brand-surface-2 transition"
+                        title="このページを印刷"
+                    >
+                        <Printer :size="14" />
+                        印刷
+                    </button>
+                </div>
+            </template>
+        </UiPageHeader>
 
         <div class="manual-layout">
             <!-- 本文 -->
@@ -590,6 +614,54 @@ const img = (file) => `/images/manual/attendance/${file}`;
         align-self: start;
         max-height: calc(100vh - 2rem);
         overflow-y: auto;
+    }
+}
+
+/* ============ 印刷時（A4縦向き）レイアウト ============ */
+@media print {
+    .manual-layout {
+        display: block !important;
+        grid-template-columns: none !important;
+    }
+    .manual-toc { display: none !important; }
+    section {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    figure {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .manual-main {
+        font-size: 10pt;
+        line-height: 1.5;
+    }
+    .manual-main figure img,
+    .manual-main img {
+        max-width: 100%;
+        max-height: 18cm;
+        object-fit: contain;
+    }
+    table, th, td {
+        border-color: #999 !important;
+    }
+}
+</style>
+
+<style>
+/* グローバル印刷ルール（AdminLayoutのナビ等を非表示） */
+@media print {
+    aside.admin-sidebar, .admin-topbar, header.admin-topbar,
+    [class*="AdminSidebar"], [class*="AdminTopbar"],
+    nav.admin-nav, .breadcrumb, .page-header-actions {
+        display: none !important;
+    }
+    body, html {
+        background: #fff !important;
+    }
+    @page {
+        size: A4 portrait;
+        margin: 12mm 12mm 14mm 12mm;
     }
 }
 </style>
