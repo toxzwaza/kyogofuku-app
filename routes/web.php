@@ -142,17 +142,6 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // ヘルプ
     Route::get('/help', fn () => inertia('Admin/Help'))->name('help');
 
-    // 業務マニュアル
-    Route::prefix('manuals')->name('manuals.')->controller(\App\Http\Controllers\Admin\AdminManualController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('/customer', 'customer')->name('customer');
-        Route::get('/photo-slot', 'photoSlot')->name('photo-slot');
-        Route::get('/event', 'event')->name('event');
-        Route::get('/peripheral', 'peripheral')->name('peripheral');
-        // 2026-05-29 版 簡易マニュアル
-        Route::get('/simple-20260529', 'simple20260529')->name('simple-20260529');
-    });
-
     // イベント一覧
     Route::get('/events', [AdminEventController::class, 'index'])->name('events.index');
     Route::get('/events/create', [AdminEventController::class, 'create'])->name('events.create');
@@ -173,6 +162,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/photo-slots/create-schedule', [AdminPhotoSlotController::class, 'createSchedule'])->name('photo-slots.create-schedule');
     Route::post('/photo-slots/create-slot-schedule', [AdminPhotoSlotController::class, 'createSlotSchedule'])->name('photo-slots.create-slot-schedule');
     Route::put('/photo-slots/{photoSlot}', [AdminPhotoSlotController::class, 'update'])->name('photo-slots.update');
+    Route::patch('/photo-slots/{photoSlot}/release-customer', [AdminPhotoSlotController::class, 'releaseCustomer'])->name('photo-slots.release-customer');
     Route::delete('/photo-slots/{photoSlot}', [AdminPhotoSlotController::class, 'destroy'])->name('photo-slots.destroy');
 
     // スタジオ管理
