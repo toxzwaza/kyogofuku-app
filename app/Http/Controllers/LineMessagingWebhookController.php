@@ -6,13 +6,15 @@ use App\Models\CustomerLineContact;
 use App\Models\CustomerLineMessage;
 use App\Models\LineUnknownInboundMessage;
 use App\Services\Line\LineMessagingService;
+use App\Services\Line\ShopLineGroupNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class LineMessagingWebhookController extends Controller
 {
     public function __construct(
-        private LineMessagingService $lineMessaging
+        private LineMessagingService $lineMessaging,
+        private ShopLineGroupNotifier $shopNotifier,
     ) {}
 
     public function handle(Request $request)
@@ -104,6 +106,9 @@ class LineMessagingWebhookController extends Controller
                 'line_message_id' => $lineMessageId,
                 'payload' => null,
             ]);
+
+            // 連携済みユーザーからのテキスト受信時は店舗グループにも通知
+            $this->shopNotifier->notifyInboundMessage($contact, $text);
 
             return;
         }

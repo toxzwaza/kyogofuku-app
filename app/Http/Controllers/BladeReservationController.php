@@ -8,6 +8,7 @@ use App\Models\EventTimeslot;
 use App\Services\BladeLp\FormSchemaValidator;
 use App\Services\BladeLp\LineNotifier;
 use App\Services\EventReservationScheduleBootstrapService;
+use App\Services\ReservationConfirmationMailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -150,6 +151,18 @@ class BladeReservationController extends Controller
                 'reservation_id' => $reservation->id,
                 'error' => $e->getMessage(),
             ]);
+        }
+
+        // 受付完了メール送信（Vue 版と同等の挙動。失敗時も予約処理は続行）
+        if (filled($reservation->email)) {
+            try {
+                app(ReservationConfirmationMailer::class)->send($reservation);
+            } catch (\Throwable $e) {
+                Log::error('[BladeReservation] 受付完了メール送信失敗', [
+                    'reservation_id' => $reservation->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $request->session()->put('blade_lp_form_data.'.$event->id, $validated);

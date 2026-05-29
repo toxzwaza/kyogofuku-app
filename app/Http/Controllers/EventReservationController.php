@@ -2,18 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\ReservationConfirmationMail;
-use App\Models\CustomerLineLinkToken;
-use App\Models\Email;
-use App\Models\EmailThread;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
 use App\Services\EventReservationScheduleBootstrapService;
-use App\Services\Line\EventLineShopResolver;
+use App\Services\ReservationConfirmationMailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +16,10 @@ use Inertia\Inertia;
 
 class EventReservationController extends Controller
 {
+    public function __construct(
+        private ReservationConfirmationMailer $reservationMailer,
+    ) {}
+
     /**
      * 予約を保存
      */
@@ -685,105 +684,13 @@ class EventReservationController extends Controller
 
     /**
      * 受付完了メールを送信し、データベースに保存
+     *
+     * 実体は ReservationConfirmationMailer サービスに移管済み。
+     * Vue 版・Blade LP 版で同じロジックを共有するため、Service 呼び出しに薄く委譲する。
      */
     private function sendReservationConfirmationEmail(EventReservation $reservation)
     {
-        $reservation->load('event', 'document');
-
-        $lineLiffUrl = null;
-        $event = $reservation->event;
-        if ($event) {
-            $shopId = app(EventLineShopResolver::class)->resolveShopIdForEvent($event);
-            if ($shopId !== null) {
-                $token = CustomerLineLinkToken::generateToken();
-                CustomerLineLinkToken::query()->create([
-                    'token' => $token,
-                    'customer_id' => null,
-                    'event_reservation_id' => $reservation->id,
-                    'shop_id' => $shopId,
-                    'suggested_label' => '本人',
-                    'expires_at' => now()->addDays(30),
-                    'created_by_user_id' => null,
-                ]);
-                $lineLiffUrl = rtrim((string) config('app.url'), '/').'/line/liff/link/'.rawurlencode($token);
-            }
-        }
-
-        $mailViewData = [
-            'reservation' => $reservation,
-            'lineLiffUrl' => $lineLiffUrl,
-            'lineAddFriendUrl' => (string) config('line.line_official_add_friend_url', ''),
-            'reservationEmailIncludeAddFriendUrl' => (bool) config('line.reservation_email_include_add_friend_url', true),
-        ];
-
-        // メールスレッドを取得または作成
-        $emailThread = EmailThread::firstOrCreate(
-            ['event_reservation_id' => $reservation->id],
-            ['subject' => "【{$reservation->event->title}】ご予約ありがとうございます"]
-        );
-
-        // メールを送信（スレッドIDを渡す）
-        $mailable = new ReservationConfirmationMail($reservation, $emailThread->id, $lineLiffUrl);
-        Mail::to($reservation->email)->send($mailable);
-
-        // 送信したメールをデータベースに保存
-        // メールの生データを取得するため、Mailファサードのイベントを使用
-        // または、送信後にメール内容を再構築して保存
-        $rawEmail = $this->buildRawEmail($mailable, $reservation->email);
-
-        // Message-IDを生成（RFC 5322形式：<...>で囲む）
-        $messageId = '<reservation-confirmation-'.$reservation->id.'-'.now()->timestamp.'@'.parse_url(config('app.url'), PHP_URL_HOST).'>';
-
-        Email::create([
-            'message_id' => $messageId,
-            'from' => config('mail.from.address'),
-            'to' => $reservation->email,
-            'subject' => $mailable->envelope()->subject,
-            'text_body' => view('mail.reservation_confirmation_plain', $mailViewData)->render(),
-            'html_body' => view('mail.reservation_confirmation', $mailViewData)->render(),
-            'raw_email' => $rawEmail,
-            'event_reservation_id' => $reservation->id,
-            'email_thread_id' => $emailThread->id,
-        ]);
-
-        Log::info('受付完了メールを送信しました', [
-            'reservation_id' => $reservation->id,
-            'email' => $reservation->email,
-            'email_thread_id' => $emailThread->id,
-        ]);
-    }
-
-    /**
-     * メールの生データを構築
-     */
-    private function buildRawEmail($mailable, $to)
-    {
-        $envelope = $mailable->envelope();
-        $content = $mailable->content();
-
-        $subject = $envelope->subject;
-        $from = config('mail.from.address');
-        $fromName = config('mail.from.name');
-
-        $r = $mailable->reservation;
-        $textBody = view('mail.reservation_confirmation_plain', [
-            'reservation' => $r,
-            'lineLiffUrl' => $mailable->lineLiffUrl,
-            'lineAddFriendUrl' => (string) config('line.line_official_add_friend_url', ''),
-            'reservationEmailIncludeAddFriendUrl' => (bool) config('line.reservation_email_include_add_friend_url', true),
-        ])->render();
-
-        $rawEmail = "From: {$fromName} <{$from}>\r\n";
-        $rawEmail .= "To: {$to}\r\n";
-        $rawEmail .= "Subject: {$subject}\r\n";
-        $rawEmail .= "Reply-To: reply@reply.kyogofuku-hirata.jp\r\n";
-        $rawEmail .= 'Date: '.now()->format('r')."\r\n";
-        $rawEmail .= "MIME-Version: 1.0\r\n";
-        $rawEmail .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        $rawEmail .= "\r\n";
-        $rawEmail .= $textBody;
-
-        return $rawEmail;
+        $this->reservationMailer->send($reservation);
     }
 
     /**
