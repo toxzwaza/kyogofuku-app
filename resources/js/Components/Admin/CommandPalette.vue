@@ -205,7 +205,7 @@ const noResults = computed(() =>
                                                 <UserIcon :size="15" class="text-brand-text-muted flex-shrink-0" />
                                                 <div class="flex-1 min-w-0">
                                                     <div class="text-sm truncate">{{ c.name || '(無記名)' }} <span class="text-brand-text-muted text-xs">#{{ c.id }}</span></div>
-                                                    <div class="text-[11px] text-brand-text-muted truncate">{{ c.phone || c.email || '' }}</div>
+                                                    <div class="text-[11px] text-brand-text-muted truncate">{{ c.phone_number || c.email || '' }}</div>
                                                 </div>
                                                 <CornerDownLeft v-if="active" :size="12" class="text-brand-text-subtle" />
                                             </div>

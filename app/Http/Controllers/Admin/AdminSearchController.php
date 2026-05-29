@@ -45,8 +45,8 @@ class AdminSearchController extends Controller
 
         $customers = Customer::where(function ($w) use ($like, $q) {
                 $w->where('name', 'like', $like)
-                    ->orWhere('furigana', 'like', $like)
-                    ->orWhere('phone', 'like', $like)
+                    ->orWhere('kana', 'like', $like)
+                    ->orWhere('phone_number', 'like', $like)
                     ->orWhere('email', 'like', $like);
                 if (ctype_digit($q)) {
                     $w->orWhere('id', (int) $q);
@@ -54,7 +54,7 @@ class AdminSearchController extends Controller
             })
             ->orderByDesc('updated_at')
             ->take(8)
-            ->get(['id', 'name', 'furigana', 'phone', 'email']);
+            ->get(['id', 'name', 'kana', 'phone_number', 'email']);
 
         return response()->json([
             'reservations' => $reservations,
