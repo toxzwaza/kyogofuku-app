@@ -39,7 +39,12 @@ export default defineConfig({
                 ],
             },
             workbox: {
+                // Laravel + Inertia 構成のため、SW のナビゲーションフォールバックは無効化する。
+                // 既定では SW が `index.html` を全ナビゲーションに返そうとし、サーバ側ルーティングと
+                // 衝突して本番でモーダル等が固まる症状の原因になっていた。
                 globPatterns: [],
+                navigateFallback: null,
+                navigateFallbackDenylist: [/.*/],
             },
             devOptions: { enabled: true },
         }),
