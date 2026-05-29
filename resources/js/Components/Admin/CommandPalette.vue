@@ -98,19 +98,19 @@ const onSelect = (item) => {
     }
 };
 
-// 統合リスト（Combobox に渡す）
-const combinedItems = computed(() => {
-    const list = [];
-    for (const n of filteredNav.value) list.push({ ...n, __type: 'nav' });
-    for (const r of serverResults.value.reservations) list.push({ ...r, __type: 'reservation' });
-    for (const c of serverResults.value.customers)   list.push({ ...c, __type: 'customer' });
-    return list;
-});
+// ComboboxOption に渡す :value をテンプレ内でインラインに { ...n, __type } すると
+// 評価のたびに新規オブジェクトとなり HeadlessUI の reactive 比較で無限再レンダーする。
+// computed で事前に1段階アイテム化して参照を安定させる。
+const navItems = computed(() => filteredNav.value.map((n) => ({ ...n, __type: 'nav' })));
+const reservationItems = computed(() => serverResults.value.reservations.map((r) => ({ ...r, __type: 'reservation' })));
+const customerItems = computed(() => serverResults.value.customers.map((c) => ({ ...c, __type: 'customer' })));
 
 const noResults = computed(() =>
     query.value.trim().length > 0 &&
     !loading.value &&
-    combinedItems.value.length === 0
+    navItems.value.length === 0 &&
+    reservationItems.value.length === 0 &&
+    customerItems.value.length === 0
 );
 </script>
 
@@ -153,12 +153,12 @@ const noResults = computed(() =>
 
                                 <ComboboxOptions static class="max-h-[60vh] overflow-y-auto py-2">
                                     <!-- ナビゲーション -->
-                                    <div v-if="filteredNav.length" class="px-2">
+                                    <div v-if="navItems.length" class="px-2">
                                         <div class="px-2 pb-1 text-[10px] uppercase tracking-widest text-brand-text-subtle font-semibold">画面</div>
                                         <ComboboxOption
-                                            v-for="n in filteredNav"
+                                            v-for="n in navItems"
                                             :key="'nav-' + n.route"
-                                            :value="{ ...n, __type: 'nav' }"
+                                            :value="n"
                                             v-slot="{ active }"
                                         >
                                             <div :class="['flex items-center gap-2.5 px-2 py-2 rounded cursor-pointer', active ? 'bg-brand-surface-2' : '']">
@@ -171,12 +171,12 @@ const noResults = computed(() =>
                                     </div>
 
                                     <!-- 予約 -->
-                                    <div v-if="serverResults.reservations.length" class="px-2 mt-2 pt-2 border-t border-brand-border">
+                                    <div v-if="reservationItems.length" class="px-2 mt-2 pt-2 border-t border-brand-border">
                                         <div class="px-2 pb-1 text-[10px] uppercase tracking-widest text-brand-text-subtle font-semibold">予約</div>
                                         <ComboboxOption
-                                            v-for="r in serverResults.reservations"
+                                            v-for="r in reservationItems"
                                             :key="'r-' + r.id"
-                                            :value="{ ...r, __type: 'reservation' }"
+                                            :value="r"
                                             v-slot="{ active }"
                                         >
                                             <div :class="['flex items-center gap-2.5 px-2 py-2 rounded cursor-pointer', active ? 'bg-brand-surface-2' : '']">
@@ -193,12 +193,12 @@ const noResults = computed(() =>
                                     </div>
 
                                     <!-- 顧客 -->
-                                    <div v-if="serverResults.customers.length" class="px-2 mt-2 pt-2 border-t border-brand-border">
+                                    <div v-if="customerItems.length" class="px-2 mt-2 pt-2 border-t border-brand-border">
                                         <div class="px-2 pb-1 text-[10px] uppercase tracking-widest text-brand-text-subtle font-semibold">顧客</div>
                                         <ComboboxOption
-                                            v-for="c in serverResults.customers"
+                                            v-for="c in customerItems"
                                             :key="'c-' + c.id"
-                                            :value="{ ...c, __type: 'customer' }"
+                                            :value="c"
                                             v-slot="{ active }"
                                         >
                                             <div :class="['flex items-center gap-2.5 px-2 py-2 rounded cursor-pointer', active ? 'bg-brand-surface-2' : '']">
