@@ -399,6 +399,9 @@ class EventController extends Controller
             'shop_ids.*' => 'exists:shops,id',
             'document_ids' => 'nullable|array',
             'document_ids.*' => 'exists:documents,id',
+            'thumbnail_media_file_id' => 'nullable|integer|exists:media_files,id',
+            'thumbnail_path' => 'nullable|string|max:1024',
+            'thumbnail_storage_disk' => 'nullable|in:public,s3',
         ]);
 
         // date型なのでそのまま使用（datetime-localの場合はT以降を削除）

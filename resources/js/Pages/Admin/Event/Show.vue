@@ -131,6 +131,18 @@
                                                 </span>
                                             </dd>
                                         </div>
+                                        <div class="sm:col-span-2">
+                                            <dt class="text-sm font-medium text-brand-text-muted">サムネイル画像（外部HP Pick Up 用）</dt>
+                                            <dd class="mt-1">
+                                                <img
+                                                    v-if="event.thumbnail_url"
+                                                    :src="event.thumbnail_url"
+                                                    alt="サムネイル"
+                                                    class="w-40 h-28 object-cover rounded-md border border-brand-border"
+                                                />
+                                                <span v-else class="text-brand-text-subtle text-sm">未設定</span>
+                                            </dd>
+                                        </div>
 
                                     </dl>
                                 </div>
@@ -326,6 +338,47 @@
                                                     </label>
                                                 </div>
                                                 <div v-if="editForm.errors.shop_ids" class="mt-1 text-sm text-red-600">{{ editForm.errors.shop_ids }}</div>
+                                            </div>
+
+                                            <!-- サムネイル画像（外部HP連携用 / Pick Up セクション表示用） -->
+                                            <div>
+                                                <label class="block text-sm font-medium text-brand-text mb-2">
+                                                    サムネイル画像
+                                                    <span class="ml-2 text-xs font-normal text-brand-text-muted">外部HP（Pick Up セクション）で使用</span>
+                                                </label>
+                                                <div v-if="thumbnailPreviewUrl" class="flex items-start space-x-4">
+                                                    <img
+                                                        :src="thumbnailPreviewUrl"
+                                                        alt="サムネイルプレビュー"
+                                                        class="w-40 h-28 object-cover rounded-md border border-brand-border"
+                                                    />
+                                                    <div class="flex flex-col space-y-2">
+                                                        <button
+                                                            type="button"
+                                                            @click="showThumbnailPicker = true"
+                                                            class="px-3 py-1.5 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100"
+                                                        >
+                                                            変更
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            @click="clearThumbnail"
+                                                            class="px-3 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50"
+                                                        >
+                                                            削除
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    v-else
+                                                    type="button"
+                                                    @click="showThumbnailPicker = true"
+                                                    class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800"
+                                                >
+                                                    サムネイル画像を選択
+                                                </button>
+                                                <div v-if="editForm.errors.thumbnail_media_file_id" class="mt-1 text-sm text-red-600">{{ editForm.errors.thumbnail_media_file_id }}</div>
+                                                <div v-if="editForm.errors.thumbnail_path" class="mt-1 text-sm text-red-600">{{ editForm.errors.thumbnail_path }}</div>
                                             </div>
 
                                             <div class="flex justify-end space-x-3">
@@ -1066,6 +1119,13 @@
                 </div>
             </div>
         </transition>
+
+        <!-- サムネイル選択用 MediaPicker -->
+        <MediaPicker
+            :show="showThumbnailPicker"
+            @close="showThumbnailPicker = false"
+            @select="selectThumbnail"
+        />
     </AdminLayout>
 </template>
 
@@ -1074,6 +1134,7 @@ import { ref, reactive } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
+import MediaPicker from '@/Components/MediaPicker.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
@@ -1188,7 +1249,32 @@ const editForm = useForm({
     gtm_id: props.event.gtm_id || '',
     success_text: props.event.success_text || '',
     ended_message_text: props.event.ended_message_text || '',
+    thumbnail_media_file_id: props.event.thumbnail_media_file_id || null,
+    thumbnail_path: props.event.thumbnail_path || null,
+    thumbnail_storage_disk: props.event.thumbnail_storage_disk || 'public',
 });
+
+// サムネイル選択用
+const showThumbnailPicker = ref(false);
+const thumbnailPreviewUrl = ref(props.event.thumbnail_url || null);
+
+const selectThumbnail = (selectedMedia) => {
+    if (selectedMedia && selectedMedia.length > 0) {
+        const media = selectedMedia[0];
+        editForm.thumbnail_media_file_id = media.id;
+        editForm.thumbnail_path = media.path;
+        editForm.thumbnail_storage_disk = media.storage_disk || 'public';
+        thumbnailPreviewUrl.value = media.url;
+    }
+    showThumbnailPicker.value = false;
+};
+
+const clearThumbnail = () => {
+    editForm.thumbnail_media_file_id = null;
+    editForm.thumbnail_path = null;
+    editForm.thumbnail_storage_disk = 'public';
+    thumbnailPreviewUrl.value = null;
+};
 
 const newVenueForm = useForm({
     name: '',

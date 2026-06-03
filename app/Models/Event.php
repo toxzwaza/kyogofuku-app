@@ -37,6 +37,9 @@ class Event extends Model
         'lp_design_slug',
         'lp_theme_tokens',
         'form_schema',
+        'thumbnail_media_file_id',
+        'thumbnail_path',
+        'thumbnail_storage_disk',
     ];
 
     protected $casts = [
@@ -55,6 +58,7 @@ class Event extends Model
         'cta_web_button_url',
         'cta_phone_button_url',
         'background_image_url',
+        'thumbnail_url',
     ];
 
     /**
@@ -105,6 +109,31 @@ class Event extends Model
         $disk = ($this->background_image_storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
         $path = str_replace('\\', '/', $path);
         return Storage::disk($disk)->url($path);
+    }
+
+    /**
+     * サムネイル画像のURLを取得（外部HP連携API・Pick Up用）
+     */
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        $path = $this->thumbnail_path;
+        if (!$path) {
+            return null;
+        }
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+        $disk = ($this->thumbnail_storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
+        $path = str_replace('\\', '/', $path);
+        return Storage::disk($disk)->url($path);
+    }
+
+    /**
+     * サムネイル MediaFile とのリレーション
+     */
+    public function thumbnailMediaFile()
+    {
+        return $this->belongsTo(MediaFile::class, 'thumbnail_media_file_id');
     }
 
     /**

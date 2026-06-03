@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Customer;
+use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\PhotoSlot;
 use App\Models\StaffSchedule;
 use App\Observers\CustomerObserver;
+use App\Observers\EventObserver;
 use App\Observers\EventReservationObserver;
 use App\Observers\PhotoSlotObserver;
 use App\Observers\StaffScheduleObserver;
@@ -35,5 +37,6 @@ class AppServiceProvider extends ServiceProvider
         EventReservation::observe(EventReservationObserver::class);
         Customer::observe(CustomerObserver::class);
         PhotoSlot::observe(PhotoSlotObserver::class);
+        Event::observe(EventObserver::class);
     }
 }

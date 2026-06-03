@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\NaturalLanguageController;
+use App\Http\Controllers\Api\PublicEventController;
 use App\Http\Controllers\GoogleCalendarKeepTokenController;
 use App\Http\Controllers\UtmAnalyticsApiController;
 use Illuminate\Http\Request;
@@ -32,3 +33,9 @@ Route::post('/nl/chat', [NaturalLanguageController::class, 'chat']);
 
 // MCP サーバー用 tool 直接実行エンドポイント（Bearer トークン認証）
 Route::post('/tools/execute', [NaturalLanguageController::class, 'executeTool']);
+
+// 外部WP（kouichi/hirata）連携用 公開API（認証なし、CORS で許可ドメインのみ）
+Route::prefix('public')->group(function () {
+    Route::get('/events', [PublicEventController::class, 'index']);
+    Route::get('/events/footer-banner', [PublicEventController::class, 'footerBanner']);
+});
