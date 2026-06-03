@@ -241,13 +241,25 @@ class PublicEventControllerTest extends TestCase
         $res->assertNoContent();
     }
 
-    public function test_footer_banner_excludes_null_end_at(): void
+    public function test_footer_banner_falls_back_to_null_end_at_when_no_dated_events(): void
     {
+        // end_at NULL のみ存在 → それを 1件返す
         $this->createEvent(['slug' => 'null-end', 'end_at' => null], [$this->okayama->id]);
 
         $res = $this->getJson('/api/public/events/footer-banner?shop=' . urlencode('岡山店'));
 
-        $res->assertNoContent();
+        $res->assertOk()->assertJsonPath('data.slug', 'null-end');
+    }
+
+    public function test_footer_banner_prefers_dated_over_null(): void
+    {
+        // end_at NULL と end_at 日付付きが両方存在 → 日付付きが優先
+        $this->createEvent(['slug' => 'no-end', 'end_at' => null], [$this->okayama->id]);
+        $this->createEvent(['slug' => 'has-end', 'end_at' => now()->addDays(10)], [$this->okayama->id]);
+
+        $res = $this->getJson('/api/public/events/footer-banner?shop=' . urlencode('岡山店'));
+
+        $res->assertOk()->assertJsonPath('data.slug', 'has-end');
     }
 
     public function test_footer_banner_works_with_multiple_shops(): void

@@ -72,12 +72,18 @@ class PublicEventController extends Controller
         $cacheKey = $this->cacheKey('events_footer', $shops);
 
         $data = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($shops) {
+            $today = now()->toDateString();
+            // 期限付きで end_at >= 今日 を優先、なければ end_at NULL（期限なし）から1件
+            // ORDER BY: end_at IS NULL を後（0=NOT NULL先頭, 1=NULL末尾）→ end_at 昇順 → id 昇順
             $event = Event::with(['shops', 'images'])
                 ->where('is_public', true)
                 ->whereIn('form_type', self::ALLOWED_FORM_TYPES)
                 ->whereHas('shops', fn ($q) => $q->whereIn('shops.name', $shops))
-                ->whereNotNull('end_at')
-                ->whereDate('end_at', '>=', now()->toDateString())
+                ->where(function ($q) use ($today) {
+                    $q->whereNull('end_at')
+                      ->orWhereDate('end_at', '>=', $today);
+                })
+                ->orderByRaw('CASE WHEN end_at IS NULL THEN 1 ELSE 0 END')
                 ->orderBy('end_at', 'asc')
                 ->orderBy('id', 'asc')
                 ->first();
