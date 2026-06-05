@@ -36,11 +36,11 @@ class LineMessageMediaStore
         );
 
         // 3. S3 public へ保存
+        //    バケットが「Object Ownership = Bucket owner enforced」になっており ACL を受け付けないため、
+        //    既存 MediaFileController / EventImageController と同じく options なしで put する。
+        //    バケット自体がパブリック公開設定済みなので追加の ACL 指定は不要。
         try {
-            $stored = Storage::disk('s3_public')->put($path, $fetched['contents'], [
-                'ContentType' => $fetched['mime'],
-                'visibility' => 'public',
-            ]);
+            $stored = Storage::disk('s3_public')->put($path, $fetched['contents']);
         } catch (\Throwable $e) {
             Log::channel('line_image')->error('[store] S3 upload exception', [
                 'line_message_id' => $lineMessageId,
@@ -107,12 +107,10 @@ class LineMessageMediaStore
             'path' => $path,
         ]);
 
+        // バケットが ACL を受け付けないため、既存 MediaFileController と同じく options なしで put
         try {
             $stream = fopen($file->getRealPath(), 'rb');
-            $stored = Storage::disk('s3_public')->put($path, $stream, [
-                'ContentType' => $mime,
-                'visibility' => 'public',
-            ]);
+            $stored = Storage::disk('s3_public')->put($path, $stream);
             if (is_resource($stream)) {
                 fclose($stream);
             }
