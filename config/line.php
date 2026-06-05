@@ -59,8 +59,9 @@ return [
      */
     'image_messaging' => [
         'enabled' => env('LINE_IMAGE_MESSAGING_ENABLED', true),
-        // 送信時の最大サイズ（LINE 仕様：1MB / 1024px）
-        'max_size_bytes' => 1024 * 1024,
+        // LINE Messaging API の上限は 10MB だが、サーバー負荷とのバランスで 5MB に設定
+        // 必要なら .env の LINE_IMAGE_MAX_SIZE_BYTES で上書き可
+        'max_size_bytes' => (int) env('LINE_IMAGE_MAX_SIZE_BYTES', 5 * 1024 * 1024),
         'max_dimension' => 1024,
         'preview_dimension' => 240,
     ],

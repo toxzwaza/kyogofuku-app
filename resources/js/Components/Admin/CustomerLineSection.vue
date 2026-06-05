@@ -115,7 +115,7 @@ const unlinking = ref(false);
 const imageInputRef = ref(null);
 const selectedImageFile = ref(null);
 const selectedImagePreview = ref('');
-const IMAGE_MAX_BYTES = 1024 * 1024; // LINE仕様: 1MB
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024; // 5MB (LINE 仕様上限は 10MB だが負荷バランスで 5MB に設定)
 const IMAGE_ALLOWED_MIMES = ['image/jpeg', 'image/png'];
 // label[for] / input[id] を一意にして複数インスタンス共存にも対応
 const imageInputId = `line-image-input-${Math.random().toString(36).slice(2, 10)}`;
@@ -243,7 +243,9 @@ function onImageSelected(event) {
         return;
     }
     if (file.size > IMAGE_MAX_BYTES) {
-        sendError.value = `画像サイズは 1MB 以下にしてください。(現在: ${(file.size / 1024).toFixed(0)}KB)`;
+        const maxMb = (IMAGE_MAX_BYTES / 1024 / 1024).toFixed(0);
+        const curMb = (file.size / 1024 / 1024).toFixed(2);
+        sendError.value = `画像サイズは ${maxMb}MB 以下にしてください。(現在: ${curMb}MB)`;
         if (imageInputRef.value) imageInputRef.value.value = '';
         return;
     }
@@ -748,7 +750,7 @@ const canIssueLink = computed(() => {
                                         :for="imageInputId"
                                         class="hover:text-gray-700 cursor-pointer inline-flex p-0.5 rounded opacity-65 hover:opacity-100"
                                         :class="{ 'opacity-40 cursor-not-allowed pointer-events-none': !!selectedImageFile }"
-                                        title="画像を添付（JPEG/PNG・最大1MB）"
+                                        title="画像を添付（JPEG/PNG・最大5MB）"
                                     >
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
