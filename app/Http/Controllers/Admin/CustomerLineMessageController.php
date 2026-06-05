@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\CustomerLineContact;
 use App\Models\CustomerLineLinkToken;
 use App\Models\CustomerLineMessage;
+use App\Services\Line\LineMessageMediaStore;
 use App\Services\Line\LineMessagingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -60,7 +61,7 @@ class CustomerLineMessageController extends Controller
         $this->assertContactBelongsToCustomer($customer, $contact);
 
         $collection = $contact->messages()
-            ->with('sentByUser:id,name')
+            ->with(['sentByUser:id,name', 'mediaFile'])
             ->orderBy('id')
             ->limit(500)
             ->get();
@@ -83,6 +84,7 @@ class CustomerLineMessageController extends Controller
                 'direction' => $m->direction,
                 'message_type' => $m->message_type,
                 'text' => $m->text,
+                'image_url' => $m->mediaFile?->url,
                 'created_at' => $m->created_at?->toIso8601String(),
                 'sent_by' => $m->sentByUser?->name,
                 'admin_read_at' => $readAt?->toIso8601String(),
@@ -92,18 +94,107 @@ class CustomerLineMessageController extends Controller
         return response()->json(['messages' => $messages]);
     }
 
-    public function send(Request $request, Customer $customer, CustomerLineContact $contact, LineMessagingService $messaging)
-    {
+    public function send(
+        Request $request,
+        Customer $customer,
+        CustomerLineContact $contact,
+        LineMessagingService $messaging,
+        LineMessageMediaStore $mediaStore,
+    ) {
         $this->assertContactBelongsToCustomer($customer, $contact);
-
-        $validated = $request->validate([
-            'text' => 'required|string|max:4500',
-        ]);
 
         if ((int) $customer->shop_id !== (int) $contact->shop_id) {
             return response()->json(['message' => '顧客の担当店舗と連絡先の店舗が一致しません。'], 422);
         }
 
+        $imageEnabled = (bool) config('line.image_messaging.enabled', true);
+        $maxBytes = (int) config('line.image_messaging.max_size_bytes', 1024 * 1024);
+        $hasImage = $imageEnabled && $request->hasFile('image_file');
+
+        // text と image の少なくともどちらかが必要
+        $rules = [
+            'text' => ['nullable', 'string', 'max:4500'],
+        ];
+        if ($imageEnabled) {
+            $rules['image_file'] = [
+                'nullable',
+                'file',
+                'image',
+                'mimes:jpeg,jpg,png',
+                'max:'.max(1, intdiv($maxBytes, 1024)),
+            ];
+        }
+        $validated = $request->validate($rules);
+
+        if (! $hasImage && empty($validated['text'])) {
+            return response()->json(['message' => 'メッセージ本文か画像のどちらかを指定してください。'], 422);
+        }
+
+        // ---- 画像送信 ----
+        if ($hasImage) {
+            try {
+                $mediaFile = $mediaStore->storeOutboundImage($request->file('image_file'));
+            } catch (\Throwable $e) {
+                Log::channel('line_image')->error('[admin-send] media store failed', [
+                    'customer_id' => $customer->id,
+                    'contact_id' => $contact->id,
+                    'exception' => $e::class.': '.$e->getMessage(),
+                ]);
+
+                return response()->json(['message' => '画像の保存に失敗しました: '.$e->getMessage()], 500);
+            }
+
+            $imageUrl = $mediaFile->url;
+            // 本番では LINE 側仕様で HTTPS 必須。テスト環境は Storage::fake() で http URL になるためスキップ。
+            if (! app()->environment('testing')
+                && (! $imageUrl || ! str_starts_with($imageUrl, 'https://'))
+            ) {
+                Log::channel('line_image')->error('[admin-send] image url is not https', [
+                    'media_file_id' => $mediaFile->id,
+                    'url' => $imageUrl,
+                ]);
+
+                return response()->json(['message' => '画像 URL が HTTPS ではありません（S3 設定要確認）。'], 500);
+            }
+
+            try {
+                $messaging->pushImageToUser($contact->line_user_id, $imageUrl, $imageUrl);
+            } catch (\Throwable $e) {
+                Log::channel('line_image')->error('[admin-send] LINE push image failed', [
+                    'customer_id' => $customer->id,
+                    'contact_id' => $contact->id,
+                    'media_file_id' => $mediaFile->id,
+                    'exception' => $e::class.': '.$e->getMessage(),
+                ]);
+
+                return response()->json(['message' => $e->getMessage()], 502);
+            }
+
+            $message = CustomerLineMessage::query()->create([
+                'customer_line_contact_id' => $contact->id,
+                'direction' => CustomerLineMessage::DIRECTION_OUTBOUND,
+                'message_type' => 'image',
+                'text' => null,
+                'line_message_id' => null,
+                'payload' => null,
+                'sent_by_user_id' => $request->user()?->id,
+                'media_file_id' => $mediaFile->id,
+            ]);
+
+            return response()->json([
+                'message' => [
+                    'id' => $message->id,
+                    'direction' => $message->direction,
+                    'message_type' => $message->message_type,
+                    'text' => null,
+                    'image_url' => $imageUrl,
+                    'created_at' => $message->created_at?->toIso8601String(),
+                    'sent_by' => $request->user()?->name,
+                ],
+            ]);
+        }
+
+        // ---- テキスト送信（従来通り）----
         try {
             $messaging->pushTextToUser($contact->line_user_id, $validated['text']);
         } catch (\Throwable $e) {
@@ -128,6 +219,7 @@ class CustomerLineMessageController extends Controller
                 'direction' => $message->direction,
                 'message_type' => $message->message_type,
                 'text' => $message->text,
+                'image_url' => null,
                 'created_at' => $message->created_at?->toIso8601String(),
                 'sent_by' => $request->user()?->name,
             ],

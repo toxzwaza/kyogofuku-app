@@ -50,4 +50,18 @@ return [
      * サンクスメールに友だち追加 URL を併記する（false なら LIFF のみ案内）
      */
     'reservation_email_include_add_friend_url' => env('LINE_RESERVATION_EMAIL_INCLUDE_ADD_FRIEND_URL', true),
+
+    /**
+     * 画像メッセージ送受信機能のON/OFF（緊急ロールバック用フラグ）
+     * false にすると Webhook での画像保存も管理画面からの画像送信もスキップされ、
+     * 旧仕様（text のみ）の挙動に戻る。本番事故時は .env でこれを false にして
+     * config:cache し直すだけで即座に旧挙動に戻せる。
+     */
+    'image_messaging' => [
+        'enabled' => env('LINE_IMAGE_MESSAGING_ENABLED', true),
+        // 送信時の最大サイズ（LINE 仕様：1MB / 1024px）
+        'max_size_bytes' => 1024 * 1024,
+        'max_dimension' => 1024,
+        'preview_dimension' => 240,
+    ],
 ];

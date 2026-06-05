@@ -70,6 +70,15 @@ return [
             'days' => 14,
         ],
 
+        // LINE 画像送受信専用ログ（laravel.log と分離してデバッグしやすくする）
+        // 使い方: Log::channel('line_image')->info(...) / ->error(...)
+        'line_image' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/line_image.log'),
+            'level' => env('LINE_IMAGE_LOG_LEVEL', 'debug'),
+            'days' => 14,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

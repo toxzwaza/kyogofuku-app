@@ -20,6 +20,7 @@ class CustomerLineMessage extends Model
         'payload',
         'sent_by_user_id',
         'admin_read_at',
+        'media_file_id',
     ];
 
     protected $casts = [
@@ -35,5 +36,10 @@ class CustomerLineMessage extends Model
     public function sentByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sent_by_user_id');
+    }
+
+    public function mediaFile(): BelongsTo
+    {
+        return $this->belongsTo(MediaFile::class, 'media_file_id');
     }
 }

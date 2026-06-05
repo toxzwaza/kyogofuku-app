@@ -111,6 +111,13 @@ const sending = ref(false);
 const sendError = ref('');
 const unlinking = ref(false);
 
+// 画像添付
+const imageInputRef = ref(null);
+const selectedImageFile = ref(null);
+const selectedImagePreview = ref('');
+const IMAGE_MAX_BYTES = 1024 * 1024; // LINE仕様: 1MB
+const IMAGE_ALLOWED_MIMES = ['image/jpeg', 'image/png'];
+
 const linkIssueLabel = ref('');
 const linkIssueClientError = ref('');
 const lastLineLiffUrl = ref('');
@@ -222,9 +229,45 @@ function copyLineLiffUrl() {
     navigator.clipboard.writeText(lastLineLiffUrl.value);
 }
 
+function onImageSelected(event) {
+    const file = event.target?.files?.[0];
+    if (!file) {
+        clearSelectedImage();
+        return;
+    }
+    if (!IMAGE_ALLOWED_MIMES.includes(file.type)) {
+        sendError.value = '画像は JPEG / PNG 形式のみ送信できます。';
+        if (imageInputRef.value) imageInputRef.value.value = '';
+        return;
+    }
+    if (file.size > IMAGE_MAX_BYTES) {
+        sendError.value = `画像サイズは 1MB 以下にしてください。(現在: ${(file.size / 1024).toFixed(0)}KB)`;
+        if (imageInputRef.value) imageInputRef.value.value = '';
+        return;
+    }
+    sendError.value = '';
+    selectedImageFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        selectedImagePreview.value = e.target?.result || '';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearSelectedImage() {
+    selectedImageFile.value = null;
+    selectedImagePreview.value = '';
+    if (imageInputRef.value) imageInputRef.value.value = '';
+}
+
+function openImagePicker() {
+    if (imageInputRef.value) imageInputRef.value.click();
+}
+
 async function sendMessage() {
     const text = sendText.value.trim();
-    if (!text || !selectedContactId.value) {
+    const hasImage = !!selectedImageFile.value;
+    if ((!text && !hasImage) || !selectedContactId.value) {
         return;
     }
     sending.value = true;
@@ -240,8 +283,20 @@ async function sendMessage() {
                       customer: props.customer.id,
                       contact: selectedContactId.value,
                   });
-        await axios.post(url, { text });
-        sendText.value = '';
+
+        if (hasImage) {
+            // 画像送信時は multipart/form-data。LINE仕様で1メッセージ1枚なので text と排他
+            const fd = new FormData();
+            fd.append('image_file', selectedImageFile.value);
+            await axios.post(url, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            clearSelectedImage();
+        } else {
+            await axios.post(url, { text });
+            sendText.value = '';
+        }
+
         await fetchMessages(selectedContactId.value, { silent: true });
     } catch (e) {
         sendError.value = e.response?.data?.message || '送信に失敗しました。';
@@ -590,8 +645,19 @@ const canIssueLink = computed(() => {
                                                     {{ contactAvatarChar }}
                                                 </div>
                                                 <div class="line-bubble-wrap line-bubble-wrap--in shrink min-w-0">
+                                                    <!-- 画像メッセージ -->
+                                                    <a
+                                                        v-if="m.message_type === 'image' && m.image_url"
+                                                        :href="m.image_url"
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                        class="block max-w-[14rem] rounded-2xl overflow-hidden border border-gray-200"
+                                                    >
+                                                        <img :src="m.image_url" alt="受信画像" class="w-full h-auto block" loading="lazy" />
+                                                    </a>
+                                                    <!-- それ以外の非テキスト（sticker/video等） -->
                                                     <div
-                                                        v-if="m.message_type && m.message_type !== 'text'"
+                                                        v-else-if="m.message_type && m.message_type !== 'text'"
                                                         class="line-rich-card text-gray-900"
                                                     >
                                                         <p class="line-rich-card__title">LINE</p>
@@ -614,7 +680,16 @@ const canIssueLink = computed(() => {
                                         <template v-else>
                                             <div class="flex items-end gap-2 max-w-[min(100%,28rem)] flex-row-reverse">
                                                 <div class="line-bubble-wrap line-bubble-wrap--out shrink min-w-0">
-                                                    <div class="line-bubble line-bubble--out text-gray-900">
+                                                    <a
+                                                        v-if="m.message_type === 'image' && m.image_url"
+                                                        :href="m.image_url"
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                        class="block max-w-[14rem] rounded-2xl overflow-hidden border border-gray-200"
+                                                    >
+                                                        <img :src="m.image_url" alt="送信画像" class="w-full h-auto block" loading="lazy" />
+                                                    </a>
+                                                    <div v-else class="line-bubble line-bubble--out text-gray-900">
                                                         <span class="whitespace-pre-wrap text-[15px] leading-relaxed">{{
                                                             m.text || '（テキスト以外）'
                                                         }}</span>
@@ -638,31 +713,56 @@ const canIssueLink = computed(() => {
 
                         <div class="line-composer border-t border-gray-200/90 bg-white px-3 py-2.5">
                             <div v-if="sendError" class="text-sm text-red-600 mb-2">{{ sendError }}</div>
+
+                            <!-- 画像プレビュー -->
+                            <div v-if="selectedImagePreview" class="mb-2 inline-flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2">
+                                <img :src="selectedImagePreview" alt="送信プレビュー" class="h-20 w-20 object-cover rounded" />
+                                <div class="flex flex-col text-xs text-gray-600">
+                                    <span class="font-medium text-gray-800 truncate max-w-[14rem]">{{ selectedImageFile?.name }}</span>
+                                    <span>{{ (selectedImageFile?.size / 1024).toFixed(0) }} KB</span>
+                                    <button
+                                        type="button"
+                                        class="mt-1 self-start text-red-600 hover:text-red-800"
+                                        @click="clearSelectedImage"
+                                    >削除</button>
+                                </div>
+                            </div>
+
+                            <input
+                                ref="imageInputRef"
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                class="hidden"
+                                @change="onImageSelected"
+                            />
+
                             <div class="flex items-end gap-2">
-                                <div class="line-composer__icons shrink-0 hidden sm:flex items-center gap-1 text-gray-400 pb-2 pr-1" aria-hidden="true">
-                                    <span class="line-composer__icon-btn" title="（装飾）">
+                                <div class="line-composer__icons shrink-0 flex items-center gap-1 text-gray-400 pb-2 pr-1">
+                                    <button
+                                        type="button"
+                                        class="line-composer__icon-btn hover:text-gray-700"
+                                        :disabled="!!selectedImageFile"
+                                        title="画像を添付（JPEG/PNG・最大1MB）"
+                                        @click="openImagePicker"
+                                    >
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                    </span>
-                                    <span class="line-composer__icon-btn" title="（装飾）">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                        </svg>
-                                    </span>
+                                    </button>
                                 </div>
                                 <textarea
                                     v-model="sendText"
                                     rows="2"
                                     class="line-composer__input flex-1 min-w-0 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[15px] text-gray-900 placeholder:text-gray-400 focus:border-[#06C755]/50 focus:ring-1 focus:ring-[#06C755]/30 resize-y min-h-[44px] max-h-32"
-                                    placeholder="Enterで送信 / Shift + Enterで改行"
+                                    :placeholder="selectedImageFile ? '画像を送信します（テキストは併送できません）' : 'Enterで送信 / Shift + Enterで改行'"
                                     maxlength="4500"
+                                    :disabled="!!selectedImageFile"
                                     @keydown="onComposerKeydown"
                                 />
                                 <button
                                     type="button"
                                     class="line-send-btn shrink-0 flex items-center gap-1 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow-sm disabled:opacity-45 disabled:cursor-not-allowed"
-                                    :disabled="sending || !sendText.trim()"
+                                    :disabled="sending || (!sendText.trim() && !selectedImageFile)"
                                     @click="sendMessage"
                                 >
                                     {{ sending ? '送信中…' : '送信' }}
