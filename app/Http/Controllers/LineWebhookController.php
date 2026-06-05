@@ -32,11 +32,12 @@ class LineWebhookController extends Controller
      */
     public function pushToLineGroup($message, $groupId = null, $actionUrl = null, $actionLabel = '詳細を開く')
     {
-        $channelToken = env('LINE_CHANNEL_TOKEN');
-        
-        // グループIDが引数で渡されていない場合は、.envから取得（後方互換性のため）
+        // config キャッシュ実行時に env() 直呼びが null になる問題を避けるため config() 経由で取得
+        $channelToken = config('line.channel_token');
+
+        // グループIDが引数で渡されていない場合は、config('line.group_id') から取得（後方互換性のため）
         if (empty($groupId)) {
-        $groupId = env('LINE_GROUP_ID');
+            $groupId = config('line.group_id');
         }
 
         // トークンとグループIDが設定されているか確認
@@ -144,10 +145,11 @@ class LineWebhookController extends Controller
      */
     public function pushFlexMessage(array $flexContents, string $altText, $groupId = null)
     {
-        $channelToken = env('LINE_CHANNEL_TOKEN');
+        // config キャッシュ実行時に env() 直呼びが null になる問題を避けるため config() 経由で取得
+        $channelToken = config('line.channel_token');
 
         if (empty($groupId)) {
-            $groupId = env('LINE_GROUP_ID');
+            $groupId = config('line.group_id');
         }
 
         if (empty($channelToken)) {

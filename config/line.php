@@ -10,6 +10,15 @@ return [
         'channel_secret' => env('LINE_MESSAGING_CHANNEL_SECRET'),
         'channel_access_token' => env('LINE_MESSAGING_CHANNEL_ACCESS_TOKEN'),
     ],
+
+    /**
+     * 旧 LINE Messaging API push 用のチャネルトークン・既定グループID。
+     * LineWebhookController::pushToLineGroup() / pushFlexMessage() で使用。
+     * 以前は env() を直接呼び出していたが、config:cache 実行時に null 化する問題を避けるため
+     * 必ず config('line.channel_token') / config('line.group_id') 経由で参照すること。
+     */
+    'channel_token' => env('LINE_CHANNEL_TOKEN'),
+    'group_id' => env('LINE_GROUP_ID'),
     'liff' => [
         /** LIFF アプリの ID（liff.line.me/{ここ}） */
         'id' => env('LINE_LIFF_ID', env('LINE_MESSAGING_LIFF_ID')),
