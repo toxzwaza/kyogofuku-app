@@ -746,7 +746,7 @@ const canIssueLink = computed(() => {
                                     <!-- label[for] で input[id] と明示的に紐付け（HTML標準：label クリック → input click トリガー） -->
                                     <label
                                         :for="imageInputId"
-                                        class="line-composer__icon-btn hover:text-gray-700 cursor-pointer inline-flex"
+                                        class="hover:text-gray-700 cursor-pointer inline-flex p-0.5 rounded opacity-65 hover:opacity-100"
                                         :class="{ 'opacity-40 cursor-not-allowed pointer-events-none': !!selectedImageFile }"
                                         title="画像を添付（JPEG/PNG・最大1MB）"
                                     >
