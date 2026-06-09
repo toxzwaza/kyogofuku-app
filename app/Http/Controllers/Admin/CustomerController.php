@@ -1197,27 +1197,39 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'photo_type_id' => 'required|exists:photo_types,id',
-            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'photo' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:10240',
             'remarks' => 'nullable|string',
         ]);
 
-        $manager = $this->createImageManager();
-        if (! $manager) {
-            return redirect()->route('admin.customers.show', $customer)
-                ->with('error', 'WebP変換に必要な画像ドライバー（GD/Imagick）が利用できません。');
-        }
-
         $file = $request->file('photo');
-        $webpPath = $this->convertUploadToWebpAndPutS3Private($file, (int) $customer->id, $manager);
-        if (! $webpPath) {
-            return redirect()->route('admin.customers.show', $customer)
-                ->with('error', '写真の WebP 変換に失敗しました。');
+        $isPdf = strtolower($file->getClientOriginalExtension()) === 'pdf'
+            || $file->getClientMimeType() === 'application/pdf';
+
+        if ($isPdf) {
+            // PDF は変換せずそのまま S3（s3_private）に保存
+            $storedPath = $this->putUploadToS3Private($file, (int) $customer->id, 'pdf');
+            if (! $storedPath) {
+                return redirect()->route('admin.customers.show', $customer)
+                    ->with('error', 'PDF の保存に失敗しました。');
+            }
+        } else {
+            // 画像は従来通り WebP に変換して保存
+            $manager = $this->createImageManager();
+            if (! $manager) {
+                return redirect()->route('admin.customers.show', $customer)
+                    ->with('error', 'WebP変換に必要な画像ドライバー（GD/Imagick）が利用できません。');
+            }
+            $storedPath = $this->convertUploadToWebpAndPutS3Private($file, (int) $customer->id, $manager);
+            if (! $storedPath) {
+                return redirect()->route('admin.customers.show', $customer)
+                    ->with('error', '写真の WebP 変換に失敗しました。');
+            }
         }
 
         CustomerPhoto::create([
             'customer_id' => $customer->id,
             'photo_type_id' => $validated['photo_type_id'],
-            'file_path' => $webpPath,
+            'file_path' => $storedPath,
             'storage_disk' => 's3',
             'remarks' => $validated['remarks'] ?? null,
         ]);
@@ -1272,6 +1284,26 @@ class CustomerController extends Controller
             return $webpPath;
         } catch (\Exception $e) {
             Log::error('WebP変換エラー (S3 customers/'.$customerId.'): '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * アップロードファイルを変換せずそのまま S3（s3_private）に保存
+     * （PDF など画像変換に適さないファイル用）
+     *
+     * @return string|null 保存したパス（customers/{id}/{unique}.{ext}）、失敗時は null
+     */
+    private function putUploadToS3Private($uploadedFile, int $customerId, string $ext): ?string
+    {
+        try {
+            $path = 'customers/'.$customerId.'/'.Str::random(40).'.'.$ext;
+            Storage::disk('s3_private')->put($path, file_get_contents($uploadedFile->getRealPath()));
+
+            return $path;
+        } catch (\Exception $e) {
+            Log::error('ファイル保存エラー (S3 customers/'.$customerId.'): '.$e->getMessage());
 
             return null;
         }

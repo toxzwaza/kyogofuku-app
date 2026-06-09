@@ -665,7 +665,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-brand-text mb-1">
-                                        画像ファイル <span class="text-red-500">*</span>
+                                        ファイル（画像・PDF） <span class="text-red-500">*</span>
                                     </label>
                                     <input
                                         ref="photoFileInputCamera"
@@ -678,7 +678,7 @@
                                     <input
                                         ref="photoFileInputFile"
                                         type="file"
-                                        accept="image/*"
+                                        accept="image/*,application/pdf"
                                         class="hidden"
                                         @change="onPhotoFileChange"
                                     />
@@ -736,6 +736,21 @@
                                     「写真を追加」ボタンを押して保存してください。
                                 </p>
                             </div>
+                            <!-- PDF 選択時プレビュー -->
+                            <div v-else-if="isPdfSelected" class="mt-4">
+                                <label class="block text-xs font-medium text-brand-text mb-2">
+                                    選択中のファイル
+                                </label>
+                                <div class="inline-flex items-center gap-3 px-4 py-3 rounded-lg border border-brand-border bg-brand-surface-2">
+                                    <svg class="w-8 h-8 text-red-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 2a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6H6zm7 1.5L18.5 9H13V3.5zM8.5 13h1.2c.9 0 1.5.6 1.5 1.5S10.6 16 9.7 16H9v1.5H8.5V13zm.5.9v1.2h.6c.4 0 .6-.2.6-.6s-.2-.6-.6-.6h-.6zm3.2-.9h1.1c1 0 1.7.8 1.7 2.2s-.7 2.3-1.7 2.3h-1.1V13zm.5.9v2.6h.5c.6 0 1-.5 1-1.4 0-.8-.4-1.3-1-1.3h-.5zm3.4-.9h2.2v.9h-1.7v1h1.5v.8h-1.5v1.8h-.5V13z"/>
+                                    </svg>
+                                    <span class="text-sm text-brand-text break-all">{{ pdfFileName }}</span>
+                                </div>
+                                <p class="mt-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                                    「写真を追加」ボタンを押して保存してください。
+                                </p>
+                            </div>
                             <div class="mt-4 flex justify-end">
                                 <button
                                     type="submit"
@@ -752,7 +767,17 @@
                         <div v-if="customer.photos && customer.photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             <div v-for="photo in customer.photos" :key="photo.id" class="relative group cursor-pointer" @click="openPhotoPreview(photo)">
                                 <div class="aspect-square rounded-lg overflow-hidden border border-brand-border bg-brand-surface-2 hover:border-indigo-500 transition-colors relative">
+                                    <div
+                                        v-if="isPdfPhoto(photo)"
+                                        class="w-full h-full flex flex-col items-center justify-center gap-2 bg-red-50 text-red-600"
+                                    >
+                                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M6 2a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6H6zm7 1.5L18.5 9H13V3.5zM8.5 13h1.2c.9 0 1.5.6 1.5 1.5S10.6 16 9.7 16H9v1.5H8.5V13zm.5.9v1.2h.6c.4 0 .6-.2.6-.6s-.2-.6-.6-.6h-.6zm3.2-.9h1.1c1 0 1.7.8 1.7 2.2s-.7 2.3-1.7 2.3h-1.1V13zm.5.9v2.6h.5c.6 0 1-.5 1-1.4 0-.8-.4-1.3-1-1.3h-.5zm3.4-.9h2.2v.9h-1.7v1h1.5v.8h-1.5v1.8h-.5V13z"/>
+                                        </svg>
+                                        <span class="text-xs font-medium">PDF</span>
+                                    </div>
                                     <img
+                                        v-else
                                         :src="getPhotoUrl(photo)"
                                         :alt="photo.type?.name || '写真'"
                                         class="w-full h-full object-cover"
@@ -2054,7 +2079,10 @@
                 class="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto z-50 flex items-center justify-center p-4"
                 @click.self="closePhotoPreviewModal"
             >
-                <div class="relative bg-brand-surface rounded-xl shadow-2xl max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div
+                    class="relative bg-brand-surface rounded-xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                    :class="(!showingUnsavedPhotoPreview && isPdfPhoto(selectedPhoto)) ? 'w-[95vw] max-w-6xl' : 'max-w-4xl'"
+                >
                     <!-- ヘッダー -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-brand-border bg-brand-surface-2">
                         <h3 class="text-xl font-bold text-brand-text">
@@ -2074,7 +2102,14 @@
                     <!-- コンテンツ -->
                     <div class="overflow-y-auto flex-1 p-6">
                         <div class="text-center">
+                            <iframe
+                                v-if="!showingUnsavedPhotoPreview && isPdfPhoto(selectedPhoto)"
+                                :src="getPhotoUrl(selectedPhoto)"
+                                class="w-full h-[80vh] rounded-lg border border-brand-border bg-white"
+                                title="PDF プレビュー"
+                            ></iframe>
                             <img
+                                v-else
                                 :src="showingUnsavedPhotoPreview ? photoPreview : getPhotoUrl(selectedPhoto)"
                                 :alt="showingUnsavedPhotoPreview ? 'プレビュー' : (selectedPhoto?.type?.name || '写真')"
                                 class="max-w-full max-h-[70vh] mx-auto object-contain rounded-lg"
@@ -2471,6 +2506,10 @@ const photoSlotShopUsers = ref([]);
 
 // 写真プレビュー用URL
 const photoPreview = ref(null);
+// PDF を選択中かどうか（画像プレビュー不可のため別表示）
+const isPdfSelected = ref(false);
+// 選択中 PDF のファイル名
+const pdfFileName = ref('');
 // 写真用ファイル入力（カメラ・ファイル選択）
 const photoFileInputCamera = ref(null);
 const photoFileInputFile = ref(null);
@@ -3015,15 +3054,27 @@ const onPhotoFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
         photoForm.photo = file;
-        // プレビュー用URLを生成後に手書きメモ用モーダルを開く
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            photoPreview.value = e.target.result;
-            showPhotoMemoModal.value = true;
-        };
-        reader.readAsDataURL(file);
+        const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+        if (isPdf) {
+            // PDF は画像プレビュー・手書きメモの対象外。ファイル名のみ表示
+            isPdfSelected.value = true;
+            pdfFileName.value = file.name;
+            photoPreview.value = null;
+        } else {
+            // 画像はプレビュー用URLを生成後に手書きメモ用モーダルを開く
+            isPdfSelected.value = false;
+            pdfFileName.value = '';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                photoPreview.value = e.target.result;
+                showPhotoMemoModal.value = true;
+            };
+            reader.readAsDataURL(file);
+        }
     } else {
         photoPreview.value = null;
+        isPdfSelected.value = false;
+        pdfFileName.value = '';
     }
 };
 
@@ -3052,6 +3103,12 @@ const getPhotoUrl = (photo) => {
     if (!photo) return '';
     if (photo.url) return photo.url;
     return `/storage/${photo.file_path || ''}`;
+};
+
+// 写真が PDF かどうか（保存パスの拡張子で判定）
+const isPdfPhoto = (photo) => {
+    if (!photo) return false;
+    return /\.pdf$/i.test(photo.file_path || '');
 };
 
 const migratingPhotoId = ref(null);
@@ -3084,6 +3141,8 @@ const storeCustomerPhoto = () => {
         onSuccess: () => {
             photoForm.reset();
             photoPreview.value = null;
+            isPdfSelected.value = false;
+            pdfFileName.value = '';
             closePhotoPreviewModal();
             // ファイル入力もリセット
             if (photoFileInputCamera.value) photoFileInputCamera.value.value = '';
