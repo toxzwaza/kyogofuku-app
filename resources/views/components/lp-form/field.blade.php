@@ -188,7 +188,7 @@
                                                 "
                                             >
                                                 <p class="lp-slot__time">
-                                                    {{ $startAt->format('H:i') }} 〜 {{ $startAt->copy()->addHour()->format('H:i') }}
+                                                    {{ $startAt->format('H:i') }} 〜
                                                 </p>
                                                 <div class="lp-slot__center">
                                                     <div class="lp-slot__badges">
@@ -264,7 +264,7 @@
                                     "
                                 >
                                     <p class="lp-slot__time">
-                                        {{ $startAt->format('H:i') }} 〜 {{ $startAt->copy()->addHour()->format('H:i') }}
+                                        {{ $startAt->format('H:i') }} 〜
                                     </p>
                                     <div class="lp-slot__center">
                                         <div class="lp-slot__badges">

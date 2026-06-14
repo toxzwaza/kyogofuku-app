@@ -76,6 +76,15 @@ return [
             'requires_form_schema' => true,
             'default_tokens' => [],
         ],
+
+        'maedori_uchiawase' => [
+            'label' => '前撮り打合せ会（京呉服 好一 岡山店・城東店）',
+            'render_type' => 'blade',
+            'blade_view' => 'event.lp.templates.maedori_uchiawase',
+            'allowed_form_types' => null,
+            'requires_form_schema' => true,
+            'default_tokens' => [],
+        ],
     ],
 
     /**
