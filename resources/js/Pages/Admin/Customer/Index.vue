@@ -16,37 +16,62 @@
 
         <div>
             <div class="mx-auto">
-                <div class="flex flex-col lg:flex-row gap-6 lg:items-start">
+                <div class="flex flex-col lg:flex-row-reverse gap-6 lg:items-start">
                     <!-- 左：検索条件 -->
                     <aside
                         class="w-full lg:w-[22rem] shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto"
                     >
-                        <div class="bg-brand-surface rounded-xl border border-brand-border shadow-sm overflow-hidden">
-                            <div class="px-4 py-3 border-b border-brand-border bg-brand-surface-2">
+                        <div class="bg-brand-surface rounded-xl border border-brand-border shadow-sm">
+                            <div class="px-4 py-3 border-b border-brand-border bg-brand-surface-2 rounded-t-xl">
                                 <h3 class="text-base font-semibold text-brand-text">検索条件</h3>
                                 <p class="text-xs text-brand-text-muted mt-0.5 leading-snug">
                                     各ブロックを開いて絞り込み、検索を実行してください
                                 </p>
                             </div>
                             <form @submit.prevent="searchCustomers" class="p-3 space-y-2">
-                                <!-- 基本情報 -->
-                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
+                                <!-- タブ・検索ボタン（スクロール時も上部に固定表示） -->
+                                <div class="sticky top-0 z-10 -mx-3 -mt-3 px-3 pt-3 pb-2 bg-brand-surface border-b border-brand-border space-y-2">
+                                <!-- 検索条件タブ -->
+                                <div class="flex flex-wrap gap-1">
+                                    <button
+                                        v-for="tab in filterTabs"
+                                        :key="tab.key"
+                                        type="button"
+                                        @click="setActiveFilterTab(tab.key)"
+                                        :class="[
+                                            'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors',
+                                            activeFilterTab === tab.key
+                                                ? 'bg-brand-primary text-white'
+                                                : 'text-brand-text-muted hover:bg-brand-surface-2'
+                                        ]"
+                                    >
+                                        {{ tab.label }}
+                                    </button>
+                                </div>
+
+                                <!-- 検索・リセット（タブと条件の間に配置） -->
+                                <div class="flex gap-2">
                                     <button
                                         type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
-                                        @click="toggleFilterAccordion('basic')"
+                                        class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-brand-border text-sm font-medium text-brand-text bg-brand-surface hover:bg-brand-surface-2 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-primary"
+                                        @click="resetSearch"
                                     >
-                                        <span>基本情報</span>
-                                        <ChevronDown
-                                            :size="14"
-                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
-                                            :class="{ 'rotate-180': filterAccordion.basic }"
-                                        />
+                                        <RotateCcw :size="15" />
+                                        リセット
                                     </button>
-                                    <div
-                                        v-show="filterAccordion.basic"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
+                                    <button
+                                        type="submit"
+                                        class="flex-1 inline-flex items-center justify-center gap-1.5 px-5 py-2 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-primary"
                                     >
+                                        <Search :size="15" />
+                                        検索
+                                    </button>
+                                </div>
+                                </div>
+
+                                <!-- 基本情報 -->
+                                <div v-show="activeFilterTab === 'basic'" class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
+                                    <div class="px-3 pb-3 pt-3 space-y-3 bg-brand-surface-2/50">
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">顧客名</label>
                                             <input
@@ -67,30 +92,52 @@
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">成人式エリア</label>
-                                            <div class="flex gap-2 items-end">
-                                                <div class="flex-1 min-w-0">
-                                                    <select
-                                                        v-model="searchForm.ceremony_prefecture"
-                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
-                                                        @change="searchForm.ceremony_area_id = null"
-                                                    >
-                                                        <option :value="null">全て</option>
-                                                        <option v-for="pref in ceremonyPrefectures" :key="pref" :value="pref">
-                                                            {{ pref }}
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <select
-                                                        v-model="searchForm.ceremony_area_id"
-                                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
-                                                        :disabled="!searchForm.ceremony_prefecture"
-                                                    >
-                                                        <option :value="null">全て</option>
-                                                        <option v-for="area in searchCeremonyAreasFiltered" :key="area.id" :value="area.id">
-                                                            {{ area.name }}
-                                                        </option>
-                                                    </select>
+                                            <div class="space-y-2">
+                                                <select
+                                                    v-model="searchForm.ceremony_prefecture"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
+                                                    @change="searchForm.ceremony_area_id = []"
+                                                >
+                                                    <option :value="null">全て</option>
+                                                    <option v-for="pref in ceremonyPrefectures" :key="pref" :value="pref">
+                                                        {{ pref }}
+                                                    </option>
+                                                </select>
+                                                <div v-if="searchForm.ceremony_prefecture">
+                                                    <div class="flex items-center justify-between mb-1">
+                                                        <span class="text-xs text-brand-text-muted">市町村（複数選択可）</span>
+                                                        <div class="flex gap-2">
+                                                            <button
+                                                                type="button"
+                                                                class="text-xs text-brand-primary hover:underline"
+                                                                @click="selectAllCeremonyAreas"
+                                                            >
+                                                                全選択
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                class="text-xs text-brand-text-muted hover:underline"
+                                                                @click="clearCeremonyAreas"
+                                                            >
+                                                                全解除
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="rounded-md border border-brand-border bg-brand-surface max-h-40 overflow-y-auto p-2 space-y-1">
+                                                        <label
+                                                            v-for="area in searchCeremonyAreasFiltered"
+                                                            :key="area.id"
+                                                            class="flex items-center gap-2 text-sm text-brand-text cursor-pointer"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                :checked="isCeremonyAreaSelected(area.id)"
+                                                                @change="toggleCeremonyArea(area.id)"
+                                                                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
+                                                            />
+                                                            <span>{{ area.name }}</span>
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -102,6 +149,33 @@
                                                 class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="電話番号で検索"
                                             />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">担当店舗（複数選択可）</label>
+                                            <div class="rounded-md border border-brand-border bg-brand-surface max-h-40 overflow-y-auto p-2 space-y-1">
+                                                <label class="flex items-center gap-2 text-sm text-brand-text cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        :checked="isAllShopsSelected"
+                                                        @change="selectAllShops"
+                                                        class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
+                                                    />
+                                                    <span>全て</span>
+                                                </label>
+                                                <label
+                                                    v-for="shop in shops"
+                                                    :key="shop.id"
+                                                    class="flex items-center gap-2 text-sm text-brand-text cursor-pointer"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        :checked="isShopSelected(shop.id)"
+                                                        @change="toggleShopFilter(shop.id)"
+                                                        class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
+                                                    />
+                                                    <span>{{ shop.name }}</span>
+                                                </label>
+                                            </div>
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">登録日（開始）</label>
@@ -123,23 +197,8 @@
                                 </div>
 
                                 <!-- 成人式情報 -->
-                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
-                                    <button
-                                        type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
-                                        @click="toggleFilterAccordion('seijin')"
-                                    >
-                                        <span>成人式情報</span>
-                                        <ChevronDown
-                                            :size="14"
-                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
-                                            :class="{ 'rotate-180': filterAccordion.seijin }"
-                                        />
-                                    </button>
-                                    <div
-                                        v-show="filterAccordion.seijin"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
-                                    >
+                                <div v-show="activeFilterTab === 'seijin'" class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
+                                    <div class="px-3 pb-3 pt-3 space-y-3 bg-brand-surface-2/50">
                                         <p v-if="seijinFilterOptionsLoading" class="text-xs text-brand-text-muted">候補を読み込み中…</p>
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">仕度会場</label>
@@ -212,23 +271,8 @@
                                 </div>
 
                                 <!-- 成約情報 -->
-                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
-                                    <button
-                                        type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
-                                        @click="toggleFilterAccordion('contract')"
-                                    >
-                                        <span>成約情報</span>
-                                        <ChevronDown
-                                            :size="14"
-                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
-                                            :class="{ 'rotate-180': filterAccordion.contract }"
-                                        />
-                                    </button>
-                                    <div
-                                        v-show="filterAccordion.contract"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
-                                    >
+                                <div v-show="activeFilterTab === 'contract'" class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
+                                    <div class="px-3 pb-3 pt-3 space-y-3 bg-brand-surface-2/50">
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">成約ステータス</label>
                                             <select
@@ -337,23 +381,8 @@
                                 </div>
 
                                 <!-- 制約情報 -->
-                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
-                                    <button
-                                        type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
-                                        @click="toggleFilterAccordion('constraint')"
-                                    >
-                                        <span>制約情報</span>
-                                        <ChevronDown
-                                            :size="14"
-                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
-                                            :class="{ 'rotate-180': filterAccordion.constraint }"
-                                        />
-                                    </button>
-                                    <div
-                                        v-show="filterAccordion.constraint"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
-                                    >
+                                <div v-show="activeFilterTab === 'constraint'" class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
+                                    <div class="px-3 pb-3 pt-3 space-y-3 bg-brand-surface-2/50">
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">制約の有無</label>
                                             <select
@@ -413,23 +442,8 @@
                                 </div>
 
                                 <!-- 前撮り情報 -->
-                                <div class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
-                                    <button
-                                        type="button"
-                                        class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-surface-2 transition-colors"
-                                        @click="toggleFilterAccordion('photo')"
-                                    >
-                                        <span>前撮り情報</span>
-                                        <ChevronDown
-                                            :size="14"
-                                            class="text-brand-text-muted shrink-0 transition-transform duration-200"
-                                            :class="{ 'rotate-180': filterAccordion.photo }"
-                                        />
-                                    </button>
-                                    <div
-                                        v-show="filterAccordion.photo"
-                                        class="px-3 pb-3 pt-0 space-y-3 border-t border-brand-border bg-brand-surface-2/50"
-                                    >
+                                <div v-show="activeFilterTab === 'photo'" class="rounded-lg border border-brand-border bg-brand-surface overflow-hidden">
+                                    <div class="px-3 pb-3 pt-3 space-y-3 bg-brand-surface-2/50">
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">担当店舗</label>
                                             <select
@@ -456,21 +470,6 @@
                                     </div>
                                 </div>
 
-                                <div class="flex justify-end gap-2 pt-3 border-t border-brand-border">
-                                    <button
-                                        type="button"
-                                        class="px-4 py-2 rounded-lg border border-brand-border text-sm font-medium text-brand-text bg-brand-surface hover:bg-brand-surface-2 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-primary"
-                                        @click="resetSearch"
-                                    >
-                                        リセット
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        class="px-5 py-2 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-primary"
-                                    >
-                                        検索
-                                    </button>
-                                </div>
                             </form>
                         </div>
                     </aside>
@@ -486,30 +485,51 @@
                                     件
                                 </p>
                             </div>
+                            <!-- 適用中の絞り込み条件 -->
+                            <div
+                                v-if="filterChips.length"
+                                class="px-4 py-2.5 border-b border-brand-border bg-brand-surface flex flex-wrap items-center gap-1.5"
+                            >
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-brand-text-muted mr-1">
+                                    <Filter :size="13" />
+                                    絞り込み中
+                                </span>
+                                <span
+                                    v-for="chip in filterChips"
+                                    :key="chip.key"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-medium"
+                                >
+                                    <span class="text-brand-text-muted">{{ chip.label }}:</span>{{ chip.value }}
+                                </span>
+                            </div>
                             <div class="p-4 sm:p-5">
                                 <div class="overflow-x-auto rounded-lg border border-brand-border">
                                     <table class="min-w-full divide-y divide-brand-border">
                                         <thead class="bg-brand-surface-2">
                                             <tr>
                                                 <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">画像</th>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">タグ</th>
                                                 <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">顧客名</th>
                                                 <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ふりがな</th>
                                                 <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">成人式エリア</th>
                                                 <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">電話番号</th>
-                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">操作</th>
+                                                <th class="px-4 py-2.5 sm:px-6 sm:py-3 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">担当店舗</th>
                                             </tr>
                                         </thead>
                                         <tbody class="bg-brand-surface divide-y divide-brand-border">
                                             <template v-if="!customers.data || customers.data.length === 0">
                                                 <tr>
-                                                    <td colspan="7" class="px-4 py-12 text-center text-sm text-brand-text-muted">
+                                                    <td colspan="6" class="px-4 py-12 text-center text-sm text-brand-text-muted">
                                                         該当する顧客がありません
                                                     </td>
                                                 </tr>
                                             </template>
                                             <template v-else>
-                                                <tr v-for="customer in customers.data" :key="customer.id">
+                                                <tr
+                                                    v-for="customer in customers.data"
+                                                    :key="customer.id"
+                                                    @click="router.visit(route('admin.customers.show', customer.id))"
+                                                    class="cursor-pointer hover:bg-brand-surface-2 transition-colors"
+                                                >
                                                     <td class="px-4 py-4 sm:px-6 whitespace-nowrap">
                                             <div class="w-16 h-16 rounded-lg overflow-hidden border border-brand-border bg-brand-surface-2 flex items-center justify-center">
                                                 <img
@@ -534,39 +554,11 @@
                                                 </svg>
                                             </div>
                                                     </td>
-                                                    <td class="px-4 py-4 sm:px-6">
-                                            <div v-if="customer.tags && customer.tags.length > 0" class="flex flex-wrap gap-1">
-                                                <span
-                                                    v-for="tag in customer.tags"
-                                                    :key="tag.id"
-                                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                                                    :style="{
-                                                        backgroundColor: tag.color ? tag.color + '20' : '#f3f4f620',
-                                                        color: tag.color || '#6b7280',
-                                                        border: `1px solid ${tag.color || '#e5e7eb'}`
-                                                    }"
-                                                >
-                                                    {{ tag.name }}
-                                                </span>
-                                            </div>
-                                            <span v-else class="text-sm text-brand-text-subtle">-</span>
-                                                    </td>
                                                     <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.name }}</td>
                                                     <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.kana || '-' }}</td>
                                                     <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.ceremony_area?.name || '-' }}</td>
                                                     <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.phone_number || '-' }}</td>
-                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm font-medium">
-                                            <Link
-                                                :href="route('admin.customers.show', customer.id)"
-                                                class="group relative inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium text-white bg-brand-primary rounded-lg shadow-sm hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-all duration-200"
-                                            >
-                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                詳細
-                                            </Link>
-                                                    </td>
+                                                    <td class="px-4 py-4 sm:px-6 whitespace-nowrap text-sm text-brand-text">{{ customer.shop?.name || '-' }}</td>
                                                 </tr>
                                             </template>
                                         </tbody>
@@ -970,7 +962,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { UiPageHeader, UiButton } from '@/Components/UI';
-import { Plus, ChevronDown, Search, Filter, RotateCcw, Eye } from 'lucide-vue-next';
+import { Plus, Search, Filter, RotateCcw, Eye } from 'lucide-vue-next';
 import ActionButton from '@/Components/ActionButton.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
@@ -993,14 +985,15 @@ const props = defineProps({
 // モーダル表示フラグ
 const showAddCustomerModal = ref(false);
 
-// 検索条件アコーディオン（左パネル）
-const filterAccordion = reactive({
-    basic: true,
-    seijin: false,
-    contract: false,
-    constraint: false,
-    photo: false,
-});
+// 検索条件タブ（左パネル）
+const filterTabs = [
+    { key: 'basic', label: '基本情報' },
+    { key: 'seijin', label: '成人式情報' },
+    { key: 'contract', label: '成約情報' },
+    { key: 'constraint', label: '制約情報' },
+    { key: 'photo', label: '前撮り情報' },
+];
+const activeFilterTab = ref('basic');
 const seijinVenueOptionsFromDb = ref([]);
 const seijinFilterSalonNames = ref([]);
 const seijinFilterOptionsLoaded = ref(false);
@@ -1036,10 +1029,9 @@ const loadSeijinFilterOptionsIfNeeded = async () => {
     }
 };
 
-const toggleFilterAccordion = (key) => {
-    const nextOpen = !filterAccordion[key];
-    filterAccordion[key] = nextOpen;
-    if (key === 'seijin' && nextOpen) {
+const setActiveFilterTab = (key) => {
+    activeFilterTab.value = key;
+    if (key === 'seijin') {
         loadSeijinFilterOptionsIfNeeded();
     }
 };
@@ -1078,14 +1070,28 @@ const searchForm = reactive({
     name: props.filters?.name || '',
     kana: props.filters?.kana || '',
     ceremony_prefecture: (() => {
-        const id = props.filters?.ceremony_area_id;
+        const v = props.filters?.ceremony_area_id;
+        const id = Array.isArray(v) ? v[0] : v;
         if (id == null || id === '') return null;
         const areas = props.ceremonyAreas || [];
         const area = areas.find((a) => a.id == id);
         return area?.prefecture ?? null;
     })(),
-    ceremony_area_id: props.filters?.ceremony_area_id || null,
+    ceremony_area_id: (() => {
+        const v = props.filters?.ceremony_area_id;
+        if (v == null || v === '') return [];
+        return (Array.isArray(v) ? v : [v]).map(Number);
+    })(),
     phone_number: props.filters?.phone_number || '',
+    customer_shop_id: (() => {
+        const v = props.filters?.customer_shop_id;
+        if (v === undefined || v === null || v === '' || v === 'all') return ['all'];
+        if (Array.isArray(v)) {
+            if (v.length === 0 || v.includes('all')) return ['all'];
+            return v.map(Number);
+        }
+        return [Number(v)];
+    })(),
     seijin_preparation_venue: props.filters?.seijin_preparation_venue || '',
     seijin_preparation_time: props.filters?.seijin_preparation_time || '',
     other_store_preparation: (() => {
@@ -1126,6 +1132,123 @@ const searchForm = reactive({
     constraint_explainer_user_id: props.filters?.constraint_explainer_user_id != null && props.filters.constraint_explainer_user_id !== ''
         ? Number(props.filters.constraint_explainer_user_id)
         : null,
+});
+
+// 担当店舗フィルタ（複数選択）。['all'] = 全店舗、[id,...] = 選択店舗のみ
+const isAllShopsSelected = computed(() => {
+    const v = searchForm.customer_shop_id;
+    return !Array.isArray(v) || v.length === 0 || v.includes('all');
+});
+const isShopSelected = (id) =>
+    Array.isArray(searchForm.customer_shop_id) && searchForm.customer_shop_id.includes(id);
+const selectAllShops = () => {
+    searchForm.customer_shop_id = ['all'];
+};
+const toggleShopFilter = (id) => {
+    let list = Array.isArray(searchForm.customer_shop_id)
+        ? searchForm.customer_shop_id.filter((v) => v !== 'all')
+        : [];
+    if (list.includes(id)) {
+        list = list.filter((v) => v !== id);
+    } else {
+        list.push(id);
+    }
+    searchForm.customer_shop_id = list.length ? list : ['all'];
+};
+
+// 成人式エリア 市町村フィルタ（複数選択・選択された県の市町村のみ対象）
+const isCeremonyAreaSelected = (id) =>
+    Array.isArray(searchForm.ceremony_area_id) && searchForm.ceremony_area_id.includes(id);
+const toggleCeremonyArea = (id) => {
+    let list = Array.isArray(searchForm.ceremony_area_id) ? [...searchForm.ceremony_area_id] : [];
+    if (list.includes(id)) {
+        list = list.filter((v) => v !== id);
+    } else {
+        list.push(id);
+    }
+    searchForm.ceremony_area_id = list;
+};
+const selectAllCeremonyAreas = () => {
+    searchForm.ceremony_area_id = searchCeremonyAreasFiltered.value.map((a) => a.id);
+};
+const clearCeremonyAreas = () => {
+    searchForm.ceremony_area_id = [];
+};
+
+// 適用中の絞り込み条件（実際に結果へ反映されている props.filters ベース）をチップ表示用に整形
+const filterChips = computed(() => {
+    const f = props.filters || {};
+    const chips = [];
+    const findName = (list, id, field = 'name') =>
+        (list || []).find((x) => x.id == id)?.[field] ?? `#${id}`;
+    const boolLabel = (v) => {
+        if (v === true || v === 'true' || v === 1 || v === '1') return 'あり';
+        if (v === false || v === 'false' || v === 0 || v === '0') return 'なし';
+        return null;
+    };
+    const text = (key, label) => {
+        const v = f[key];
+        if (v !== null && v !== undefined && v !== '') chips.push({ key, label, value: String(v) });
+    };
+    const bool = (key, label) => {
+        const v = f[key];
+        if (v === null || v === undefined || v === '') return;
+        const b = boolLabel(v);
+        if (b) chips.push({ key, label, value: b });
+    };
+    const idChip = (key, label, list, field = 'name') => {
+        const v = f[key];
+        if (v !== null && v !== undefined && v !== '') chips.push({ key, label, value: findName(list, v, field) });
+    };
+    const toArray = (v) =>
+        Array.isArray(v) ? v : (v !== null && v !== undefined && v !== '' ? [v] : []);
+
+    // 基本情報
+    text('name', '顧客名');
+    text('kana', 'ふりがな');
+    text('phone_number', '電話番号');
+    const shopIds = toArray(f.customer_shop_id).filter((x) => x !== 'all');
+    if (shopIds.length) {
+        chips.push({ key: 'customer_shop_id', label: '担当店舗', value: shopIds.map((id) => findName(props.shops, id)).join('、') });
+    }
+    const areaIds = toArray(f.ceremony_area_id);
+    if (areaIds.length) {
+        chips.push({ key: 'ceremony_area_id', label: '成人式エリア', value: areaIds.map((id) => findName(props.ceremonyAreas, id)).join('、') });
+    }
+    text('created_at_from', '登録日(開始)');
+    text('created_at_to', '登録日(終了)');
+
+    // 成人式情報
+    text('seijin_preparation_venue', '仕度会場');
+    text('seijin_preparation_time', '時間');
+    bool('other_store_preparation', '他店お支度');
+    text('other_store_salon_name', '美容室名');
+    text('kimono_ship_date', '着物発送日');
+
+    // 成約情報
+    text('contract_status', '成約ステータス');
+    text('contract_date_from', '成約日(開始)');
+    text('contract_date_to', '成約日(終了)');
+    idChip('shop_id', '成約店舗', props.shops);
+    idChip('plan_id', 'プラン', props.plans);
+    text('kimono_type', '着物種別');
+    bool('warranty_flag', '安心保証');
+    idChip('user_id', '担当スタッフ', props.users);
+    text('preparation_venue', 'お仕度会場');
+    text('preparation_date', 'お仕度日程');
+
+    // 制約情報
+    text('constraint_presence', '制約');
+    idChip('constraint_template_id', '制約テンプレート', props.constraintTemplates);
+    text('constraint_signed_at_from', '署名日(開始)');
+    text('constraint_signed_at_to', '署名日(終了)');
+    idChip('constraint_explainer_user_id', '説明担当', props.users);
+
+    // 前撮り情報
+    idChip('photo_slot_shop_id', '前撮り担当店舗', props.shops);
+    bool('photo_slot_details_undecided', '前撮り詳細未決定');
+
+    return chips;
 });
 
 // 来店動機をフォーム用に正規化（SNS広告・WEB広告はSNS・WEB広告に統合）
@@ -1231,7 +1354,7 @@ const resetSearch = () => {
     searchForm.name = '';
     searchForm.kana = '';
     searchForm.ceremony_prefecture = null;
-    searchForm.ceremony_area_id = null;
+    searchForm.ceremony_area_id = [];
     searchForm.phone_number = '';
     searchForm.seijin_preparation_venue = '';
     searchForm.seijin_preparation_time = '';
