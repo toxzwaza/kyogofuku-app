@@ -38,6 +38,8 @@ class PublicEventController extends Controller
             $today = now()->toDateString();
             $events = Event::with(['shops', 'images'])
                 ->where('is_public', true)
+                // 「UTM分析APIに含める」ON のイベントのみ HP に掲載する
+                ->where('utm_analytics_enabled', true)
                 ->whereIn('form_type', self::ALLOWED_FORM_TYPES)
                 ->whereHas('shops', fn ($q) => $q->whereIn('shops.name', $shops))
                 // end_at が過去のイベント（受付終了済み）は除外。end_at NULL（期限なし）は表示
@@ -77,6 +79,8 @@ class PublicEventController extends Controller
             // ORDER BY: end_at IS NULL を後（0=NOT NULL先頭, 1=NULL末尾）→ end_at 昇順 → id 昇順
             $event = Event::with(['shops', 'images'])
                 ->where('is_public', true)
+                // 「UTM分析APIに含める」ON のイベントのみ HP に掲載する
+                ->where('utm_analytics_enabled', true)
                 ->whereIn('form_type', self::ALLOWED_FORM_TYPES)
                 ->whereHas('shops', fn ($q) => $q->whereIn('shops.name', $shops))
                 ->where(function ($q) use ($today) {
