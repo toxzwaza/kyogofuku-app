@@ -8,6 +8,7 @@ use App\Models\ConstraintTemplate;
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\CustomerConstraint;
+use App\Models\CustomerLineContact;
 use App\Models\CustomerNote;
 use App\Models\CustomerPhoto;
 use App\Models\CustomerTag;
@@ -21,6 +22,7 @@ use App\Models\User;
 use App\Services\Line\ReservationLineContactMigrator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -872,9 +874,21 @@ class CustomerController extends Controller
             'shop_id' => 'nullable|exists:shops,id',
         ]);
 
-        $customer->update([
-            'shop_id' => $validated['shop_id'] ?? null,
-        ]);
+        $newShopId = $validated['shop_id'] ?? null;
+
+        DB::transaction(function () use ($customer, $newShopId) {
+            $customer->update([
+                'shop_id' => $newShopId,
+            ]);
+
+            // LINE 連絡先(customer_line_contacts)の shop_id は Overview の受信表示先を決めるため、
+            // 担当店舗の変更に追従させる。単一チャネル運用なので店舗付け替えで送受信は壊れない。
+            // shop_id は NOT NULL 制約があるため、担当店舗をクリア(null)した場合は据え置く。
+            if ($newShopId) {
+                CustomerLineContact::where('customer_id', $customer->id)
+                    ->update(['shop_id' => $newShopId]);
+            }
+        });
 
         return redirect()->route('admin.customers.show', $customer)
             ->with('success', '担当店舗を更新しました。');
