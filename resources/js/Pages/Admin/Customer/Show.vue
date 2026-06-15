@@ -127,6 +127,7 @@
               <UiDetailField label="成人年度" :value="customer.coming_of_age_year || '—'" :icon="Sparkles" />
               <UiDetailField label="成人式エリア" :value="customer.ceremony_area?.name || '—'" :icon="MapPin" />
               <UiDetailField label="保護者名" :value="customer.guardian_name || '—'" :icon="Users" />
+              <UiDetailField label="担当店舗" :value="customer.shop?.name || '—'" :icon="Building2" />
             </UiDetailSection>
 
             <UiDetailSection title="成人式情報" :icon="Sparkles" :cols="2">

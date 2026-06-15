@@ -41,7 +41,7 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Customer::with('ceremonyArea');
+        $query = Customer::with(['ceremonyArea', 'shop']);
 
         // 顧客情報での検索
         if ($request->filled('name')) {
@@ -65,13 +65,44 @@ class CustomerController extends Controller
             $query->where('kana', 'LIKE', '%'.$request->kana.'%');
         }
 
+        // 成人式エリア（市町村）で絞り込み（複数選択可）
         if ($request->filled('ceremony_area_id')) {
-            $query->where('ceremony_area_id', $request->ceremony_area_id);
+            $ceremonyAreaIds = array_values(array_filter(array_map(
+                fn ($v) => is_numeric($v) ? (int) $v : null,
+                (array) $request->input('ceremony_area_id')
+            ), fn ($v) => $v !== null));
+            if (! empty($ceremonyAreaIds)) {
+                $query->whereIn('ceremony_area_id', $ceremonyAreaIds);
+            }
         }
 
         if ($request->filled('phone_number')) {
             $query->where('phone_number', 'LIKE', '%'.$request->phone_number.'%');
         }
+
+        // 顧客の担当店舗で絞り込み（複数選択可）。未指定（初回アクセス）時はログインユーザーの担当店舗
+        // （複数所属なら main フラグの店舗）をデフォルト適用する。'all' を含む場合は全店舗（絞り込みなし）。
+        $defaultCustomerShopId = optional(
+            $request->user()?->shops()
+                ->where('shops.is_active', true)
+                ->orderByDesc('shop_user.main')
+                ->orderBy('shops.id')
+                ->first()
+        )->id;
+        if (! $request->has('customer_shop_id')) {
+            $customerShopIds = $defaultCustomerShopId !== null ? [$defaultCustomerShopId] : [];
+        } elseif (in_array('all', (array) $request->input('customer_shop_id'), true)) {
+            $customerShopIds = [];
+        } else {
+            $customerShopIds = array_values(array_filter(array_map(
+                fn ($v) => is_numeric($v) ? (int) $v : null,
+                (array) $request->input('customer_shop_id')
+            ), fn ($v) => $v !== null));
+        }
+        if (! empty($customerShopIds)) {
+            $query->whereIn('shop_id', $customerShopIds);
+        }
+        $customerShopFilterValue = empty($customerShopIds) ? 'all' : $customerShopIds;
 
         // 成人式情報（顧客マスタ）
         if ($request->filled('seijin_preparation_venue')) {
@@ -269,7 +300,7 @@ class CustomerController extends Controller
             'plans' => $plans,
             'users' => $users,
             'constraintTemplates' => $constraintTemplates,
-            'filters' => $request->only([
+            'filters' => array_merge($request->only([
                 'name', 'kana', 'ceremony_area_id', 'phone_number',
                 'created_at_from', 'created_at_to',
                 'seijin_preparation_venue', 'seijin_preparation_time', 'other_store_preparation',
@@ -280,6 +311,9 @@ class CustomerController extends Controller
                 'constraint_presence', 'constraint_template_id', 'constraint_signed_at_from',
                 'constraint_signed_at_to', 'constraint_explainer_user_id',
                 'photo_slot_details_undecided', 'photo_slot_shop_id',
+            ]), [
+                // 担当店舗フィルタの実効値（未指定時はデフォルト店舗、全店舗時は 'all'）を返してUIの選択状態に反映
+                'customer_shop_id' => $customerShopFilterValue,
             ]),
             'prefillFromReservation' => $prefillFromReservation,
         ]);
