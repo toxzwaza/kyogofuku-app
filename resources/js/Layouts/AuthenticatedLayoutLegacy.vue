@@ -51,6 +51,7 @@ const menuItems = [
         route: 'admin.events.index',
         subItems: [
             { label: 'イベント一覧', route: 'admin.events.index' },
+            { label: 'イベント予約者一覧', route: 'admin.event-reservations.index' },
             { label: 'イベント作成', route: 'admin.events.create' },
             { label: 'API並び順', route: 'admin.events.utm-analytics-order' },
             { label: 'イベント予約者出力', route: 'admin.events.reservations-export.index' },
@@ -472,6 +473,9 @@ const menuItems = [
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.events.index')" :active="route().current('admin.events.index')" class="pl-8">
                             イベント一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('admin.event-reservations.index')" :active="route().current('admin.event-reservations.*')" class="pl-8">
+                            イベント予約者一覧
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('admin.events.create')" :active="route().current('admin.events.create')" class="pl-8">
                             イベント作成

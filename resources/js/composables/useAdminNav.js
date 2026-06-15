@@ -39,6 +39,7 @@ export function useAdminNav() {
             group: 'イベント・予約',
             items: [
                 { label: 'イベント一覧',       route: 'admin.events.index',                    icon: Ticket,        activePatterns: ['admin.events.*'] },
+                { label: 'イベント予約者一覧', route: 'admin.event-reservations.index',         icon: CalendarCheck, activePatterns: ['admin.event-reservations.*'] },
                 { label: '予約者出力',         route: 'admin.events.reservations-export.index', icon: Download,      activePatterns: ['admin.events.reservations-export.*'] },
                 { label: '開催会場',           route: 'admin.venues.index',                    icon: MapPin,        activePatterns: ['admin.venues.*'] },
                 { label: 'スライドショー',     route: 'admin.slideshows.index',                icon: Film,          activePatterns: ['admin.slideshows.*'] },

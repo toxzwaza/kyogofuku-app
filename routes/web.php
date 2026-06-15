@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\EventImageController as AdminEventImageController
 use App\Http\Controllers\Admin\MediaFileController as AdminMediaFileController;
 use App\Http\Controllers\Admin\EventLpSettingsController as AdminEventLpSettingsController;
 use App\Http\Controllers\Admin\EventReservationExportController;
+use App\Http\Controllers\Admin\EventReservationListController;
 use App\Http\Controllers\Admin\EventUtmAnalyticsOrderController;
 use App\Http\Controllers\Admin\LineUnknownInboxController;
 use App\Http\Controllers\Admin\PhotoSlotController as AdminPhotoSlotController;
@@ -155,6 +156,9 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
 
     // イベント一覧
     Route::get('/events', [AdminEventController::class, 'index'])->name('events.index');
+    // イベント予約者一覧（専用ページ＋データ取得用 JSON）
+    Route::get('/event-reservations', [EventReservationListController::class, 'index'])->name('event-reservations.index');
+    Route::get('/event-reservations/search', [EventReservationListController::class, 'search'])->name('event-reservations.search');
     Route::get('/events/create', [AdminEventController::class, 'create'])->name('events.create');
     Route::get('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'index'])->name('events.utm-analytics-order');
     Route::post('/events/utm-analytics-order', [EventUtmAnalyticsOrderController::class, 'updateOrder'])->name('events.utm-analytics-order.update');
