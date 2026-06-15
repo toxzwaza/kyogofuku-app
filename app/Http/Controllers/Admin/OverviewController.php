@@ -133,31 +133,48 @@ class OverviewController extends Controller
             }
         }
 
-        // ── LINE 未読受信（ログインユーザーの担当店舗のみ・お客様単位でグループ化） ──
+        // ── LINE 受信（ログインユーザーの担当店舗・お客様単位でグループ化） ──
         // 休業日などに届き未対応のまま残るメッセージを Overview で漏れなく拾うためのブロック。
-        // 既読化は顧客／予約詳細でスレッドを開いた時点で行われるため、ここでは未読のみを表示する。
+        // 未読は全件（古い見落としを防ぐ）、既読は直近分のみ取得し、画面側のトグルで
+        // 「未読のみ / 既読も表示」を切り替えられるようにする。
         $currentUser = $request->user();
         $userShopIds = $currentUser
             ? $currentUser->shops()->where('shops.is_active', true)->pluck('shops.id')->toArray()
             : [];
 
-        $lineInbound = ['groups' => [], 'unread_total' => 0];
+        $lineInbound = ['groups' => [], 'unread_total' => 0, 'total' => 0];
         if (! empty($userShopIds)) {
+            $contactInShop = fn ($q) => $q->whereIn('shop_id', $userShopIds);
+            $withContact = [
+                'contact' => fn ($q) => $q->select('id', 'customer_id', 'event_reservation_id', 'label', 'shop_id'),
+                'contact.customer' => fn ($q) => $q->select('id', 'name'),
+                'contact.eventReservation' => fn ($q) => $q->select('id', 'name'),
+            ];
+
+            // 未読は全件（上限300・古い未読も漏らさない）、既読は直近のみ（上限200）
             $unreadMessages = CustomerLineMessage::query()
-                ->with([
-                    'contact' => fn ($q) => $q->select('id', 'customer_id', 'event_reservation_id', 'label', 'shop_id'),
-                    'contact.customer' => fn ($q) => $q->select('id', 'name'),
-                    'contact.eventReservation' => fn ($q) => $q->select('id', 'name'),
-                ])
+                ->with($withContact)
                 ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
                 ->whereNull('admin_read_at')
-                ->whereHas('contact', fn ($q) => $q->whereIn('shop_id', $userShopIds))
-                ->orderByDesc('id') // 最新が先頭
+                ->whereHas('contact', $contactInShop)
+                ->orderByDesc('id')
+                ->limit(300)
+                ->get();
+
+            $readMessages = CustomerLineMessage::query()
+                ->with($withContact)
+                ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
+                ->whereNotNull('admin_read_at')
+                ->whereHas('contact', $contactInShop)
+                ->orderByDesc('id')
                 ->limit(200)
                 ->get();
 
+            // マージして id 降順（最新が先頭）に整列
+            $allMessages = $unreadMessages->concat($readMessages)->sortByDesc('id')->values();
+
             $groups = [];
-            foreach ($unreadMessages as $m) {
+            foreach ($allMessages as $m) {
                 $contact = $m->contact;
                 if (! $contact) {
                     continue;
@@ -176,27 +193,22 @@ class OverviewController extends Controller
                         'customer_id'    => $contact->customer_id,
                         'reservation_id' => $contact->event_reservation_id,
                         'unread_count'   => 0,
-                        'latest_at'      => null,
-                        'latest_preview' => '',
-                        'latest_is_image' => false,
+                        'total_count'    => 0,
                         'messages'       => [],
                     ];
                 }
                 $isImage = $m->message_type !== null && $m->message_type !== 'text';
-                $text = (string) ($m->text ?? '');
+                $isUnread = $m->admin_read_at === null;
                 $groups[$key]['messages'][] = [
-                    'id'           => $m->id,
-                    'text'         => $text,
-                    'is_image'     => $isImage,
-                    'message_type' => $m->message_type,
-                    'created_at'   => $m->created_at?->toIso8601String(),
+                    'id'         => $m->id,
+                    'text'       => (string) ($m->text ?? ''),
+                    'is_image'   => $isImage,
+                    'is_unread'  => $isUnread,
+                    'created_at' => $m->created_at?->toIso8601String(),
                 ];
-                $groups[$key]['unread_count']++;
-                // id 降順で取得しているため、グループで最初に出会ったものが最新メッセージ
-                if ($groups[$key]['latest_at'] === null) {
-                    $groups[$key]['latest_at'] = $m->created_at?->toIso8601String();
-                    $groups[$key]['latest_preview'] = $isImage ? '' : mb_substr($text, 0, 120);
-                    $groups[$key]['latest_is_image'] = $isImage;
+                $groups[$key]['total_count']++;
+                if ($isUnread) {
+                    $groups[$key]['unread_count']++;
                 }
             }
 
@@ -209,6 +221,7 @@ class OverviewController extends Controller
             $lineInbound = [
                 'groups'       => array_values($groups), // 最新受信のお客様が先頭
                 'unread_total' => $unreadMessages->count(),
+                'total'        => $allMessages->count(),
             ];
         }
 

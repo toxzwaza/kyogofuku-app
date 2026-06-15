@@ -22,13 +22,44 @@ const props = defineProps({
     daily_trend: { type: Array, default: () => [] },
     status_dist: { type: Array, default: () => [] },
     heatmap: { type: Object, default: () => ({ cells: {}, max: 0 }) },
-    line_inbound: { type: Object, default: () => ({ groups: [], unread_total: 0 }) },
+    line_inbound: { type: Object, default: () => ({ groups: [], unread_total: 0, total: 0 }) },
 });
 
 // LINE受信ブロック：お客様グループの展開状態
 const expandedGroups = ref({});
 const toggleGroup = (id) => { expandedGroups.value[id] = !expandedGroups.value[id]; };
 const isExpanded = (id) => !!expandedGroups.value[id];
+
+// LINE受信ブロック：表示フィルタ（未読のみ / 既読も表示）
+const lineUnreadOnly = ref(true);
+
+// 表示用グループ：トグルに応じてメッセージを絞り込み、プレビュー・最新時刻を再計算
+const lineGroupsView = computed(() => {
+    let groups = (props.line_inbound.groups || []).map((g) => {
+        const msgs = lineUnreadOnly.value
+            ? g.messages.filter((m) => m.is_unread)
+            : g.messages;
+        const latest = msgs.length ? msgs[msgs.length - 1] : null; // messages は古い順
+        return {
+            ...g,
+            view_messages: msgs,
+            latest_at: latest?.created_at ?? null,
+            latest_text: latest ? (latest.is_image ? '' : latest.text) : '',
+            latest_is_image: latest?.is_image ?? false,
+        };
+    });
+    // 未読のみ表示時は、未読を含まないグループを除外
+    if (lineUnreadOnly.value) {
+        groups = groups.filter((g) => g.view_messages.length > 0);
+    }
+    // 並び順：未読を含むお客様を上 → 最新受信時刻の降順
+    return groups.sort((a, b) => {
+        const ua = a.unread_count > 0 ? 1 : 0;
+        const ub = b.unread_count > 0 ? 1 : 0;
+        if (ua !== ub) return ub - ua;
+        return new Date(b.latest_at || 0) - new Date(a.latest_at || 0);
+    });
+});
 
 const statusVariant = (status) => ({
     '確認中':       'primary',
@@ -182,45 +213,81 @@ const maxShopCnt = computed(() =>
         <!-- LINE受信（未読のみ）＋ 最近の予約：左右2カラム -->
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-            <!-- LINE受信（未読のみ・お客様単位でまとめて展開） -->
+            <!-- LINE受信（お客様単位でまとめて展開・未読/既読をトグル切替） -->
             <UiCard variant="default" padding="none">
                 <template #header>
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between gap-3">
                         <h2 class="font-serif text-base flex items-center gap-2">
                             LINE受信
                             <UiBadge v-if="line_inbound.unread_total > 0" variant="success" size="sm">
                                 未読 {{ line_inbound.unread_total }}
                             </UiBadge>
                         </h2>
-                        <MessageCircle :size="14" class="text-brand-text-muted" />
+                        <div class="flex items-center gap-2">
+                            <!-- 未読のみトグル -->
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="lineUnreadOnly"
+                                @click="lineUnreadOnly = !lineUnreadOnly"
+                                class="flex items-center gap-1.5 text-[11px] text-brand-text-muted hover:text-brand-text transition-colors"
+                            >
+                                <span>未読のみ</span>
+                                <span
+                                    class="relative inline-flex h-4 w-7 flex-shrink-0 items-center rounded-full transition-colors"
+                                    :class="lineUnreadOnly ? 'bg-uguisu-500' : 'bg-brand-border'"
+                                >
+                                    <span
+                                        class="inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform"
+                                        :class="lineUnreadOnly ? 'translate-x-3.5' : 'translate-x-0.5'"
+                                    />
+                                </span>
+                            </button>
+                            <MessageCircle :size="14" class="text-brand-text-muted" />
+                        </div>
                     </div>
                 </template>
 
-                <div v-if="line_inbound.groups.length === 0" class="p-6 text-center text-sm text-brand-text-muted">
-                    未読のLINEメッセージはありません。
+                <div v-if="lineGroupsView.length === 0" class="p-6 text-center text-sm text-brand-text-muted">
+                    {{ lineUnreadOnly ? '未読のLINEメッセージはありません。' : 'LINEメッセージはありません。' }}
+                    <button
+                        v-if="lineUnreadOnly && line_inbound.total > 0"
+                        type="button"
+                        @click="lineUnreadOnly = false"
+                        class="block mx-auto mt-2 text-xs text-brand-primary hover:underline"
+                    >
+                        既読も表示する
+                    </button>
                 </div>
                 <div v-else class="divide-y divide-brand-border">
-                    <div v-for="g in line_inbound.groups" :key="g.contact_id">
+                    <div v-for="g in lineGroupsView" :key="g.contact_id">
                         <!-- お客様の見出し行（クリックで展開） -->
                         <button
                             type="button"
                             class="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-brand-surface-2 transition-colors"
                             @click="toggleGroup(g.contact_id)"
                         >
-                            <span class="flex-shrink-0 w-1 self-stretch rounded-full bg-uguisu-500"></span>
+                            <span
+                                class="flex-shrink-0 w-1 self-stretch rounded-full"
+                                :class="g.unread_count > 0 ? 'bg-uguisu-500' : 'bg-brand-border'"
+                            ></span>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-sm font-medium truncate">{{ g.name }}</span>
+                                    <span
+                                        class="text-sm font-medium truncate"
+                                        :class="g.unread_count > 0 ? '' : 'text-brand-text-muted'"
+                                    >{{ g.name }}</span>
                                     <UiBadge :variant="g.link_kind === 'reservation' ? 'primary' : 'neutral'" size="sm">
                                         {{ g.link_kind === 'reservation' ? '予約' : '顧客' }}
                                     </UiBadge>
-                                    <UiBadge variant="success" size="sm">未読 {{ g.unread_count }}</UiBadge>
+                                    <UiBadge v-if="g.unread_count > 0" variant="success" size="sm">未読 {{ g.unread_count }}</UiBadge>
+                                    <UiBadge v-else variant="neutral" size="sm">既読</UiBadge>
                                 </div>
                                 <div class="text-xs text-brand-text-muted truncate mt-0.5">
                                     <span v-if="g.latest_is_image" class="inline-flex items-center gap-1">
                                         <ImageIcon :size="12" /> 画像
                                     </span>
-                                    <span v-else>{{ g.latest_preview || '（テキスト以外）' }}</span>
+                                    <span v-else>{{ (g.latest_text && g.latest_text.trim()) ? g.latest_text : '（テキスト以外）' }}</span>
                                 </div>
                             </div>
                             <div class="flex-shrink-0 flex flex-col items-end gap-1">
@@ -233,22 +300,30 @@ const maxShopCnt = computed(() =>
                             </div>
                         </button>
 
-                        <!-- 展開部：そのお客様の未読メッセージ一覧（時系列） -->
+                        <!-- 展開部：そのお客様のメッセージ一覧（時系列・既読は淡色） -->
                         <div v-if="isExpanded(g.contact_id)" class="bg-brand-surface-2 px-5 py-3 space-y-2">
                             <div
-                                v-for="msg in g.messages"
+                                v-for="msg in g.view_messages"
                                 :key="msg.id"
-                                class="rounded-md border border-brand-border bg-brand-surface px-3 py-2"
+                                class="rounded-md border px-3 py-2"
+                                :class="msg.is_unread
+                                    ? 'border-brand-border bg-brand-surface'
+                                    : 'border-brand-border/60 bg-brand-surface/60'"
                             >
                                 <div class="flex items-start justify-between gap-2">
                                     <p v-if="msg.is_image" class="flex items-center gap-1 text-sm text-brand-text-muted">
                                         <ImageIcon :size="14" /> 画像メッセージ
                                     </p>
-                                    <p v-else class="text-sm whitespace-pre-wrap break-words flex-1">
+                                    <p
+                                        v-else
+                                        class="text-sm whitespace-pre-wrap break-words flex-1"
+                                        :class="msg.is_unread ? '' : 'text-brand-text-muted'"
+                                    >
                                         {{ msg.text?.trim() ? msg.text : '（テキスト以外）' }}
                                     </p>
-                                    <span class="flex-shrink-0 text-[10px] text-brand-text-subtle whitespace-nowrap">
-                                        {{ fmtDateTime(msg.created_at) }}
+                                    <span class="flex-shrink-0 flex items-center gap-1 whitespace-nowrap">
+                                        <span v-if="msg.is_unread" class="inline-block w-1.5 h-1.5 rounded-full bg-uguisu-500" title="未読"></span>
+                                        <span class="text-[10px] text-brand-text-subtle">{{ fmtDateTime(msg.created_at) }}</span>
                                     </span>
                                 </div>
                             </div>
