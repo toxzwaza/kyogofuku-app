@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CustomerLineMessage;
 use App\Models\EventReservation;
 use App\Models\StaffSchedule;
 use Carbon\Carbon;
@@ -132,6 +133,85 @@ class OverviewController extends Controller
             }
         }
 
+        // ── LINE 未読受信（ログインユーザーの担当店舗のみ・お客様単位でグループ化） ──
+        // 休業日などに届き未対応のまま残るメッセージを Overview で漏れなく拾うためのブロック。
+        // 既読化は顧客／予約詳細でスレッドを開いた時点で行われるため、ここでは未読のみを表示する。
+        $currentUser = $request->user();
+        $userShopIds = $currentUser
+            ? $currentUser->shops()->where('shops.is_active', true)->pluck('shops.id')->toArray()
+            : [];
+
+        $lineInbound = ['groups' => [], 'unread_total' => 0];
+        if (! empty($userShopIds)) {
+            $unreadMessages = CustomerLineMessage::query()
+                ->with([
+                    'contact' => fn ($q) => $q->select('id', 'customer_id', 'event_reservation_id', 'label', 'shop_id'),
+                    'contact.customer' => fn ($q) => $q->select('id', 'name'),
+                    'contact.eventReservation' => fn ($q) => $q->select('id', 'name'),
+                ])
+                ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
+                ->whereNull('admin_read_at')
+                ->whereHas('contact', fn ($q) => $q->whereIn('shop_id', $userShopIds))
+                ->orderByDesc('id') // 最新が先頭
+                ->limit(200)
+                ->get();
+
+            $groups = [];
+            foreach ($unreadMessages as $m) {
+                $contact = $m->contact;
+                if (! $contact) {
+                    continue;
+                }
+                $key = $contact->id;
+                if (! isset($groups[$key])) {
+                    $isReservation = $contact->customer_id === null && $contact->event_reservation_id !== null;
+                    $displayName = $isReservation
+                        ? ($contact->eventReservation?->name ?? '予約者')
+                        : ($contact->customer?->name ?? '顧客');
+                    $groups[$key] = [
+                        'contact_id'     => $contact->id,
+                        'name'           => $displayName,
+                        'label'          => $contact->label ?? 'お客様',
+                        'link_kind'      => $isReservation ? 'reservation' : 'customer',
+                        'customer_id'    => $contact->customer_id,
+                        'reservation_id' => $contact->event_reservation_id,
+                        'unread_count'   => 0,
+                        'latest_at'      => null,
+                        'latest_preview' => '',
+                        'latest_is_image' => false,
+                        'messages'       => [],
+                    ];
+                }
+                $isImage = $m->message_type !== null && $m->message_type !== 'text';
+                $text = (string) ($m->text ?? '');
+                $groups[$key]['messages'][] = [
+                    'id'           => $m->id,
+                    'text'         => $text,
+                    'is_image'     => $isImage,
+                    'message_type' => $m->message_type,
+                    'created_at'   => $m->created_at?->toIso8601String(),
+                ];
+                $groups[$key]['unread_count']++;
+                // id 降順で取得しているため、グループで最初に出会ったものが最新メッセージ
+                if ($groups[$key]['latest_at'] === null) {
+                    $groups[$key]['latest_at'] = $m->created_at?->toIso8601String();
+                    $groups[$key]['latest_preview'] = $isImage ? '' : mb_substr($text, 0, 120);
+                    $groups[$key]['latest_is_image'] = $isImage;
+                }
+            }
+
+            // 展開時は時系列（古い順）で読めるように並べ替え
+            foreach ($groups as &$g) {
+                $g['messages'] = array_reverse($g['messages']);
+            }
+            unset($g);
+
+            $lineInbound = [
+                'groups'       => array_values($groups), // 最新受信のお客様が先頭
+                'unread_total' => $unreadMessages->count(),
+            ];
+        }
+
         return Inertia::render($this->viewFor('Admin/Overview'), [
             'stats' => [
                 'today_count'     => $todayCount,
@@ -141,6 +221,7 @@ class OverviewController extends Controller
                 'pending_count'   => $pendingCount,
             ],
             'recent_reservations' => $recent,
+            'line_inbound'        => $lineInbound,
             'shop_ranking'        => $byShop,
             'week_range'          => [
                 'start' => $weekStart->format('Y-m-d'),

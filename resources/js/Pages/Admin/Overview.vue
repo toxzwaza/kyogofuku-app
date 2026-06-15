@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import {
@@ -11,6 +11,7 @@ import ReservationHeatmap from '@/Components/Admin/ReservationHeatmap.vue';
 import {
     CalendarDays, Users, TrendingUp, TrendingDown, AlertCircle,
     ArrowRight, Store, Clock, BarChart3, PieChart, Grid3x3,
+    MessageCircle, ChevronDown, Image as ImageIcon,
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -21,7 +22,13 @@ const props = defineProps({
     daily_trend: { type: Array, default: () => [] },
     status_dist: { type: Array, default: () => [] },
     heatmap: { type: Object, default: () => ({ cells: {}, max: 0 }) },
+    line_inbound: { type: Object, default: () => ({ groups: [], unread_total: 0 }) },
 });
+
+// LINE受信ブロック：お客様グループの展開状態
+const expandedGroups = ref({});
+const toggleGroup = (id) => { expandedGroups.value[id] = !expandedGroups.value[id]; };
+const isExpanded = (id) => !!expandedGroups.value[id];
 
 const statusVariant = (status) => ({
     '確認中':       'primary',
@@ -40,6 +47,21 @@ const fmtDateTime = (s) => {
     const hh = String(d.getHours()).padStart(2, '0');
     const mi = String(d.getMinutes()).padStart(2, '0');
     return `${mm}/${dd} ${hh}:${mi}`;
+};
+
+const fmtRelative = (s) => {
+    if (!s) return '';
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    const diff = Date.now() - d.getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return 'たった今';
+    if (min < 60) return `${min}分前`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}時間前`;
+    const day = Math.floor(hr / 24);
+    if (day < 7) return `${day}日前`;
+    return fmtDateTime(s);
 };
 
 const weekDeltaAbs = computed(() =>
@@ -157,10 +179,96 @@ const maxShopCnt = computed(() =>
             </UiCard>
         </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- LINE受信（未読のみ）＋ 最近の予約：左右2カラム -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+            <!-- LINE受信（未読のみ・お客様単位でまとめて展開） -->
+            <UiCard variant="default" padding="none">
+                <template #header>
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-serif text-base flex items-center gap-2">
+                            LINE受信
+                            <UiBadge v-if="line_inbound.unread_total > 0" variant="success" size="sm">
+                                未読 {{ line_inbound.unread_total }}
+                            </UiBadge>
+                        </h2>
+                        <MessageCircle :size="14" class="text-brand-text-muted" />
+                    </div>
+                </template>
+
+                <div v-if="line_inbound.groups.length === 0" class="p-6 text-center text-sm text-brand-text-muted">
+                    未読のLINEメッセージはありません。
+                </div>
+                <div v-else class="divide-y divide-brand-border">
+                    <div v-for="g in line_inbound.groups" :key="g.contact_id">
+                        <!-- お客様の見出し行（クリックで展開） -->
+                        <button
+                            type="button"
+                            class="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-brand-surface-2 transition-colors"
+                            @click="toggleGroup(g.contact_id)"
+                        >
+                            <span class="flex-shrink-0 w-1 self-stretch rounded-full bg-uguisu-500"></span>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-sm font-medium truncate">{{ g.name }}</span>
+                                    <UiBadge :variant="g.link_kind === 'reservation' ? 'primary' : 'neutral'" size="sm">
+                                        {{ g.link_kind === 'reservation' ? '予約' : '顧客' }}
+                                    </UiBadge>
+                                    <UiBadge variant="success" size="sm">未読 {{ g.unread_count }}</UiBadge>
+                                </div>
+                                <div class="text-xs text-brand-text-muted truncate mt-0.5">
+                                    <span v-if="g.latest_is_image" class="inline-flex items-center gap-1">
+                                        <ImageIcon :size="12" /> 画像
+                                    </span>
+                                    <span v-else>{{ g.latest_preview || '（テキスト以外）' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 flex flex-col items-end gap-1">
+                                <span class="text-[11px] text-brand-text-muted whitespace-nowrap">{{ fmtRelative(g.latest_at) }}</span>
+                                <ChevronDown
+                                    :size="16"
+                                    class="text-brand-text-muted transition-transform"
+                                    :class="{ 'rotate-180': isExpanded(g.contact_id) }"
+                                />
+                            </div>
+                        </button>
+
+                        <!-- 展開部：そのお客様の未読メッセージ一覧（時系列） -->
+                        <div v-if="isExpanded(g.contact_id)" class="bg-brand-surface-2 px-5 py-3 space-y-2">
+                            <div
+                                v-for="msg in g.messages"
+                                :key="msg.id"
+                                class="rounded-md border border-brand-border bg-brand-surface px-3 py-2"
+                            >
+                                <div class="flex items-start justify-between gap-2">
+                                    <p v-if="msg.is_image" class="flex items-center gap-1 text-sm text-brand-text-muted">
+                                        <ImageIcon :size="14" /> 画像メッセージ
+                                    </p>
+                                    <p v-else class="text-sm whitespace-pre-wrap break-words flex-1">
+                                        {{ msg.text?.trim() ? msg.text : '（テキスト以外）' }}
+                                    </p>
+                                    <span class="flex-shrink-0 text-[10px] text-brand-text-subtle whitespace-nowrap">
+                                        {{ fmtDateTime(msg.created_at) }}
+                                    </span>
+                                </div>
+                            </div>
+                            <Link
+                                v-if="(g.link_kind === 'reservation' && g.reservation_id) || g.customer_id"
+                                :href="g.link_kind === 'reservation' && g.reservation_id
+                                    ? route('admin.reservations.show', g.reservation_id)
+                                    : route('admin.customers.show', g.customer_id)"
+                                class="inline-flex items-center gap-1 text-xs text-brand-primary hover:underline mt-1"
+                            >
+                                {{ g.link_kind === 'reservation' ? '予約詳細を開く' : '顧客詳細を開く' }}
+                                <ArrowRight :size="12" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </UiCard>
 
             <!-- 最近の予約 -->
-            <UiCard variant="default" padding="none" class="lg:col-span-2">
+            <UiCard variant="default" padding="none">
                 <template #header>
                     <div class="flex items-center justify-between">
                         <h2 class="font-serif text-base">最近の予約</h2>
@@ -190,6 +298,11 @@ const maxShopCnt = computed(() =>
                     </Link>
                 </div>
             </UiCard>
+
+        </section>
+
+        <!-- ヒートマップ ＋ 店舗別予約 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- ヒートマップ -->
             <UiCard variant="default" class="lg:col-span-2">
