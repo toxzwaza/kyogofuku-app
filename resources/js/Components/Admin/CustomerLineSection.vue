@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, onUnmounted } from 'vue';
+import { ref, watch, computed, onUnmounted, nextTick } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import QRCode from 'qrcode';
@@ -106,6 +106,68 @@ onUnmounted(() => {
 });
 const messages = ref([]);
 const loadingMessages = ref(false);
+
+// トーク表示：スクロールコンテナと「最新（一番下）」への自動スクロール
+const chatScrollRef = ref(null);
+function scrollChatToBottom() {
+    nextTick(() => {
+        const el = chatScrollRef.value;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
+    });
+}
+// 最新メッセージが変わったとき（初回読込・連絡先切替・送信・新着）に一番下へ
+watch(
+    () => (messages.value.length ? messages.value[messages.value.length - 1].id : null),
+    () => scrollChatToBottom(),
+);
+
+// タブ内に配置され初期は非表示(display:none)のため、可視化された瞬間に一番下へスクロールする
+let chatVisibilityObserver = null;
+watch(chatScrollRef, (el) => {
+    if (chatVisibilityObserver) {
+        chatVisibilityObserver.disconnect();
+        chatVisibilityObserver = null;
+    }
+    if (el && typeof IntersectionObserver !== 'undefined') {
+        chatVisibilityObserver = new IntersectionObserver((entries) => {
+            if (entries.some((entry) => entry.isIntersecting)) {
+                scrollChatToBottom();
+            }
+        });
+        chatVisibilityObserver.observe(el);
+    }
+});
+
+// トーク拡大モーダル
+const isExpanded = ref(false);
+function onModalKeydown(e) {
+    if (e.key === 'Escape') {
+        isExpanded.value = false;
+    }
+}
+watch(isExpanded, (open) => {
+    if (typeof document !== 'undefined') {
+        document.body.style.overflow = open ? 'hidden' : '';
+    }
+    if (open) {
+        scrollChatToBottom();
+        window.addEventListener('keydown', onModalKeydown);
+    } else {
+        window.removeEventListener('keydown', onModalKeydown);
+    }
+});
+onUnmounted(() => {
+    window.removeEventListener('keydown', onModalKeydown);
+    if (typeof document !== 'undefined') {
+        document.body.style.overflow = '';
+    }
+    if (chatVisibilityObserver) {
+        chatVisibilityObserver.disconnect();
+        chatVisibilityObserver = null;
+    }
+});
 const sendText = ref('');
 const sending = ref(false);
 const sendError = ref('');
@@ -318,13 +380,6 @@ function formatLineTime(iso) {
         return '';
     }
     return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false });
-}
-
-function onComposerKeydown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
 }
 
 function unlinkSelectedContact() {
@@ -576,6 +631,28 @@ const canIssueLink = computed(() => {
                 <div v-if="!contacts.length" class="text-sm text-gray-500 mb-4">連携済みの LINE がありません。上記リンクからお客様に連携してもらってください。</div>
 
                 <template v-else>
+                    <Teleport to="body" :disabled="!isExpanded">
+                    <div
+                        :class="isExpanded ? 'line-chat-overlay fixed inset-0 z-[60] flex items-start justify-center bg-black/40 p-3 sm:p-6 overflow-y-auto' : 'contents'"
+                        @click.self="isExpanded = false"
+                    >
+                    <div
+                        :class="isExpanded ? 'line-chat-modal w-full max-w-3xl my-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-5' : 'contents'"
+                    >
+                    <div v-if="isExpanded" class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-semibold text-gray-800">LINE トーク（拡大表示）</h3>
+                        <button
+                            type="button"
+                            class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                            title="閉じる"
+                            aria-label="閉じる"
+                            @click="isExpanded = false"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                     <div
                         class="flex border-b border-gray-200 mb-3 gap-1 min-w-0 -mt-0.5"
                         role="tablist"
@@ -602,6 +679,18 @@ const canIssueLink = computed(() => {
                                 {{ c.label }}（{{ c.line_user_id_masked }}）
                             </span>
                         </button>
+                        <button
+                            v-if="!isExpanded"
+                            type="button"
+                            class="shrink-0 self-center mb-1 ml-0.5 p-1.5 rounded-md text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            title="拡大表示して大きな画面でやり取りする"
+                            aria-label="拡大表示"
+                            @click="isExpanded = true"
+                        >
+                            <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                            </svg>
+                        </button>
                     </div>
 
                     <div
@@ -621,8 +710,12 @@ const canIssueLink = computed(() => {
                         </button>
                     </div>
 
-                    <div class="line-chat-panel rounded-xl overflow-hidden border border-gray-200/80 shadow-inner mb-3">
-                        <div class="line-chat-scroll min-h-[220px] max-h-80 overflow-y-auto px-3 py-4">
+                    <div class="line-chat-panel rounded-xl overflow-hidden border border-gray-200/80 shadow-inner" :class="isExpanded ? 'mb-0' : 'mb-3'">
+                        <div
+                            ref="chatScrollRef"
+                            class="line-chat-scroll overflow-y-auto px-3 py-4"
+                            :class="isExpanded ? 'min-h-[55vh] max-h-[65vh]' : 'min-h-[220px] max-h-80'"
+                        >
                             <p v-if="loadingMessages" class="text-sm text-gray-500 text-center py-8">読み込み中…</p>
                             <template v-else>
                                 <p
@@ -761,10 +854,9 @@ const canIssueLink = computed(() => {
                                     v-model="sendText"
                                     rows="2"
                                     class="line-composer__input flex-1 min-w-0 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[15px] text-gray-900 placeholder:text-gray-400 focus:border-[#06C755]/50 focus:ring-1 focus:ring-[#06C755]/30 resize-y min-h-[44px] max-h-32"
-                                    :placeholder="selectedImageFile ? '画像を送信します（テキストは併送できません）' : 'Enterで送信 / Shift + Enterで改行'"
+                                    :placeholder="selectedImageFile ? '画像を送信します（テキストは併送できません）' : 'Enterで改行 ／ 送信は「送信」ボタンから'"
                                     maxlength="4500"
                                     :disabled="!!selectedImageFile"
-                                    @keydown="onComposerKeydown"
                                 />
                                 <button
                                     type="button"
@@ -780,6 +872,9 @@ const canIssueLink = computed(() => {
                             </div>
                         </div>
                     </div>
+                    </div>
+                    </div>
+                    </Teleport>
                 </template>
             </template>
         </div>
@@ -789,6 +884,32 @@ const canIssueLink = computed(() => {
 <style scoped>
 .line-chat-panel {
     background-color: #ececec;
+}
+
+/* トーク拡大モーダル：フワッと出現させる */
+.line-chat-overlay {
+    animation: lineOverlayFade 0.18s ease-out;
+}
+.line-chat-modal {
+    animation: lineModalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes lineOverlayFade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes lineModalPop {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .line-chat-scroll {
