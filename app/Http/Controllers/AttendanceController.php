@@ -70,9 +70,27 @@ class AttendanceController extends Controller
             $attendanceStatus['cancellableAction'] = $this->getCancellableActionForRecord($todayRecord);
         }
 
+        // 休憩を事後登録できる日（出勤レコードが存在する日）。直近2か月分。
+        $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        $registrableDates = AttendanceRecord::where('user_id', $user->id)
+            ->whereNotNull('clock_in_at')
+            ->whereDate('date', '>=', $today->copy()->subMonths(2))
+            ->whereDate('date', '<=', $today)
+            ->orderByDesc('date')
+            ->get(['id', 'date', 'clock_in_at', 'clock_out_at'])
+            ->map(fn ($r) => [
+                'date' => $r->date->format('Y-m-d'),
+                'label' => $r->date->format('Y/m/d') . '（' . $weekdays[$r->date->dayOfWeek] . '）',
+                'clock_in_at' => $r->clock_in_at?->format('H:i'),
+                'clock_out_at' => $r->clock_out_at?->format('H:i'),
+            ])
+            ->values()
+            ->all();
+
         return Inertia::render($this->viewFor('Attendance/Index'), [
             'attendanceStatus' => $attendanceStatus,
             'userShops' => $userShops,
+            'registrableBreakDates' => $registrableDates,
             'currentUser' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -234,6 +252,69 @@ class AttendanceController extends Controller
 
         return DB::transaction(function () use ($activeBreak, $record) {
             $activeBreak->update(['end_at' => Carbon::now()]);
+            return response()->json([
+                'success' => true,
+                'record' => $this->formatRecord($record->fresh(['breaks'])),
+            ]);
+        });
+    }
+
+    /**
+     * 休憩の事後登録（日付指定）
+     *
+     * 通常はリアルタイム打刻しないため、超過取得・取得漏れの補正用。
+     * 指定日の既存勤怠レコードに休憩を1件追加する（CSV出力に反映される）。
+     */
+    public function breakRegister(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'breaks' => 'required|array|min:1',
+            'breaks.*.start_time' => 'required|date_format:H:i',
+            'breaks.*.end_time' => 'required|date_format:H:i',
+        ]);
+
+        $user = $request->user();
+        $date = Carbon::parse($validated['date'])->startOfDay();
+
+        $record = AttendanceRecord::where('user_id', $user->id)
+            ->whereDate('date', $date)
+            ->with('breaks')
+            ->first();
+
+        if (!$record) {
+            return response()->json([
+                'message' => '該当日の勤怠記録がありません。先に出勤打刻または仮登録を行ってください。',
+            ], 404);
+        }
+
+        $newBreaks = [];
+        foreach ($validated['breaks'] as $i => $b) {
+            $no = $i + 1;
+            $startAt = $date->copy()->setTimeFromTimeString($b['start_time']);
+            $endAt = $date->copy()->setTimeFromTimeString($b['end_time']);
+
+            if ($endAt->lte($startAt)) {
+                return response()->json(['message' => "{$no}件目：休憩終了は休憩開始より後の時刻を指定してください。"], 422);
+            }
+            if ($record->clock_in_at && $startAt->lt($record->clock_in_at)) {
+                return response()->json(['message' => "{$no}件目：休憩開始は出勤時刻より後にしてください。"], 422);
+            }
+            if ($record->clock_out_at && $endAt->gt($record->clock_out_at)) {
+                return response()->json(['message' => "{$no}件目：休憩終了は退勤時刻より前にしてください。"], 422);
+            }
+
+            $newBreaks[] = ['start_at' => $startAt, 'end_at' => $endAt];
+        }
+
+        return DB::transaction(function () use ($record, $newBreaks) {
+            foreach ($newBreaks as $b) {
+                AttendanceBreak::create([
+                    'attendance_record_id' => $record->id,
+                    'start_at' => $b['start_at'],
+                    'end_at' => $b['end_at'],
+                ]);
+            }
             return response()->json([
                 'success' => true,
                 'record' => $this->formatRecord($record->fresh(['breaks'])),

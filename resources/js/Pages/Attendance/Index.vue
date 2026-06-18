@@ -11,6 +11,7 @@
             :attendance-status="attendanceStatus"
             :user-shops="userShops"
             :current-user="currentUser"
+            :registrable-break-dates="registrableBreakDates"
             :attendance-manual-url="attendanceManualUrl"
             :attendance-manual-url-manager="attendanceManualUrlManager"
         />
@@ -28,6 +29,7 @@ defineProps({
     attendanceStatus: { type: Object, default: () => ({}) },
     userShops: { type: Array, default: () => [] },
     currentUser: { type: Object, default: null },
+    registrableBreakDates: { type: Array, default: () => [] },
     attendanceManualUrl: { type: String, default: '' },
     attendanceManualUrlManager: { type: String, default: '' },
 });
