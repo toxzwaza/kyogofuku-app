@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AttendanceMasterImportController;
 use App\Http\Controllers\Api\NaturalLanguageController;
 use App\Http\Controllers\Api\PublicEventController;
 use App\Http\Controllers\GoogleCalendarKeepTokenController;
@@ -27,6 +28,10 @@ Route::get('/google-calendar/keep-token', GoogleCalendarKeepTokenController::cla
 
 // UTM 流入経路分析 API（GAS 等から計測・分析用。X-Api-Key または token で認証）
 Route::get('/utm-analytics', UtmAnalyticsApiController::class);
+
+// 勤怠マスタ（勤務属性・会社カレンダー）取込API（X-Api-Key または token で認証）
+Route::get('/attendance/master-import', [AttendanceMasterImportController::class, 'current']);
+Route::post('/attendance/master-import', [AttendanceMasterImportController::class, 'import']);
 
 // 自然言語 API（Claude API tool_use で操作。Bearer トークン認証）
 Route::post('/nl/chat', [NaturalLanguageController::class, 'chat']);
