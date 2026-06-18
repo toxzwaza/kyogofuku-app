@@ -3,11 +3,11 @@ import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import {
-    LogIn, LogOut, Coffee, Play, X as XIcon,
+    LogIn, LogOut, Coffee, X as XIcon, Plus, Trash2,
     BookOpen, FileEdit, History, CheckCircle2, Clock,
 } from 'lucide-vue-next';
 import {
-    UiCard, UiBadge, UiSelect, UiFormField,
+    UiCard, UiBadge, UiSelect, UiFormField, UiDialog, UiButton,
 } from '@/Components/UI';
 import DigitalClock from '@/Components/DigitalClock.vue';
 
@@ -15,6 +15,7 @@ const props = defineProps({
     attendanceStatus: { type: Object, default: () => ({}) },
     userShops: { type: Array, default: () => [] },
     currentUser: { type: Object, default: null },
+    registrableBreakDates: { type: Array, default: () => [] },
     attendanceManualUrl: { type: String, default: '' },
     attendanceManualUrlManager: { type: String, default: '' },
 });
@@ -58,8 +59,6 @@ const canClockIn = computed(() => {
     const shops = props.userShops || [];
     return !props.attendanceStatus?.todayRecord && (shops.length <= 1 || !!clockInShopId.value);
 });
-const canBreakStart = computed(() => !!props.attendanceStatus?.isWorking);
-const canBreakEnd = computed(() => !!props.attendanceStatus?.isOnBreak);
 const canClockOut = computed(() => !!props.attendanceStatus?.isWorking);
 
 watch(
@@ -133,29 +132,86 @@ async function clockOut() {
     }
 }
 
-async function breakStart() {
-    punchingAction.value = 'break_start';
-    try {
-        const { data } = await axios.post(route('attendance.break-start'));
-        if (data.success) router.reload();
-        else alert(data.message || '休憩開始の登録に失敗しました。');
-    } catch (err) {
-        alert(err.response?.data?.message || '休憩開始の登録に失敗しました。');
-    } finally {
-        punchingAction.value = null;
+// 休憩の事後登録（モーダル）
+const showBreakModal = ref(false);
+const breakSubmitting = ref(false);
+const breakError = ref('');
+const selectedBreakDate = ref('');
+const breakRows = ref([]);
+
+const breakDateOptions = computed(() =>
+    (props.registrableBreakDates || []).map((d) => ({ value: d.date, label: d.label }))
+);
+const selectedBreakDateInfo = computed(() =>
+    (props.registrableBreakDates || []).find((d) => d.date === selectedBreakDate.value) || null
+);
+
+const hourOptions = Array.from({ length: 24 }, (_, i) => {
+    const v = String(i).padStart(2, '0');
+    return { value: v, label: v };
+});
+const minuteOptions = ['00', '10', '20', '30', '40', '50'].map((v) => ({ value: v, label: v }));
+
+function emptyBreakRow() {
+    return { start_h: '', start_m: '', end_h: '', end_m: '' };
+}
+
+function openBreakModal() {
+    selectedBreakDate.value = props.registrableBreakDates?.[0]?.date ?? '';
+    breakRows.value = [emptyBreakRow()];
+    breakError.value = '';
+    showBreakModal.value = true;
+}
+
+function addBreakRow() {
+    breakRows.value.push(emptyBreakRow());
+}
+
+function removeBreakRow(idx) {
+    breakRows.value.splice(idx, 1);
+    if (breakRows.value.length === 0) {
+        breakRows.value.push(emptyBreakRow());
     }
 }
 
-async function breakEnd() {
-    punchingAction.value = 'break_end';
+async function submitBreak() {
+    breakError.value = '';
+    if (!selectedBreakDate.value) {
+        breakError.value = '日付を選択してください。';
+        return;
+    }
+    const breaks = [];
+    for (let i = 0; i < breakRows.value.length; i++) {
+        const r = breakRows.value[i];
+        if (!r.start_h || !r.start_m || !r.end_h || !r.end_m) {
+            breakError.value = `${i + 1}件目：休憩開始・休憩終了をすべて選択してください。`;
+            return;
+        }
+        const start_time = `${r.start_h}:${r.start_m}`;
+        const end_time = `${r.end_h}:${r.end_m}`;
+        if (end_time <= start_time) {
+            breakError.value = `${i + 1}件目：休憩終了は休憩開始より後の時刻を選択してください。`;
+            return;
+        }
+        breaks.push({ start_time, end_time });
+    }
+
+    breakSubmitting.value = true;
     try {
-        const { data } = await axios.post(route('attendance.break-end'));
-        if (data.success) router.reload();
-        else alert(data.message || '休憩終了の登録に失敗しました。');
+        const { data } = await axios.post(route('attendance.break-register'), {
+            date: selectedBreakDate.value,
+            breaks,
+        });
+        if (data.success) {
+            showBreakModal.value = false;
+            router.reload();
+        } else {
+            breakError.value = data.message || '休憩の登録に失敗しました。';
+        }
     } catch (err) {
-        alert(err.response?.data?.message || '休憩終了の登録に失敗しました。');
+        breakError.value = err.response?.data?.message || '休憩の登録に失敗しました。';
     } finally {
-        punchingAction.value = null;
+        breakSubmitting.value = false;
     }
 }
 
@@ -195,9 +251,9 @@ const statusHelperText = computed(() => {
     const s = props.attendanceStatus;
     if (!s?.todayRecord) return '';
     if (s.isOnBreak) return '休憩終了の打刻をお願いします';
-    if (s.isWorking) return '休憩または退勤の打刻が可能です';
+    if (s.isWorking) return '退勤の打刻が可能です';
     if (s.todayRecord.clock_out_at) return '本日の勤務は終了しています';
-    return '休憩または退勤の打刻が可能です';
+    return '退勤の打刻が可能です';
 });
 
 const punchButtonClasses = (variant, enabled) => {
@@ -245,7 +301,7 @@ const punchButtonClasses = (variant, enabled) => {
                     />
                 </UiFormField>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="grid grid-cols-2 gap-2">
                     <button
                         type="button"
                         :disabled="!canClockIn || !!punchingAction"
@@ -254,24 +310,6 @@ const punchButtonClasses = (variant, enabled) => {
                     >
                         <LogIn :size="16" />
                         {{ punchingAction === 'clock_in' ? '処理中…' : '出勤' }}
-                    </button>
-                    <button
-                        type="button"
-                        :disabled="!canBreakStart || !!punchingAction"
-                        @click="breakStart"
-                        :class="punchButtonClasses('warning', canBreakStart && !punchingAction)"
-                    >
-                        <Coffee :size="16" />
-                        {{ punchingAction === 'break_start' ? '処理中…' : '休憩開始' }}
-                    </button>
-                    <button
-                        type="button"
-                        :disabled="!canBreakEnd || !!punchingAction"
-                        @click="breakEnd"
-                        :class="punchButtonClasses('primary', canBreakEnd && !punchingAction)"
-                    >
-                        <Play :size="16" />
-                        {{ punchingAction === 'break_end' ? '処理中…' : '休憩終了' }}
                     </button>
                     <button
                         type="button"
@@ -285,6 +323,13 @@ const punchButtonClasses = (variant, enabled) => {
                 </div>
 
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-sm">
+                    <button
+                        type="button"
+                        @click="openBreakModal"
+                        class="inline-flex items-center gap-1 text-natane-700 hover:underline"
+                    >
+                        <Coffee :size="14" /> 休憩登録
+                    </button>
                     <Link
                         :href="route('attendance.provisional.create')"
                         class="inline-flex items-center gap-1 text-brand-primary hover:underline"
@@ -427,4 +472,94 @@ const punchButtonClasses = (variant, enabled) => {
             </div>
         </div>
     </UiCard>
+
+    <!-- 休憩の事後登録モーダル -->
+    <UiDialog v-model:open="showBreakModal" title="休憩登録" size="md">
+        <p class="text-xs text-brand-text-muted mb-4 leading-relaxed">
+            通常、休憩の登録は不要です。休憩を超過して取得した場合や、取得できなかった場合のみ登録してください。<br>
+            登録した休憩は指定日の勤怠に追加され、CSV出力に反映されます。
+        </p>
+
+        <div v-if="breakDateOptions.length === 0" class="text-sm text-brand-text-muted py-4 text-center">
+            休憩を登録できる勤怠記録がありません。<br>先に出勤打刻または仮登録を行ってください。
+        </div>
+
+        <div v-else class="space-y-4">
+            <UiFormField label="日付">
+                <UiSelect
+                    v-model="selectedBreakDate"
+                    :options="breakDateOptions"
+                    placeholder="選択してください"
+                    size="md"
+                />
+            </UiFormField>
+
+            <div
+                v-if="selectedBreakDateInfo"
+                class="flex items-center gap-4 rounded-soft bg-brand-surface-2 border border-brand-border px-3 py-2 text-sm"
+            >
+                <span class="text-brand-text-muted">出勤
+                    <span class="font-mono text-brand-text tabular-nums ml-1">{{ selectedBreakDateInfo.clock_in_at || '-' }}</span>
+                </span>
+                <span class="text-brand-text-muted">退勤
+                    <span class="font-mono text-brand-text tabular-nums ml-1">{{ selectedBreakDateInfo.clock_out_at || '-' }}</span>
+                </span>
+            </div>
+
+            <div class="space-y-2">
+                <p class="text-[11px] font-medium text-brand-text-subtle uppercase tracking-wider">休憩時間</p>
+                <div
+                    v-for="(row, idx) in breakRows"
+                    :key="idx"
+                    class="flex items-end gap-2"
+                >
+                    <div class="flex-1">
+                        <label class="block text-[11px] text-brand-text-muted mb-1">休憩開始</label>
+                        <div class="flex items-center gap-1">
+                            <UiSelect v-model="row.start_h" :options="hourOptions" placeholder="時" size="md" />
+                            <span class="text-brand-text-muted">:</span>
+                            <UiSelect v-model="row.start_m" :options="minuteOptions" placeholder="分" size="md" />
+                        </div>
+                    </div>
+                    <span class="pb-2 text-brand-text-subtle">〜</span>
+                    <div class="flex-1">
+                        <label class="block text-[11px] text-brand-text-muted mb-1">休憩終了</label>
+                        <div class="flex items-center gap-1">
+                            <UiSelect v-model="row.end_h" :options="hourOptions" placeholder="時" size="md" />
+                            <span class="text-brand-text-muted">:</span>
+                            <UiSelect v-model="row.end_m" :options="minuteOptions" placeholder="分" size="md" />
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        @click="removeBreakRow(idx)"
+                        class="pb-1.5 text-brand-text-muted hover:text-akane-600 transition-colors"
+                        title="この行を削除"
+                    >
+                        <Trash2 :size="16" />
+                    </button>
+                </div>
+
+                <button
+                    type="button"
+                    @click="addBreakRow"
+                    class="inline-flex items-center gap-1 text-sm text-brand-primary hover:underline pt-1"
+                >
+                    <Plus :size="14" /> 休憩を追加
+                </button>
+            </div>
+
+            <p v-if="breakError" class="text-sm text-akane-600">{{ breakError }}</p>
+        </div>
+
+        <template #footer>
+            <UiButton variant="ghost" @click="showBreakModal = false">キャンセル</UiButton>
+            <UiButton
+                variant="primary"
+                :loading="breakSubmitting"
+                :disabled="breakDateOptions.length === 0"
+                @click="submitBreak"
+            >登録する</UiButton>
+        </template>
+    </UiDialog>
 </template>

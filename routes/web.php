@@ -98,6 +98,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut'])->name('attendance.clock-out');
     Route::post('/attendance/break-start', [AttendanceController::class, 'breakStart'])->name('attendance.break-start');
     Route::post('/attendance/break-end', [AttendanceController::class, 'breakEnd'])->name('attendance.break-end');
+    Route::post('/attendance/break-register', [AttendanceController::class, 'breakRegister'])->name('attendance.break-register');
     Route::post('/attendance/cancel-last', [AttendanceController::class, 'cancelLastAction'])->name('attendance.cancel-last');
     Route::get('/attendance/provisional/create', [AttendanceController::class, 'createProvisional'])->name('attendance.provisional.create');
     Route::post('/attendance/provisional', [AttendanceController::class, 'storeProvisional'])->name('attendance.provisional.store');
