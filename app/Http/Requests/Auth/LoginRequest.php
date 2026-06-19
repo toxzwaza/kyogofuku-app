@@ -32,6 +32,7 @@ class LoginRequest extends FormRequest
         $rules = [
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'shop_id' => ['required', 'integer', 'exists:shops,id'],
+            'device_token' => ['nullable', 'string'],
         ];
         if (config('auth.security_login')) {
             $rules['password'] = ['required', 'string'];
@@ -75,6 +76,19 @@ class LoginRequest extends FormRequest
                     'password' => trans('auth.failed'),
                 ]);
             }
+        }
+
+        // 端末ゲート：有効な登録端末（localStorageの端末トークン）が必須。
+        if (config('auth.device_gate_enabled')) {
+            $device = \App\Models\DeviceRegistration::findActiveByToken($this->input('device_token'));
+            if (! $device || (int) $device->shop_id !== $shopId) {
+                $this->recordLoginFailure($userId, $shopId);
+                throw ValidationException::withMessages([
+                    'device_token' => 'この端末は未登録です。店舗パスワードで端末登録を行ってください。',
+                ]);
+            }
+            $device->forceFill(['last_used_at' => now(), 'last_ip' => $this->ip()])->save();
+            $this->session()->put('device_registration_id', $device->id);
         }
 
         RateLimiter::clear($this->throttleKey());

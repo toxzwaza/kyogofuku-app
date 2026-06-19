@@ -121,4 +121,18 @@ return [
 
     'security_login' => filter_var(env('SECURITY_LOGIN', 'true'), FILTER_VALIDATE_BOOLEAN),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Device Gate (端末認証によるアクセス制限)
+    |--------------------------------------------------------------------------
+    |
+    | true のとき、ログインには「登録済み端末（localStorageの端末トークン）」が
+    | 必須になる。未登録端末は店舗パスワードでの端末登録が必要。
+    | 段階導入のため既定 false（店舗パスワード設定が済むまではロックアウトを防ぐ）。
+    | env DEVICE_GATE_ENABLED で制御。
+    |
+    */
+
+    'device_gate_enabled' => filter_var(env('DEVICE_GATE_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN),
+
 ];

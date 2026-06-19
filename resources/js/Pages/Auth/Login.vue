@@ -100,6 +100,41 @@
                             <InputError class="mt-2" :message="form.errors.user_id" />
                         </div>
 
+                        <!-- 端末登録パスワード（端末ゲート有効 ＆ 未登録端末のみ表示） -->
+                        <div v-if="deviceGateEnabled && !deviceRegistered">
+                            <label for="device_password" class="block text-sm font-medium text-gray-700 mb-2">
+                                端末登録パスワード
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                <input
+                                    id="device_password"
+                                    type="password"
+                                    v-model="devicePassword"
+                                    autocomplete="off"
+                                    class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                                    placeholder="この端末を登録するためのパスワード"
+                                />
+                            </div>
+                            <p class="mt-1.5 text-xs text-gray-500">この端末は未登録です。店舗の端末登録パスワードを入力すると、次回以降は入力不要になります。</p>
+                            <InputError class="mt-2" :message="deviceError" />
+                        </div>
+
+                        <!-- 登録済み端末の表示 -->
+                        <div v-else-if="deviceGateEnabled && deviceRegistered" class="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
+                            <div class="flex items-center gap-2 text-sm text-emerald-800">
+                                <svg class="h-5 w-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>この端末は登録済みです（端末ID: <span class="font-mono font-semibold">{{ deviceCode }}</span>）</span>
+                            </div>
+                        </div>
+                        <InputError v-if="deviceGateEnabled" class="mt-2" :message="form.errors.device_token" />
+
                         <!-- パスワード（SECURITY_LOGIN=true の場合のみ表示） -->
                         <div v-if="securityLogin">
                             <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
@@ -185,7 +220,8 @@
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import axios from 'axios';
 
 const page = usePage();
 
@@ -203,13 +239,59 @@ const blocked = computed(() => !!page.props.blocked);
 const failureCount = computed(() => Number(page.props.failureCount) || 0);
 const ipAddress = computed(() => page.props.ipAddress ?? null);
 const securityLogin = computed(() => page.props.securityLogin !== false);
+const deviceGateEnabled = computed(() => page.props.deviceGateEnabled === true);
 
 const form = useForm({
     shop_id: '',
     user_id: '',
     password: '',
+    device_token: '',
     remember: false,
 });
+
+// 端末ゲート用の状態
+const DEVICE_TOKEN_KEY = 'kyogofuku_device_token';
+const DEVICE_CODE_KEY = 'kyogofuku_device_code';
+const deviceToken = ref('');
+const deviceCode = ref('');
+const deviceRegistered = ref(false);
+const devicePassword = ref('');
+const deviceError = ref('');
+
+async function checkDeviceStatus() {
+    if (!deviceGateEnabled.value) return;
+    let token = '';
+    try {
+        token = localStorage.getItem(DEVICE_TOKEN_KEY) || '';
+    } catch {
+        token = '';
+    }
+    if (!token) {
+        deviceRegistered.value = false;
+        return;
+    }
+    try {
+        const { data } = await axios.get(route('device.status'), { params: { device_token: token } });
+        if (data.registered) {
+            deviceRegistered.value = true;
+            deviceToken.value = token;
+            deviceCode.value = data.device_code;
+            form.device_token = token;
+        } else {
+            // 解除済み等で無効 → ローカルを掃除して再登録を促す
+            deviceRegistered.value = false;
+            deviceToken.value = '';
+            try {
+                localStorage.removeItem(DEVICE_TOKEN_KEY);
+                localStorage.removeItem(DEVICE_CODE_KEY);
+            } catch {
+                // 無視
+            }
+        }
+    } catch {
+        deviceRegistered.value = false;
+    }
+}
 
 const selectedShopUsers = computed(() => {
     if (!form.shop_id) return [];
@@ -236,6 +318,7 @@ watch(
 const STORAGE_KEY = 'kyogofuku_last_login';
 
 onMounted(() => {
+    checkDeviceStatus();
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
@@ -255,7 +338,48 @@ onMounted(() => {
     }
 });
 
-const submit = () => {
+const submit = async () => {
+    // 端末ゲート有効＆未登録の場合は、先に端末登録（店舗パスワード）を行う
+    if (deviceGateEnabled.value && !deviceRegistered.value) {
+        deviceError.value = '';
+        if (!form.shop_id) {
+            deviceError.value = '店舗を選択してください。';
+            return;
+        }
+        if (!devicePassword.value) {
+            deviceError.value = '端末登録パスワードを入力してください。';
+            return;
+        }
+        try {
+            const { data } = await axios.post(route('device.register'), {
+                shop_id: form.shop_id,
+                password: devicePassword.value,
+                user_id: form.user_id || null,
+            });
+            if (data.success) {
+                deviceToken.value = data.device_token;
+                deviceCode.value = data.device_code;
+                deviceRegistered.value = true;
+                form.device_token = data.device_token;
+                devicePassword.value = '';
+                try {
+                    localStorage.setItem(DEVICE_TOKEN_KEY, data.device_token);
+                    localStorage.setItem(DEVICE_CODE_KEY, data.device_code);
+                } catch {
+                    // localStorage が使えない場合は無視
+                }
+            } else {
+                deviceError.value = data.message || '端末登録に失敗しました。';
+                return;
+            }
+        } catch (e) {
+            deviceError.value = e.response?.data?.message || '端末登録に失敗しました。';
+            return;
+        }
+    } else if (deviceGateEnabled.value) {
+        form.device_token = deviceToken.value || '';
+    }
+
     if (form.shop_id && form.user_id) {
         try {
             localStorage.setItem(
