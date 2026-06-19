@@ -17,15 +17,30 @@ class Shop extends Model
         'is_active',
         'line_group_id',
         'google_calendar_id',
+        'device_password',
+        'device_password_updated_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'device_password_updated_at' => 'datetime',
+    ];
+
+    protected $hidden = [
+        'device_password',
     ];
 
     protected $appends = [
         'image_url',
     ];
+
+    /**
+     * 端末登録用パスワードとの多対多/従属
+     */
+    public function deviceRegistrations()
+    {
+        return $this->hasMany(DeviceRegistration::class);
+    }
 
     /**
      * イベントとの多対多リレーション

@@ -5,7 +5,7 @@ import {
     Camera, Building2,
     Store, Settings,
     Clock, History, CheckCircle2, Briefcase, DollarSign, Calculator, AlarmClock,
-    FileText, Sparkles, BookOpen, LifeBuoy,
+    FileText, Sparkles, BookOpen, LifeBuoy, MonitorSmartphone,
 } from 'lucide-vue-next';
 
 /**
@@ -87,6 +87,7 @@ export function useAdminNav() {
             group: 'システム',
             items: [
                 { label: 'ログ',       route: 'admin.activity-logs.index', icon: FileText, activePatterns: ['admin.activity-logs.*'] },
+                { label: '端末管理',   route: 'admin.device-registrations.index', icon: MonitorSmartphone, activePatterns: ['admin.device-registrations.*'], permission: 'isAttendanceManager' },
                 { label: 'UIキット',   route: 'admin.ui-kit',              icon: Sparkles, activePatterns: ['admin.ui-kit'] },
             ],
         },

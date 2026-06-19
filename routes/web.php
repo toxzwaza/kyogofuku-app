@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\AttendancePayrollSimulatorController as AdminAtte
 use App\Http\Controllers\Admin\CompanyCalendarController as AdminCompanyCalendarController;
 use App\Http\Controllers\Admin\ConstraintTemplateController as AdminConstraintTemplateController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
+use App\Http\Controllers\Admin\DeviceRegistrationController as AdminDeviceRegistrationController;
+use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\Admin\CustomerLineMessageController;
 use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
@@ -71,6 +73,10 @@ Route::get('/debug-gd', function () {
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+// 端末登録API（ログイン画面・guest からアクセス。localStorageの端末トークン用）
+Route::get('/device/status', [DeviceController::class, 'status'])->middleware('throttle:60,1')->name('device.status');
+Route::post('/device/register', [DeviceController::class, 'register'])->middleware('throttle:20,1')->name('device.register');
 
 Route::get('/test', [TestController::class, 'index'])->name('test');
 
@@ -137,6 +143,11 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
 
     // モダン管理ダッシュボード（オーバービュー）
     Route::get('/', [\App\Http\Controllers\Admin\OverviewController::class, 'index'])->name('overview');
+
+    // 端末管理（勤怠管理者のみ・コントローラ内で権限チェック）
+    Route::get('/device-registrations', [AdminDeviceRegistrationController::class, 'index'])->name('device-registrations.index');
+    Route::delete('/device-registrations/{device}', [AdminDeviceRegistrationController::class, 'revoke'])->name('device-registrations.revoke');
+    Route::put('/device-registrations/shop-password/{shop}', [AdminDeviceRegistrationController::class, 'updateShopPassword'])->name('device-registrations.shop-password');
 
     // グローバル検索（コマンドパレット等）
     Route::get('/search', \App\Http\Controllers\Admin\AdminSearchController::class)->name('search');

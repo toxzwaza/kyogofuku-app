@@ -38,6 +38,7 @@ class AuthenticatedSessionController extends Controller
                 'ipAddress' => $ipAddress,
                 'shops' => [],
                 'securityLogin' => config('auth.security_login'),
+                'deviceGateEnabled' => (bool) config('auth.device_gate_enabled'),
             ]);
         }
 
@@ -61,6 +62,7 @@ class AuthenticatedSessionController extends Controller
             'blocked' => false,
             'shops' => $shops ?: [],
             'securityLogin' => config('auth.security_login'),
+            'deviceGateEnabled' => (bool) config('auth.device_gate_enabled'),
         ]);
     }
 
