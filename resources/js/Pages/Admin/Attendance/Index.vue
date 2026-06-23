@@ -102,19 +102,24 @@
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">ユーザー</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">店舗</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">ステータス</th>
-                                        <th class="px-4 py-2 text-left font-medium text-brand-text">出勤</th>
-                                        <th class="px-4 py-2 text-left font-medium text-brand-text">退勤</th>
-                                        <th class="px-4 py-2 text-left font-medium text-brand-text">ベース開始</th>
-                                        <th class="px-4 py-2 text-left font-medium text-brand-text">ベース終了</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">出勤打刻</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">退勤打刻</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">ベース出勤</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">ベース退勤</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">業務開始(給与)</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">業務終了(給与)</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">残業(丸め)</th>
-                                        <th class="px-4 py-2 text-left font-medium text-brand-text">休憩</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text w-20">操作</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-brand-border">
                                     <tr v-for="r in records.data" :key="r.id" class="hover:bg-brand-surface-2">
-                                        <td class="px-4 py-2">{{ formatDateJaWithWeekday(r.date) }}</td>
+                                        <td class="px-4 py-2 align-top">
+                                            <div class="whitespace-nowrap">{{ formatDateJaWithWeekday(r.date) }}</div>
+                                            <div v-if="payrollBadges(r.payroll).length" class="mt-1 flex flex-wrap gap-1">
+                                                <span v-for="badge in payrollBadges(r.payroll)" :key="badge.label" :class="badge.class" class="inline-block rounded px-1.5 py-0.5 text-xs font-medium">{{ badge.label }}</span>
+                                            </div>
+                                        </td>
                                         <td class="px-4 py-2">{{ r.user?.name ?? '-' }}</td>
                                         <td class="px-4 py-2">{{ r.shop?.name ?? '-' }}</td>
                                         <td class="px-4 py-2">
@@ -124,11 +129,11 @@
                                         <td class="px-4 py-2">{{ formatTimeJa(r.clock_out_at) }}</td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_start_at) }}</td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_end_at) }}</td>
-                                        <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
+                                        <td class="px-4 py-2" :class="payrollClockInClass(r.payroll)">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
+                                        <td class="px-4 py-2" :class="payrollClockOutClass(r.payroll)">{{ formatTimeJa(r.payroll?.payroll_clock_out_at) }}</td>
                                         <td class="px-4 py-2">{{ formatOvertimeRounded(r.payroll?.overtime_minutes_rounded) }}</td>
-                                        <td class="px-4 py-2">{{ formatBreaks(r.breaks) }}</td>
                                         <td class="px-4 py-2">
-                                            <button type="button" @click="openEditModal(r)" class="text-brand-primary hover:text-brand-primary-hover text-sm">編集</button>
+                                            <button type="button" @click="openEditModal(r)" class="text-brand-primary hover:text-brand-primary-hover text-sm">詳細</button>
                                         </td>
                                     </tr>
                                     <tr v-if="!records.data || records.data.length === 0">
@@ -163,19 +168,24 @@
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">日付</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">店舗</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">ステータス</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">出勤</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">退勤</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">ベース開始</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">ベース終了</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">出勤打刻</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">退勤打刻</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">ベース出勤</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">ベース退勤</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">業務開始(給与)</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">業務終了(給与)</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">残業(丸め)</th>
-                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">休憩</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text w-20">操作</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-brand-border">
                                                 <tr v-for="r in group.records" :key="r.id" class="hover:bg-brand-surface-2">
-                                                    <td class="px-4 py-2">{{ formatDateJaWithWeekday(r.date) }}</td>
+                                                    <td class="px-4 py-2 align-top">
+                                                        <div class="whitespace-nowrap">{{ formatDateJaWithWeekday(r.date) }}</div>
+                                                        <div v-if="payrollBadges(r.payroll).length" class="mt-1 flex flex-wrap gap-1">
+                                                            <span v-for="badge in payrollBadges(r.payroll)" :key="badge.label" :class="badge.class" class="inline-block rounded px-1.5 py-0.5 text-xs font-medium">{{ badge.label }}</span>
+                                                        </div>
+                                                    </td>
                                                     <td class="px-4 py-2">{{ r.shop?.name ?? '-' }}</td>
                                                     <td class="px-4 py-2">
                                                         <span :class="statusClass(r.status)">{{ statusLabel(r.status) }}</span>
@@ -184,11 +194,11 @@
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.clock_out_at) }}</td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_start_at) }}</td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_end_at) }}</td>
-                                                    <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
+                                                    <td class="px-4 py-2" :class="payrollClockInClass(r.payroll)">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
+                                                    <td class="px-4 py-2" :class="payrollClockOutClass(r.payroll)">{{ formatTimeJa(r.payroll?.payroll_clock_out_at) }}</td>
                                                     <td class="px-4 py-2">{{ formatOvertimeRounded(r.payroll?.overtime_minutes_rounded) }}</td>
-                                                    <td class="px-4 py-2">{{ formatBreaks(r.breaks) }}</td>
                                                     <td class="px-4 py-2">
-                                                        <button type="button" @click="openEditModal(r)" class="text-brand-primary hover:text-brand-primary-hover text-sm">編集</button>
+                                                        <button type="button" @click="openEditModal(r)" class="text-brand-primary hover:text-brand-primary-hover text-sm">詳細</button>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -202,7 +212,10 @@
                         <!-- 編集モーダル -->
                         <div v-if="editRecord" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="editRecord = null">
                             <div class="bg-brand-surface rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-                                <div class="p-4 border-b font-medium text-brand-text">勤怠を編集</div>
+                                <div class="p-4 border-b font-medium text-brand-text flex items-center justify-between">
+                                    <span>勤怠の詳細</span>
+                                    <span :class="statusClass(editRecord.status)">{{ statusLabel(editRecord.status) }}</span>
+                                </div>
                                 <form @submit.prevent="submitEdit" class="p-4 space-y-4">
                                     <div>
                                         <label class="block text-xs font-medium text-brand-text-muted mb-1">日付</label>
@@ -234,11 +247,26 @@
                                             <li v-for="(msg, k) in editForm.errors" :key="k">{{ msg }}</li>
                                         </ul>
                                     </div>
-                                    <div class="flex gap-2 pt-2">
-                                        <button type="submit" :disabled="editForm.processing" class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm hover:bg-brand-primary-hover disabled:opacity-50">
-                                            {{ editForm.processing ? '保存中...' : '保存' }}
+                                    <!-- 承認（未申請・申請済のみ） -->
+                                    <div v-if="canApprove" class="rounded-md border border-green-200 bg-green-50 p-3 space-y-2">
+                                        <div class="flex items-center gap-1.5 text-sm font-medium text-green-900">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                            この勤怠を承認する
+                                        </div>
+                                        <p class="text-xs text-green-800">
+                                            現在<strong>保存済みの内容</strong>で承認します。時刻を修正した場合は、先に下の「変更を保存」を押してください。
+                                        </p>
+                                        <button type="button" @click="approveRecord" :disabled="editForm.processing" class="w-full px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+                                            {{ editForm.processing ? '処理中...' : '承認する' }}
                                         </button>
-                                        <button type="button" @click="editRecord = null" class="px-4 py-2 bg-brand-surface-2 text-brand-text rounded-md text-sm hover:bg-gray-200">キャンセル</button>
+                                    </div>
+
+                                    <!-- 編集内容の保存／キャンセル -->
+                                    <div class="flex items-center justify-end gap-2 pt-3 border-t border-brand-border">
+                                        <button type="button" @click="editRecord = null" class="px-4 py-2 text-brand-text-muted rounded-md text-sm hover:bg-brand-surface-2">キャンセル</button>
+                                        <button type="submit" :disabled="editForm.processing" class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50">
+                                            {{ editForm.processing ? '保存中...' : '変更を保存' }}
+                                        </button>
                                     </div>
                                 </form>
                             </div>
@@ -259,6 +287,29 @@ import { formatTimeJa, formatDateJa, formatDateJaWithWeekday, formatDateInputVal
 function formatOvertimeRounded(val) {
     if (val === null || val === undefined) return '-';
     return `${val}分`;
+}
+
+// 業務開始(給与)セルの背景色
+// - early / no_base（打刻時刻を採用）: オレンジ
+// - late（遅刻で打刻時刻を採用）: 青
+// - on_time / 打刻なし: 着色なし
+function payrollClockInClass(payroll) {
+    const category = payroll?.clock_in_category;
+    if (category === 'early' || category === 'no_base') {
+        return 'bg-orange-100 text-orange-900';
+    }
+    if (category === 'late') {
+        return 'bg-blue-100 text-blue-900';
+    }
+    return '';
+}
+
+// 業務終了(給与)セルの背景色（残業ありは残業バッジと同じ紫）
+function payrollClockOutClass(payroll) {
+    if ((payroll?.overtime_minutes_rounded ?? 0) > 0) {
+        return 'bg-purple-100 text-purple-900';
+    }
+    return '';
 }
 
 const props = defineProps({
@@ -328,6 +379,41 @@ function submitEdit() {
         clock_in_at: clockInAt,
         clock_out_at: clockOutAt,
         breaks,
+        ...Object.fromEntries(
+            Object.entries({
+                shop_id: filters.value.shop_id,
+                user_id: filters.value.user_id,
+                from: filters.value.from,
+                to: filters.value.to,
+            }).filter(([, v]) => v)
+        ),
+    }, {
+        preserveScroll: true,
+        onError: (errors) => {
+            editForm.value.errors = errors;
+            editForm.value.processing = false;
+        },
+        onFinish: () => {
+            editForm.value.processing = false;
+        },
+        onSuccess: () => {
+            editRecord.value = null;
+        },
+    });
+}
+
+// 未申請・申請済のみ承認可能
+const canApprove = computed(() => {
+    const s = editRecord.value?.status;
+    return s === 'draft' || s === 'applied';
+});
+
+function approveRecord() {
+    if (!editRecord.value) return;
+    const r = editRecord.value;
+    editForm.value.processing = true;
+    editForm.value.errors = {};
+    router.post(route('admin.attendance.approve', r.id), {
         ...Object.fromEntries(
             Object.entries({
                 shop_id: filters.value.shop_id,
@@ -455,12 +541,19 @@ function statusClass(s) {
     return classes[s] ?? '';
 }
 
-function formatBreaks(breaks) {
-    if (!breaks || breaks.length === 0) return '-';
-    return breaks.map(b => {
-        const s = formatTimeJa(b.start_at);
-        const e = b.end_at ? formatTimeJa(b.end_at) : '〜';
-        return `${s}-${e}`;
-    }).join(', ');
+// 日付の下に表示するバッジ（遅刻・早出・残業／複数可）
+function payrollBadges(payroll) {
+    const badges = [];
+    const category = payroll?.clock_in_category;
+    if (category === 'late') {
+        badges.push({ label: '遅刻', class: 'bg-blue-100 text-blue-900' });
+    }
+    if (category === 'early') {
+        badges.push({ label: '早出', class: 'bg-orange-100 text-orange-900' });
+    }
+    if ((payroll?.overtime_minutes_rounded ?? 0) > 0) {
+        badges.push({ label: '残業', class: 'bg-purple-100 text-purple-900' });
+    }
+    return badges;
 }
 </script>

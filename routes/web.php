@@ -418,6 +418,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/attendance/payroll-simulator', [AdminAttendancePayrollSimulatorController::class, 'simulate'])->name('attendance.payroll-simulator.simulate');
 
     Route::put('/attendance/{record}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
+    Route::post('/attendance/{record}/approve', [AdminAttendanceController::class, 'approve'])->name('attendance.approve');
 
     Route::get('/work-attributes', [AdminWorkAttributeController::class, 'index'])->name('work-attributes.index');
     Route::get('/work-attributes/create', [AdminWorkAttributeController::class, 'create'])->name('work-attributes.create');

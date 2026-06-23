@@ -10,7 +10,6 @@ class AttendancePayrollSetting extends Model
         'start_early_threshold_minutes',
         'start_rounding_unit_minutes',
         'overtime_rounding_unit_minutes',
-        'overtime_discard_remainder_upto_minutes',
     ];
 
     public static function current(): self

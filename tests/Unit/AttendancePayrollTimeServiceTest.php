@@ -26,18 +26,27 @@ class AttendancePayrollTimeServiceTest extends TestCase
         $this->service = new AttendancePayrollTimeService;
     }
 
-    public function test_round_overtime_30_15(): void
+    public function test_round_overtime_floors_to_unit(): void
     {
-        $s = new AttendancePayrollSetting([
+        // 残業は常に短い方（切り捨て）へ丸める
+        $s30 = new AttendancePayrollSetting([
             'overtime_rounding_unit_minutes' => 30,
-            'overtime_discard_remainder_upto_minutes' => 15,
         ]);
+        $this->assertSame(0, $this->service->roundOvertimeMinutes(0, $s30));
+        $this->assertSame(30, $this->service->roundOvertimeMinutes(44, $s30));
+        $this->assertSame(30, $this->service->roundOvertimeMinutes(45, $s30));
+        $this->assertSame(30, $this->service->roundOvertimeMinutes(46, $s30));
+        $this->assertSame(30, $this->service->roundOvertimeMinutes(59, $s30));
+        $this->assertSame(60, $this->service->roundOvertimeMinutes(60, $s30));
 
-        $this->assertSame(0, $this->service->roundOvertimeMinutes(0, $s));
-        $this->assertSame(30, $this->service->roundOvertimeMinutes(44, $s));
-        $this->assertSame(30, $this->service->roundOvertimeMinutes(45, $s));
-        $this->assertSame(60, $this->service->roundOvertimeMinutes(46, $s));
-        $this->assertSame(60, $this->service->roundOvertimeMinutes(60, $s));
+        // 単位15分: 38分 → 30分（20:38 打刻者のケース）
+        $s15 = new AttendancePayrollSetting([
+            'overtime_rounding_unit_minutes' => 15,
+        ]);
+        $this->assertSame(30, $this->service->roundOvertimeMinutes(38, $s15));
+        $this->assertSame(30, $this->service->roundOvertimeMinutes(44, $s15));
+        $this->assertSame(45, $this->service->roundOvertimeMinutes(45, $s15));
+        $this->assertSame(0, $this->service->roundOvertimeMinutes(14, $s15));
     }
 
     public function test_payroll_clock_in_uses_base_when_early(): void
@@ -72,6 +81,85 @@ class AttendancePayrollTimeServiceTest extends TestCase
         );
         $this->assertTrue(
             $this->service->payrollClockInAt(Carbon::parse('2026-03-16 08:45:00'), $base, $s)->equalTo($base)
+        );
+    }
+
+    public function test_payroll_clock_in_category_matches_branches(): void
+    {
+        $s = new AttendancePayrollSetting([
+            'start_early_threshold_minutes' => 30,
+            'start_rounding_unit_minutes' => 1,
+        ]);
+        $base = Carbon::parse('2026-03-16 09:00:00');
+
+        // 出勤打刻なし
+        $this->assertNull($this->service->payrollClockInCategory(null, $base, $s));
+
+        // ベース未解決 → 打刻採用（オレンジ相当）
+        $this->assertSame(
+            'no_base',
+            $this->service->payrollClockInCategory(Carbon::parse('2026-03-16 08:43:00'), null, $s)
+        );
+
+        // 早出（しきい値より前）→ 打刻採用（オレンジ相当）
+        $this->assertSame(
+            'early',
+            $this->service->payrollClockInCategory(Carbon::parse('2026-03-16 08:29:59'), $base, $s)
+        );
+        // 早出境界ちょうど → 打刻採用（オレンジ相当）
+        $this->assertSame(
+            'early',
+            $this->service->payrollClockInCategory(Carbon::parse('2026-03-16 08:30:00'), $base, $s)
+        );
+        // 早出だがしきい値内 → ベースにそろえる（通常表示）
+        $this->assertSame(
+            'on_time',
+            $this->service->payrollClockInCategory(Carbon::parse('2026-03-16 08:45:00'), $base, $s)
+        );
+        // ベース開始ちょうど・以降 → 遅刻扱いで打刻採用（青相当）
+        $this->assertSame(
+            'late',
+            $this->service->payrollClockInCategory(Carbon::parse('2026-03-16 09:00:00'), $base, $s)
+        );
+        $this->assertSame(
+            'late',
+            $this->service->payrollClockInCategory(Carbon::parse('2026-03-16 09:15:00'), $base, $s)
+        );
+
+        // しきい値0 の早出 → ベースにそろえる（通常表示）
+        $s0 = new AttendancePayrollSetting([
+            'start_early_threshold_minutes' => 0,
+            'start_rounding_unit_minutes' => 1,
+        ]);
+        $this->assertSame(
+            'on_time',
+            $this->service->payrollClockInCategory(Carbon::parse('2026-03-16 08:30:00'), $base, $s0)
+        );
+    }
+
+    public function test_payroll_clock_out_at_uses_base_end_plus_rounded_overtime(): void
+    {
+        $baseEnd = Carbon::parse('2026-03-16 18:00:00');
+
+        // 退勤打刻なし → null
+        $this->assertNull($this->service->payrollClockOutAt(null, $baseEnd, 30));
+
+        // ベース退勤未解決 → 退勤打刻をそのまま
+        $this->assertTrue(
+            $this->service->payrollClockOutAt(Carbon::parse('2026-03-16 18:17:00'), null, 0)
+                ->equalTo(Carbon::parse('2026-03-16 18:17:00'))
+        );
+
+        // 残業あり → ベース退勤 ＋ 丸め後残業
+        $this->assertTrue(
+            $this->service->payrollClockOutAt(Carbon::parse('2026-03-16 18:40:00'), $baseEnd, 30)
+                ->equalTo(Carbon::parse('2026-03-16 18:30:00'))
+        );
+
+        // 残業なし → ベース退勤
+        $this->assertTrue(
+            $this->service->payrollClockOutAt(Carbon::parse('2026-03-16 18:05:00'), $baseEnd, 0)
+                ->equalTo($baseEnd)
         );
     }
 
