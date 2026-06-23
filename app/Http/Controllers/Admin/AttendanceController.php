@@ -162,6 +162,35 @@ class AttendanceController extends Controller
     }
 
     /**
+     * 勤怠レコードの承認（未申請・申請済を承認済にする）
+     */
+    public function approve(Request $request, AttendanceRecord $record)
+    {
+        $user = $request->user();
+        if (!AttendanceScopeService::canAccessManagement($user)) {
+            abort(403);
+        }
+        if (!AttendanceScopeService::canApproveRecord($user, $record)) {
+            abort(403);
+        }
+        if ($record->isApproved()) {
+            return redirect()->route('admin.attendance.index', $request->only(['shop_id', 'user_id', 'from', 'to']))
+                ->withErrors(['record' => 'すでに承認済みです。']);
+        }
+
+        DB::transaction(function () use ($record, $user) {
+            $record->update([
+                'status' => AttendanceRecord::STATUS_APPROVED,
+                'approved_at' => Carbon::now(),
+                'approved_by' => $user->id,
+            ]);
+        });
+
+        return redirect()->route('admin.attendance.index', $request->only(['shop_id', 'user_id', 'from', 'to']))
+            ->with('success', '承認しました。');
+    }
+
+    /**
      * 勤怠データをCSVでエクスポート（選択ユーザー・現在の絞り込み条件）
      */
     public function exportCsv(Request $request): StreamedResponse
@@ -220,9 +249,9 @@ class AttendanceController extends Controller
                 '出勤_実打刻',
                 '退勤_実打刻',
                 '業務開始_給与用',
-                '業務終了_実績',
-                'ベース開始',
-                'ベース終了',
+                '業務終了_給与用',
+                'ベース出勤',
+                'ベース退勤',
                 '残業_分_丸め後',
                 '休憩',
             ]);
@@ -257,7 +286,7 @@ class AttendanceController extends Controller
                     $clockIn,
                     $clockOut,
                     $fmt($pay['payroll_clock_in_at'] ?? null),
-                    $clockOut,
+                    $fmt($pay['payroll_clock_out_at'] ?? null),
                     $fmt($pay['base_start_at'] ?? null),
                     $fmt($pay['base_end_at'] ?? null),
                     $pay['overtime_minutes_rounded'] !== null ? (string) $pay['overtime_minutes_rounded'] : '',

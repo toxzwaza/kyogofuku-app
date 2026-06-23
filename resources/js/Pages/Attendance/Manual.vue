@@ -475,18 +475,9 @@ const img = (file) => `/images/manual/attendance/${file}`;
                                 </div>
                                 <div>
                                     <dt class="font-semibold text-brand-text">残業・丸め単位（分）</dt>
-                                    <dd class="text-brand-text-muted">残業時間を丸める単位（例：30分単位）。</dd>
-                                </div>
-                                <div>
-                                    <dt class="font-semibold text-brand-text">残業・端数の切り捨て上限（分）</dt>
-                                    <dd class="text-brand-text-muted">丸め単位未満の端数のうち、この分数<strong>以下なら切り捨て</strong>、超えたら次の単位へ繰り上げ。</dd>
+                                    <dd class="text-brand-text-muted">残業時間をこの単位で<strong>切り捨て</strong>ます（短い方へ丸め。例：単位15分なら38分→30分）。</dd>
                                 </div>
                             </dl>
-                            <UiAlert variant="warning" class="mt-2">
-                                <span class="text-xs">
-                                    「端数の切り捨て上限」は<strong>「丸め単位（分）」未満</strong>でなければなりません（例: 単位30分なら、上限は29分まで）。
-                                </span>
-                            </UiAlert>
                         </div>
                     </UiCard>
                 </section>

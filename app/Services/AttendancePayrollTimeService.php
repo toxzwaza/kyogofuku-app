@@ -177,6 +177,57 @@ class AttendancePayrollTimeService
     }
 
     /**
+     * 「業務開始(給与)」の決定区分（背景色などの表示用）
+     *
+     * - null      : 出勤打刻なし
+     * - 'no_base' : ベース業務開始が解決できず、打刻時刻をそのまま採用（早出と同様にオレンジ表示）
+     * - 'early'   : 早出として打刻時刻を採用（オレンジ表示）
+     * - 'late'    : 遅刻（打刻 ≧ ベース開始）で打刻時刻を採用（青表示）
+     * - 'on_time' : ベース開始にそろえて採用（通常表示）
+     *
+     * 区分は payrollClockInAt と同じ分岐に従う。
+     */
+    public function payrollClockInCategory(?Carbon $actualIn, ?Carbon $baseStart, ?AttendancePayrollSetting $setting = null): ?string
+    {
+        if ($actualIn === null) {
+            return null;
+        }
+
+        if ($baseStart === null) {
+            return 'no_base';
+        }
+
+        $setting = $setting ?? AttendancePayrollSetting::current();
+        $threshold = max(0, (int) $setting->start_early_threshold_minutes);
+
+        if ($actualIn->gte($baseStart)) {
+            return 'late';
+        }
+
+        // ここから先は早出領域（actualIn < baseStart）
+        if ($threshold <= 0) {
+            return 'on_time';
+        }
+
+        $earlyBound = $baseStart->copy()->subMinutes($threshold);
+        $actualMin = $actualIn->copy()->startOfMinute();
+        $earlyBoundMin = $earlyBound->copy()->startOfMinute();
+        $baseStartMin = $baseStart->copy()->startOfMinute();
+
+        if ($actualMin->lt($earlyBoundMin)) {
+            return 'early';
+        }
+        if ($actualMin->equalTo($earlyBoundMin)) {
+            return 'early';
+        }
+        if ($actualMin->lt($baseStartMin)) {
+            return 'on_time';
+        }
+
+        return 'early';
+    }
+
+    /**
      * 始業用: その日 0:00 からの経過「整数分」を unit 分刻みに最近接丸め（PHP の round 規則。1 のときはそのまま）
      */
     public function roundClockTimeToNearestMinuteUnit(Carbon $at, ?AttendancePayrollSetting $setting = null): Carbon
@@ -232,7 +283,30 @@ class AttendancePayrollTimeService
     }
 
     /**
-     * 終業（残業）分の丸め（overtime_rounding_unit_minutes / overtime_discard_remainder_upto_minutes）
+     * 給与・CSV 用の退勤時刻（実際に適用される業務終了）
+     *
+     * - 退勤打刻なし: null
+     * - ベース退勤が解決できない: 退勤打刻をそのまま採用
+     * - ベース退勤あり: ベース退勤 ＋ 丸め後残業分（残業 0 ならベース退勤）
+     */
+    public function payrollClockOutAt(?Carbon $actualOut, ?Carbon $baseEnd, int $roundedOvertimeMinutes): ?Carbon
+    {
+        if ($actualOut === null) {
+            return null;
+        }
+
+        if ($baseEnd === null) {
+            return $actualOut->copy();
+        }
+
+        return $baseEnd->copy()->addMinutes(max(0, $roundedOvertimeMinutes));
+    }
+
+    /**
+     * 終業（残業）分の丸め（overtime_rounding_unit_minutes 刻みで切り捨て）
+     *
+     * 残業は常に「短い方（切り捨て）」へ丸める。単位未満の端数は常に切り捨てる。
+     * 例: 単位15分なら 38分 → 30分。
      */
     public function roundOvertimeMinutes(int $minutes, ?AttendancePayrollSetting $setting = null): int
     {
@@ -242,18 +316,8 @@ class AttendancePayrollTimeService
 
         $setting = $setting ?? AttendancePayrollSetting::current();
         $unit = max(1, (int) $setting->overtime_rounding_unit_minutes);
-        $discardUpto = min($unit - 1, max(0, (int) $setting->overtime_discard_remainder_upto_minutes));
 
-        $q = intdiv($minutes, $unit) * $unit;
-        $r = $minutes % $unit;
-        if ($r === 0) {
-            return $minutes;
-        }
-        if ($r <= $discardUpto) {
-            return $q;
-        }
-
-        return $q + $unit;
+        return intdiv($minutes, $unit) * $unit;
     }
 
     /**
@@ -264,6 +328,8 @@ class AttendancePayrollTimeService
      *   base_start_at: string|null,
      *   base_end_at: string|null,
      *   payroll_clock_in_at: string|null,
+     *   payroll_clock_out_at: string|null,
+     *   clock_in_category: string|null,
      *   overtime_minutes_raw: int|null,
      *   overtime_minutes_rounded: int|null
      * }
@@ -278,15 +344,19 @@ class AttendancePayrollTimeService
         $baseEnd = $window['end'] ?? null;
 
         $payrollIn = $this->payrollClockInAt($record->clock_in_at, $baseStart, $setting);
+        $category = $this->payrollClockInCategory($record->clock_in_at, $baseStart, $setting);
         $rawOt = $this->rawOvertimeMinutesAfterBaseEnd($record, $baseEnd);
         $roundedOt = $baseEnd !== null
             ? $this->roundOvertimeMinutes($rawOt, $setting)
             : null;
+        $payrollOut = $this->payrollClockOutAt($record->clock_out_at, $baseEnd, (int) ($roundedOt ?? 0));
 
         return [
             'base_start_at' => $baseStart?->toIso8601String(),
             'base_end_at' => $baseEnd?->toIso8601String(),
             'payroll_clock_in_at' => $payrollIn?->toIso8601String(),
+            'payroll_clock_out_at' => $payrollOut?->toIso8601String(),
+            'clock_in_category' => $category,
             'overtime_minutes_raw' => $baseEnd !== null ? $rawOt : null,
             'overtime_minutes_rounded' => $roundedOt,
         ];

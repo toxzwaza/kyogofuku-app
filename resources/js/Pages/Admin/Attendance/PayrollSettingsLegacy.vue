@@ -22,7 +22,7 @@
                         <section>
                             <h3 class="text-base font-semibold text-gray-900 mb-2">始業（出勤）</h3>
                             <p class="text-sm text-gray-600 mb-4">
-                                シフト開始より前の打刻の扱いと、給与用出勤時刻の丸め（単位への最近接）を設定します。端数の切り捨て上限（分）は終業・残業用のみです。
+                                シフト開始より前の打刻の扱いと、給与用出勤時刻の丸め（単位への最近接）を設定します。
                             </p>
                             <div class="space-y-4">
                                 <div>
@@ -66,7 +66,7 @@
                         <section class="pt-6 border-t border-gray-200">
                             <h3 class="text-base font-semibold text-gray-900 mb-2">終業（残業）</h3>
                             <p class="text-sm text-gray-600 mb-4">
-                                シフト終了以降に算出した残業（分）を、以下の単位で丸めます。
+                                シフト終了以降に算出した残業（分）を、以下の単位で<strong>切り捨て</strong>ます（短い方へ丸め）。
                             </p>
                             <div class="space-y-4">
                                 <div>
@@ -79,23 +79,9 @@
                                         required
                                         class="w-full rounded-md border-gray-300 shadow-sm"
                                     />
+                                    <p class="mt-1 text-xs text-gray-500">残業はこの単位で<strong>切り捨て</strong>ます（例: 単位15分 → 38分→30分、44分→30分、45分→45分）。</p>
                                     <div v-if="form.errors.overtime_rounding_unit_minutes" class="mt-1 text-sm text-red-600">
                                         {{ form.errors.overtime_rounding_unit_minutes }}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">残業・端数の切り捨て上限（分）</label>
-                                    <input
-                                        v-model.number="form.overtime_discard_remainder_upto_minutes"
-                                        type="number"
-                                        min="0"
-                                        max="479"
-                                        required
-                                        class="w-full rounded-md border-gray-300 shadow-sm"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500">丸め単位未満の端数のうち、この値以下は捨て、超えると次の単位へ切り上げ（例: 単位30・上限15 → 44分→30分、46分→60分）</p>
-                                    <div v-if="form.errors.overtime_discard_remainder_upto_minutes" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.overtime_discard_remainder_upto_minutes }}
                                     </div>
                                 </div>
                             </div>
@@ -129,7 +115,6 @@ const form = useForm({
     start_early_threshold_minutes: props.setting.start_early_threshold_minutes ?? 0,
     start_rounding_unit_minutes: props.setting.start_rounding_unit_minutes ?? 1,
     overtime_rounding_unit_minutes: props.setting.overtime_rounding_unit_minutes,
-    overtime_discard_remainder_upto_minutes: props.setting.overtime_discard_remainder_upto_minutes,
 });
 
 function submit() {
