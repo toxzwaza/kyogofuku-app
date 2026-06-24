@@ -64,12 +64,21 @@
                                     @keyup.enter="fetchMedia"
                                 />
                                 <select
-                                    v-model="selectedTag"
+                                    v-model="filterRootId"
                                     class="rounded-md border-gray-300 shadow-sm text-sm"
-                                    @change="fetchMedia"
+                                    @change="onChangeRoot"
                                 >
                                     <option value="">すべてのタグ</option>
-                                    <option v-for="tag in allTags" :key="tag" :value="tag">{{ tag }}</option>
+                                    <option v-for="o in rootTagOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+                                </select>
+                                <select
+                                    v-model="filterSubId"
+                                    class="rounded-md border-gray-300 shadow-sm text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                                    :disabled="!filterRootId || subOptions.length === 0"
+                                    @change="fetchMedia()"
+                                >
+                                    <option value="">{{ subOptions.length ? '配下タグ：指定なし' : '配下タグなし' }}</option>
+                                    <option v-for="o in subOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
                                 </select>
                                 <button
                                     @click="fetchMedia"
@@ -159,13 +168,25 @@
 
                             <!-- タグ -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">タグ（カンマ区切り）</label>
-                                <input
-                                    v-model="uploadTagInput"
-                                    type="text"
+                                <label class="block text-sm font-medium text-gray-700 mb-1">タグ（セレクトから追加・複数可）</label>
+                                <select
                                     class="w-full rounded-md border-gray-300 shadow-sm text-sm"
-                                    placeholder="例: 振袖, 会場, バナー"
-                                />
+                                    :value="''"
+                                    @change="onAddUploadTag($event)"
+                                >
+                                    <option value="">タグを選択して追加…</option>
+                                    <option v-for="o in availableUploadTagOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+                                </select>
+                                <div v-if="uploadTagIds.length > 0" class="flex flex-wrap gap-1 mt-1">
+                                    <span
+                                        v-for="id in uploadTagIds"
+                                        :key="id"
+                                        class="inline-flex items-center gap-1 rounded bg-gray-100 border border-gray-200 px-2 py-0.5 text-xs text-gray-700"
+                                    >
+                                        {{ tagById[id]?.full_path || ('#' + id) }}
+                                        <button type="button" class="text-gray-400 hover:text-red-600" @click="removeUploadTag(id)">&times;</button>
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="flex justify-end">
@@ -203,7 +224,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -217,8 +238,67 @@ const emit = defineEmits(['close', 'select']);
 
 const activeTab = ref('library');
 const searchQuery = ref('');
-const selectedTag = ref('');
-const allTags = ref([]);
+const tagTree = ref([]);
+
+// タグ絞り込み（2段：直下タグ＋配下タグ）
+const filterRootId = ref('');
+const filterSubId = ref('');
+
+const tagById = computed(() => {
+    const map = {};
+    tagTree.value.forEach((t) => { map[t.id] = t; });
+    return map;
+});
+const tagOptions = computed(() =>
+    [...tagTree.value]
+        .sort((a, b) => a.full_path.localeCompare(b.full_path, 'ja'))
+        .map((t) => ({ value: t.id, label: t.full_path }))
+);
+const rootTagOptions = computed(() =>
+    [...tagTree.value]
+        .filter((t) => t.parent_id == null)
+        .sort((a, b) => a.name.localeCompare(b.name, 'ja'))
+        .map((t) => ({ value: t.id, label: t.name }))
+);
+const descendantIds = (id) => {
+    const ids = [id];
+    const stack = [id];
+    while (stack.length) {
+        const cur = stack.pop();
+        tagTree.value.filter((t) => t.parent_id === cur).forEach((c) => {
+            ids.push(c.id);
+            stack.push(c.id);
+        });
+    }
+    return ids;
+};
+const subOptions = computed(() => {
+    if (!filterRootId.value) return [];
+    const ids = descendantIds(Number(filterRootId.value)).filter((id) => id !== Number(filterRootId.value));
+    return ids
+        .map((id) => tagById.value[id])
+        .filter(Boolean)
+        .sort((a, b) => a.full_path.localeCompare(b.full_path, 'ja'))
+        .map((t) => ({ value: t.id, label: t.full_path }));
+});
+const appliedTagId = computed(() => filterSubId.value || filterRootId.value || '');
+const onChangeRoot = () => {
+    filterSubId.value = '';
+    fetchMedia();
+};
+const availableUploadTagOptions = computed(() =>
+    tagOptions.value.filter((o) => !uploadTagIds.value.includes(o.value))
+);
+const onAddUploadTag = (event) => {
+    const val = Number(event.target.value);
+    if (val && !uploadTagIds.value.includes(val)) {
+        uploadTagIds.value.push(val);
+    }
+    event.target.value = '';
+};
+const removeUploadTag = (id) => {
+    uploadTagIds.value = uploadTagIds.value.filter((x) => x !== id);
+};
 const mediaItems = ref([]);
 const selectedIds = ref(new Set());
 const selectedMediaMap = ref(new Map());
@@ -230,7 +310,7 @@ const totalPages = ref(1);
 const uploadFileInput = ref(null);
 const uploadFiles = ref([]);
 const uploadPreviews = ref([]);
-const uploadTagInput = ref('');
+const uploadTagIds = ref([]);
 const isUploading = ref(false);
 
 watch(() => props.show, (val) => {
@@ -238,6 +318,9 @@ watch(() => props.show, (val) => {
         selectedIds.value = new Set();
         selectedMediaMap.value = new Map();
         activeTab.value = 'library';
+        searchQuery.value = '';
+        filterRootId.value = '';
+        filterSubId.value = '';
         fetchMedia();
     }
 });
@@ -248,12 +331,12 @@ const fetchMedia = async (page = 1) => {
     try {
         const params = { page };
         if (searchQuery.value) params.search = searchQuery.value;
-        if (selectedTag.value) params.tag = selectedTag.value;
+        if (appliedTagId.value) params.tag_id = appliedTagId.value;
 
         const res = await axios.get(route('admin.media.list-json'), { params });
         mediaItems.value = res.data.mediaFiles.data;
         totalPages.value = res.data.mediaFiles.last_page;
-        allTags.value = res.data.allTags;
+        tagTree.value = res.data.tagTree;
     } catch (e) {
         console.error('メディア取得エラー:', e);
     } finally {
@@ -306,8 +389,7 @@ const submitUpload = async () => {
 
     const formData = new FormData();
     uploadFiles.value.forEach(file => formData.append('images[]', file));
-    const tags = uploadTagInput.value.split(',').map(t => t.trim()).filter(t => t.length > 0);
-    tags.forEach(tag => formData.append('tags[]', tag));
+    uploadTagIds.value.forEach(id => formData.append('tag_ids[]', id));
 
     try {
         const res = await axios.post(route('admin.media.store-json'), formData, {
@@ -327,7 +409,7 @@ const submitUpload = async () => {
         // リセット
         uploadFiles.value = [];
         uploadPreviews.value = [];
-        uploadTagInput.value = '';
+        uploadTagIds.value = [];
         if (uploadFileInput.value) uploadFileInput.value.value = '';
 
         // ライブラリタブに切り替え・再読み込み

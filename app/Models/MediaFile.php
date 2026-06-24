@@ -30,6 +30,16 @@ class MediaFile extends Model
     ];
 
     /**
+     * 付与された階層タグ（多対多）
+     *
+     * ※ JSON カラム `tags`（旧・文字列タグ）とは別。リレーションは `mediaTags` を使う。
+     */
+    public function mediaTags()
+    {
+        return $this->belongsToMany(MediaTag::class, 'media_file_tag');
+    }
+
+    /**
      * このメディアを使用しているイベント画像
      */
     public function eventImages()

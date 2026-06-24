@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\EventImage;
 use App\Models\MediaFile;
+use App\Models\MediaTag;
 use App\Models\SlideshowImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,48 +26,24 @@ class MediaFileController extends Controller
      */
     public function index(Request $request)
     {
-        $query = MediaFile::query()->orderBy('created_at', 'desc');
+        $allTags = $this->loadAllTags();
+
+        $query = MediaFile::query()->with('mediaTags')->orderBy('created_at', 'desc');
 
         if ($search = $request->input('search')) {
             $query->where('original_filename', 'like', "%{$search}%");
         }
 
-        if ($tag = $request->input('tag')) {
-            $query->whereJsonContains('tags', $tag);
-        }
+        $this->applyTagFilter($query, $request->input('tag_id'), $allTags);
 
-        $mediaFiles = $query->paginate(24)->through(function ($media) {
-            return [
-                'id' => $media->id,
-                'original_filename' => $media->original_filename,
-                'path' => $media->path,
-                'url' => $media->url,
-                'storage_disk' => $media->storage_disk,
-                'mime_type' => $media->mime_type,
-                'file_size' => $media->file_size,
-                'width' => $media->width,
-                'height' => $media->height,
-                'alt' => $media->alt,
-                'tags' => $media->tags ?? [],
-                'usage_count' => $media->usage_count,
-                'created_at' => $media->created_at->format('Y-m-d H:i'),
-            ];
-        });
-
-        // タグ一覧（サイドバーフィルタ用）
-        $allTags = MediaFile::whereNotNull('tags')
-            ->pluck('tags')
-            ->flatten()
-            ->unique()
-            ->sort()
-            ->values();
+        $mediaFiles = $query->paginate(24)->through(fn ($media) => $this->formatMedia($media, $allTags));
 
         return Inertia::render($this->viewFor('Admin/Media/Index'), [
             'mediaFiles' => $mediaFiles,
-            'allTags' => $allTags,
+            'tagTree' => $this->tagTreePayload($allTags),
             'filters' => [
                 'search' => $request->input('search', ''),
-                'tag' => $request->input('tag', ''),
+                'tag_id' => $request->input('tag_id', ''),
             ],
         ]);
     }
@@ -79,8 +56,8 @@ class MediaFileController extends Controller
         $request->validate([
             'images' => 'required|array|min:1',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:media_tags,id',
         ]);
 
         $manager = $this->createImageManager();
@@ -91,7 +68,7 @@ class MediaFileController extends Controller
 
         $uploaded = 0;
         foreach ($request->file('images') as $file) {
-            $mediaFile = $this->processAndStoreUpload($file, $manager, $request->input('tags'));
+            $mediaFile = $this->processAndStoreUpload($file, $manager, $request->input('tag_ids'));
             if ($mediaFile) {
                 $uploaded++;
             }
@@ -114,8 +91,8 @@ class MediaFileController extends Controller
         $request->validate([
             'images' => 'required|array|min:1',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:media_tags,id',
         ]);
 
         $manager = $this->createImageManager();
@@ -123,24 +100,12 @@ class MediaFileController extends Controller
             return response()->json(['error' => '画像ドライバーが利用できません。'], 500);
         }
 
+        $allTags = $this->loadAllTags();
         $results = [];
         foreach ($request->file('images') as $file) {
-            $mediaFile = $this->processAndStoreUpload($file, $manager, $request->input('tags'));
+            $mediaFile = $this->processAndStoreUpload($file, $manager, $request->input('tag_ids'));
             if ($mediaFile) {
-                $results[] = [
-                    'id' => $mediaFile->id,
-                    'original_filename' => $mediaFile->original_filename,
-                    'url' => $mediaFile->url,
-                    'path' => $mediaFile->path,
-                    'storage_disk' => $mediaFile->storage_disk,
-                    'alt' => $mediaFile->alt,
-                    'tags' => $mediaFile->tags ?? [],
-                    'width' => $mediaFile->width,
-                    'height' => $mediaFile->height,
-                    'file_size' => $mediaFile->file_size,
-                    'usage_count' => 0,
-                    'created_at' => $mediaFile->created_at->format('Y-m-d H:i'),
-                ];
+                $results[] = $this->formatMedia($mediaFile->load('mediaTags'), $allTags);
             }
         }
 
@@ -152,43 +117,21 @@ class MediaFileController extends Controller
      */
     public function listJson(Request $request)
     {
-        $query = MediaFile::query()->orderBy('created_at', 'desc');
+        $allTags = $this->loadAllTags();
+
+        $query = MediaFile::query()->with('mediaTags')->orderBy('created_at', 'desc');
 
         if ($search = $request->input('search')) {
             $query->where('original_filename', 'like', "%{$search}%");
         }
 
-        if ($tag = $request->input('tag')) {
-            $query->whereJsonContains('tags', $tag);
-        }
+        $this->applyTagFilter($query, $request->input('tag_id'), $allTags);
 
-        $mediaFiles = $query->paginate(24)->through(function ($media) {
-            return [
-                'id' => $media->id,
-                'original_filename' => $media->original_filename,
-                'url' => $media->url,
-                'path' => $media->path,
-                'storage_disk' => $media->storage_disk,
-                'alt' => $media->alt,
-                'tags' => $media->tags ?? [],
-                'width' => $media->width,
-                'height' => $media->height,
-                'file_size' => $media->file_size,
-                'usage_count' => $media->usage_count,
-                'created_at' => $media->created_at->format('Y-m-d H:i'),
-            ];
-        });
-
-        $allTags = MediaFile::whereNotNull('tags')
-            ->pluck('tags')
-            ->flatten()
-            ->unique()
-            ->sort()
-            ->values();
+        $mediaFiles = $query->paginate(24)->through(fn ($media) => $this->formatMedia($media, $allTags));
 
         return response()->json([
             'mediaFiles' => $mediaFiles,
-            'allTags' => $allTags,
+            'tagTree' => $this->tagTreePayload($allTags),
         ]);
     }
 
@@ -199,14 +142,19 @@ class MediaFileController extends Controller
     {
         $validated = $request->validate([
             'alt' => 'nullable|string|max:255',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:media_tags,id',
         ]);
 
-        $mediaFile->update($validated);
+        $mediaFile->update(['alt' => $validated['alt'] ?? null]);
+        $mediaFile->mediaTags()->sync($validated['tag_ids'] ?? []);
 
         if ($request->wantsJson()) {
-            return response()->json(['success' => true]);
+            $allTags = $this->loadAllTags();
+            return response()->json([
+                'success' => true,
+                'media' => $this->formatMedia($mediaFile->load('mediaTags'), $allTags),
+            ]);
         }
 
         return redirect()->route('admin.media.index')
@@ -233,6 +181,60 @@ class MediaFileController extends Controller
 
         return redirect()->route('admin.media.index')
             ->with('success', 'メディアを削除しました。');
+    }
+
+    /**
+     * 選択した複数メディアを一括削除（使用中はスキップ）
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'media_ids' => 'required|array|min:1',
+            'media_ids.*' => 'integer|exists:media_files,id',
+        ]);
+
+        $deleted = 0;
+        $skipped = 0;
+        foreach (MediaFile::whereIn('id', $validated['media_ids'])->get() as $mediaFile) {
+            if ($mediaFile->usage_count > 0) {
+                $skipped++;
+                continue;
+            }
+            $disk = ($mediaFile->storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
+            $path = $disk === 's3_public' ? str_replace('\\', '/', $mediaFile->path) : $mediaFile->path;
+            if (Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
+            }
+            $mediaFile->delete();
+            $deleted++;
+        }
+
+        $msg = "{$deleted}件のメディアを削除しました。" . ($skipped > 0 ? "（使用中の{$skipped}件はスキップしました）" : '');
+
+        return redirect()->route('admin.media.index', $request->only(['search', 'tag_id']))
+            ->with($skipped > 0 ? 'info' : 'success', $msg);
+    }
+
+    /**
+     * 選択した複数メディアに指定タグを一括付与（既存タグは維持）
+     */
+    public function bulkTag(Request $request)
+    {
+        $validated = $request->validate([
+            'media_ids' => 'required|array|min:1',
+            'media_ids.*' => 'integer|exists:media_files,id',
+            'tag_ids' => 'required|array|min:1',
+            'tag_ids.*' => 'integer|exists:media_tags,id',
+        ]);
+
+        foreach (MediaFile::whereIn('id', $validated['media_ids'])->get() as $mediaFile) {
+            $mediaFile->mediaTags()->syncWithoutDetaching($validated['tag_ids']);
+        }
+
+        $count = count($validated['media_ids']);
+
+        return redirect()->route('admin.media.index', $request->only(['search', 'tag_id']))
+            ->with('success', "{$count}件のメディアにタグを付与しました。");
     }
 
     /**
@@ -354,7 +356,7 @@ class MediaFileController extends Controller
     /**
      * アップロードファイルをWebP変換してS3に保存し、MediaFileレコードを作成
      */
-    private function processAndStoreUpload($uploadedFile, $manager, ?array $tags = null): ?MediaFile
+    private function processAndStoreUpload($uploadedFile, $manager, ?array $tagIds = null): ?MediaFile
     {
         try {
             $originalFilename = $uploadedFile->getClientOriginalName();
@@ -372,7 +374,7 @@ class MediaFileController extends Controller
 
             Storage::disk('s3_public')->put($webpPath, $content);
 
-            return MediaFile::create([
+            $mediaFile = MediaFile::create([
                 'original_filename' => $originalFilename,
                 'path' => $webpPath,
                 'storage_disk' => 's3',
@@ -381,12 +383,85 @@ class MediaFileController extends Controller
                 'width' => $width,
                 'height' => $height,
                 'alt' => pathinfo($originalFilename, PATHINFO_FILENAME),
-                'tags' => $tags ?: null,
             ]);
+
+            if (!empty($tagIds)) {
+                $mediaFile->mediaTags()->sync($tagIds);
+            }
+
+            return $mediaFile;
         } catch (\Exception $e) {
             \Log::error('メディアアップロードエラー: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * 全タグ（件数付き）をロード
+     */
+    private function loadAllTags()
+    {
+        return MediaTag::query()
+            ->withCount('mediaFiles')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * タグ絞り込み（指定タグ＋その子孫タグを含む）
+     */
+    private function applyTagFilter($query, $tagId, $allTags): void
+    {
+        if (!$tagId) {
+            return;
+        }
+        $tag = $allTags->firstWhere('id', (int) $tagId);
+        if (!$tag) {
+            return;
+        }
+        $ids = $tag->selfAndDescendantIds($allTags);
+        $query->whereHas('mediaTags', fn ($q) => $q->whereIn('media_tags.id', $ids));
+    }
+
+    /**
+     * メディア1件を表示用配列に整形（タグは {id, name, full_path}）
+     */
+    private function formatMedia(MediaFile $media, $allTags): array
+    {
+        return [
+            'id' => $media->id,
+            'original_filename' => $media->original_filename,
+            'path' => $media->path,
+            'url' => $media->url,
+            'storage_disk' => $media->storage_disk,
+            'mime_type' => $media->mime_type,
+            'file_size' => $media->file_size,
+            'width' => $media->width,
+            'height' => $media->height,
+            'alt' => $media->alt,
+            'tags' => $media->mediaTags->map(fn ($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'full_path' => $t->fullPath($allTags),
+            ])->values(),
+            'usage_count' => $media->usage_count,
+            'created_at' => $media->created_at->format('Y-m-d H:i'),
+        ];
+    }
+
+    /**
+     * サイドバー用のタグツリー（フラット配列：id, parent_id, name, full_path, media_count）
+     */
+    private function tagTreePayload($allTags): array
+    {
+        return $allTags->map(fn (MediaTag $t) => [
+            'id' => $t->id,
+            'parent_id' => $t->parent_id,
+            'name' => $t->name,
+            'full_path' => $t->fullPath($allTags),
+            'media_count' => $t->media_files_count,
+        ])->values()->all();
     }
 
     /**
