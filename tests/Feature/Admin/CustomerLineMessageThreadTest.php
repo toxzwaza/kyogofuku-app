@@ -64,8 +64,51 @@ class CustomerLineMessageThreadTest extends TestCase
         $this->assertSame('reply from shop', $messages[1]['text']);
         $this->assertSame($user->name, $messages[1]['sent_by']);
 
-        $this->assertNotNull(
+        // メッセージ取得（GET）では既読化されない
+        $this->assertNull(
             CustomerLineMessage::query()->where('text', 'hello from line')->value('admin_read_at')
         );
+    }
+
+    public function test_mark_read_marks_unread_inbound_messages_as_read(): void
+    {
+        $user = User::factory()->create();
+        $shop = Shop::create(['name' => 'S', 'is_active' => true]);
+        $customer = Customer::create(['name' => 'C', 'shop_id' => $shop->id]);
+        $contact = CustomerLineContact::create([
+            'customer_id' => $customer->id,
+            'shop_id' => $shop->id,
+            'line_user_id' => 'Utest',
+            'label' => '本人',
+        ]);
+
+        $inbound = CustomerLineMessage::query()->create([
+            'customer_line_contact_id' => $contact->id,
+            'direction' => CustomerLineMessage::DIRECTION_INBOUND,
+            'message_type' => 'text',
+            'text' => 'unread inbound',
+            'line_message_id' => 'mid-in-2',
+            'payload' => null,
+            'sent_by_user_id' => null,
+        ]);
+        $outbound = CustomerLineMessage::query()->create([
+            'customer_line_contact_id' => $contact->id,
+            'direction' => CustomerLineMessage::DIRECTION_OUTBOUND,
+            'message_type' => 'text',
+            'text' => 'staff reply',
+            'line_message_id' => null,
+            'payload' => null,
+            'sent_by_user_id' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(
+            route('admin.customers.line.mark-read', [$customer, $contact])
+        );
+
+        $response->assertOk();
+        $response->assertJson(['updated' => 1]);
+        $this->assertNotNull($inbound->fresh()->admin_read_at);
+        // 送信（outbound）は対象外
+        $this->assertNull($outbound->fresh()->admin_read_at);
     }
 }

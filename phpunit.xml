@@ -27,5 +27,7 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <!-- 端末ゲートは段階導入機能。テストでは無効化（.env の値が漏れて認証付きHTTPテストが login へ飛ぶのを防ぐ） -->
+        <env name="DEVICE_GATE_ENABLED" value="false"/>
     </php>
 </phpunit>
