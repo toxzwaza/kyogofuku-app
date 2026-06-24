@@ -71,8 +71,8 @@ class LineMessageMediaStore
             'storage_disk' => 's3',
             'mime_type' => $fetched['mime'],
             'file_size' => $fetched['size'],
-            'tags' => ['line_inbound'],
         ]);
+        $this->attachRootTag($mediaFile, 'line_inbound');
 
         Log::channel('line_image')->info('[store] media_file created', [
             'media_file_id' => $mediaFile->id,
@@ -132,8 +132,8 @@ class LineMessageMediaStore
             'storage_disk' => 's3',
             'mime_type' => $mime,
             'file_size' => $size,
-            'tags' => ['line_outbound'],
         ]);
+        $this->attachRootTag($mediaFile, 'line_outbound');
 
         Log::channel('line_image')->info('[store] outbound media_file created', [
             'media_file_id' => $mediaFile->id,
@@ -141,5 +141,17 @@ class LineMessageMediaStore
         ]);
 
         return $mediaFile;
+    }
+
+    /**
+     * ルート階層のタグ（親なし）を名前で取得または作成し、メディアに付与する
+     */
+    private function attachRootTag(MediaFile $mediaFile, string $name): void
+    {
+        $tag = \App\Models\MediaTag::firstOrCreate(
+            ['parent_id' => null, 'name' => $name],
+            ['sort_order' => 0],
+        );
+        $mediaFile->mediaTags()->syncWithoutDetaching([$tag->id]);
     }
 }

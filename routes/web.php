@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignController;
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
 use App\Http\Controllers\Admin\MediaFileController as AdminMediaFileController;
+use App\Http\Controllers\Admin\MediaTagController as AdminMediaTagController;
 use App\Http\Controllers\Admin\EventLpSettingsController as AdminEventLpSettingsController;
 use App\Http\Controllers\Admin\EventReservationExportController;
 use App\Http\Controllers\Admin\EventReservationListController;
@@ -205,9 +206,16 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/media', [AdminMediaFileController::class, 'store'])->name('media.store');
     Route::post('/media/upload-json', [AdminMediaFileController::class, 'storeJson'])->name('media.store-json');
     Route::get('/media/list-json', [AdminMediaFileController::class, 'listJson'])->name('media.list-json');
+    // メディアタグ（階層）— {mediaFile} より前に定義
+    Route::get('/media/tags', [AdminMediaTagController::class, 'index'])->name('media.tags.index');
+    Route::post('/media/tags', [AdminMediaTagController::class, 'store'])->name('media.tags.store');
+    Route::patch('/media/tags/{mediaTag}', [AdminMediaTagController::class, 'update'])->name('media.tags.update');
+    Route::delete('/media/tags/{mediaTag}', [AdminMediaTagController::class, 'destroy'])->name('media.tags.destroy');
     Route::patch('/media/{mediaFile}', [AdminMediaFileController::class, 'update'])->name('media.update');
     Route::delete('/media/{mediaFile}', [AdminMediaFileController::class, 'destroy'])->name('media.destroy');
     Route::post('/media/import-existing', [AdminMediaFileController::class, 'importExisting'])->name('media.import-existing');
+    Route::post('/media/bulk-delete', [AdminMediaFileController::class, 'bulkDestroy'])->name('media.bulk-delete');
+    Route::post('/media/bulk-tag', [AdminMediaFileController::class, 'bulkTag'])->name('media.bulk-tag');
 
     // イベント画像管理
     Route::get('/events/{event}/images', [AdminEventImageController::class, 'index'])->name('events.images.index');
