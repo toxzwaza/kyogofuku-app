@@ -106,6 +106,43 @@ onUnmounted(() => {
 });
 const messages = ref([]);
 const loadingMessages = ref(false);
+const marking = ref(false);
+
+// 未読（受信かつ未読）件数。0 より大きいときのみ「確認」ボタンを押下可能にする
+const unreadCount = computed(
+    () => messages.value.filter((m) => m.direction === 'inbound' && !m.admin_read_at).length,
+);
+const hasUnread = computed(() => unreadCount.value > 0);
+
+// 「確認」ボタン: スレッドの未読受信メッセージを既読化する
+async function markAsRead() {
+    const contactId = selectedContactId.value;
+    if (!contactId || !hasUnread.value || marking.value) {
+        return;
+    }
+    marking.value = true;
+    try {
+        const url =
+            lineMode.value === 'reservation'
+                ? route('admin.reservations.line.mark-read', {
+                      reservation: props.lineApi.reservation_id,
+                      contact: contactId,
+                  })
+                : route('admin.customers.line.mark-read', {
+                      customer: props.customer.id,
+                      contact: contactId,
+                  });
+        const { data } = await axios.post(url);
+        const readAt = data.admin_read_at ?? new Date().toISOString();
+        messages.value = messages.value.map((m) =>
+            m.direction === 'inbound' && !m.admin_read_at ? { ...m, admin_read_at: readAt } : m,
+        );
+    } catch {
+        sendError.value = '既読の更新に失敗しました。';
+    } finally {
+        marking.value = false;
+    }
+}
 
 // トーク表示：スクロールコンテナと「最新（一番下）」への自動スクロール
 const chatScrollRef = ref(null);
@@ -835,6 +872,21 @@ const canIssueLink = computed(() => {
                                 :disabled="!!selectedImageFile"
                                 @change="onImageSelected"
                             />
+
+                            <!-- 確認（既読）ボタン：未読がある時のみ押下可 -->
+                            <div class="flex justify-end mb-2">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-45 disabled:cursor-not-allowed"
+                                    :disabled="!hasUnread || marking"
+                                    @click="markAsRead"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {{ marking ? '更新中…' : (hasUnread ? `確認 (${unreadCount})` : '確認') }}
+                                </button>
+                            </div>
 
                             <div class="flex items-end gap-2">
                                 <div class="line-composer__icons shrink-0 flex items-center gap-1 text-gray-400 pb-2 pr-1">

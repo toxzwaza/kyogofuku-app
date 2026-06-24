@@ -258,6 +258,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/reservations/{reservation}', [AdminReservationController::class, 'show'])->name('reservations.show');
     Route::post('/reservations/{reservation}/line/link-token', [ReservationLineMessageController::class, 'issueLinkToken'])->name('reservations.line.link-token');
     Route::get('/reservations/{reservation}/line/contacts/{contact}/messages', [ReservationLineMessageController::class, 'contactMessages'])->name('reservations.line.contact-messages');
+    Route::post('/reservations/{reservation}/line/contacts/{contact}/mark-read', [ReservationLineMessageController::class, 'markRead'])->name('reservations.line.mark-read');
     Route::post('/reservations/{reservation}/line/contacts/{contact}/send', [ReservationLineMessageController::class, 'send'])->name('reservations.line.send');
     Route::delete('/reservations/{reservation}/line/contacts/{contact}', [ReservationLineMessageController::class, 'destroyContact'])->name('reservations.line.contact-destroy');
     Route::get('/reservations/{reservation}/edit', [AdminReservationController::class, 'edit'])->name('reservations.edit');
@@ -342,6 +343,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
 
     Route::post('/customers/{customer}/line/link-token', [CustomerLineMessageController::class, 'issueLinkToken'])->name('customers.line.link-token');
     Route::get('/customers/{customer}/line/contacts/{contact}/messages', [CustomerLineMessageController::class, 'contactMessages'])->name('customers.line.contact-messages');
+    Route::post('/customers/{customer}/line/contacts/{contact}/mark-read', [CustomerLineMessageController::class, 'markRead'])->name('customers.line.mark-read');
     Route::post('/customers/{customer}/line/contacts/{contact}/send', [CustomerLineMessageController::class, 'send'])->name('customers.line.send');
     Route::delete('/customers/{customer}/line/contacts/{contact}', [CustomerLineMessageController::class, 'destroyContact'])->name('customers.line.contact-destroy');
 

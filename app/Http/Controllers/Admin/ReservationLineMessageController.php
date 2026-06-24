@@ -74,19 +74,8 @@ class ReservationLineMessageController extends Controller
             ->limit(500)
             ->get();
 
-        $markedReadAt = now();
-        CustomerLineMessage::query()
-            ->where('customer_line_contact_id', $contact->id)
-            ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
-            ->whereNull('admin_read_at')
-            ->update(['admin_read_at' => $markedReadAt]);
-
-        $messages = $collection->map(function (CustomerLineMessage $m) use ($markedReadAt) {
-            $readAt = $m->admin_read_at;
-            if ($m->direction === CustomerLineMessage::DIRECTION_INBOUND && $readAt === null) {
-                $readAt = $markedReadAt;
-            }
-
+        // メッセージ取得では既読化しない（既読化は markRead で明示的に行う）
+        $messages = $collection->map(function (CustomerLineMessage $m) {
             return [
                 'id' => $m->id,
                 'direction' => $m->direction,
@@ -95,11 +84,31 @@ class ReservationLineMessageController extends Controller
                 'image_url' => $m->mediaFile?->url,
                 'created_at' => $m->created_at?->toIso8601String(),
                 'sent_by' => $m->sentByUser?->name,
-                'admin_read_at' => $readAt?->toIso8601String(),
+                'admin_read_at' => $m->admin_read_at?->toIso8601String(),
             ];
         });
 
         return response()->json(['messages' => $messages]);
+    }
+
+    /**
+     * スレッドの未読（受信）メッセージを既読にする
+     */
+    public function markRead(EventReservation $reservation, CustomerLineContact $contact)
+    {
+        $this->assertReservationOwnsContact($reservation, $contact);
+
+        $markedReadAt = now();
+        $updated = CustomerLineMessage::query()
+            ->where('customer_line_contact_id', $contact->id)
+            ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
+            ->whereNull('admin_read_at')
+            ->update(['admin_read_at' => $markedReadAt]);
+
+        return response()->json([
+            'updated' => $updated,
+            'admin_read_at' => $markedReadAt->toIso8601String(),
+        ]);
     }
 
     public function send(
