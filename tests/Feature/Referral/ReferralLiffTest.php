@@ -111,9 +111,11 @@ class ReferralLiffTest extends TestCase
         $this->link($customer, 'Ume');
         app(ReferralPointService::class)->applyDelta($customer, 5000, 'adjust');
 
-        $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
+        $res = $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
             ->assertOk()
             ->assertJson(['state' => 'ok', 'balance' => 5000]);
+        // ステージ章は data URI（ngrok等でも確実に表示するため外部URLにしない）
+        $this->assertStringStartsWith('data:image/png;base64,', (string) $res->json('stage_badge'));
     }
 
     public function test_my_points_data_not_linked(): void

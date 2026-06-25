@@ -44,6 +44,7 @@ class LineMyPageLiffController extends Controller
         return response()->json([
             'state' => 'ok',
             'stage' => $data['stage'],
+            'stage_badge' => $this->stageBadgeDataUri($data['stage']),
             'matured_referrals_count' => $data['matured_referrals_count'],
             'balance' => $data['balance'],
             'gift_card_unit' => $data['gift_card_unit'],
@@ -88,6 +89,27 @@ class LineMyPageLiffController extends Controller
                 'shoot_time' => $p->shoot_time,
             ]),
         ]);
+    }
+
+    /**
+     * ステージ章バッジを data URI で返す（ngrok等のブラウザ警告で外部画像が表示できない環境でも確実に出すため）。
+     * キャッシュして毎回のエンコードを避ける。
+     */
+    private function stageBadgeDataUri(string $stage): ?string
+    {
+        $allowed = ['bronze', 'silver', 'gold', 'platinum'];
+        if (!in_array($stage, $allowed, true)) {
+            $stage = 'bronze';
+        }
+
+        return \Illuminate\Support\Facades\Cache::rememberForever("line.stage_badge.$stage", function () use ($stage) {
+            $path = public_path("images/line/badges/{$stage}.png");
+            if (!is_file($path)) {
+                return null;
+            }
+
+            return 'data:image/png;base64,'.base64_encode(file_get_contents($path));
+        });
     }
 
     private function view(string $screen)

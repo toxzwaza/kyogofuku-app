@@ -34,12 +34,6 @@
     mypage: @json(route('line.liff.mypage.data')),
   };
   const STAGE_LABEL = { bronze:'ブロンズ', silver:'シルバー', gold:'ゴールド', platinum:'プラチナ' };
-  const BADGES = {
-    bronze: @json(asset('images/line/badges/bronze.png')),
-    silver: @json(asset('images/line/badges/silver.png')),
-    gold: @json(asset('images/line/badges/gold.png')),
-    platinum: @json(asset('images/line/badges/platinum.png')),
-  };
   const SUBLINE = { 'my-stage':'ご紹介の実績とランク', 'my-points':'ためる・つかう', 'mypage':'ご登録内容の確認' };
 
   const yen = (n) => Number(n||0).toLocaleString();
@@ -63,7 +57,7 @@
     const r = d.referrals_made || {};
     return ''
       + '<div class="card"><h2>あなたのステージ</h2>'
-        + '<div class="crest"><img class="badge" src="'+(BADGES[d.stage]||BADGES.bronze)+'" alt="'+(STAGE_LABEL[d.stage]||'')+'">'
+        + '<div class="crest">'+(d.stage_badge ? '<img class="badge" src="'+d.stage_badge+'" alt="'+(STAGE_LABEL[d.stage]||'')+'">' : '')
         + '<div class="name">'+(STAGE_LABEL[d.stage]||d.stage)+'</div>'
         + '<div class="meta">成立したご紹介：'+(d.matured_referrals_count||0)+' 件</div></div></div>'
       + '<div class="card"><h2>ご紹介の状況</h2>'
