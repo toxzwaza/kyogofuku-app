@@ -21,8 +21,8 @@
   #loading { text-align: center; color: #888; padding: 40px 0; }
   .code { font-size: 30px; font-weight: 700; letter-spacing: 3px; text-align: center; color: #06713a; margin: 6px 0 2px; }
   .label { font-size: 12px; color: #888; text-align: center; }
-  .qr { text-align: center; margin: 16px 0; }
-  .qr img, .qr canvas { width: 200px; height: 200px; }
+  .qr { display: flex; justify-content: center; margin: 16px 0; }
+  .qr img, .qr canvas { width: 200px; height: 200px; display: block; margin: 0 auto; }
   .urlrow { display: flex; gap: 8px; margin-top: 6px; }
   .urlrow input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; color: #444; background: #fafafa; }
   .urlrow button { padding: 0 14px; border: 1px solid #06C755; background: #fff; color: #06C755; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; }

@@ -77,7 +77,8 @@ class LineMyPageLiffController extends Controller
                 'phone_number' => $customer->phone_number,
             ],
             'contracts' => $customer->contracts->map(fn ($c) => [
-                'contract_date' => $c->contract_date?->format('Y-m-d'),
+                // contract_date は date キャスト未設定で文字列のことがあるため安全に整形
+                'contract_date' => $c->contract_date ? \Illuminate\Support\Carbon::parse($c->contract_date)->format('Y-m-d') : null,
                 'plan' => $c->plan?->name,
                 'kimono_type' => $c->kimono_type,
                 'total_amount' => $c->total_amount,

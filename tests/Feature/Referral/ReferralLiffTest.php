@@ -166,11 +166,14 @@ class ReferralLiffTest extends TestCase
     public function test_mypage_data_returns_customer_info(): void
     {
         $this->fakeLine('Ump');
-        $customer = $this->customer('山田花子');
+        // 成約あり顧客（contract_date が文字列でも format で落ちないことを保証）
+        $customer = $this->contractedCustomer('山田花子');
         $this->link($customer, 'Ump');
 
         $this->postJson(route('line.liff.mypage.data'), ['id_token' => 'tok'])
             ->assertOk()
-            ->assertJson(['state' => 'ok', 'customer' => ['name' => '山田花子']]);
+            ->assertJson(['state' => 'ok', 'customer' => ['name' => '山田花子']])
+            ->assertJsonPath('contracts.0.contract_date', today()->format('Y-m-d'))
+            ->assertJsonPath('contracts.0.total_amount', 200000);
     }
 }
