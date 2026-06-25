@@ -482,6 +482,18 @@ Route::get('/line/liff/resume', [LineLiffController::class, 'liffLoginResume'])-
 Route::get('/line/liff/welcome', [\App\Http\Controllers\LineWelcomeLinkController::class, 'show'])->name('line.liff.welcome');
 Route::post('/line/liff/welcome/match', [\App\Http\Controllers\LineWelcomeLinkController::class, 'match'])->name('line.liff.welcome.match');
 
+// 友達紹介LIFF（紹介URL紐付け）
+Route::get('/line/liff/referral', [\App\Http\Controllers\LineReferralLiffController::class, 'show'])->name('line.liff.referral');
+Route::post('/line/liff/referral/check', [\App\Http\Controllers\LineReferralLiffController::class, 'check'])->name('line.liff.referral.check');
+Route::post('/line/liff/referral/link', [\App\Http\Controllers\LineReferralLiffController::class, 'link'])->name('line.liff.referral.link');
+
+// マイステージ / マイポイント / 顧客詳細 LIFF（表示専用）
+Route::get('/line/liff/my-stage', [\App\Http\Controllers\LineMyPageLiffController::class, 'showMyStage'])->name('line.liff.my-stage');
+Route::get('/line/liff/my-points', [\App\Http\Controllers\LineMyPageLiffController::class, 'showMyPoints'])->name('line.liff.my-points');
+Route::get('/line/liff/mypage', [\App\Http\Controllers\LineMyPageLiffController::class, 'showMyPage'])->name('line.liff.mypage');
+Route::post('/line/liff/my-points/data', [\App\Http\Controllers\LineMyPageLiffController::class, 'points'])->name('line.liff.my-points.data');
+Route::post('/line/liff/mypage/data', [\App\Http\Controllers\LineMyPageLiffController::class, 'mypage'])->name('line.liff.mypage.data');
+
 Route::get('/test-line', function () {
     app()->call('App\Http\Controllers\LineTestController@test');
 });

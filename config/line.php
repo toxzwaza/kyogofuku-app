@@ -33,6 +33,20 @@ return [
          * 未設定時は後方互換で LINE_MESSAGING_CHANNEL_ID を参照（レガシー構成向け）
          */
         'login_channel_id' => env('LINE_LOGIN_CHANNEL_ID', env('LINE_MESSAGING_CHANNEL_ID')),
+        /**
+         * 友達紹介系LIFF（紹介URL / マイステージ / マイポイント / 顧客詳細）の LIFF アプリ ID。
+         * 未設定時は通常の LIFF ID にフォールバック。Endpoint は /line/liff/referral 等。
+         */
+        'referral_id' => env('LINE_REFERRAL_LIFF_ID', env('LINE_LIFF_ID')),
+    ],
+
+    /**
+     * 友達紹介プログラムの設定（有効期限等は DB の referral_settings が優先。ここは固定値）
+     */
+    'referral' => [
+        'code_length' => 8,
+        // 紹介URLのベース（LIFF）。?ref=XXXX を付けて配布する
+        'liff_url' => env('LINE_REFERRAL_LIFF_URL'),
     ],
 
     /**
