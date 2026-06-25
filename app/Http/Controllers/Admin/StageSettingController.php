@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\ResolvesUiView;
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\CustomerStage;
+use App\Models\Referral;
 use App\Models\ReferralSetting;
 use App\Models\StageSetting;
+use App\Services\Referral\StageEvaluator;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -31,7 +34,7 @@ class StageSettingController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(Request $request, StageEvaluator $evaluator)
     {
         $validated = $request->validate([
             'stages' => 'required|array',
@@ -54,6 +57,20 @@ class StageSettingController extends Controller
         foreach ($validated['settings'] as $key => $value) {
             ReferralSetting::set($key, (string) $value);
         }
+
+        // 閾値変更を即時反映：成立実績のある顧客のステージを再評価する
+        // （成立0の顧客は常にブロンズなので対象外）
+        Referral::query()
+            ->where('status', Referral::STATUS_MATURED)
+            ->distinct()
+            ->pluck('referrer_customer_id')
+            ->filter()
+            ->each(function ($customerId) use ($evaluator) {
+                $customer = Customer::find($customerId);
+                if ($customer) {
+                    $evaluator->evaluate($customer);
+                }
+            });
 
         return redirect()->route('admin.referral.stage-settings.index')
             ->with('success', 'ステージ設定を保存しました。');

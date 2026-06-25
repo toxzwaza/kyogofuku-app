@@ -2,14 +2,18 @@
 
 namespace Tests\Feature\Referral;
 
+use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\GiftCard;
+use App\Models\Plan;
+use App\Models\Referral;
 use App\Models\ReferralPoint;
 use App\Models\Shop;
 use App\Models\StageSetting;
 use App\Models\User;
 use App\Services\Referral\GiftCardService;
 use App\Services\Referral\ReferralPointService;
+use App\Services\Referral\StageEvaluator;
 use Database\Seeders\ReferralSettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -113,5 +117,62 @@ class ReferralAdminTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('admin.referral.list'))
             ->assertOk();
+    }
+
+    public function test_stage_settings_update_reevaluates_existing_customers(): void
+    {
+        $referrer = $this->customer('紹介者');
+        Referral::create([
+            'referrer_customer_id' => $referrer->id,
+            'referred_line_user_id' => 'Ureeval',
+            'status' => Referral::STATUS_MATURED,
+        ]);
+        // 旧設定（silver=4）では成立1件 → bronze
+        app(StageEvaluator::class)->evaluate($referrer);
+        $this->assertDatabaseHas('customer_stages', ['customer_id' => $referrer->id, 'stage' => 'bronze']);
+
+        // silver の最小成立を 1 に変更して保存 → 再評価で silver になる
+        $payload = [
+            'stages' => [
+                ['stage' => 'bronze', 'min_referrals' => 0, 'reward_rate_percent' => 3],
+                ['stage' => 'silver', 'min_referrals' => 1, 'reward_rate_percent' => 4],
+                ['stage' => 'gold', 'min_referrals' => 3, 'reward_rate_percent' => 5],
+                ['stage' => 'platinum', 'min_referrals' => 5, 'reward_rate_percent' => 10],
+            ],
+            'settings' => ['referred_bonus_points' => 10000, 'gift_card_unit' => 500, 'maturation_months' => 1, 'referral_expire_months' => 6],
+        ];
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.referral.stage-settings.update'), $payload)
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('customer_stages', ['customer_id' => $referrer->id, 'stage' => 'silver', 'matured_referrals_count' => 1]);
+    }
+
+    public function test_manual_mature_endpoint_grants_points(): void
+    {
+        $referrer = $this->customer('紹介者');
+        $referred = $this->customer('被紹介者');
+        $plan = Plan::create(['name' => '振袖', 'code' => 'PX'.uniqid(), 'is_active' => true]);
+        Referral::create([
+            'referrer_customer_id' => $referrer->id,
+            'referred_line_user_id' => 'Uadminmature',
+            'referred_customer_id' => $referred->id,
+            'status' => Referral::STATUS_LINKED,
+        ]);
+        Contract::create([
+            'customer_id' => $referred->id, 'shop_id' => $this->shop->id, 'plan_id' => $plan->id,
+            'contract_date' => today(), 'kimono_type' => '振袖', 'total_amount' => 110000, 'status' => '確定',
+        ]); // Observer → contracted
+        $referral = Referral::where('referred_customer_id', $referred->id)->first();
+        $this->assertSame(Referral::STATUS_CONTRACTED, $referral->status);
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.referral.mature', $referral))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('referrals', ['id' => $referral->id, 'status' => 'matured']);
+        $this->assertSame(3000, (int) ReferralPoint::where('customer_id', $referrer->id)->value('balance'));
+        $this->assertSame(10000, (int) ReferralPoint::where('customer_id', $referred->id)->value('balance'));
     }
 }
