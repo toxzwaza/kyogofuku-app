@@ -50,7 +50,11 @@
 
   function renderNotLinked() {
     document.getElementById('body').innerHTML =
-      '<div class="card"><div class="msg err">ご利用には顧客登録とLINE連携が必要です。店舗スタッフへお問い合わせください。</div></div>';
+      '<div class="card"><div class="msg warn">ご利用にはLINE連携が必要です。下のボタンから、ご予約・お客様情報と連携してください。</div>'
+      + '<button class="btn btn-line" id="linkBtn">LINE連携する</button>'
+      + '<p class="muted center" style="margin-top:12px">連携がお済みでない場合のみ表示されます。</p></div>';
+    var b = document.getElementById('linkBtn');
+    if (b) b.onclick = function () { location.href = location.pathname + '?screen=link'; };
   }
 
   function renderStage(d) {

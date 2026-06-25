@@ -52,4 +52,12 @@ class LiffEntryTest extends TestCase
             ->assertOk()
             ->assertSee('SCREEN = "mypage"', false);
     }
+
+    public function test_screen_link_shows_welcome_form(): void
+    {
+        $this->get('/line/liff?screen=link')
+            ->assertOk()
+            ->assertSee('LINE連携', false)
+            ->assertSee('id="lookup_key"', false);
+    }
 }

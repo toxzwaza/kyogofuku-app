@@ -114,6 +114,18 @@
   .coupon .disc{ font-family:var(--mincho); font-size:19px; font-weight:700; color:var(--accent-deep); margin:1px 0; }
   .coupon .d{ color:var(--ink-soft); font-size:11.5px; }
 
+  /* フォーム入力 */
+  label.fld{ display:block; margin:16px 0 6px; font-size:13px; font-weight:700; color:var(--accent-deep); font-family:var(--mincho); letter-spacing:1px; }
+  label.fld .opt{ font-family:var(--gothic); font-weight:400; font-size:11px; color:var(--ink-soft); margin-left:6px; }
+  .input{ width:100%; box-sizing:border-box; padding:13px 14px; font-size:16px; border:1px solid var(--line); border-radius:10px; background:#fbf8f1; color:var(--ink); }
+  .input:focus{ outline:none; border-color:var(--accent); background:#fff; }
+  .help{ font-size:11.5px; color:var(--ink-soft); margin:5px 0 0; line-height:1.5; }
+  .lead{ font-size:13.5px; color:var(--ink); line-height:1.7; margin:0 0 4px; }
+  #status{ margin-top:14px; font-size:13.5px; white-space:pre-wrap; word-break:break-word; text-align:center; }
+  #status.err{ color:#b3261e; }
+  #status.ok{ color:var(--accent-deep); font-weight:700; }
+  #status.hint{ color:var(--ink-soft); }
+
   /* 還元率バッジ */
   .rate{ display:inline-flex; align-items:baseline; gap:3px; margin-top:8px; padding:4px 12px; border-radius:20px;
     background:var(--accent-soft); color:var(--accent-deep); font-weight:700; }

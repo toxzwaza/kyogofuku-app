@@ -33,6 +33,14 @@ class LineLiffEntryController extends Controller
             ]);
         }
 
+        // LINE連携（セルフ紐付け）。未連携ユーザーが顧客詳細などから起動する。
+        if ($screen === 'link') {
+            return response()->view('line.liff-welcome', [
+                'error' => null,
+                'liffId' => config('line.liff.referral_id'),
+            ]);
+        }
+
         // マイページ系（未知の screen は mypage に寄せる）
         $target = in_array($screen, self::MYPAGE_SCREENS, true) ? $screen : 'mypage';
 
