@@ -16,6 +16,7 @@ use App\Services\Referral\ReferralPointService;
 use App\Services\Referral\StageEvaluator;
 use Database\Seeders\ReferralSettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class ReferralAdminTest extends TestCase
@@ -27,6 +28,7 @@ class ReferralAdminTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Http::fake(); // LINE Push をモック
         $this->seed(ReferralSettingsSeeder::class);
         $this->shop = Shop::create(['name' => 'テスト店', 'is_active' => true]);
     }

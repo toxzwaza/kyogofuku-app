@@ -21,6 +21,7 @@ use App\Services\Referral\StageEvaluator;
 use Database\Seeders\ReferralSettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -38,6 +39,7 @@ class ReferralEngineTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Http::fake(); // LINE Push をモック（成立通知の実APIコールを防ぐ）
         $this->seed(ReferralSettingsSeeder::class); // stage_settings / referral_settings
         $this->shop = Shop::create(['name' => 'テスト店', 'is_active' => true]);
         $this->plan = Plan::create(['name' => '振袖', 'code' => 'P'.Str::random(6), 'is_active' => true]);
@@ -339,6 +341,29 @@ class ReferralEngineTest extends TestCase
         $this->assertFalse($second['ok']);
         $this->assertSame('already_matured', $second['reason']);
         $this->assertSame(3000, (int) ReferralPoint::where('customer_id', $referrer->id)->value('balance'));
+    }
+
+    public function test_maturation_pushes_notifications_to_both(): void
+    {
+        $referrer = $this->customer('紹介者');
+        $this->lineContact($referrer, 'UrefBoss'); // 紹介者のLINE
+        $referred = $this->customer('被紹介者');
+        Referral::create([
+            'referrer_customer_id' => $referrer->id,
+            'referred_line_user_id' => 'UreferredFriend',
+            'referred_customer_id' => $referred->id,
+            'status' => Referral::STATUS_LINKED,
+        ]);
+        $this->contract($referred, 110000); // → contracted
+        $referral = Referral::where('referred_customer_id', $referred->id)->first();
+
+        app(ReferralMaturationService::class)->mature($referral);
+
+        // 紹介者へ「紹介者特典」、被紹介者へ「被紹介者特典」のPushが飛ぶ
+        Http::assertSent(fn ($req) => str_contains($req->url(), '/v2/bot/message/push')
+            && str_contains(json_encode($req->data(), JSON_UNESCAPED_UNICODE), '紹介者特典'));
+        Http::assertSent(fn ($req) => str_contains($req->url(), '/v2/bot/message/push')
+            && str_contains(json_encode($req->data(), JSON_UNESCAPED_UNICODE), '被紹介者特典'));
     }
 
     public function test_manual_maturation_rejects_non_contracted(): void
