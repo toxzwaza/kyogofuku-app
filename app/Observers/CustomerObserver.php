@@ -27,14 +27,8 @@ class CustomerObserver
             ['balance' => 0],
         );
 
-        // 被紹介者の後埋め：この顧客のLINEに一致する紹介に referred_customer_id をセット
-        $lineUserIds = $customer->lineContacts()->pluck('line_user_id')->filter()->all();
-        if ($lineUserIds) {
-            Referral::query()
-                ->whereIn('referred_line_user_id', $lineUserIds)
-                ->whereNull('referred_customer_id')
-                ->update(['referred_customer_id' => $customer->id]);
-        }
+        // 被紹介者としての紹介を同期（補完・最初の紹介者のみ有効・contracted昇格）。
+        app(\App\Services\Referral\ReferralCustomerSyncService::class)->sync($customer);
     }
 
     public function updated(Customer $customer): void

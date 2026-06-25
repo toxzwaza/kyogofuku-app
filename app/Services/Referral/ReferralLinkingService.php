@@ -59,6 +59,22 @@ class ReferralLinkingService
             return ['status' => Referral::STATUS_REJECTED, 'reason' => 'existing_customer', 'referral' => $referral];
         }
 
+        // 最初の紹介者のみ有効：別の紹介者から既に有効な紹介がある被紹介者は却下する
+        $alreadyByOther = Referral::query()
+            ->where('referred_line_user_id', $referredLineUserId)
+            ->where('referrer_customer_id', '!=', $referrerId)
+            ->whereIn('status', [
+                Referral::STATUS_LINKED,
+                Referral::STATUS_CONTRACTED,
+                Referral::STATUS_MATURED,
+            ])
+            ->exists();
+        if ($alreadyByOther) {
+            $referral = $this->createRejected($referrerId, $referredLineUserId, 'already_referred');
+
+            return ['status' => Referral::STATUS_REJECTED, 'reason' => 'already_referred', 'referral' => $referral];
+        }
+
         // 紹介成立待ち
         $months = ReferralSetting::getInt('referral_expire_months', 6);
         $referral = Referral::create([

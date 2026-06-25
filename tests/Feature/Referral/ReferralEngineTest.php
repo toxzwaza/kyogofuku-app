@@ -157,6 +157,61 @@ class ReferralEngineTest extends TestCase
         $this->assertSame(1, Referral::query()->where('referred_line_user_id', 'Udup')->count());
     }
 
+    // ---- 最初の紹介者のみ有効：2人目の紹介者は却下 ----
+    public function test_only_first_referrer_is_valid(): void
+    {
+        $a = $this->customer('紹介者A');
+        $b = $this->customer('紹介者B');
+        ReferralCode::create(['customer_id' => $a->id, 'code' => 'AAAA1111']);
+        ReferralCode::create(['customer_id' => $b->id, 'code' => 'BBBB2222']);
+        $svc = app(ReferralLinkingService::class);
+
+        $r1 = $svc->link('AAAA1111', 'Ufirst');
+        $this->assertSame(Referral::STATUS_LINKED, $r1['status']);
+
+        $r2 = $svc->link('BBBB2222', 'Ufirst');
+        $this->assertSame(Referral::STATUS_REJECTED, $r2['status']);
+        $this->assertSame('already_referred', $r2['reason']);
+    }
+
+    // ---- LINE連携が後から行われた場合：補完して contracted へ ----
+    public function test_late_line_link_backfills_and_contracts(): void
+    {
+        $referrer = $this->customer('紹介者');
+        $referred = $this->customer('被紹介者B');
+        // まだ顧客に紐付く前に踏んだ紹介（referred_customer_id は null）
+        $referral = Referral::create([
+            'referrer_customer_id' => $referrer->id,
+            'referred_line_user_id' => 'Ulate',
+            'status' => Referral::STATUS_LINKED,
+        ]);
+        // 成約（この時点ではLINE未連携 → 紐付かず linked のまま）
+        $this->contract($referred, 110000);
+        $this->assertSame(Referral::STATUS_LINKED, $referral->fresh()->status);
+
+        // 後からLINE連携 → 補完 ＆ contracted へ昇格
+        $this->lineContact($referred, 'Ulate');
+        $referral->refresh();
+        $this->assertSame(Referral::STATUS_CONTRACTED, $referral->status);
+        $this->assertSame($referred->id, $referral->referred_customer_id);
+    }
+
+    // ---- 複数紹介者の linked を同期で1件に絞る（最初の紹介者のみ有効） ----
+    public function test_sync_keeps_only_first_referrer_on_link(): void
+    {
+        $a = $this->customer('紹介者A');
+        $b = $this->customer('紹介者B');
+        $referred = $this->customer('被紹介者C');
+        $first = Referral::create(['referrer_customer_id' => $a->id, 'referred_line_user_id' => 'Umulti', 'status' => Referral::STATUS_LINKED]);
+        $second = Referral::create(['referrer_customer_id' => $b->id, 'referred_line_user_id' => 'Umulti', 'status' => Referral::STATUS_LINKED]);
+
+        $this->lineContact($referred, 'Umulti'); // Observer → sync
+
+        $this->assertSame(Referral::STATUS_LINKED, $first->fresh()->status);
+        $this->assertSame(Referral::STATUS_REJECTED, $second->fresh()->status);
+        $this->assertSame('already_referred', $second->fresh()->reject_reason);
+    }
+
     // ---- ポイント付与：紹介者（税抜×%）・被紹介者（固定） ----
     public function test_point_grant_referrer_and_referred(): void
     {

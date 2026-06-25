@@ -3,8 +3,9 @@
 namespace App\Observers;
 
 use App\Models\Contract;
-use App\Models\Referral;
+use App\Models\Customer;
 use App\Models\ReferralCode;
+use App\Services\Referral\ReferralCustomerSyncService;
 
 class ContractObserver
 {
@@ -38,16 +39,10 @@ class ContractObserver
             ['code' => ReferralCode::generateUniqueCode()],
         );
 
-        Referral::query()
-            ->where('referred_customer_id', $contract->customer_id)
-            ->where('status', Referral::STATUS_LINKED)
-            ->get()
-            ->each(function (Referral $referral) use ($contract) {
-                $referral->update([
-                    'status' => Referral::STATUS_CONTRACTED,
-                    'contract_id' => $contract->id,
-                    'contracted_at' => now(),
-                ]);
-            });
+        // 被紹介者としての紹介を同期（補完・最初の紹介者のみ有効・contracted昇格）。
+        $customer = Customer::find($contract->customer_id);
+        if ($customer) {
+            app(ReferralCustomerSyncService::class)->sync($customer);
+        }
     }
 }
