@@ -35,7 +35,10 @@ class RegisterLineRichMenu extends Command
         }
 
         $configPath = storage_path('app/line/rich_menu.json');
-        $imagePath = storage_path('app/line/rich_menu.png');
+        // 画像は jpg を優先（PNGは1MB上限を超えやすいため）。なければ png。
+        $imagePath = is_file(storage_path('app/line/rich_menu.jpg'))
+            ? storage_path('app/line/rich_menu.jpg')
+            : storage_path('app/line/rich_menu.png');
         if (!is_file($configPath)) {
             $this->error("定義が見つかりません: {$configPath}");
 
@@ -56,8 +59,9 @@ class RegisterLineRichMenu extends Command
 
         // 2. 画像アップロード
         if (is_file($imagePath)) {
+            $contentType = str_ends_with($imagePath, '.png') ? 'image/png' : 'image/jpeg';
             $upload = Http::withToken($token)
-                ->withBody(file_get_contents($imagePath), 'image/png')
+                ->withBody(file_get_contents($imagePath), $contentType)
                 ->post("https://api-data.line.me/v2/bot/richmenu/{$richMenuId}/content");
             if (!$upload->successful()) {
                 $this->error('画像アップロード失敗: '.$upload->body());

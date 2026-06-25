@@ -482,6 +482,9 @@ Route::get('/line/liff/resume', [LineLiffController::class, 'liffLoginResume'])-
 Route::get('/line/liff/welcome', [\App\Http\Controllers\LineWelcomeLinkController::class, 'show'])->name('line.liff.welcome');
 Route::post('/line/liff/welcome/match', [\App\Http\Controllers\LineWelcomeLinkController::class, 'match'])->name('line.liff.welcome.match');
 
+// 友達紹介系LIFFの統一エントリ（エンドポイント=/line/liff）。?ref= / ?screen= で画面振り分け。
+Route::get('/line/liff', [\App\Http\Controllers\LineLiffEntryController::class, 'entry'])->name('line.liff.entry');
+
 // 友達紹介LIFF（紹介URL紐付け）
 Route::get('/line/liff/referral', [\App\Http\Controllers\LineReferralLiffController::class, 'show'])->name('line.liff.referral');
 Route::post('/line/liff/referral/check', [\App\Http\Controllers\LineReferralLiffController::class, 'check'])->name('line.liff.referral.check');

@@ -1044,6 +1044,45 @@ LINE_REFERRAL_EXPIRE_MONTHS=6
         参照データ：<code>customers</code>（顧客情報）／<code>contracts</code>（成約金額・プラン）／前撮り日（<code>customer_photo_slots</code> 等の撮影予定）。※公開範囲・表示項目は要確認（個人情報のため最小限に）。
       </div>
 
+      <div class="callout warn">
+        <strong>🆕 重要：リッチメニューは「2系統」あり、API系はManager画面に表示されない</strong>
+        LINEのリッチメニューには管理場所の異なる2系統が存在する。<strong>本機能はAPI系（①）で運用する</strong>。
+        <table>
+          <thead><tr><th>系統</th><th>作成方法</th><th>Manager画面（manager.line.biz）に表示</th></tr></thead>
+          <tbody>
+            <tr><td><strong>① Messaging API リッチメニュー</strong>（本採用）</td><td>API：<code>POST /v2/bot/richmenu</code> ＋ 画像アップ ＋ デフォルト設定（<code>line:register-rich-menu</code>）</td><td><strong>❌ 表示されない</strong>（API管理）</td></tr>
+            <tr><td>② Manager リッチメニュー</td><td>manager.line.biz「トークルーム管理 → リッチメニュー」でGUI作成</td><td>✅ 表示される</td></tr>
+          </tbody>
+        </table>
+        そのため <strong>「Manager画面では空（未設定）なのに、ユーザーのトークにはメニューが出る」</strong>のは正常挙動（①がデフォルト適用されているため）。①の変更・削除は <strong>API経由のみ</strong>（Managerからは不可）。<br>
+        ・削除：<code>php artisan line:register-rich-menu --delete={richMenuId}</code><br>
+        ・差し替え：<code>rich_menu.json</code>／画像を更新して再度 <code>line:register-rich-menu</code>（新IDで作成しデフォルト切替）<br>
+        ・①と②を併存させると優先順位・ユーザー単位上書きで混乱するため、<strong>運用はAPI方式（①）に一本化</strong>する。
+      </div>
+
+      <div class="callout info">
+        <strong>📐 実装メモ（2026-06-25 テストBot @318aqqzb で登録）</strong>
+        サイズ <strong>2500×1686（2×2）</strong>／定義 <code>storage/app/line/rich_menu.json</code>・画像 <code>storage/app/line/rich_menu.png</code>。<br>
+        登録結果：<code>richMenuId: richmenu-8940bc068395a245f97ad89f469cf636</code>（画像アップOK・デフォルト設定200）。<br>
+        各ボタンの遷移先は下記「統一エントリ」のクエリURL（<code>liff.line.me/{LIFF_ID}?screen=...</code>）。
+      </div>
+
+      <div class="callout warn">
+        <strong>🔑 LIFF「パス付加」は実機で効かない → 統一エントリ（/line/liff）＋クエリ方式に変更</strong>
+        当初は1つのLIFFアプリ（Endpoint=<code>/line/liff</code>）＋パス付加（<code>liff.line.me/{id}/referral</code> → <code>/line/liff/referral</code>）で4画面を賄う想定だったが、実機では <strong>LINEがエンドポイント直下 <code>/line/liff</code> を読み込み</strong>、<code>The route line/liff could not be found.</code> で404になった（パス付加が機能しない）。<br>
+        <strong>対処：</strong>Endpoint を <code>/line/liff</code> のままにし、<code>LineLiffEntryController</code> が <strong>クエリパラメータで画面を振り分ける</strong>方式に統一。
+        <table>
+          <thead><tr><th>画面</th><th>URL（リッチメニュー action.uri / 配布リンク）</th></tr></thead>
+          <tbody>
+            <tr><td>友達紹介</td><td><code>liff.line.me/{LIFF_ID}?screen=referral</code>（被紹介者は <code>?ref=XXXX</code>）</td></tr>
+            <tr><td>マイステージ</td><td><code>liff.line.me/{LIFF_ID}?screen=my-stage</code></td></tr>
+            <tr><td>マイポイント・ギフト</td><td><code>liff.line.me/{LIFF_ID}?screen=my-points</code></td></tr>
+            <tr><td>顧客詳細（マイページ）</td><td><code>liff.line.me/{LIFF_ID}?screen=mypage</code>（既定）</td></tr>
+          </tbody>
+        </table>
+        <code>liff.line.me/{LIFF_ID}</code> のURLはLIFF IDが不変のため<strong>テスト／本番で同一</strong>（本番化はLIFFアプリのEndpointを本番ドメインへ向けるだけ）。Scopeは <strong>openid（getIDTokenに必須）＋profile</strong>。
+      </div>
+
       <h3>12.5 設定後の確認</h3>
       <ol>
         <li>Messaging API の「検証」で Webhook が 200 を返す</li>
