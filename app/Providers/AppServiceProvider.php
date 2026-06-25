@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\PhotoSlot;
 use App\Models\StaffSchedule;
+use App\Observers\ContractObserver;
 use App\Observers\CustomerObserver;
 use App\Observers\EventObserver;
 use App\Observers\EventReservationObserver;
@@ -36,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         StaffSchedule::observe(StaffScheduleObserver::class);
         EventReservation::observe(EventReservationObserver::class);
         Customer::observe(CustomerObserver::class);
+        Contract::observe(ContractObserver::class);
         PhotoSlot::observe(PhotoSlotObserver::class);
         Event::observe(EventObserver::class);
     }

@@ -49,6 +49,38 @@ class Customer extends Model
         return $this->hasMany(Contract::class);
     }
 
+    // ---- LINE紹介機能 ----
+    public function referralCode()
+    {
+        return $this->hasOne(ReferralCode::class);
+    }
+
+    public function stage()
+    {
+        return $this->hasOne(CustomerStage::class);
+    }
+
+    public function referralPoint()
+    {
+        return $this->hasOne(ReferralPoint::class);
+    }
+
+    public function pointLedgers()
+    {
+        return $this->hasMany(PointLedger::class);
+    }
+
+    public function giftCards()
+    {
+        return $this->hasMany(GiftCard::class);
+    }
+
+    /** 自分が紹介者になっている紹介関係 */
+    public function referralsMade()
+    {
+        return $this->hasMany(Referral::class, 'referrer_customer_id');
+    }
+
     public function tags()
     {
         return $this->belongsToMany(

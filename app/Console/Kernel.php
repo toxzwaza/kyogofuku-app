@@ -36,6 +36,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // Google Calendar トークン維持は Python + HTTP 方式を使用（docs/CRON_SETUP.md 参照）
+
+        // LINE紹介機能：成約1ヶ月後の確定＋ポイント付与／期限切れ紹介の失効
+        $schedule->command('referral:mature')->dailyAt('03:00');
+        $schedule->command('referral:expire')->dailyAt('03:15');
     }
 
     /**
