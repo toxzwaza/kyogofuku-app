@@ -170,6 +170,28 @@ class ReferralLiffTest extends TestCase
             ->assertJson(['state' => 'not_linked']);
     }
 
+    public function test_unlink_removes_contact(): void
+    {
+        $this->fakeLine('Uunlink');
+        $customer = $this->customer('解除する人');
+        $this->link($customer, 'Uunlink');
+        $this->assertDatabaseHas('customer_line_contacts', ['line_user_id' => 'Uunlink']);
+
+        $this->postJson(route('line.liff.unlink'), ['id_token' => 'tok'])
+            ->assertOk()
+            ->assertJson(['state' => 'unlinked']);
+
+        $this->assertDatabaseMissing('customer_line_contacts', ['line_user_id' => 'Uunlink']);
+    }
+
+    public function test_unlink_unauthorized_without_valid_token(): void
+    {
+        Http::fake(['*oauth2/v2.1/verify*' => Http::response(['error' => 'invalid'], 400)]);
+
+        $this->postJson(route('line.liff.unlink'), ['id_token' => 'bad'])
+            ->assertStatus(401);
+    }
+
     public function test_mypage_data_returns_customer_info(): void
     {
         $this->fakeLine('Ump');

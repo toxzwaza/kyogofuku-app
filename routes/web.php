@@ -497,6 +497,7 @@ Route::get('/line/liff/my-points', [\App\Http\Controllers\LineMyPageLiffControll
 Route::get('/line/liff/mypage', [\App\Http\Controllers\LineMyPageLiffController::class, 'showMyPage'])->name('line.liff.mypage');
 Route::post('/line/liff/my-points/data', [\App\Http\Controllers\LineMyPageLiffController::class, 'points'])->name('line.liff.my-points.data');
 Route::post('/line/liff/mypage/data', [\App\Http\Controllers\LineMyPageLiffController::class, 'mypage'])->name('line.liff.mypage.data');
+Route::post('/line/liff/unlink', [\App\Http\Controllers\LineMyPageLiffController::class, 'unlink'])->name('line.liff.unlink');
 
 Route::get('/test-line', function () {
     app()->call('App\Http\Controllers\LineTestController@test');

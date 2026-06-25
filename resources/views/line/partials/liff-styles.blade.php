@@ -86,6 +86,7 @@
   .btn-primary{ background:linear-gradient(180deg,var(--accent),var(--accent-deep)); color:#fff; box-shadow:0 4px 12px rgba(138,109,47,.25); }
   .btn-line{ background:#06C755; color:#fff; }
   .btn-ghost{ background:#fff; color:var(--accent-deep); border:1px solid var(--accent); }
+  .btn-unlink{ background:#fff; color:#a14; border:1px solid #e0b6b6; font-weight:600; }
   .btn + .btn{ margin-top:10px; }
   .copybtn{ padding:0 16px; border:1px solid var(--accent); background:#fff; color:var(--accent-deep); border-radius:10px; font-weight:700; font-size:13px; }
 

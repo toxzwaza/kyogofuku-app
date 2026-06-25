@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesLineLiffUser;
+use App\Models\CustomerLineContact;
 use App\Services\Referral\ReferralSummaryService;
 use Illuminate\Http\Request;
 
@@ -113,6 +114,30 @@ class LineMyPageLiffController extends Controller
 
             return 'data:image/png;base64,'.base64_encode(file_get_contents($path));
         });
+    }
+
+    /**
+     * LINE連携の解除（顧客本人がマイページから実行）。
+     * 既存の管理画面と同様、CustomerLineContact を削除する（メッセージはFKでCASCADE）。
+     */
+    public function unlink(Request $request)
+    {
+        $lineUserId = $this->resolveLineUserId($request);
+        if (!$lineUserId) {
+            return response()->json(['state' => 'unauthorized'], 401);
+        }
+
+        $contact = CustomerLineContact::query()
+            ->where('line_user_id', $lineUserId)
+            ->first();
+
+        if (!$contact) {
+            return response()->json(['state' => 'not_linked'], 200);
+        }
+
+        $contact->delete();
+
+        return response()->json(['state' => 'unlinked']);
     }
 
     private function view(string $screen)

@@ -32,6 +32,7 @@
   const ROUTES = {
     points: @json(route('line.liff.my-points.data')),
     mypage: @json(route('line.liff.mypage.data')),
+    unlink: @json(route('line.liff.unlink')),
   };
   const STAGE_LABEL = { bronze:'ブロンズ', silver:'シルバー', gold:'ゴールド', platinum:'プラチナ' };
   const SUBLINE = { 'my-stage':'ご紹介の実績とランク', 'my-points':'ためる・つかう', 'mypage':'ご登録内容の確認' };
@@ -125,7 +126,32 @@
         + '<div class="name">'+esc(d.customer.name)+' 様</div>'
         + (d.customer.kana ? '<div class="meta">'+esc(d.customer.kana)+'</div>' : '')+'</div></div>'
       + '<div class="card"><h2>ご成約内容</h2><div class="list">'+(contracts||'<div class="empty">ご成約の登録はありません</div>')+'</div></div>'
-      + '<div class="card"><h2>前撮り日</h2><div class="list">'+(slots||'<div class="empty">前撮りのご予定はありません</div>')+'</div></div>';
+      + '<div class="card"><h2>前撮り日</h2><div class="list">'+(slots||'<div class="empty">前撮りのご予定はありません</div>')+'</div></div>'
+      + '<div class="card" id="unlinkCard" style="text-align:center"><button class="btn btn-unlink" id="unlinkBtn">LINE連携を解除する</button>'
+      + '<p class="muted" style="margin-top:8px">解除すると、マイページの情報は表示されなくなります。</p></div>';
+  }
+
+  function wireUnlink(idToken) {
+    const btn = document.getElementById('unlinkBtn');
+    if (!btn) return;
+    btn.onclick = function () {
+      const card = document.getElementById('unlinkCard');
+      card.innerHTML = '<p style="margin:0 0 14px">LINE連携を解除しますか？</p>'
+        + '<button class="btn btn-unlink" id="unlinkYes">解除する</button>'
+        + '<button class="btn btn-ghost" id="unlinkNo" style="margin-top:10px">やめる</button>';
+      document.getElementById('unlinkNo').onclick = function () { location.reload(); };
+      document.getElementById('unlinkYes').onclick = async function () {
+        document.getElementById('unlinkYes').disabled = true;
+        const r = await post(ROUTES.unlink, { id_token: idToken });
+        if (r.data.state === 'unlinked' || r.data.state === 'not_linked') {
+          card.innerHTML = '<div class="msg ok">LINE連携を解除しました。</div>';
+          document.getElementById('subline').textContent = '';
+          setTimeout(renderNotLinked, 900);
+        } else {
+          card.innerHTML = '<div class="msg err">解除に失敗しました。時間をおいて再度お試しください。</div>';
+        }
+      };
+    };
   }
 
   async function main() {
@@ -142,6 +168,7 @@
         const r = await post(ROUTES.mypage, { id_token: idToken });
         if (r.status === 403) return renderNotLinked();
         body.innerHTML = renderMypage(r.data);
+        wireUnlink(idToken);
       } else {
         const r = await post(ROUTES.points, { id_token: idToken });
         if (r.status === 403) return renderNotLinked();
