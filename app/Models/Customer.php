@@ -81,6 +81,11 @@ class Customer extends Model
         return $this->hasMany(Referral::class, 'referrer_customer_id');
     }
 
+    public function customerCoupons()
+    {
+        return $this->hasMany(CustomerCoupon::class);
+    }
+
     public function tags()
     {
         return $this->belongsToMany(

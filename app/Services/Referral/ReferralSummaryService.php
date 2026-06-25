@@ -3,6 +3,7 @@
 namespace App\Services\Referral;
 
 use App\Models\Customer;
+use App\Models\CustomerCoupon;
 use App\Models\GiftCard;
 use App\Models\PointLedger;
 use App\Models\Referral;
@@ -50,7 +51,25 @@ class ReferralSummaryService
             ->groupBy('status')
             ->pluck('cnt', 'status');
 
+        $coupons = CustomerCoupon::query()
+            ->with('coupon:id,name,discount_type,discount_value,combinable')
+            ->where('customer_id', $customer->id)
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (CustomerCoupon $cc) => [
+                'id' => $cc->id,
+                'name' => $cc->coupon?->name,
+                'discount_type' => $cc->coupon?->discount_type,
+                'discount_value' => $cc->coupon?->discount_value,
+                'combinable' => (bool) ($cc->coupon?->combinable),
+                'status' => $cc->status,
+                'valid_until' => $cc->valid_until?->format('Y-m-d'),
+                'used_at' => $cc->used_at?->format('Y-m-d H:i'),
+                'usable' => $cc->isUsable(),
+            ]);
+
         return [
+            'coupons' => $coupons,
             'stage' => $stage?->stage ?? 'bronze',
             'matured_referrals_count' => (int) ($stage?->matured_referrals_count ?? 0),
             'referral_code' => optional($customer->referralCode)->code,

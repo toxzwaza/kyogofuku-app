@@ -896,7 +896,7 @@
 
                     <!-- ポイント・ギフトタブ -->
                     <template #referral>
-                        <CustomerReferralPanel :customer-id="customer.id" :referral="referral" />
+                        <CustomerReferralPanel :customer-id="customer.id" :referral="referral" :distributable-coupons="distributableCoupons" />
                     </template>
                 </UiTabs>
             </div>
@@ -2413,6 +2413,10 @@ const props = defineProps({
     referral: {
         type: Object,
         default: () => ({}),
+    },
+    distributableCoupons: {
+        type: Array,
+        default: () => [],
     },
     notes: {
         type: Array,

@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagControll
 use App\Http\Controllers\Admin\StageSettingController as AdminStageSettingController;
 use App\Http\Controllers\Admin\ReferralController as AdminReferralController;
 use App\Http\Controllers\Admin\GiftCardController as AdminGiftCardController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\CustomerCouponController as AdminCustomerCouponController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignController;
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
@@ -448,6 +450,14 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     });
     Route::post('/customers/{customer}/gift-cards', [AdminGiftCardController::class, 'issue'])->name('customers.gift-cards.issue');
     Route::post('/gift-cards/{giftCard}/cancel', [AdminGiftCardController::class, 'cancel'])->name('gift-cards.cancel');
+
+    // 任意配布クーポン
+    Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons.index');
+    Route::post('/coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
+    Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
+    Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
+    Route::post('/customers/{customer}/coupons', [AdminCustomerCouponController::class, 'distribute'])->name('customers.coupons.distribute');
+    Route::post('/customer-coupons/{customerCoupon}/use', [AdminCustomerCouponController::class, 'markUsed'])->name('customer-coupons.use');
 
     // 資料管理
     Route::post('/documents', [AdminEventController::class, 'storeDocument'])->name('documents.store');

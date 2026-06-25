@@ -556,10 +556,14 @@ class CustomerController extends Controller
         })->values()->all();
 
         $referralSummary = app(\App\Services\Referral\ReferralSummaryService::class)->forCustomer($customer);
+        $distributableCoupons = \App\Models\Coupon::active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'discount_type', 'discount_value', 'combinable']);
 
         return Inertia::render($this->viewFor('Admin/Customer/Show'), [
             'customer' => $customerForInertia,
             'referral' => $referralSummary,
+            'distributableCoupons' => $distributableCoupons,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'ceremonyAreas' => $ceremonyAreas,
             'shops' => $shops,

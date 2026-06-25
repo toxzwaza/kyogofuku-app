@@ -35,6 +35,7 @@ export function useAdminNav() {
                 { label: '制約テンプレート', route: 'admin.constraint-templates.index', icon: Lock,        activePatterns: ['admin.constraint-templates.*'] },
                 { label: '友達紹介',       route: 'admin.referral.list',             icon: Gift,          activePatterns: ['admin.referral.list'] },
                 { label: 'ステージ設定',   route: 'admin.referral.stage-settings.index', icon: Settings,  activePatterns: ['admin.referral.stage-settings.*'] },
+                { label: 'クーポン',       route: 'admin.coupons.index',             icon: Ticket,        activePatterns: ['admin.coupons.*'] },
             ],
         },
         {

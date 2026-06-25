@@ -68,6 +68,47 @@
             </div>
         </UiCard>
 
+        <!-- クーポン（任意配布） -->
+        <UiCard variant="default" padding="md">
+            <template #header><h3 class="font-serif text-base">クーポン</h3></template>
+            <div class="flex items-end gap-2 flex-wrap mb-3">
+                <UiFormField label="クーポンを配布" class="w-72">
+                    <UiSelect v-model="distributeCouponId" :options="[{ value: '', label: '選択してください' }, ...couponOptions]" size="sm" />
+                </UiFormField>
+                <UiButton variant="primary" size="sm" :disabled="!distributeCouponId" @click="distribute">配布する</UiButton>
+            </div>
+            <div v-if="referral.coupons && referral.coupons.length" class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-brand-surface-2">
+                        <tr>
+                            <th class="px-3 py-2 text-left font-medium">クーポン</th>
+                            <th class="px-3 py-2 text-left font-medium">併用</th>
+                            <th class="px-3 py-2 text-left font-medium">有効期限</th>
+                            <th class="px-3 py-2 text-left font-medium">状態</th>
+                            <th class="px-3 py-2 text-left font-medium">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-brand-border">
+                        <tr v-for="c in referral.coupons" :key="c.id">
+                            <td class="px-3 py-2">{{ c.name }}（{{ couponDiscount(c) }}）</td>
+                            <td class="px-3 py-2">
+                                <span :class="c.combinable ? 'bg-green-100 text-green-900' : 'bg-gray-200 text-gray-700'" class="px-2 py-0.5 rounded text-xs">{{ c.combinable ? '併用可' : '併用不可' }}</span>
+                            </td>
+                            <td class="px-3 py-2">{{ c.valid_until || '—' }}</td>
+                            <td class="px-3 py-2">
+                                <span :class="couponStatusClass(c.status)" class="px-2 py-0.5 rounded text-xs">{{ couponStatusLabel(c.status) }}</span>
+                            </td>
+                            <td class="px-3 py-2">
+                                <button v-if="c.usable" type="button" class="text-xs text-brand-primary hover:underline" @click="useCoupon(c)">使用</button>
+                                <span v-else class="text-xs text-brand-text-subtle">{{ c.used_at || '—' }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div v-else class="py-4 text-center text-brand-text-muted text-sm">保有クーポンはありません</div>
+        </UiCard>
+
         <!-- ポイント台帳 -->
         <UiCard variant="default" padding="md">
             <template #header><h3 class="font-serif text-base">ポイント履歴</h3></template>
@@ -101,12 +142,34 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import { UiCard, UiFormField, UiInput, UiButton } from '@/Components/UI';
+import { UiCard, UiFormField, UiInput, UiButton, UiSelect } from '@/Components/UI';
 
 const props = defineProps({
     customerId: [Number, String],
     referral: { type: Object, default: () => ({}) },
+    distributableCoupons: { type: Array, default: () => [] },
 });
+
+const distributeCouponId = ref('');
+const couponOptions = computed(() => props.distributableCoupons.map((c) => ({
+    value: c.id,
+    label: `${c.name}（${couponDiscount(c)}${c.combinable ? '・併用可' : ''}）`,
+})));
+const couponDiscount = (c) => c.discount_type === 'rate' ? `${c.discount_value}%OFF` : `${Number(c.discount_value).toLocaleString()}円OFF`;
+const couponStatusLabel = (s) => ({ held: '保有', used: '使用済', expired: '期限切れ' }[s] || s);
+const couponStatusClass = (s) => ({ held: 'bg-blue-100 text-blue-900', used: 'bg-gray-200 text-gray-700', expired: 'bg-gray-100 text-gray-500' }[s]);
+
+const distribute = () => {
+    if (!distributeCouponId.value) return;
+    router.post(route('admin.customers.coupons.distribute', props.customerId), { coupon_id: distributeCouponId.value }, {
+        preserveScroll: true,
+        onSuccess: () => { distributeCouponId.value = ''; },
+    });
+};
+const useCoupon = (c) => {
+    if (!confirm('このクーポンを使用済みにしますか？')) return;
+    router.post(route('admin.customer-coupons.use', c.id), {}, { preserveScroll: true });
+};
 
 const unit = computed(() => Number(props.referral.gift_card_unit || 500));
 const issueAmount = ref(unit.value);
