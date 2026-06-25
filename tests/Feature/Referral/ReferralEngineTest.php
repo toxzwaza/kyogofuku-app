@@ -15,6 +15,7 @@ use App\Models\Shop;
 use App\Services\Referral\GiftCardService;
 use App\Services\Referral\PointGrantService;
 use App\Services\Referral\ReferralLinkingService;
+use App\Services\Referral\ReferralMaturationService;
 use App\Services\Referral\ReferralPointService;
 use App\Services\Referral\StageEvaluator;
 use Database\Seeders\ReferralSettingsSeeder;
@@ -307,6 +308,51 @@ class ReferralEngineTest extends TestCase
         $referral = Referral::where('referred_customer_id', $referred->id)->first();
         $this->assertSame(Referral::STATUS_CONTRACTED, $referral->status); // matured にならない
         $this->assertSame(0, (int) ReferralPoint::where('customer_id', $referrer->id)->value('balance'));
+    }
+
+    // ---- 手動成立（管理画面の「ポイント反映」）：据置を待たず即時付与・冪等 ----
+    public function test_manual_maturation_grants_immediately(): void
+    {
+        $referrer = $this->customer('紹介者');
+        $referred = $this->customer('被紹介者');
+        Referral::create([
+            'referrer_customer_id' => $referrer->id,
+            'referred_line_user_id' => 'Umanual',
+            'referred_customer_id' => $referred->id,
+            'status' => Referral::STATUS_LINKED,
+        ]);
+        $this->contract($referred, 110000); // Observer → contracted（contracted_at = now、据置未経過）
+        $referral = Referral::where('referred_customer_id', $referred->id)->first();
+        $this->assertSame(Referral::STATUS_CONTRACTED, $referral->status);
+
+        $svc = app(ReferralMaturationService::class);
+        $result = $svc->mature($referral); // 据置を待たず即時反映
+        $this->assertTrue($result['ok']);
+
+        $referral->refresh();
+        $this->assertSame(Referral::STATUS_MATURED, $referral->status);
+        $this->assertSame(3000, (int) ReferralPoint::where('customer_id', $referrer->id)->value('balance'));
+        $this->assertSame(10000, (int) ReferralPoint::where('customer_id', $referred->id)->value('balance'));
+
+        // 冪等：2回目は二重付与しない
+        $second = $svc->mature($referral->fresh());
+        $this->assertFalse($second['ok']);
+        $this->assertSame('already_matured', $second['reason']);
+        $this->assertSame(3000, (int) ReferralPoint::where('customer_id', $referrer->id)->value('balance'));
+    }
+
+    public function test_manual_maturation_rejects_non_contracted(): void
+    {
+        $referrer = $this->customer('紹介者');
+        $referral = Referral::create([
+            'referrer_customer_id' => $referrer->id,
+            'referred_line_user_id' => 'Ulinkedonly',
+            'status' => Referral::STATUS_LINKED,
+        ]);
+
+        $result = app(ReferralMaturationService::class)->mature($referral);
+        $this->assertFalse($result['ok']);
+        $this->assertSame('not_contracted', $result['reason']);
     }
 
     // ---- ギフトカード：発行（減算）・単位/残高チェック・キャンセル（返還）----

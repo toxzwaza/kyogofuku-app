@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\ResolvesUiView;
 use App\Http\Controllers\Controller;
 use App\Models\Referral;
+use App\Services\Referral\ReferralMaturationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -54,5 +55,25 @@ class ReferralController extends Controller
             ],
             'filters' => ['status' => $request->input('status', '')],
         ]);
+    }
+
+    /**
+     * 手動で紹介を成立（matured）させ、ポイントを反映する。
+     * 自動バッチ（referral:mature）が動かなかった場合のフォールバック。据置期間は待たず即時反映。
+     */
+    public function mature(Referral $referral, ReferralMaturationService $maturation)
+    {
+        $result = $maturation->mature($referral);
+
+        if (!$result['ok']) {
+            return back()->with('error', match ($result['reason'] ?? '') {
+                'already_matured' => 'この紹介はすでに確定（ポイント反映済み）です。',
+                'not_contracted' => 'ポイント反映できるのは「成約（仮）」の紹介のみです。',
+                'invalid_contract' => '有効な確定成約が見つからないため反映できません。',
+                default => '反映に失敗しました。',
+            });
+        }
+
+        return back()->with('success', '紹介を成立させ、ポイントを反映しました。');
     }
 }

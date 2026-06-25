@@ -29,6 +29,7 @@
                             <th class="px-4 py-2 text-left font-medium">成約日</th>
                             <th class="px-4 py-2 text-left font-medium">確定日</th>
                             <th class="px-4 py-2 text-left font-medium">期限</th>
+                            <th class="px-4 py-2 text-left font-medium">操作</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-brand-border">
@@ -48,6 +49,18 @@
                             <td class="px-4 py-2">{{ r.contracted_at || '—' }}</td>
                             <td class="px-4 py-2">{{ r.matured_at || '—' }}</td>
                             <td class="px-4 py-2">{{ r.expires_at || '—' }}</td>
+                            <td class="px-4 py-2">
+                                <button
+                                    v-if="r.status === 'contracted'"
+                                    type="button"
+                                    :disabled="processingId === r.id"
+                                    class="px-3 py-1 rounded-soft text-xs bg-brand-primary text-brand-on-primary hover:opacity-90 disabled:opacity-50"
+                                    @click="matureReferral(r)"
+                                >
+                                    ポイント反映
+                                </button>
+                                <span v-else class="text-brand-text-subtle text-xs">—</span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -71,6 +84,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import { UiPageHeader, UiCard } from '@/Components/UI';
 
 const props = defineProps({
@@ -99,5 +113,15 @@ const statusClass = (s) => ({
 
 const filterBy = (status) => {
     router.get(route('admin.referral.list'), status ? { status } : {}, { preserveState: true });
+};
+
+const processingId = ref(null);
+const matureReferral = (r) => {
+    if (!window.confirm(`「${r.referrer || '—'}」さんと被紹介者に紹介特典ポイントを反映します。よろしいですか？`)) return;
+    processingId.value = r.id;
+    router.post(route('admin.referral.mature', r.id), {}, {
+        preserveScroll: true,
+        onFinish: () => { processingId.value = null; },
+    });
 };
 </script>

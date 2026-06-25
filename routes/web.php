@@ -447,6 +447,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         Route::get('/stage-settings', [AdminStageSettingController::class, 'index'])->name('stage-settings.index');
         Route::put('/stage-settings', [AdminStageSettingController::class, 'update'])->name('stage-settings.update');
         Route::get('/list', [AdminReferralController::class, 'index'])->name('list');
+        Route::post('/{referral}/mature', [AdminReferralController::class, 'mature'])->name('mature');
     });
     Route::post('/customers/{customer}/gift-cards', [AdminGiftCardController::class, 'issue'])->name('customers.gift-cards.issue');
     Route::post('/gift-cards/{giftCard}/cancel', [AdminGiftCardController::class, 'cancel'])->name('gift-cards.cancel');
