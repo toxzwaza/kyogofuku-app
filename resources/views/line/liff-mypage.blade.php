@@ -1,30 +1,27 @@
 <!DOCTYPE html>
 <html lang="ja">
+@php
+  $theme = ['my-stage' => 'indigo', 'my-points' => 'vermilion', 'mypage' => 'matcha'][$screen] ?? 'matcha';
+  $heading = ['my-stage' => 'マイステージ', 'my-points' => 'マイポイント', 'mypage' => 'マイページ'][$screen] ?? 'マイページ';
+@endphp
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>京呉服平田 マイページ</title>
-<style>
-  body { font-family: -apple-system, "Hiragino Sans", sans-serif; margin: 0; background: #f7f7f7; color: #222; }
-  .wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
-  .card { background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 14px; }
-  h1 { font-size: 17px; margin: 0 0 12px; }
-  h2 { font-size: 14px; margin: 0 0 8px; color: #555; }
-  .big { font-size: 28px; font-weight: 700; color: #06C755; }
-  .stage { display: inline-block; padding: 4px 12px; border-radius: 16px; font-weight: 700; }
-  .b-bronze { background:#fde7d2; color:#8a4b00; } .b-silver { background:#e5e7eb; color:#374151; }
-  .b-gold { background:#fdf0c8; color:#8a6d00; } .b-platinum { background:#e0e7ff; color:#3730a3; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { padding: 6px 4px; border-bottom: 1px solid #eee; text-align: left; }
-  .muted { color: #888; font-size: 13px; }
-  #loading { text-align:center; color:#888; padding:40px 0; }
-  .err { background:#fdecec; color:#b3261e; padding:12px; border-radius:8px; }
-</style>
+<title>京呉服平田 {{ $heading }}</title>
+@include('line.partials.liff-styles')
 </head>
-<body>
+<body data-theme="{{ $theme }}">
 <div class="wrap">
-  <div id="loading">読み込み中…</div>
-  <div id="content"></div>
+  <div id="loading">読み込んでいます…</div>
+  <div id="content" style="display:none">
+    <div class="appbar">
+      <span class="seal">京呉服平田</span>
+      <h1>{{ $heading }}</h1>
+      <div class="rule"></div>
+      <div class="sub" id="subline"></div>
+    </div>
+    <div id="body"></div>
+  </div>
 </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -37,6 +34,16 @@
     mypage: @json(route('line.liff.mypage.data')),
   };
   const STAGE_LABEL = { bronze:'ブロンズ', silver:'シルバー', gold:'ゴールド', platinum:'プラチナ' };
+  const BADGES = {
+    bronze: @json(asset('images/line/badges/bronze.png')),
+    silver: @json(asset('images/line/badges/silver.png')),
+    gold: @json(asset('images/line/badges/gold.png')),
+    platinum: @json(asset('images/line/badges/platinum.png')),
+  };
+  const SUBLINE = { 'my-stage':'ご紹介の実績とランク', 'my-points':'ためる・つかう', 'mypage':'ご登録内容の確認' };
+
+  const yen = (n) => Number(n||0).toLocaleString();
+  const esc = (s) => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
   async function post(url, body) {
     const res = await fetch(url, {
@@ -46,33 +53,55 @@
     });
     return { status: res.status, data: await res.json().catch(() => ({})) };
   }
-  const yen = (n) => Number(n||0).toLocaleString();
 
   function renderNotLinked() {
-    document.getElementById('content').innerHTML =
-      '<div class="card"><div class="err">ご利用には顧客登録とLINE連携が必要です。店舗スタッフへお問い合わせください。</div></div>';
+    document.getElementById('body').innerHTML =
+      '<div class="card"><div class="msg err">ご利用には顧客登録とLINE連携が必要です。店舗スタッフへお問い合わせください。</div></div>';
   }
+
   function renderStage(d) {
-    return '<div class="card"><h1>マイステージ</h1>'
-      + '<span class="stage b-'+d.stage+'">'+(STAGE_LABEL[d.stage]||d.stage)+'</span>'
-      + '<p class="muted" style="margin-top:10px">成立した紹介：'+d.matured_referrals_count+' 件</p></div>';
+    const r = d.referrals_made || {};
+    return ''
+      + '<div class="card"><h2>あなたのステージ</h2>'
+        + '<div class="crest"><img class="badge" src="'+(BADGES[d.stage]||BADGES.bronze)+'" alt="'+(STAGE_LABEL[d.stage]||'')+'">'
+        + '<div class="name">'+(STAGE_LABEL[d.stage]||d.stage)+'</div>'
+        + '<div class="meta">成立したご紹介：'+(d.matured_referrals_count||0)+' 件</div></div></div>'
+      + '<div class="card"><h2>ご紹介の状況</h2>'
+        + '<div class="kv"><span class="k">成立（特典確定）</span><span class="v">'+(r.matured||0)+' 件</span></div>'
+        + '<div class="kv"><span class="k">ご成約（確定待ち）</span><span class="v">'+(r.contracted||0)+' 件</span></div>'
+        + '<div class="kv"><span class="k">ご登録（成約待ち）</span><span class="v">'+(r.linked||0)+' 件</span></div></div>'
+      + '<p class="muted center">ご紹介が成立するほど、特典の還元率がアップします。</p>';
   }
+
   function renderPoints(d) {
-    let rows = (d.ledger||[]).slice(0,20).map(l =>
-      '<tr><td>'+l.created_at+'</td><td>'+l.note+'</td><td style="text-align:right">'+(l.amount>=0?'+':'')+yen(l.amount)+'</td></tr>').join('');
-    return '<div class="card"><h1>マイポイント</h1>'
-      + '<div class="big">'+yen(d.balance)+' pt</div>'
-      + '<p class="muted">'+yen(d.gift_card_unit)+'円単位でギフトカードに引き換えできます（店舗にて）。</p></div>'
-      + '<div class="card"><h2>ポイント履歴</h2><table>'+(rows||'<tr><td class="muted">履歴はありません</td></tr>')+'</table></div>';
+    let rows = (d.ledger||[]).slice(0,30).map(l =>
+      '<div class="row"><div><div>'+esc(l.note||'ポイント')+'</div><div class="d">'+esc(l.created_at)+'</div></div>'
+      + '<div class="'+(l.amount>=0?'plus':'minus')+'">'+(l.amount>=0?'+':'')+yen(l.amount)+'</div></div>').join('');
+    let gifts = (d.gift_cards||[]).map(g => {
+      const used = g.status !== 'issued';
+      return '<div class="row"><div><div>ギフトカード '+yen(g.amount)+'円</div><div class="d">'+esc(g.issued_at||'')+'</div></div>'
+        + '<span class="pill'+(used?' gray':'')+'">'+(g.status==='issued'?'発行済':'取消')+'</span></div>';
+    }).join('');
+    return ''
+      + '<div class="card"><h2>ご利用可能ポイント</h2>'
+        + '<div class="hero"><div class="num">'+yen(d.balance)+'<small>pt</small></div><div class="cap">POINT</div></div>'
+        + '<p class="muted center" style="margin-top:12px">'+yen(d.gift_card_unit)+'円単位でギフトカードに引き換えできます（店舗にて）。</p></div>'
+      + '<div class="card"><h2>ポイント履歴</h2><div class="list">'+(rows||'<div class="empty">履歴はまだありません</div>')+'</div></div>'
+      + (gifts ? '<div class="card"><h2>ギフトカード</h2><div class="list">'+gifts+'</div></div>' : '');
   }
+
   function renderMypage(d) {
     let contracts = (d.contracts||[]).map(c =>
-      '<tr><td>'+(c.contract_date||'')+'</td><td>'+(c.plan||c.kimono_type||'')+'</td><td style="text-align:right">'+yen(c.total_amount)+'円</td></tr>').join('');
+      '<div class="row"><div><div>'+esc(c.plan||c.kimono_type||'ご成約')+'</div><div class="d">'+esc(c.contract_date||'')+'</div></div>'
+      + '<div class="v">'+yen(c.total_amount)+' 円</div></div>').join('');
     let slots = (d.photo_slots||[]).map(p =>
-      '<tr><td>'+(p.shoot_date||'')+'</td><td>'+(p.shoot_time||'')+'</td></tr>').join('');
-    return '<div class="card"><h1>マイページ</h1><p>'+d.customer.name+' 様</p></div>'
-      + '<div class="card"><h2>ご成約内容</h2><table>'+(contracts||'<tr><td class="muted">成約情報はありません</td></tr>')+'</table></div>'
-      + '<div class="card"><h2>前撮り日</h2><table>'+(slots||'<tr><td class="muted">前撮りの予定はありません</td></tr>')+'</table></div>';
+      '<div class="row"><div class="d">前撮り</div><div class="v">'+esc(p.shoot_date||'')+' '+esc(p.shoot_time||'')+'</div></div>').join('');
+    return ''
+      + '<div class="card"><div class="crest"><div class="ring"><span>'+esc((d.customer.name||'　').slice(0,1))+'</span></div>'
+        + '<div class="name">'+esc(d.customer.name)+' 様</div>'
+        + (d.customer.kana ? '<div class="meta">'+esc(d.customer.kana)+'</div>' : '')+'</div></div>'
+      + '<div class="card"><h2>ご成約内容</h2><div class="list">'+(contracts||'<div class="empty">ご成約の登録はありません</div>')+'</div></div>'
+      + '<div class="card"><h2>前撮り日</h2><div class="list">'+(slots||'<div class="empty">前撮りのご予定はありません</div>')+'</div></div>';
   }
 
   async function main() {
@@ -81,20 +110,23 @@
       if (!liff.isLoggedIn()) { liff.login(); return; }
       const idToken = liff.getIDToken();
       document.getElementById('loading').style.display = 'none';
-      const content = document.getElementById('content');
+      document.getElementById('content').style.display = 'block';
+      document.getElementById('subline').textContent = SUBLINE[SCREEN] || '';
+      const body = document.getElementById('body');
 
       if (SCREEN === 'mypage') {
         const r = await post(ROUTES.mypage, { id_token: idToken });
         if (r.status === 403) return renderNotLinked();
-        content.innerHTML = renderMypage(r.data);
+        body.innerHTML = renderMypage(r.data);
       } else {
         const r = await post(ROUTES.points, { id_token: idToken });
         if (r.status === 403) return renderNotLinked();
-        content.innerHTML = (SCREEN === 'my-stage') ? renderStage(r.data) : renderPoints(r.data);
+        body.innerHTML = (SCREEN === 'my-stage') ? renderStage(r.data) : renderPoints(r.data);
       }
     } catch (e) {
       document.getElementById('loading').style.display = 'none';
-      document.getElementById('content').innerHTML = '<div class="card"><div class="err">エラーが発生しました。</div></div>';
+      document.getElementById('content').style.display = 'block';
+      document.getElementById('body').innerHTML = '<div class="card"><div class="msg err">エラーが発生しました。</div></div>';
     }
   }
   main();
