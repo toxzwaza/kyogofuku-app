@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Referral;
 
+use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\CustomerLineContact;
+use App\Models\Plan;
 use App\Models\Referral;
 use App\Models\ReferralCode;
 use App\Models\Shop;
@@ -28,6 +30,25 @@ class ReferralLiffTest extends TestCase
         $this->seed(ReferralSettingsSeeder::class);
         $this->shop = Shop::create(['name' => '店', 'is_active' => true]);
         config(['line.liff.login_channel_id' => '2009633621']);
+        config(['line.referral.liff_url' => 'https://liff.line.me/2009633621-Wh0yxjfu']);
+    }
+
+    /** 成約済（確定contract）顧客を作る。ContractObserver が紹介コードを発行する。 */
+    private function contractedCustomer(string $name = '紹介者'): Customer
+    {
+        $plan = Plan::firstOrCreate(['code' => 'PTEST'], ['name' => '振袖', 'is_active' => true]);
+        $c = $this->customer($name);
+        Contract::create([
+            'customer_id' => $c->id,
+            'shop_id' => $this->shop->id,
+            'plan_id' => $plan->id,
+            'contract_date' => today(),
+            'kimono_type' => '振袖',
+            'total_amount' => 200000,
+            'status' => '確定',
+        ]);
+
+        return $c;
     }
 
     /** verify と push をモック。verify は sub を返す。 */
@@ -100,6 +121,44 @@ class ReferralLiffTest extends TestCase
         $this->fakeLine('Unobody');
 
         $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJson(['state' => 'not_linked']);
+    }
+
+    public function test_me_returns_code_for_contracted_customer(): void
+    {
+        $this->fakeLine('Uref1');
+        $customer = $this->contractedCustomer();
+        $this->link($customer, 'Uref1');
+
+        $res = $this->postJson(route('line.liff.referral.me'), ['id_token' => 'tok'])
+            ->assertOk()
+            ->assertJson(['state' => 'ok']);
+
+        $code = $res->json('code');
+        $this->assertNotEmpty($code);
+        $this->assertStringContainsString('?ref='.$code, $res->json('share_url'));
+        // ContractObserver が成約時にコードを発行している
+        $this->assertDatabaseHas('referral_codes', ['customer_id' => $customer->id, 'code' => $code]);
+    }
+
+    public function test_me_not_eligible_without_contract(): void
+    {
+        $this->fakeLine('Uref2');
+        $customer = $this->customer('未成約');
+        $this->link($customer, 'Uref2');
+
+        $this->postJson(route('line.liff.referral.me'), ['id_token' => 'tok'])
+            ->assertOk()
+            ->assertJson(['state' => 'not_eligible']);
+        $this->assertDatabaseMissing('referral_codes', ['customer_id' => $customer->id]);
+    }
+
+    public function test_me_not_linked(): void
+    {
+        $this->fakeLine('Unobody2');
+
+        $this->postJson(route('line.liff.referral.me'), ['id_token' => 'tok'])
             ->assertStatus(403)
             ->assertJson(['state' => 'not_linked']);
     }

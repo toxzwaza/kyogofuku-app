@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Contract;
 use App\Models\Referral;
+use App\Models\ReferralCode;
 
 class ContractObserver
 {
@@ -30,6 +31,12 @@ class ContractObserver
         if (!$contract->customer_id) {
             return;
         }
+
+        // 成約済顧客は紹介可能になるため、紹介コードを発行（未発行なら）。
+        ReferralCode::firstOrCreate(
+            ['customer_id' => $contract->customer_id],
+            ['code' => ReferralCode::generateUniqueCode()],
+        );
 
         Referral::query()
             ->where('referred_customer_id', $contract->customer_id)

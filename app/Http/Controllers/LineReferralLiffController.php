@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesLineLiffUser;
 use App\Models\Referral;
+use App\Models\ReferralCode;
 use App\Models\ReferralSetting;
 use App\Services\Line\LineMessagingService;
 use App\Services\Referral\ReferralLinkingService;
@@ -23,6 +24,44 @@ class LineReferralLiffController extends Controller
             'liffId' => config('line.liff.referral_id'),
             'ref' => (string) $request->query('ref', ''),
             'addFriendUrl' => config('line.line_official_add_friend_url'),
+        ]);
+    }
+
+    /**
+     * 紹介者の自分の紹介コード・共有URLを返す（リッチメニュー「友達紹介」＝ref無しで開いたとき）。
+     * 紹介できるのは成約済（status='確定'のcontractがある）顧客のみ。既にコードがあれば有資格。
+     * 有資格ならコードを発行（firstOrCreate）して返す。
+     */
+    public function me(Request $request)
+    {
+        $lineUserId = $this->resolveLineUserId($request);
+        if (!$lineUserId) {
+            return response()->json(['state' => 'unauthorized'], 401);
+        }
+
+        $customer = $this->resolveCustomerByLineUserId($lineUserId);
+        if (!$customer) {
+            return response()->json(['state' => 'not_linked'], 403);
+        }
+
+        $hasCode = $customer->referralCode()->exists();
+        $isContracted = $customer->contracts()->where('status', '確定')->exists();
+        if (!$hasCode && !$isContracted) {
+            return response()->json(['state' => 'not_eligible']);
+        }
+
+        $code = ReferralCode::firstOrCreate(
+            ['customer_id' => $customer->id],
+            ['code' => ReferralCode::generateUniqueCode()],
+        );
+
+        $base = (string) config('line.referral.liff_url');
+        $shareUrl = $base !== '' ? $base.'?ref='.$code->code : '';
+
+        return response()->json([
+            'state' => 'ok',
+            'code' => $code->code,
+            'share_url' => $shareUrl,
         ]);
     }
 

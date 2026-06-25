@@ -487,6 +487,7 @@ Route::get('/line/liff', [\App\Http\Controllers\LineLiffEntryController::class, 
 
 // 友達紹介LIFF（紹介URL紐付け）
 Route::get('/line/liff/referral', [\App\Http\Controllers\LineReferralLiffController::class, 'show'])->name('line.liff.referral');
+Route::post('/line/liff/referral/me', [\App\Http\Controllers\LineReferralLiffController::class, 'me'])->name('line.liff.referral.me');
 Route::post('/line/liff/referral/check', [\App\Http\Controllers\LineReferralLiffController::class, 'check'])->name('line.liff.referral.check');
 Route::post('/line/liff/referral/link', [\App\Http\Controllers\LineReferralLiffController::class, 'link'])->name('line.liff.referral.link');
 
