@@ -555,8 +555,11 @@ class CustomerController extends Controller
             ];
         })->values()->all();
 
+        $referralSummary = app(\App\Services\Referral\ReferralSummaryService::class)->forCustomer($customer);
+
         return Inertia::render($this->viewFor('Admin/Customer/Show'), [
             'customer' => $customerForInertia,
+            'referral' => $referralSummary,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'ceremonyAreas' => $ceremonyAreas,
             'shops' => $shops,

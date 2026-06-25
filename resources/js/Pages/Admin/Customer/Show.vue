@@ -893,6 +893,11 @@
                         </UiCard>
                         </div>
                     </template>
+
+                    <!-- ポイント・ギフトタブ -->
+                    <template #referral>
+                        <CustomerReferralPanel :customer-id="customer.id" :referral="referral" />
+                    </template>
                 </UiTabs>
             </div>
         </div>
@@ -2390,8 +2395,10 @@ const tabs = [
     { id: 'overview', label: '概要' },
     { id: 'info',     label: '詳細情報' },
     { id: 'comm',     label: '連絡・メモ' },
+    { id: 'referral', label: 'ポイント・ギフト' },
 ];
 import CustomerSummaryPanel from '@/Components/Admin/CustomerSummaryPanel.vue';
+import CustomerReferralPanel from '@/Components/Admin/CustomerReferralPanel.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -2403,6 +2410,10 @@ import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     customer: Object,
+    referral: {
+        type: Object,
+        default: () => ({}),
+    },
     notes: {
         type: Array,
         default: () => [],

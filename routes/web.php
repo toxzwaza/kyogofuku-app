@@ -11,6 +11,9 @@ use App\Http\Controllers\Admin\DeviceRegistrationController as AdminDeviceRegist
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\Admin\CustomerLineMessageController;
 use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagController;
+use App\Http\Controllers\Admin\StageSettingController as AdminStageSettingController;
+use App\Http\Controllers\Admin\ReferralController as AdminReferralController;
+use App\Http\Controllers\Admin\GiftCardController as AdminGiftCardController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignController;
 use App\Http\Controllers\Admin\EventImageController as AdminEventImageController;
@@ -436,6 +439,15 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/work-attributes/{workAttribute}/edit', [AdminWorkAttributeController::class, 'edit'])->name('work-attributes.edit');
     Route::put('/work-attributes/{workAttribute}', [AdminWorkAttributeController::class, 'update'])->name('work-attributes.update');
     Route::delete('/work-attributes/{workAttribute}', [AdminWorkAttributeController::class, 'destroy'])->name('work-attributes.destroy');
+
+    // LINE友達紹介機能（管理）
+    Route::prefix('referral')->name('referral.')->group(function () {
+        Route::get('/stage-settings', [AdminStageSettingController::class, 'index'])->name('stage-settings.index');
+        Route::put('/stage-settings', [AdminStageSettingController::class, 'update'])->name('stage-settings.update');
+        Route::get('/list', [AdminReferralController::class, 'index'])->name('list');
+    });
+    Route::post('/customers/{customer}/gift-cards', [AdminGiftCardController::class, 'issue'])->name('customers.gift-cards.issue');
+    Route::post('/gift-cards/{giftCard}/cancel', [AdminGiftCardController::class, 'cancel'])->name('gift-cards.cancel');
 
     // 資料管理
     Route::post('/documents', [AdminEventController::class, 'storeDocument'])->name('documents.store');
