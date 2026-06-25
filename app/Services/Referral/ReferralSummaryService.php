@@ -7,6 +7,7 @@ use App\Models\CustomerCoupon;
 use App\Models\GiftCard;
 use App\Models\PointLedger;
 use App\Models\Referral;
+use App\Models\StageSetting;
 
 /**
  * 顧客詳細「ポイント・ギフト」タブ向けのサマリ生成。
@@ -68,10 +69,24 @@ class ReferralSummaryService
                 'usable' => $cc->isUsable(),
             ]);
 
+        // ステージ還元率・次ステージまでの進捗
+        $maturedCount = (int) ($stage?->matured_referrals_count ?? 0);
+        $stageName = $stage?->stage ?? 'bronze';
+        $rewardRate = (float) (StageSetting::query()->where('stage', $stageName)->value('reward_rate_percent') ?? 0);
+        $nextSetting = StageSetting::query()->where('min_referrals', '>', $maturedCount)->orderBy('min_referrals')->first();
+        $nextStage = $nextSetting ? [
+            'stage' => $nextSetting->stage,
+            'min_referrals' => (int) $nextSetting->min_referrals,
+            'remaining' => max(0, (int) $nextSetting->min_referrals - $maturedCount),
+            'reward_rate' => (float) $nextSetting->reward_rate_percent,
+        ] : null;
+
         return [
             'coupons' => $coupons,
-            'stage' => $stage?->stage ?? 'bronze',
-            'matured_referrals_count' => (int) ($stage?->matured_referrals_count ?? 0),
+            'stage' => $stageName,
+            'reward_rate' => $rewardRate,
+            'next_stage' => $nextStage,
+            'matured_referrals_count' => $maturedCount,
             'referral_code' => optional($customer->referralCode)->code,
             'balance' => $balance,
             'gift_card_unit' => \App\Models\ReferralSetting::getInt('gift_card_unit', 500),

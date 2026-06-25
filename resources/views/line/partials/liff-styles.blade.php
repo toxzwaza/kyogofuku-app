@@ -103,4 +103,22 @@
   .pill{ display:inline-block; font-size:11px; padding:2px 9px; border-radius:20px; background:var(--accent-soft); color:var(--accent-deep); font-weight:700; }
   .pill.gray{ background:#eee; color:#888; }
   .empty{ text-align:center; color:var(--ink-soft); font-size:13px; padding:14px 0; font-family:var(--mincho); letter-spacing:1px; }
+
+  /* クーポン（チケット風） */
+  .coupon{ position:relative; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:10px; padding:13px 14px; margin-bottom:10px;
+    background:linear-gradient(90deg, var(--accent-soft), var(--card) 70%); }
+  .coupon:last-child{ margin-bottom:0; }
+  .coupon.used{ opacity:.5; filter:grayscale(.35); }
+  .coupon .nm{ font-weight:600; font-size:13.5px; }
+  .coupon .disc{ font-family:var(--mincho); font-size:19px; font-weight:700; color:var(--accent-deep); margin:1px 0; }
+  .coupon .d{ color:var(--ink-soft); font-size:11.5px; }
+
+  /* 還元率バッジ */
+  .rate{ display:inline-flex; align-items:baseline; gap:3px; margin-top:8px; padding:4px 12px; border-radius:20px;
+    background:var(--accent-soft); color:var(--accent-deep); font-weight:700; }
+  .rate b{ font-family:var(--mincho); font-size:19px; }
+  .next-line{ text-align:center; margin:2px 0 10px; }
+  .next-line b{ color:var(--accent-deep); }
+  .next-line .big{ font-family:var(--mincho); font-size:22px; }
 </style>

@@ -113,9 +113,14 @@ class ReferralLiffTest extends TestCase
 
         $res = $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
             ->assertOk()
-            ->assertJson(['state' => 'ok', 'balance' => 5000]);
+            ->assertJson(['state' => 'ok', 'balance' => 5000])
+            // 還元率（ブロンズ=3%）と次ステージ（シルバー：あと4件）
+            ->assertJsonPath('reward_rate', 3)
+            ->assertJsonPath('next_stage.stage', 'silver')
+            ->assertJsonPath('next_stage.remaining', 4);
         // ステージ章は data URI（ngrok等でも確実に表示するため外部URLにしない）
         $this->assertStringStartsWith('data:image/png;base64,', (string) $res->json('stage_badge'));
+        $res->assertJsonStructure(['coupons']);
     }
 
     public function test_my_points_data_not_linked(): void

@@ -45,11 +45,14 @@ class LineMyPageLiffController extends Controller
             'state' => 'ok',
             'stage' => $data['stage'],
             'stage_badge' => $this->stageBadgeDataUri($data['stage']),
+            'reward_rate' => $data['reward_rate'],
+            'next_stage' => $data['next_stage'],
             'matured_referrals_count' => $data['matured_referrals_count'],
             'balance' => $data['balance'],
             'gift_card_unit' => $data['gift_card_unit'],
             'ledger' => $data['ledger'],
             'gift_cards' => $data['gift_cards'],
+            'coupons' => $data['coupons'],
             'referrals_made' => $data['referrals_made'],
         ]);
     }

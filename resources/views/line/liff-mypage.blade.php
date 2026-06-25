@@ -55,16 +55,32 @@
 
   function renderStage(d) {
     const r = d.referrals_made || {};
+    const next = d.next_stage;
+    const matured = d.matured_referrals_count || 0;
+
+    let nextCard;
+    if (next) {
+      const pct = next.min_referrals > 0 ? Math.min(100, Math.round(matured / next.min_referrals * 100)) : 0;
+      nextCard = '<div class="card"><h2>次のステージまで</h2>'
+        + '<div class="next-line">あと <span class="big">'+next.remaining+'</span> 件のご成立で<br>'
+        + '<b>'+(STAGE_LABEL[next.stage]||next.stage)+'</b>（還元率 '+(+next.reward_rate)+'％）</div>'
+        + '<div class="progress"><i style="width:'+pct+'%"></i></div>'
+        + '<div class="muted center" style="margin-top:6px">現在 '+matured+' 件 ／ '+next.min_referrals+' 件</div></div>';
+    } else {
+      nextCard = '<div class="card"><h2>次のステージまで</h2><p class="empty">最上位ステージです。いつもありがとうございます。</p></div>';
+    }
+
     return ''
       + '<div class="card"><h2>あなたのステージ</h2>'
         + '<div class="crest">'+(d.stage_badge ? '<img class="badge" src="'+d.stage_badge+'" alt="'+(STAGE_LABEL[d.stage]||'')+'">' : '')
         + '<div class="name">'+(STAGE_LABEL[d.stage]||d.stage)+'</div>'
-        + '<div class="meta">成立したご紹介：'+(d.matured_referrals_count||0)+' 件</div></div></div>'
+        + '<div class="meta">成立したご紹介：'+matured+' 件</div>'
+        + '<div class="rate">現在の還元率 <b>'+(+d.reward_rate)+'</b>％</div></div></div>'
+      + nextCard
       + '<div class="card"><h2>ご紹介の状況</h2>'
         + '<div class="kv"><span class="k">成立（特典確定）</span><span class="v">'+(r.matured||0)+' 件</span></div>'
         + '<div class="kv"><span class="k">ご成約（確定待ち）</span><span class="v">'+(r.contracted||0)+' 件</span></div>'
-        + '<div class="kv"><span class="k">ご登録（成約待ち）</span><span class="v">'+(r.linked||0)+' 件</span></div></div>'
-      + '<p class="muted center">ご紹介が成立するほど、特典の還元率がアップします。</p>';
+        + '<div class="kv"><span class="k">ご登録（成約待ち）</span><span class="v">'+(r.linked||0)+' 件</span></div></div>';
   }
 
   function renderPoints(d) {
@@ -76,10 +92,20 @@
       return '<div class="row"><div><div>ギフトカード '+yen(g.amount)+'円</div><div class="d">'+esc(g.issued_at||'')+'</div></div>'
         + '<span class="pill'+(used?' gray':'')+'">'+(g.status==='issued'?'発行済':'取消')+'</span></div>';
     }).join('');
+    let coupons = (d.coupons||[]).map(c => {
+      const disc = c.discount_type === 'percent' ? ((+c.discount_value)+'％OFF') : (yen(c.discount_value)+'円OFF');
+      const st = c.status === 'used' ? '使用済' : (c.usable ? '利用可' : '期限切れ');
+      const usable = c.usable && c.status !== 'used';
+      return '<div class="coupon'+(usable?'':' used')+'"><div><div class="nm">'+esc(c.name||'クーポン')+'</div>'
+        + '<div class="disc">'+disc+'</div>'
+        + '<div class="d">'+(c.valid_until?('有効期限 '+esc(c.valid_until)):'')+(c.combinable?'　併用可':'')+'</div></div>'
+        + '<span class="pill'+(usable?'':' gray')+'">'+st+'</span></div>';
+    }).join('');
     return ''
       + '<div class="card"><h2>ご利用可能ポイント</h2>'
         + '<div class="hero"><div class="num">'+yen(d.balance)+'<small>pt</small></div><div class="cap">POINT</div></div>'
         + '<p class="muted center" style="margin-top:12px">'+yen(d.gift_card_unit)+'円単位でギフトカードに引き換えできます（店舗にて）。</p></div>'
+      + (coupons ? '<div class="card"><h2>保有クーポン</h2>'+coupons+'</div>' : '')
       + '<div class="card"><h2>ポイント履歴</h2><div class="list">'+(rows||'<div class="empty">履歴はまだありません</div>')+'</div></div>'
       + (gifts ? '<div class="card"><h2>ギフトカード</h2><div class="list">'+gifts+'</div></div>' : '');
   }
