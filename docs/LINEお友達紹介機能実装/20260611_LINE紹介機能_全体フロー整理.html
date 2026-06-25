@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>LINE友達紹介機能 — 全体フロー整理</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --line-color: #06C755;
+    --liff-color: #4A90E2;
+    --backend-color: #8B5CF6;
+    --user-color: #F59E0B;
+    --bg: #fafafa;
+    --card-bg: #fff;
+    --border: #e5e7eb;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --accent: #C8102E;
+    --warn-bg: #fef3c7;
+    --warn-border: #f59e0b;
+    --info-bg: #dbeafe;
+    --info-border: #3b82f6;
+    --ok-bg: #d1fae5;
+    --ok-border: #10b981;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--text);
+    line-height: 1.7;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+  aside {
+    background: #fff; border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  aside h2 { font-size: 14px; margin: 0 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  aside ol { padding-left: 18px; margin: 0; font-size: 14px; }
+  aside ol li { margin: 6px 0; }
+  aside a { color: var(--text); text-decoration: none; }
+  aside a:hover { color: var(--accent); }
+  main {
+    max-width: 1100px; padding: 32px 48px; margin: 0;
+  }
+  header.title {
+    border-bottom: 3px solid var(--line-color);
+    padding-bottom: 16px; margin-bottom: 32px;
+  }
+  header.title h1 {
+    font-size: 28px; margin: 0 0 6px;
+  }
+  header.title .meta {
+    color: var(--text-muted); font-size: 13px;
+  }
+  section { margin-bottom: 56px; }
+  h2 {
+    font-size: 22px;
+    border-left: 6px solid var(--line-color);
+    padding-left: 12px;
+    margin: 40px 0 16px;
+  }
+  h3 {
+    font-size: 17px;
+    color: var(--accent);
+    margin: 28px 0 10px;
+  }
+  h4 {
+    font-size: 15px; margin: 20px 0 8px;
+    color: var(--text);
+  }
+  p { margin: 8px 0 14px; }
+  code {
+    background: #f3f4f6;
+    padding: 2px 6px; border-radius: 4px;
+    font-family: "SFMono-Regular", Menlo, monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #1f2937; color: #e5e7eb;
+    padding: 16px; border-radius: 6px;
+    overflow-x: auto;
+    font-family: "SFMono-Regular", Menlo, monospace;
+    font-size: 13px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 12px 0 20px;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { background: #f9fafb; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .actor-line   { color: var(--line-color); font-weight: 600; }
+  .actor-liff   { color: var(--liff-color); font-weight: 600; }
+  .actor-be     { color: var(--backend-color); font-weight: 600; }
+  .actor-user   { color: var(--user-color); font-weight: 600; }
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin: 12px 0; padding: 12px;
+    background: #fff; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .callout {
+    padding: 14px 18px; border-radius: 6px;
+    margin: 14px 0;
+    border-left: 4px solid;
+  }
+  .callout.warn { background: var(--warn-bg); border-color: var(--warn-border); }
+  .callout.info { background: var(--info-bg); border-color: var(--info-border); }
+  .callout.ok   { background: var(--ok-bg); border-color: var(--ok-border); }
+  .callout strong { display: block; margin-bottom: 4px; }
+  .mermaid {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .scenario-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 16px 0 24px;
+  }
+  .scenario-card > h3 { margin-top: 0; }
+  .badge {
+    display: inline-block;
+    background: var(--line-color); color: #fff;
+    padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; margin-right: 6px;
+    vertical-align: middle;
+  }
+  .badge.liff { background: var(--liff-color); }
+  .badge.be { background: var(--backend-color); }
+  .badge.user { background: var(--user-color); }
+  .badge.new { background: var(--accent); }
+
+  .q-card {
+    background: #fff; border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 14px 18px; margin: 12px 0;
+  }
+  .q-card .q-id {
+    font-weight: 700; color: var(--accent); margin-right: 6px;
+  }
+  .timeline {
+    position: relative; margin: 24px 0;
+    padding-left: 32px;
+    border-left: 3px solid var(--line-color);
+  }
+  .timeline .event {
+    position: relative;
+    margin: 0 0 24px 0;
+    padding: 12px 16px;
+    background: #fff; border: 1px solid var(--border); border-radius: 6px;
+  }
+  .timeline .event::before {
+    content: "";
+    position: absolute;
+    width: 14px; height: 14px;
+    background: var(--line-color);
+    border: 3px solid #fff;
+    border-radius: 50%;
+    left: -41px; top: 16px;
+  }
+  .timeline .event .time {
+    font-weight: 700; color: var(--line-color); margin-right: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <h2>目次</h2>
+    <ol>
+      <li><a href="#sec-overview">登場人物・全体構成</a></li>
+      <li><a href="#sec-liff-apps">LIFFアプリの整理</a></li>
+      <li><a href="#sec-scenario-a">A. 紹介URL取得</a></li>
+      <li><a href="#sec-scenario-b">B. 被紹介者の登録</a></li>
+      <li><a href="#sec-scenario-c">C. 成約→(1ヶ月後)昇格+ポイント</a></li>
+      <li><a href="#sec-scenario-d">D. クーポン/ポイント/ギフト</a></li>
+      <li><a href="#sec-scenario-e">E. 既存顧客が踏んだ</a></li>
+      <li><a href="#sec-timeline">時系列俯瞰</a></li>
+      <li><a href="#sec-decisions">実装前に決める課題</a></li>
+      <li><a href="#sec-modifications">計画書からの修正</a></li>
+      <li><a href="#sec-testing">テスト方針</a></li>
+      <li><a href="#sec-line-console">LINE管理画面での設定</a></li>
+    </ol>
+  </aside>
+
+  <main>
+    <header class="title">
+      <h1>🔗 LINE友達紹介機能 — 全体フロー整理</h1>
+      <div class="meta">作成日：2026-06-11 ／ <strong>改訂：2026-06-25（変更メモ反映）</strong> ／ 作成：村上（システム開発部門） ／ 対象：kyogofuku-app + 公式LINE @723svxpq</div>
+    </header>
+
+    <div class="legend">
+      <span><span class="dot" style="background: var(--user-color)"></span>ユーザー (LINE App)</span>
+      <span><span class="dot" style="background: var(--line-color)"></span>LINE Platform</span>
+      <span><span class="dot" style="background: var(--liff-color)"></span>LIFF (ブラウザ in LINE)</span>
+      <span><span class="dot" style="background: var(--backend-color)"></span>kyogofuku-app (Laravel)</span>
+    </div>
+
+    <div class="callout warn">
+      <strong>🔄 2026-06-25 変更反映サマリ（<code>20260625_LINE紹介機能_変更メモ.md</code> より）</strong>
+      本フローは初版（2026-06-11）に対し、以下の確定・変更を反映済み。詳細は変更メモ参照。
+      <ul style="margin:8px 0 0;">
+        <li><strong>【確定】紹介の利用条件</strong>：①LINE連携 ②顧客登録済 ③成約済 の<strong>3条件すべて</strong>を満たす顧客のみ紹介可能（成約<em>金額</em>の閾値はなし）。</li>
+        <li><strong>【変更】特典適用タイミング</strong>：成約<em>即時</em> → <strong>被紹介者の成約から1ヶ月後（クーリングオフ期間後）</strong>に遅延確定（日次バッチ）。</li>
+        <li><strong>【変更】ステージ判定人数</strong>：定数固定 → <strong>管理画面から変更可能</strong>。初期値 ブロンズ≤3 / シルバー≤6 / ゴールド≤10 / プラチナ≥11人。</li>
+        <li><strong>【変更★根幹】紹介者特典の方式</strong>：<em>ステージ別クーポン配布</em> → <strong>ポイント還元＋ギフトカード引換</strong>。<br>
+            被紹介者の成約金額 × 紹介者ステージの%（初期 ブロンズ3 / シルバー4 / ゴールド5 / プラチナ10%、<strong>%は管理画面設定</strong>）分のポイントを獲得し、<strong>500円単位（単位は管理画面で変更可）でギフトカードに引換</strong>。ギフトカードは発行履歴を保持し、発行でポイント減算・未使用ならキャンセルでポイント返還。</li>
+        <li><strong>【変更】クーポン併用可否</strong>：発行時に「併用可／併用不可」を登録できるようにする。</li>
+        <li><strong>【変更★】被紹介者特典</strong>：<em>5,000円OFFクーポン（受取ボタン方式）を廃止</em>し、<strong>被紹介者が成約したタイミング（成約1ヶ月後）で固定ポイント（初期10,000pt・管理画面で変更可）を付与</strong>。引換は紹介者と<strong>共通の残高からギフトカード</strong>（キャッシュバックは採用しない）。友達追加／紐付け時点でのクーポン配布Pushは行わない。</li>
+        <li><strong>【維持】クーポン管理画面／サムネ画像のLINE送付利用／クーポン使用は管理画面の使用ボタン</strong>（クーポンは<strong>管理画面からの任意配布用</strong>として存続）。</li>
+      </ul>
+    </div>
+
+    <!-- ================== 1. 登場人物 ================== -->
+    <section id="sec-overview">
+      <h2>1. 登場人物・全体構成</h2>
+      <p>本機能は <strong>LINE Platform</strong>（2つのChannel）／ <strong>LIFFアプリ</strong>（複数）／ <strong>kyogofuku-app</strong>（Laravel）の3者で構成される。</p>
+
+      <div class="mermaid">
+graph TB
+    User["👤 LINEユーザー<br/>(紹介者 / 被紹介者)"]:::user
+
+    subgraph LINE["LINE Platform"]
+      direction TB
+      OA["📱 公式アカウント @723svxpq<br/>Messaging API Channel<br/>ID: 2009633542"]:::line
+      Login["🔐 LINE Login Channel<br/>ID: 2009633621<br/>(LIFF + IDトークン検証)"]:::line
+    end
+
+    subgraph LIFFApps["LIFFアプリ群"]
+      direction TB
+      LiffLink["LIFF[link]<br/>既存"]:::liff
+      LiffWelcome["LIFF[welcome]<br/>既存"]:::liff
+      LiffReferral["LIFF[referral]<br/>★新設"]:::liffnew
+      LiffMyStage["LIFF[my-stage/coupons]<br/>★新設"]:::liffnew
+    end
+
+    subgraph App["kyogofuku-app (Laravel)"]
+      direction TB
+      WH["LineMessagingWebhookController<br/>webhook受信"]:::be
+      LC["LineLiffController<br/>LineWelcomeLinkController<br/>LineReferralLiffController(新)"]:::be
+      DB[("DB<br/>customers / contracts<br/>customer_line_contacts<br/>★referral_codes / referrals<br/>★customer_stages / stage_settings(可変)<br/>★referral_points / point_ledger<br/>★gift_cards(発行履歴)<br/>★coupons / customer_coupons")]:::db
+      Admin["管理画面<br/>(スタッフ)"]:::be
+    end
+
+    Staff["👨‍💼 スタッフ"]:::user
+
+    User -.LINEトーク.- OA
+    User -- LIFF起動 --> LiffReferral
+    User -- LIFF起動 --> LiffLink
+    User -- LIFF起動 --> LiffWelcome
+    User -- LIFF起動 --> LiffMyStage
+
+    OA -- Webhook<br/>(message/postback/follow) --> WH
+    LiffReferral -- IDトークン検証 --> Login
+    LiffWelcome -- IDトークン検証 --> Login
+    LiffLink -- IDトークン検証 --> Login
+    LiffMyStage -- IDトークン検証 --> Login
+
+    LiffReferral -- API --> LC
+    LiffWelcome -- API --> LC
+    LiffLink -- API --> LC
+    LiffMyStage -- API --> LC
+
+    LC --> DB
+    WH --> DB
+    Admin --> DB
+
+    Staff --> Admin
+    WH -- Push --> OA
+    LC -- Push --> OA
+
+    classDef user fill:#fef3c7,stroke:#f59e0b,color:#92400e
+    classDef line fill:#d1fae5,stroke:#06C755,color:#065f46
+    classDef liff fill:#dbeafe,stroke:#4A90E2,color:#1e40af
+    classDef liffnew fill:#fce7f3,stroke:#ec4899,color:#9d174d
+    classDef be fill:#ede9fe,stroke:#8B5CF6,color:#5b21b6
+    classDef db fill:#fef2f2,stroke:#dc2626,color:#7f1d1d
+      </div>
+
+      <div class="callout info">
+        <strong>📌 キーポイント</strong>
+        Messaging APIチャネル（公式アカウント本体）と LINE Login チャネル（LIFF/IDトークン検証用）は別物。LIFFアプリは LINE Login チャネルに紐づく。
+      </div>
+    </section>
+
+    <!-- ================== 2. LIFFアプリの整理 ================== -->
+    <section id="sec-liff-apps">
+      <h2>2. LIFFアプリの整理</h2>
+      <table>
+        <thead><tr><th>LIFFアプリ</th><th>用途</th><th>Endpoint URL</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="badge liff">link</span></td>
+            <td>スタッフが管理画面で発行した <code>link_token</code> で紐付け</td>
+            <td><code>/line/liff/link/{token}</code></td>
+            <td>既存 (<code>LINE_LIFF_ID</code>)</td>
+          </tr>
+          <tr>
+            <td><span class="badge liff">welcome</span></td>
+            <td>あいさつメッセージ経由のセルフ紐付け（電話番号入力）</td>
+            <td><code>/line/liff/welcome</code></td>
+            <td>既存 (<code>LINE_WELCOME_LIFF_ID</code> = <code>2009633621-ZUT7AWOR</code>)</td>
+          </tr>
+          <tr>
+            <td><span class="badge new">referral</span></td>
+            <td>紹介URL経由の紐付け（ref code保持）</td>
+            <td><code>/line/liff/referral</code></td>
+            <td><strong>★新設</strong> (<code>LINE_REFERRAL_LIFF_ID</code>)</td>
+          </tr>
+          <tr>
+            <td><span class="badge new">my-stage / my-coupons</span></td>
+            <td>リッチメニュー → マイステージ / マイポイント・ギフト表示</td>
+            <td><code>/line/liff/my-stage</code>, <code>/line/liff/my-coupons</code></td>
+            <td>★新設 (referral と同アプリでも可)</td>
+          </tr>
+          <tr>
+            <td><span class="badge new">顧客詳細 (mypage)</span></td>
+            <td>リッチメニュー → 顧客情報・成約内容（金額/プラン）・前撮り日の確認（表示専用・顧客登録済＋LINE連携済のみ）</td>
+            <td><code>/line/liff/mypage</code></td>
+            <td>★新設</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <strong>⚠️ LIFFアプリ追加にあたって</strong>
+        LIFFアプリのEndpoint URLは原則1本固定。「LIFFアプリ1つで複数エンドポイント＋クエリ分岐」と「複数LIFFアプリ」のどちらも可能だが、既存設計が link/welcome の2本に分かれているので、<strong>referral 用も独立LIFFアプリ新設を推奨</strong>。
+      </div>
+    </section>
+
+    <!-- ================== 3. シナリオA ================== -->
+    <section id="sec-scenario-a">
+      <h2>3. シナリオA：紹介者がリッチメニューから「友達紹介」を選ぶ</h2>
+      <p>紹介者が自分の紹介URL／QRコードを取得し、LINEで友達に共有するまでのフロー。</p>
+
+      <div class="callout info">
+        <strong>📌 紹介できるのは「3条件を満たす顧客」のみ（2026-06-25確定）</strong>
+        ①LINE連携済 ②顧客登録済（<code>customers</code> 存在）③成約済（<code>contracts.status='確定'</code> あり）の<strong>すべて</strong>を満たす顧客に限り、紹介LIFFで紹介URLを取得できる。成約<em>金額</em>の閾値はなし。<br>
+        → 条件を満たさない場合は referral LIFF で「紹介機能のご利用には成約が必要です」等を表示し、紹介URLを発行しない（<code>referral_codes</code> は成約済顧客にのみ有効化）。
+      </div>
+
+      <div class="mermaid">
+sequenceDiagram
+    actor U as 👤 紹介者A
+    participant L as 📱 LINE App
+    participant LF as 🌐 LIFF[referral]
+    participant BE as 🟣 kyogofuku-app
+    participant DB as 🗄️ DB
+
+    U->>L: リッチメニュー「友達紹介」タップ
+    L->>LF: liff.line.me/{REFERRAL_LIFF_ID}
+    LF->>LF: liff.init() / IDトークン取得
+    LF->>BE: POST /line/liff/referral/me<br/>{id_token}
+    BE->>BE: IDトークン検証<br/>→ line_user_id
+    BE->>DB: customer_line_contacts<br/>で customer 特定
+    DB-->>BE: customer
+    BE->>DB: referral_codes から code 取得
+    BE->>DB: referrals から成立件数集計
+    DB-->>BE: code / stats
+    BE-->>LF: {code, referral_url, qr, stats}
+    LF-->>U: 紹介URL/QR表示<br/>「LINEで共有」ボタン
+    U->>L: 「LINEで共有」タップ
+    L->>L: liff.shareTargetPicker
+    U->>L: 共有先選択 → 送信
+      </div>
+
+      <div class="scenario-card">
+        <h4>必要な実装</h4>
+        <table>
+          <tr><td>LIFFアプリ「referral」新設</td><td>LINE Developersコンソール</td></tr>
+          <tr><td><code>LineReferralLiffController::show / me</code></td><td>LIFF画面＋自己情報API</td></tr>
+          <tr><td><code>resources/views/line/liff/referral.blade.php</code></td><td>LIFF SDK + UI</td></tr>
+          <tr><td><code>referral_codes</code> テーブル + Model</td><td>code生成・取得</td></tr>
+          <tr><td>リッチメニューaction(uri)</td><td><code>liff.line.me/{REFERRAL_LIFF_ID}</code></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================== 4. シナリオB ================== -->
+    <section id="sec-scenario-b">
+      <h2>4. シナリオB：被紹介者が紹介URLを踏む（友達未追加状態）</h2>
+
+      <div class="mermaid">
+sequenceDiagram
+    actor U as 👤 被紹介者B
+    participant L as 📱 LINE App
+    participant LF as 🌐 LIFF[referral]
+    participant LP as 📡 LINE Platform
+    participant BE as 🟣 kyogofuku-app
+    participant DB as 🗄️ DB
+
+    U->>L: 紹介URL?ref=ABC12345 タップ
+    L->>LF: LIFF起動 (refをsessionStorageに保存)
+    LF->>LF: liff.init() / liff.login()
+    LF->>BE: POST /referral/check<br/>{id_token, ref}
+    BE->>BE: IDトークン検証<br/>→ line_user_id
+    BE->>DB: referral_codes(ref)<br/>→ referrer_customer_id
+    BE->>DB: 自己紹介チェック・<br/>既存customerチェック
+
+    alt 公式LINE未友達
+      BE-->>LF: {state: 'need_follow'}
+      LF-->>U: 「友達追加してください」<br/>+ 公式追加URL表示
+      U->>L: 公式アカウント友達追加
+      L->>LP: follow event
+      LP->>BE: webhook(follow)
+      BE->>DB: 記録のみ
+      U->>LF: 「連携を続ける」タップ
+      LF->>BE: POST /referral/check (再)
+    end
+
+    BE-->>LF: {state: 'ready_to_link'}
+    U->>LF: 「紹介で登録する」タップ
+    LF->>BE: POST /referral/link<br/>{id_token, ref}
+    BE->>DB: referrals INSERT<br/>(status='linked', expires_at=+6mo)
+    BE->>LP: Push: お礼テキスト<br/>(成約後に特典ポイント付与の案内)
+    LP-->>L: 配信
+    BE-->>LF: {success: true}
+    LF-->>U: 「登録ありがとうございます」
+      </div>
+
+      <div class="callout warn">
+        <strong>⚠️ 被紹介者特典はこの時点では付与しない（2026-06-25変更）</strong>
+        旧フローでは紐付け直後にクーポン（5,000円OFF）をPush配布していたが、<strong>被紹介者特典はポイント方式に変更</strong>。<strong>被紹介者が成約したタイミングで固定ポイント（初期10,000pt・管理画面で変更可）を付与</strong>する（→ シナリオC・6.2）。<br>
+        このため、紐付け時点での <code>customer_coupons</code> INSERT／クーポンFlex Push は廃止。<code>customer_coupons.customer_id</code> の nullable 化も不要になる見込み（要確認：変更メモ C-12）。
+      </div>
+
+      <div class="scenario-card">
+        <h4>B の状態遷移（被紹介者のライフサイクル）</h4>
+        <div class="mermaid">
+stateDiagram-v2
+    [*] --> URL踏む
+    URL踏む --> 友達追加要求: 公式未友達
+    友達追加要求 --> 紐付け待ち: 友達追加完了
+    URL踏む --> 紐付け待ち: 公式友達済
+    紐付け待ち --> 紐付け済_customer無: /referral/link 実行
+    紐付け済_customer無 --> 紐付け済_customer有: スタッフが管理画面でcustomer作成
+    紐付け済_customer有 --> 成約済: 契約レコード作成 status=確定
+    成約済 --> [*]
+
+    URL踏む --> Rejected: 既存customer or 自己紹介
+    Rejected --> [*]
+        </div>
+      </div>
+    </section>
+
+    <!-- ================== 5. シナリオC ================== -->
+    <section id="sec-scenario-c">
+      <h2>5. シナリオC：成約検知 → （1ヶ月後）紹介成立 → 紹介者ステージ昇格＋ポイント付与</h2>
+
+      <p><strong>変更点（2026-06-25）：</strong>成約時に<em>即時</em>付与するのではなく、<strong>被紹介者の成約から1ヶ月後（クーリングオフ期間後）に日次バッチで確定</strong>し、紹介者にステージ昇格判定と<strong>ポイント付与</strong>（クーポンではない）を行う。</p>
+
+      <div class="mermaid">
+sequenceDiagram
+    actor Staff as 👨‍💼 スタッフ
+    participant Admin as 🖥️ 管理画面
+    participant BE as 🟣 kyogofuku-app
+    participant DB as 🗄️ DB
+    participant Batch as ⏰ 日次バッチ
+    participant LP as 📡 LINE Platform
+    actor A as 👤 紹介者A
+
+    Staff->>Admin: 顧客Bの契約作成<br/>status='確定'
+    Admin->>BE: ContractController::store
+    BE->>DB: contracts INSERT
+    Note over BE: ContractObserver
+    BE->>DB: referrals WHERE<br/>referred_customer_id=B<br/>AND status='linked'
+    DB-->>BE: referral [A→B]
+    BE->>DB: referrals UPDATE<br/>status='contracted'(仮)<br/>contract_id, contracted_at
+    Note over BE,DB: ここでは確定処理しない<br/>(1ヶ月後に持ち越し)
+
+    Note over Batch: 成約から1ヶ月経過後<br/>(クーリングオフ後) 日次実行
+    Batch->>DB: contracted_at+1ヶ月 ≤ now<br/>かつ未確定の referrals 抽出
+    Batch->>DB: referrals UPDATE status='matured'
+    Note over BE: StageEvaluator(A) 実行
+    BE->>DB: total_contracted_referrals 再カウント
+    BE->>DB: stage_settings(閾値) 参照<br/>(管理画面で可変)
+    BE->>BE: 閾値判定 → 昇格 or 据置
+    BE->>DB: customer_stages(A) 更新(昇格時)
+
+    Note over BE: ① 紹介者Aへポイント付与
+    BE->>DB: stage_settings(%) 参照<br/>Aの現ステージの還元率
+    BE->>BE: 付与pt = Bの成約金額 × ステージ%
+    BE->>DB: referral_points(A) 残高加算<br/>point_ledger に獲得履歴INSERT
+    BE->>LP: 昇格時のみ Push: 昇格通知テキスト
+    LP-->>A: 通知（昇格時のみ）
+
+    Note over BE: ② 被紹介者Bへ固定ポイント付与
+    BE->>DB: 設定値(被紹介者特典pt 初期10,000) 参照
+    BE->>DB: referral_points(B) 残高加算<br/>point_ledger に獲得履歴INSERT
+    Note over BE,DB: Bも共通残高からギフトカード引換
+      </div>
+
+      <div class="callout ok">
+        <strong>🎁 被紹介者特典（2026-06-25確定）</strong>
+        被紹介者B が成約したタイミング（<strong>紹介者と同様 成約1ヶ月後</strong>・C-10）で、<strong>固定ポイント（初期 10,000pt・管理画面で変更可）</strong>を付与する。B はこのポイントを<strong>紹介者と共通の残高からギフトカード</strong>に引き換える（キャッシュバックは採用しない・C-9/C-11）。
+      </div>
+
+      <div class="callout ok">
+        <strong>🎯 ポイント計算（2026-06-25確定方針）</strong>
+        付与ポイント＝<strong>被紹介者の成約金額 × 紹介者の（その時点の）ステージ別還元率</strong>。<br>
+        還元率の初期値：ブロンズ <strong>3%</strong> ／ シルバー <strong>4%</strong> ／ ゴールド <strong>5%</strong> ／ プラチナ <strong>10%</strong>（いずれも<strong>管理画面から変更可</strong>）。<br>
+        獲得ポイントは <strong>500円単位</strong>（単位も管理画面で変更可）で<strong>ギフトカードに引換</strong>（→ 6.3）。
+      </div>
+
+      <div class="callout warn">
+        <strong>⏰ 「1ヶ月後」確定の設計</strong>
+        成約検知時は <code>referrals.status='contracted'</code>（仮）として <code>contracted_at</code> を記録するのみ。日次バッチ（例 <code>php artisan referral:mature</code>）が <code>contracted_at + 1ヶ月 ≤ now</code> の紹介を <code>matured</code> に進め、そこで初めて StageEvaluator とポイント付与を実行する。<br>
+        ※「1ヶ月」の起算日（成約日／契約確定日）は要確認（変更メモ C-6）。途中で契約がキャンセルされた場合は確定させない。
+      </div>
+
+      <div class="callout info">
+        <strong>📌 ステージ昇格通知</strong>
+        昇格した場合のみ紹介者へテキストPushで通知（据置時は通知なし）。<em>クーポンFlexの配布は廃止</em>（特典はポイント方式へ移行）。
+      </div>
+
+      <div class="callout warn">
+        <strong>🔄 referred_customer_id の後埋めタイミング</strong>
+        被紹介者は紹介URLを踏んだ時点では customers レコードが無い。スタッフが管理画面で顧客作成した瞬間 → <code>CustomerObserver::created</code> で <code>referrals.referred_line_user_id</code> 一致レコードに <code>referred_customer_id</code> を後埋めする。<br>
+        ※被紹介者特典はポイント化（成約時付与）したため、旧フローの <code>customer_coupons</code> 後埋めは不要。
+      </div>
+    </section>
+
+    <!-- ================== 6. シナリオD ================== -->
+    <section id="sec-scenario-d">
+      <h2>6. シナリオD：ポイント特典（紹介者・被紹介者ともギフトカード引換）＋ クーポン使用</h2>
+
+      <div class="callout info">
+        <strong>📌 特典はすべて「ポイント方式」に統一（2026-06-25）</strong>
+        <strong>(1) 紹介者のステージ特典</strong>＝ポイント付与（成約金額×ステージ%・自動加算）→ <strong>ギフトカードに引換</strong>（6.2）。<br>
+        <strong>(2) 被紹介者特典</strong>＝成約（1ヶ月後）に<strong>固定ポイント（初期10,000pt）を付与</strong> → 紹介者と<strong>共通残高からギフトカード引換</strong>（6.2）。<br>
+        ※従来の「ステージ別クーポン配布」「被紹介者5,000円OFFクーポン（受取ボタン）」はいずれも<strong>廃止</strong>。受取ボタン(postback)による特典受領フローは無くなる。<br>
+        クーポン（6.3）は<strong>管理画面からの任意配布・使用</strong>用途として存続。
+      </div>
+
+      <h3>6.1 ポイント獲得（自動・受取操作不要）</h3>
+      <p>特典ポイントはシナリオC（成約検知→確定）で <code>referral_points</code> 残高へ自動加算される（紹介者＝成約金額×ステージ%／被紹介者＝固定10,000pt）。ユーザーの「受け取る」操作は不要。</p>
+
+      <h3>6.2 ポイント引換（ギフトカードに一本化・紹介者／被紹介者 共通）</h3>
+      <p>紹介者・被紹介者は<strong>共通のポイント残高</strong>を持ち、<strong>500円単位でギフトカードに引換</strong>える（キャッシュバックは採用しない・C-9/C-11）。<strong>ギフトカードの発行は店舗で実施</strong>し、システムは「<strong>発行済み</strong>」ボタン押下で<strong>ポイントを減算</strong>する（C-5。将来は管理画面から発行・送付できるようにする可能性あり）。未発行（未送付）状態のキャンセルでポイント返還も可能。</p>
+      <div class="mermaid">
+sequenceDiagram
+    actor U as 👤 顧客 (紹介者/被紹介者)
+    actor Staff as 👨‍💼 スタッフ
+    participant UI as 🖥️ 引換UI<br/>(LIFF/管理画面)
+    participant BE as 🟣 kyogofuku-app
+    participant DB as 🗄️ DB
+
+    U->>UI: ポイント残高を確認
+    U->>Staff: 来店時にギフトカード引換を申し出
+    Staff->>UI: 顧客のポイントから引換 (500円単位)
+    Staff->>Staff: ギフトカードを店舗で発行・手渡し
+    Staff->>BE: 「発行済み」ボタン押下
+    BE->>DB: 残高 ≥ 引換額 を検証
+    BE->>DB: gift_cards INSERT (status='issued', amount)
+    BE->>DB: referral_points 減算 + point_ledger「引換」
+    Note over Staff,DB: 誤発行などは「キャンセル」でポイント返還
+      </div>
+
+      <div class="callout ok">
+        <strong>✅ 確定（C-1〜C-12／2026-06-25）</strong>
+        基準額＝<strong>税抜・割引後の実成約額</strong>（C-2）／<strong>1pt=1円</strong>（C-3）／ポイント有効期限<strong>なし</strong>（C-4）／引換単位<strong>500円・管理画面で可変</strong>／引換手段は<strong>ギフトカードのみ</strong>（C-9）／発行は<strong>店舗対応・「発行済み」でポイント減算</strong>（C-5）。
+      </div>
+
+      <h3>6.3 クーポン使用（管理画面・任意配布クーポン）</h3>
+      <p>クーポンは<strong>管理画面から任意に発行・配布</strong>し、来店時に使用処理する（被紹介者特典としてのクーポン配布は廃止。クーポンの仕組み自体は任意配布用に存続）。</p>
+      <div class="mermaid">
+sequenceDiagram
+    actor U as 👤 顧客
+    actor Staff as 👨‍💼 スタッフ
+    participant Admin as 🖥️ 管理画面
+    participant BE as 🟣 kyogofuku-app
+    participant DB as 🗄️ DB
+
+    U->>Staff: 来店「保有クーポン」画面提示
+    Staff->>Admin: 顧客詳細<br/>「利用可能クーポン一覧」<br/>「使用」ボタン
+    Admin->>BE: POST /admin/customer-coupons/{id}/use
+    BE->>DB: customer_coupons UPDATE<br/>status='used'<br/>used_at, used_by_user_id, used_shop_id
+    BE-->>Admin: 完了
+    Admin-->>Staff: 「使用済」表示
+      </div>
+
+      <div class="callout ok">
+        <strong>📝 LINE Pushは送らない</strong>
+        使用処理時の通知は省略（運用負荷を抑える）。
+      </div>
+    </section>
+
+    <!-- ================== 7. シナリオE ================== -->
+    <section id="sec-scenario-e">
+      <h2>7. シナリオE：既存顧客が紹介URLを踏んだ場合</h2>
+
+      <div class="mermaid">
+sequenceDiagram
+    actor U as 👤 既存顧客
+    participant LF as 🌐 LIFF[referral]
+    participant BE as 🟣 kyogofuku-app
+    participant DB as 🗄️ DB
+
+    U->>LF: 紹介URL?ref=XYZ タップ
+    LF->>LF: liff.login() / IDトークン
+    LF->>BE: POST /referral/check<br/>{id_token, ref}
+    BE->>DB: customer_line_contacts<br/>line_user_id検索
+    DB-->>BE: 既存customer ヒット
+    BE->>DB: referrals INSERT<br/>(status='rejected',<br/>reason='existing_customer')
+    BE-->>LF: {state: 'rejected'}
+    LF-->>U: 「既にご利用中のため<br/>特典は適用されません」
+    Note over BE: LINE Push送信なし<br/>紹介者にも通知なし
+      </div>
+
+      <div class="callout info">
+        <strong>📌 rejectedも記録する理由</strong>
+        後の分析で「既存customer が紹介URLを踏んだ件数」を可視化できる。紹介LIFFの「保留件数」にはカウントしない。
+      </div>
+    </section>
+
+    <!-- ================== 8. 時系列俯瞰 ================== -->
+    <section id="sec-timeline">
+      <h2>8. 時系列俯瞰（紹介から成約まで）</h2>
+      <p>紹介者Aが友達BをLINE紹介し、Bが成約するまでの一連の流れ。</p>
+
+      <div class="timeline">
+        <div class="event">
+          <span class="time">T1</span>
+          <span class="actor-user">紹介者A</span> 公式追加 → welcome LIFFで電話番号紐付け
+          <br>→ <code>customer_line_contacts[A]</code> / <code>customers[A]</code> / <code>referral_codes[A=ABC123]</code> 作成
+        </div>
+        <div class="event">
+          <span class="time">T2</span>
+          <span class="actor-user">紹介者A</span> リッチメニュー「友達紹介」
+          <br>→ referral LIFF → <code>referral_codes[A].code</code> 取得 → 紹介URL表示
+        </div>
+        <div class="event">
+          <span class="time">T3</span>
+          <span class="actor-user">紹介者A</span> LINEで友達Bにシェア → BがURL受信
+        </div>
+        <div class="event">
+          <span class="time">T4</span>
+          <span class="actor-user">友達B</span> URLタップ → referral LIFF
+          <br>liff.login() → Bの line_user_id 確定 → Bはまだ未友達 → 「友達追加してください」表示
+        </div>
+        <div class="event">
+          <span class="time">T5</span>
+          <span class="actor-user">B</span> 公式アカウント追加 → follow webhook → 現状は記録のみ
+        </div>
+        <div class="event">
+          <span class="time">T6</span>
+          <span class="actor-user">B</span> あいさつメッセージ受信（welcome LIFF誘導）
+          <br>⚠️ <strong>2つの選択肢を持つ</strong>：referral LIFFに戻る or welcome LIFFで電話番号入力
+          <br>→ どちらに誘導するかが <strong>最大のUX設計論点</strong>（Q1）
+        </div>
+        <div class="event">
+          <span class="time">T7</span>
+          <span class="actor-user">B</span> referral LIFFで「紹介で登録する」タップ
+          <br>→ <code>referrals[B linked to A]</code> INSERT（status='linked'）
+          <br>→ Bに Push: お礼テキスト（特典は成約後にポイント付与する旨を案内）
+          <br>※ <strong>クーポン配布は廃止</strong>。特典付与は T10.5（被紹介者の成約後）に移動。
+        </div>
+        <div class="event">
+          <span class="time">T9</span>
+          <span class="actor-user">B</span> 後日来店 → スタッフが管理画面でB の customers レコード作成
+          <br>→ <code>CustomerObserver::created</code> で：
+          <br>　・<code>referral_codes[B]</code> 作成 ・<code>customer_stages[B]</code> 初期化
+          <br>　・<code>referrals.referred_customer_id=B</code> 後埋め
+          <br>　（被紹介者特典はポイント化のため <code>customer_coupons</code> 後埋めは不要）
+        </div>
+        <div class="event">
+          <span class="time">T10</span>
+          スタッフ Bの契約レコード作成 status='確定'
+          <br>→ <code>ContractObserver::created</code> で：
+          <br>　・<code>referrals[B→A].status='contracted'（仮）</code>＋<code>contracted_at</code> 記録
+          <br>　・<strong>この時点ではステージ評価・ポイント付与は行わない（1ヶ月後に持ち越し）</strong>
+        </div>
+        <div class="event">
+          <span class="time">T10.5</span>
+          <strong>成約から1ヶ月後（クーリングオフ期間後）</strong>・日次バッチ <code>referral:mature</code>
+          <br>→ <code>referrals[B→A].status='matured'</code>
+          <br><strong>① 紹介者A</strong>：StageEvaluator(A) で <code>stage_settings</code>（可変閾値）昇格判定 → 昇格時 <code>customer_stages[A]</code> 更新
+          <br>　ポイント付与：<code>付与pt = Bの成約金額 × Aのステージ%</code> → <code>referral_points[A]</code> 加算 ＋ <code>point_ledger</code>
+          <br>　昇格時のみ Aに Push: 昇格通知テキスト
+          <br><strong>② 被紹介者B</strong>：固定ポイント（初期10,000pt・管理画面で変更可）を付与 → <code>referral_points[B]</code> 加算 ＋ <code>point_ledger</code>
+          <br>※ Bへの付与を即時にするか1ヶ月後にするかは要確認（変更メモ C-10）
+        </div>
+        <div class="event">
+          <span class="time">T11</span>
+          <span class="actor-user">A・B</span>（紹介者・被紹介者とも）来店時に<strong>500円単位でギフトカードに引換</strong>（共通残高）
+          <br>→ スタッフが店舗で発行・手渡し → 「発行済み」ボタン → <code>gift_cards[issued]</code> INSERT ／ <code>referral_points</code> 減算 ＋ <code>point_ledger</code>「引換」（誤発行はキャンセルで返還）
+        </div>
+      </div>
+    </section>
+
+    <!-- ================== 9. 実装前に決める課題 ================== -->
+    <section id="sec-decisions">
+      <h2>9. 実装着手前に決める課題（Q1〜Q8）</h2>
+
+      <div class="callout ok">
+        <strong>✅ 2026-06-25 で確定した事項</strong>
+        <ul style="margin:8px 0 0;">
+          <li><strong>紹介の利用条件</strong>：LINE連携＋顧客登録＋成約済の3条件（金額閾値なし）。</li>
+          <li><strong>特典適用タイミング</strong>：成約から1ヶ月後（クーリングオフ後）に遅延確定。</li>
+          <li><strong>ステージ判定人数</strong>：管理画面で可変（初期 ≤3 / ≤6 / ≤10 / ≥11）。</li>
+          <li><strong>紹介者特典の方式</strong>：ポイント還元（成約金額×ステージ%・初期 3/4/5/10%）＋500円単位でギフトカード引換（単位・%とも管理画面で可変）。ギフトカードは発行履歴保持・未使用キャンセルでポイント返還。</li>
+          <li><strong>被紹介者特典</strong>：5,000円OFFクーポン廃止 → 成約1ヶ月後に固定ポイント（初期10,000pt・管理画面で可変）付与 → 紹介者と共通残高からギフトカード引換。</li>
+          <li><strong>クーポン併用可否</strong>：発行時にフラグ登録。</li>
+        </ul>
+      </div>
+
+      <div class="callout ok">
+        <strong>✅ C-1〜C-12 確定（2026-06-25 村上さん回答）</strong>
+        <ul style="margin:8px 0 0;">
+          <li>C-1 帯：ブロンズ0〜3／シルバー4〜6／ゴールド7〜10／プラチナ11人以上</li>
+          <li>C-2 基準額：税抜・割引後の実成約額（contracts）</li>
+          <li>C-3 換算：1pt=1円 ／ C-4 有効期限：なし（無期限）</li>
+          <li>C-5 ギフトカード：種別指定なし。<strong>発行は店舗対応・「発行済み」ボタンでポイント減算</strong>（将来は管理画面発行も）。単位500円・可変</li>
+          <li>C-6 起算日：契約確定日（成約日）＋1ヶ月</li>
+          <li>C-8 ステージ別クーポン配布：完全廃止（クーポンは任意配布専用）</li>
+          <li>C-9 引換手段：<strong>ギフトカードに一本化</strong>（共通残高） ／ C-11 <strong>キャッシュバックは廃止</strong></li>
+          <li>C-10 被紹介者ポイント付与：成約1ヶ月後（紹介者と同じ）</li>
+          <li>C-12 <code>customer_coupons.customer_id</code> nullable 化：不要</li>
+        </ul>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 13px;">※ 以下 Q1〜Q8 は初版（2026-06-11）の論点。紐付け／Observer周りは引き続き有効。</p>
+
+      <div class="q-card">
+        <p><span class="q-id">Q1</span><strong>T6の動線（welcome LIFF vs referral LIFFどちらに戻すか）</strong></p>
+        <ul>
+          <li>(a) follow直後にPushで「紹介LIFFに戻る」案内</li>
+          <li>(b) ユーザー任せ</li>
+          <li>(c) welcome LIFFで電話番号入力した時に referrals を埋める</li>
+        </ul>
+        <p>影響：UX大／実装やや増</p>
+      </div>
+
+      <div class="q-card">
+        <p><span class="q-id">Q2</span><strong>customer_coupons.customer_id を nullable にするか</strong></p>
+        <ul>
+          <li>(a) <strong>nullable化＋line_user_id必須</strong>（推奨）</li>
+          <li>(b) pending_coupons別テーブル</li>
+        </ul>
+        <p>後者は実装増だが既存DB変更小</p>
+      </div>
+
+      <div class="q-card">
+        <p><span class="q-id">Q3</span><strong>customer_line_contacts は紹介経由で作る？</strong></p>
+        <ul>
+          <li>(a) <strong>作らない</strong>（推奨）— customer確定後のみ</li>
+          <li>(b) 作る（customer_id nullable化）</li>
+        </ul>
+        <p>後者は周辺影響大</p>
+      </div>
+
+      <div class="q-card">
+        <p><span class="q-id">Q4</span><strong>ContractObserver は created/updated 両対応</strong></p>
+        <ul>
+          <li>(a) <strong>両対応＋idempotent化</strong>（推奨）</li>
+          <li>(b) status遷移運用に統一</li>
+        </ul>
+        <p>(a)推奨。運用ヒアリング不要で安全</p>
+      </div>
+
+      <div class="q-card">
+        <p><span class="q-id">Q5</span><strong>既存customer の line_user_id 一致での reject 判定</strong></p>
+        <ul>
+          <li>(a) line_user_id ヒット即reject</li>
+          <li>(b) <strong>referrals は作って status='rejected' で記録</strong>（推奨）</li>
+        </ul>
+        <p>後者推奨。分析データ残せる</p>
+      </div>
+
+      <div class="q-card">
+        <p><span class="q-id">Q6</span><strong>紹介経由ユーザーの初期 shop_id</strong></p>
+        <ul>
+          <li>(a) <strong>後でcustomer作成時に決定</strong>（推奨／B-1a案なら不要）</li>
+          <li>(b) 紹介者の shop_id 継承</li>
+        </ul>
+      </div>
+
+      <div class="q-card">
+        <p><span class="q-id">Q7</span><strong>postback の受け側コントローラ</strong></p>
+        <p><code>LineMessagingWebhookController</code> を改修して <code>event.type='postback'</code> 分岐を追加（計画通り）</p>
+      </div>
+
+      <div class="q-card">
+        <p><span class="q-id">Q8</span><strong>紹介LIFF が welcome LIFF と兼用か独立か</strong></p>
+        <ul>
+          <li>(a) <strong>独立LIFFアプリ新設</strong>（推奨）</li>
+          <li>(b) welcomeに ref クエリ拡張</li>
+        </ul>
+        <p>(a)推奨。責務分離</p>
+      </div>
+    </section>
+
+    <!-- ================== 10. 計画書からの修正 ================== -->
+    <section id="sec-modifications">
+      <h2>10. 計画書からの修正（推奨案を踏襲した場合）</h2>
+
+      <table>
+        <thead><tr><th>計画書（初版）</th><th>修正後（2026-06-25）</th></tr></thead>
+        <tbody>
+          <tr><td>紹介者特典＝ステージ別クーポン配布（<code>stage_coupon_grants</code>）</td><td><strong>ポイント還元＋ギフトカード引換に方式変更</strong>。<code>stage_coupon_grants</code> は廃止。</td></tr>
+          <tr><td>ステージ昇格は成約検知で<strong>即時</strong></td><td><strong>成約から1ヶ月後（クーリングオフ後）に日次バッチで確定</strong>。成約時は <code>contracted</code>（仮）止まり。</td></tr>
+          <tr><td>ステージ閾値は定数ハードコード（0/1/3/5）</td><td><strong>管理画面で可変（<code>stage_settings</code>）</strong>。初期 ≤3/≤6/≤10/≥11。</td></tr>
+          <tr><td>ステージ%・引換単位の概念なし</td><td><strong>還元率（初期 3/4/5/10%）・引換単位（初期500円）を管理画面で設定</strong>。</td></tr>
+          <tr><td>被紹介者特典＝5,000円OFFクーポン（受取ボタン）</td><td><strong>クーポン廃止 → 成約1ヶ月後に固定ポイント（初期10,000pt・可変）付与 → 共通残高からギフトカード引換</strong>（キャッシュバックは採用しない）。</td></tr>
+          <tr><td>クーポンに併用可否なし（terms_text のみ）</td><td><code>coupons</code> に<strong>併用可否フラグ</strong>を追加。</td></tr>
+          <tr><td>紹介の利用条件は未決</td><td><strong>LINE連携＋顧客登録＋成約済の3条件</strong>に確定（<code>referral_codes</code> は成約済顧客のみ有効）。</td></tr>
+          <tr><td><code>customer_coupons.customer_id</code> を nullable 化（被紹介者クーポン用）</td><td><strong>不要の見込み</strong>（被紹介者特典がポイント＝成約時付与に変更されたため。要確認 C-12）</td></tr>
+          <tr><td>LIFF は既存流用 ／ 紐付け周り</td><td><strong>referral 用 LIFF 新設</strong>、<code>?ref</code> は sessionStorage＋API化、<code>customer_line_contacts</code> は customer 確定後のみ作成（初版どおり）</td></tr>
+        </tbody>
+      </table>
+
+      <h3>新規DB変更（マイグレーション）</h3>
+      <p><strong>初版7本のうち <code>stage_coupon_grants</code> を廃止</strong>し、以下を追加・変更する（最終はPhase 1で詳細設計）：</p>
+      <ul>
+        <li><strong>新規</strong> <code>stage_settings</code>：ステージ別の<strong>人数閾値・還元率(%)</strong>を保持（管理画面で編集）</li>
+        <li><strong>新規</strong> <code>referral_points</code>：顧客ごとのポイント残高</li>
+        <li><strong>新規</strong> <code>point_ledger</code>：ポイント増減の台帳（獲得／引換／返還、参照元 referral_id 等）</li>
+        <li><strong>新規</strong> <code>gift_cards</code>：ギフトカード発行履歴（金額・状態 issued/canceled・発行/取消日時・ポイント減算と連動）。発行は店舗対応・「発行済み」ボタンで記録（C-5）</li>
+        <li><strong>設定値</strong>：引換単位（初期500円）・<strong>被紹介者特典ポイント（初期10,000pt）</strong>・各ステージ還元率 等を <code>referral_settings</code>（key-value）へ追加</li>
+        <li><strong>変更</strong> <code>coupons</code> に併用可否フラグ（例 <code>combinable boolean</code>）を追加</li>
+        <li><strong>変更</strong> <code>referrals</code> に <code>matured</code> ステータス（1ヶ月後確定）を追加</li>
+        <li><strong>見直し</strong> <code>customer_coupons.customer_id</code> の nullable 化は<strong>不要の見込み</strong>（被紹介者特典がポイント化されたため。C-12）</li>
+        <li><strong>廃止</strong> <code>stage_coupon_grants</code>／被紹介者特典クーポンの配布フロー</li>
+      </ul>
+
+      <h3>次にやること</h3>
+      <ol>
+        <li>本ドキュメントを村上さんレビュー</li>
+        <li>変更メモ C-1〜C-8 を確定（特に ポイント基準額・換算・ギフトカード仕様）</li>
+        <li>修正版実装計画を <code>20260605_LINE紹介機能_実装計画.md</code> §3 に反映（DB設計をポイント/ギフトカード方式へ改訂）</li>
+        <li>Phase 1（DB / Models / Observers / バッチ）から実装着手</li>
+      </ol>
+    </section>
+
+    <!-- ================== 11. テスト方針 ================== -->
+    <section id="sec-testing">
+      <h2>11. テスト方針</h2>
+
+      <div class="callout ok">
+        <strong>✅ 結論</strong>
+        <strong>機能（ロジック）テストはほぼ全部ローカルの PHPUnit で完結</strong>し、<strong>LINE 実機テストも本番デプロイは不要</strong>（ngrok でローカルを HTTPS 公開すれば実機確認できる）。本リポジトリは Push を <code>Http::fake()</code> で差し替えられ、Webhook 署名をテスト内生成できる作りのため、自動テストの守備範囲が広い。
+      </div>
+
+      <h3>11.1 テスト区分（2軸）</h3>
+      <table>
+        <thead><tr><th>テスト種別</th><th>必要環境</th><th>本番デプロイ</th><th>主目的</th></tr></thead>
+        <tbody>
+          <tr><td>機能（ロジック）テスト</td><td>ローカル PHPUnit のみ</td><td><strong>不要</strong></td><td>ポイント計算・ステージ判定・バッチ・引換・Observer 等</td></tr>
+          <tr><td>LINE 実機テスト</td><td>ローカル ＋ <strong>ngrok</strong>（HTTPS公開）</td><td><strong>不要</strong>（安定運用ならステージング）</td><td>LIFF・実Push・友達追加・Flex表示・リッチメニュー</td></tr>
+        </tbody>
+      </table>
+
+      <h3>11.2 ローカルで完結する自動テスト（PHPUnit）</h3>
+      <p>このプロジェクトは LINE 連携をテストしやすい構成：<strong>Push は <code>LineMessagingService</code> 経由（<code>Http::fake()</code> でモック可）</strong>／<strong>Webhook 署名は HMAC-SHA256 をテスト内生成して POST</strong>（既存 <code>LineMessagingWebhookTest</code> 等のパターン）／<strong>IDトークン検証は <code>LineIdTokenVerifier</code> を DI で差し替え可</strong>。<code>phpunit.xml</code> の <code>DEVICE_GATE_ENABLED=false</code> 済で管理画面の認証付き HTTP テストも通る。</p>
+      <table>
+        <thead><tr><th>対象</th><th>テスト内容（ローカルで実行可）</th></tr></thead>
+        <tbody>
+          <tr><td>StageEvaluator</td><td>紹介人数 → ステージ判定の境界値（<code>stage_settings</code> 可変閾値を反映）</td></tr>
+          <tr><td>ポイント付与</td><td>紹介者＝成約金額×ステージ% ／ 被紹介者＝固定10,000pt（設定値変更も反映）</td></tr>
+          <tr><td>「成約1ヶ月後」バッチ</td><td><code>Carbon::setTestNow()</code> で <code>contracted_at</code> を1ヶ月前にして <code>referral:mature</code> 実行 → <code>matured</code>＆ポイント付与（実際に待たない）</td></tr>
+          <tr><td>ギフトカード</td><td>発行→ポイント減算／未使用キャンセル→返還／使用済みはキャンセル不可</td></tr>
+          <tr><td>ギフトカード発行（店舗）</td><td>「発行済み」でポイント減算・<code>gift_cards</code>記録／キャンセルで返還</td></tr>
+          <tr><td>Observer</td><td>成約検知で <code>referrals</code> 仮確定 ／ 顧客作成で <code>referred_customer_id</code> 後埋め</td></tr>
+          <tr><td>紹介リンク</td><td>自己紹介 reject・重複返却・<strong>3条件（成約済顧客のみ紹介可）</strong>の判定</td></tr>
+          <tr><td>クーポン</td><td>併用可否フラグ／管理画面からの使用処理（status='used'）</td></tr>
+          <tr><td>Webhook</td><td>署名検証・follow イベント等を POST して分岐を確認（受取 postback は新設計で廃止のため依存減）</td></tr>
+          <tr><td>LIFF API</td><td><code>LineIdTokenVerifier</code> をフェイク化し <code>/referral/check</code> ・ <code>/referral/link</code> をログインなしで検証</td></tr>
+          <tr><td>Push 内容</td><td><code>Http::fake()</code> で「誰に・どの文面/Flexを送ろうとしたか」をアサート（実LINEに飛ばさない）</td></tr>
+        </tbody>
+      </table>
+
+      <h3>11.3 ローカル実機相当テスト（ngrok・本番デプロイ不要）</h3>
+      <p>LINE は Webhook/LIFF に HTTPS 公開 URL を要求するため、<strong>ngrok で localhost を公開</strong>する（手順は <code>docs/LINE_MESSAGING_TESTING.md</code>。本プロジェクトの <code>APP_URL</code> も ngrok を使用中）。</p>
+      <ol>
+        <li><code>ngrok http 8000</code> で公開URLを発行（現在：<code>https://unnagging-needingly-archimedes.ngrok-free.dev</code>）</li>
+        <li><strong><code>.env</code> の <code>APP_URL</code></strong>／<strong>Messaging の Webhook URL</strong>／<strong>LIFF Endpoint</strong>／<strong>Login Callback</strong> を全てその ngrok URL に揃える → <code>php artisan config:clear</code></li>
+        <li>テスト用 LINE アカウントで「友達追加 → 紹介URL → LIFF紐付け →（管理画面で成約登録）→（1ヶ月後相当で）ポイント付与 → ギフトカード引換」を実機で一気通し</li>
+      </ol>
+      <div class="callout warn">
+        <strong>⚠️ ngrok 利用時の注意</strong>
+        無料URLは再起動で変わるため、そのたびに LINE コンソール（Webhook/LIFF/Callback）の再登録が必要。referral 用に <strong>LINE Login チャネル＋LIFFアプリの登録</strong>が要る。常設URLが欲しい場合は ngrok 有料 or ステージング VPS を検討。
+      </div>
+
+      <h3>11.4 本番／ステージングが要る・要注意な部分</h3>
+      <ul>
+        <li><strong>テスト用に別の公式アカウント／LIFFチャネル</strong>を用意できると安全（本番の実ユーザーへテストPushが飛ぶ事故を防止）</li>
+        <li>リッチメニュー本番反映・実 Push 配信量（課金）・Flex 表示・<code>shareTargetPicker</code> は実機確認（ngrok で可）</li>
+        <li><strong>ギフトカードの実際の発行・手渡し</strong>（店舗対応・券手配等）は自動テスト外＝運用テスト</li>
+      </ul>
+
+      <h3>11.5 テストしやすくする実装上の工夫（着手時に入れる）</h3>
+      <ul>
+        <li>Push 送信は必ず <code>LineMessagingService</code> 経由に統一（テストは <code>Http::fake()</code>）</li>
+        <li>IDトークン検証は interface/DI で差し替え可能に</li>
+        <li>「1ヶ月後」は固定遅延でなく<strong>設定値＋<code>Carbon::setTestNow()</code></strong>でテスト</li>
+        <li>ポイント／ギフトカードは Service に集約し Unit テスト</li>
+      </ul>
+
+      <h3>11.6 おすすめの段取り</h3>
+      <ol>
+        <li><strong>Phase 1〜3（DB / ロジック / 管理画面）</strong>：ローカル PHPUnit で完結（ここで品質をほぼ担保）</li>
+        <li><strong>Phase 4〜5（LIFF / リッチメニュー / Push）</strong>：ngrok 実機で結合確認</li>
+        <li><strong>Phase 6（本番反映）</strong>：マイグレーション投入・リッチメニュー本番登録・告知</li>
+      </ol>
+
+      <div class="callout info">
+        <strong>📌 PHPUnit テスト一覧（新設計版・元計画§7を更新）</strong>
+        <code>StageEvaluatorTest</code>（境界値・可変閾値）／ <code>ReferralLinkingTest</code>（3条件・自己紹介・重複）／ <code>PointGrantTest</code>（紹介者%・被紹介者固定pt）／ <code>ReferralMatureCommandTest</code>（1ヶ月後確定バッチ）／ <code>GiftCardTest</code>（発行済みでポイント減算・キャンセル返還）／ <code>ContractObserverTest</code>（成約→仮確定）／ <code>CouponMarkUsedTest</code>（使用処理・併用可否）。
+      </div>
+    </section>
+
+    <!-- ================== 12. LINE管理画面での設定 ================== -->
+    <section id="sec-line-console">
+      <h2>12. LINE管理画面での設定手順</h2>
+
+      <p>本機能の稼働には、<strong>LINE Developers Console</strong>（2チャネル）と <strong>LINE公式アカウント Manager</strong> 側の設定が必要。詳細手順は <code>docs/LINE_MESSAGING_SETUP.md</code>（基本連携）と <code>20260605_LINEリッチメニュー作成手順.md</code>（リッチメニュー）に準拠。ここでは<strong>紹介機能のために追加・確認すべき項目</strong>を整理する。</p>
+
+      <div class="callout info">
+        <strong>🌐 ベースURL（このプロジェクトの実値）</strong>
+        以下、<code>{ドメイン}</code> は環境に応じて読み替える。検証中は ngrok、本番は本番ドメイン。
+        <table>
+          <thead><tr><th>環境</th><th>ベースURL（{ドメイン}）</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td>ローカル検証（ngrok）</td><td><code>https://unnagging-needingly-archimedes.ngrok-free.dev</code></td><td>実機テスト時の Webhook / LIFF / Callback</td></tr>
+            <tr><td>本番</td><td><code>https://kyogofuku-event.com</code></td><td>本番反映後の Webhook / LIFF / Callback</td></tr>
+          </tbody>
+        </table>
+        ※ ngrok の無料URLは再起動で変わる。上記は現在の発行値。<code>.env</code> の <code>APP_URL</code> と LINE コンソールの各URLは、検証中はngrok・本番は本番ドメインに<strong>必ず一致</strong>させる。
+      </div>
+
+      <div class="callout ok">
+        <strong>✅ 現状確認（2026-06-25・LINE公式アカウントManagerをPlaywrightで確認）</strong>
+        <ul style="margin:8px 0 0;">
+          <li>対象アカウント：<strong>【公式】京呉服平田/京呉服好一 <code>@723svxpq</code></strong>（友だち165・ライトプラン・管理者権限）。別に【社内通知用】<code>@235cbrhw</code> あり。</li>
+          <li>Messaging API：<strong>ステータス「利用中」</strong>／Channel ID <code>2009633542</code>（フロー図と一致）。Channel secret は設定済（機密のため本書には記載しない）。</li>
+          <li><strong>Webhook URL は既に本番に設定済</strong>：<code>https://kyogofuku-event.com/webhook/line/messaging</code>（＝既存のLINE 1:1連携が本番稼働中）。</li>
+          <li>応答方法：<strong>「手動チャット」</strong>（応答メッセージで自動返信しない）＝ボット運用に適した状態。</li>
+          <li><strong>リッチメニューは未作成</strong>。今回の4項目構成が初回登録になる。</li>
+        </ul>
+        <div style="margin-top:8px;"><strong>⚠️ テスト時の重要注意：</strong>このアカウントの Webhook は<strong>本番URLに向いている</strong>ため、同じアカウントの Webhook を ngrok に張り替えると<strong>本番のLINE受信が止まる／開発側に流れる</strong>。ローカル実機テストは <strong>テスト用の別チャネル（別公式アカウント）</strong>で行うのが安全（本番の友だち165名へ誤Pushも防げる）。LIFF（referral/my-stage/my-coupons/mypage）の新設・アクセストークン発行は <code>LINE Developersコンソール</code>（developers.line.biz）側で行う。</div>
+      </div>
+
+      <div class="callout info">
+        <strong>📌 設定対象は2チャネル＋公式アカウント</strong>
+        <table>
+          <thead><tr><th>対象</th><th>役割</th><th>本機能での追加設定</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge">Messaging API チャネル</span><br>@723svxpq / ID 2009633542</td><td>公式アカウント本体・Webhook受信・Push送信・リッチメニュー</td><td>Webhook URL／応答設定／リッチメニュー差し替え</td></tr>
+            <tr><td><span class="badge">LINE Login チャネル</span><br>ID 2009633621</td><td>LIFF・IDトークン検証</td><td><strong>referral / my-stage / my-coupons(→マイポイント) のLIFFアプリ新設</strong></td></tr>
+            <tr><td><span class="badge user">公式アカウント Manager</span></td><td>あいさつ／応答メッセージ・GUI運用</td><td>あいさつメッセージの文面・友だち追加導線</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>12.1 Messaging API チャネル（公式アカウント）</h3>
+      <ol>
+        <li><strong>Webhook</strong>：Messaging API タブ → Webhook URL に <code>https://{ドメイン}/webhook/line/messaging</code> を登録し、<strong>「Webhookの利用」をON</strong>。「検証」で 200 が返ることを確認。</li>
+        <li><strong>チャネルアクセストークン／チャネルシークレット</strong>：発行して <code>.env</code>（<code>LINE_MESSAGING_CHANNEL_ACCESS_TOKEN</code> / <code>LINE_MESSAGING_CHANNEL_SECRET</code>）へ。</li>
+        <li><strong>応答設定</strong>（公式アカウント Manager → 応答設定）：<strong>応答メッセージOFF</strong>・<strong>Webhook ON</strong>・あいさつメッセージは任意（友だち追加直後の導線）。</li>
+        <li><strong>リッチメニュー</strong>：友達紹介／マイステージ／マイポイント・ギフト等を配置（→ 12.4）。</li>
+      </ol>
+      <div class="callout ok">
+        <strong>✅ postback設定は新設計で簡素化</strong>
+        旧設計のクーポン「受け取る」postbackは廃止（特典はポイント自動付与）。Webhookで扱う主イベントは <code>follow</code>（友だち追加）と <code>message</code> が中心。
+      </div>
+
+      <h3>12.2 LINE Login チャネル ＋ LIFFアプリ新設</h3>
+      <p>紹介機能で使う LIFF アプリを<strong>新規追加</strong>する（既存の link / welcome とは別）。LINE Login チャネル → LIFF タブ → 追加。</p>
+      <table>
+        <thead><tr><th>LIFFアプリ</th><th>Endpoint URL</th><th>サイズ</th><th>必要scope</th><th>.env</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge new">referral</span></td><td><code>https://{ドメイン}/line/liff/referral</code></td><td>Full</td><td>openid, profile</td><td><code>LINE_REFERRAL_LIFF_ID</code></td></tr>
+          <tr><td><span class="badge new">my-stage</span></td><td><code>https://{ドメイン}/line/liff/my-stage</code></td><td>Full</td><td>openid, profile</td><td>（referralと同一アプリ可）</td></tr>
+          <tr><td><span class="badge new">my-coupons<br>→マイポイント</span></td><td><code>https://{ドメイン}/line/liff/my-coupons</code></td><td>Full</td><td>openid, profile</td><td>（同上）</td></tr>
+          <tr><td><span class="badge new">mypage<br>（顧客詳細）</span></td><td><code>https://{ドメイン}/line/liff/mypage</code></td><td>Full</td><td>openid, profile</td><td>（同上）</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li><strong>Callback URL</strong>：LINEログイン設定の Callback に <code>https://{ドメイン}/line/liff/resume</code> を登録。</li>
+        <li><strong>「LINEログイン」「友だち追加オプション（aggressive）」</strong>：紹介URLからの友だち追加導線を活かすため、必要に応じて Add friend option を設定。</li>
+        <li>発行された <strong>LIFF ID</strong> を <code>.env</code> の <code>LINE_REFERRAL_LIFF_ID</code> 等へ。</li>
+      </ul>
+      <div class="callout warn">
+        <strong>⚠️ ドメイン（Endpoint）はテスト時に変わる</strong>
+        ローカル ngrok 検証では Endpoint/Webhook/Callback が ngrok URL（<code>https://unnagging-needingly-archimedes.ngrok-free.dev</code>）になるため、<strong>テスト用と本番でLIFFアプリ／チャネルを分ける</strong>か、検証のたびに URL を貼り替える。本番反映時は本番ドメイン（<code>https://kyogofuku-event.com</code>）に統一。
+      </div>
+
+      <h3>12.3 .env への反映値（紹介機能の追加分）</h3>
+      <pre># APP_URL は検証中=ngrok / 本番=本番ドメイン に一致させる
+# 検証: APP_URL=https://unnagging-needingly-archimedes.ngrok-free.dev
+# 本番: APP_URL=https://kyogofuku-event.com
+APP_URL=https://kyogofuku-event.com
+LINE_MESSAGING_CHANNEL_ACCESS_TOKEN=...
+LINE_MESSAGING_CHANNEL_SECRET=...
+LINE_LOGIN_CHANNEL_ID=2009633621
+LINE_REFERRAL_LIFF_ID=2009633621-XXXXXXXX   # 新設LIFF
+LINE_REFERRAL_EXPIRE_MONTHS=6
+# 反映後は php artisan config:clear（本番でconfig:cache時は再キャッシュ）</pre>
+
+      <h3>12.4 リッチメニュー登録</h3>
+      <p>詳細は <code>20260605_LINEリッチメニュー作成手順.md</code>（Artisanコマンド <code>line:register-rich-menu</code>）。<strong>本機能の方式変更により、メニュー構成を 4 項目に見直す</strong>（旧 5・6＝問い合わせ/FAQ等は廃止）。レイアウトは 4 項目に合わせて再設計（例：2×2 ＝ 1500×1010 など。サイズ・分割は作成手順.md側を更新）：</p>
+      <table>
+        <thead><tr><th>マス</th><th>旧（初版・6マス）</th><th>新（4項目）</th><th>アクション</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>友達紹介</td><td>友達紹介</td><td>URI → referral LIFF</td></tr>
+          <tr><td>2</td><td>マイステージ</td><td>マイステージ</td><td>URI → my-stage LIFF</td></tr>
+          <tr><td>3</td><td>保有クーポン</td><td><strong>マイポイント／ギフト</strong></td><td>URI → my-coupons(マイポイント) LIFF</td></tr>
+          <tr><td>4</td><td>イベント予約</td><td><strong>顧客詳細（マイページ）</strong></td><td>URI → 顧客詳細 LIFF</td></tr>
+          <tr><td>5・6</td><td>問い合わせ／FAQ</td><td><strong>なし（削除）</strong></td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <strong>🆕 「顧客詳細（マイページ）」LIFF の仕様</strong>
+        対象は <strong>顧客登録済み ＋ LINE連携済み</strong> のユーザーのみ。LIFFで本人を特定（IDトークン → <code>customer_line_contacts</code> → customer）し、<strong>自分の顧客情報の確認</strong>・<strong>成約内容の確認（金額・プラン）</strong>・<strong>前撮り日の確認</strong>を<strong>表示専用</strong>で提供する。<br>
+        条件を満たさない場合（未連携／未登録）は「ご利用には顧客登録とLINE連携が必要です」と案内し、内容は表示しない。<br>
+        参照データ：<code>customers</code>（顧客情報）／<code>contracts</code>（成約金額・プラン）／前撮り日（<code>customer_photo_slots</code> 等の撮影予定）。※公開範囲・表示項目は要確認（個人情報のため最小限に）。
+      </div>
+
+      <h3>12.5 設定後の確認</h3>
+      <ol>
+        <li>Messaging API の「検証」で Webhook が 200 を返す</li>
+        <li>テスト用 LINE で公式アカウントを友だち追加 → あいさつメッセージ受信</li>
+        <li>リッチメニューの各ボタンから LIFF が開く（友達紹介 / マイステージ / マイポイント / 顧客詳細）</li>
+        <li>顧客詳細LIFF：顧客登録済＋LINE連携済のテストユーザーで、顧客情報・成約（金額/プラン）・前撮り日が表示される。未連携ユーザーでは案内表示のみ</li>
+        <li>紹介URL <code>?ref=XXXX</code> をタップ → referral LIFF が起動し ref を保持</li>
+        <li>（成約登録→ポイント付与→ギフトカード引換は 11.3 の一気通しで確認）</li>
+      </ol>
+
+      <div class="callout warn">
+        <strong>🔐 運用上の推奨</strong>
+        本番の実ユーザーへ誤Pushしないよう、<strong>検証はテスト用チャネル／テスト用公式アカウント</strong>で行うのが安全。トークン・シークレットは <code>.env</code> 管理（Git管理外）。
+      </div>
+    </section>
+
+    <footer style="margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px;">
+      関連: <code>docs/20260605_LINE紹介機能_実装計画.md</code> ／ <code>docs/20260605_LINEリッチメニュー作成手順.md</code> ／ <code>システム開発部門/京呉服平田/LINE公式アカウント/メインアカウント/20260611_公式アカウント現状確認レポート.md</code> ／ 指示台帳 No.071
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    sequence: { showSequenceNumbers: false, mirrorActors: false, wrap: true },
+    flowchart: { curve: 'basis' },
+    themeVariables: {
+      primaryColor: '#06C755',
+      primaryTextColor: '#1f2937',
+      lineColor: '#6b7280',
+      tertiaryColor: '#fff'
+    }
+  });
+</script>
+</body>
+</html>
