@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
+use App\Http\Controllers\Admin\AttendanceLeaveController as AdminAttendanceLeaveController;
 use App\Http\Controllers\Admin\AttendancePayrollSettingController as AdminAttendancePayrollSettingController;
 use App\Http\Controllers\Admin\AttendancePayrollSimulatorController as AdminAttendancePayrollSimulatorController;
 use App\Http\Controllers\Admin\CompanyCalendarController as AdminCompanyCalendarController;
@@ -418,6 +419,12 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // 勤怠管理（管理者・勤怠管理者）
     Route::get('/attendance', [AdminAttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/attendance/export-csv', [AdminAttendanceController::class, 'exportCsv'])->name('attendance.export-csv');
+    // 月次集計CSV（1スタッフ=1行の集計）
+    Route::get('/attendance/export-summary-csv', [AdminAttendanceController::class, 'exportSummaryCsv'])->name('attendance.export-summary-csv');
+
+    // 休暇登録（有給/特別休暇/欠勤）— {record} ワイルドカードより前に定義
+    Route::post('/attendance/leaves', [AdminAttendanceLeaveController::class, 'store'])->name('attendance.leaves.store');
+    Route::delete('/attendance/leaves/{leave}', [AdminAttendanceLeaveController::class, 'destroy'])->name('attendance.leaves.destroy');
 
     // 勤怠管理者のみ（{record} より前に定義 — さもないと company-calendar が attendance/{record} に吸われ POST が 405 になる）
     Route::get('/attendance/company-calendar', [AdminCompanyCalendarController::class, 'index'])->name('attendance.company-calendar.index');
