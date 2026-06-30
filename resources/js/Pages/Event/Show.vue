@@ -289,8 +289,9 @@
         </div>
 
         <!-- 固定ボタン（予約フォームの場合のみ、かつ終了していない場合、かつ成功ページ表示時ではない場合） -->
+        <!-- WEB予約・電話予約の有効フラグで表示制御。片方無効ならもう片方が flex-1 で全幅。両方無効なら非表示 -->
         <div
-            v-if="isTimeslotReservationForm && !isEnded && !showSuccess && !isLoading"
+            v-if="isTimeslotReservationForm && !isEnded && !showSuccess && !isLoading && (event.cta_web_button_enabled || event.cta_phone_button_enabled)"
             :class="[
                 'event-show-fixed-cta fixed bottom-0 left-0 right-0 z-50 p-4',
                 !event.cta_background_url && 'event-show-fixed-cta--pastel-fallback',
@@ -301,6 +302,7 @@
         >
             <div class="max-w-4xl md:max-w-xl mx-auto flex gap-4">
                 <button
+                    v-if="event.cta_web_button_enabled"
                     @click="showReservationForm = true"
                     class="flex-1 hover:opacity-80 transition-opacity"
                 >
@@ -311,6 +313,7 @@
                     />
                 </button>
                 <a
+                    v-if="event.cta_phone_button_enabled"
                     :href="`tel:${shops && shops.length > 0 ? shops[0].phone : ''}`"
                     class="flex-1 hover:opacity-80 transition-opacity"
                 >

@@ -44,6 +44,8 @@ class EventCtaDesignController extends Controller
             'media_cta_web_button_id' => 'nullable|integer|exists:media_files,id',
             'media_cta_phone_button_id' => 'nullable|integer|exists:media_files,id',
             'cta_color_type' => 'nullable|string|in:red,pink,rose,orange,amber,purple,violet,indigo,blue,sky,cyan,teal,green,emerald',
+            'cta_web_button_enabled' => 'nullable|boolean',
+            'cta_phone_button_enabled' => 'nullable|boolean',
         ]);
 
         $manager = $this->createImageManager();
@@ -105,6 +107,12 @@ class EventCtaDesignController extends Controller
 
         if ($request->has('cta_color_type')) {
             $updates['cta_color_type'] = $request->input('cta_color_type');
+        }
+        if ($request->has('cta_web_button_enabled')) {
+            $updates['cta_web_button_enabled'] = $request->boolean('cta_web_button_enabled');
+        }
+        if ($request->has('cta_phone_button_enabled')) {
+            $updates['cta_phone_button_enabled'] = $request->boolean('cta_phone_button_enabled');
         }
         if (!empty($updates)) {
             $event->update($updates);
