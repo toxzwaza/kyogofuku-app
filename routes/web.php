@@ -262,6 +262,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/reservations/{reservation}/line/contacts/{contact}/mark-read', [ReservationLineMessageController::class, 'markRead'])->name('reservations.line.mark-read');
     Route::post('/reservations/{reservation}/line/contacts/{contact}/send', [ReservationLineMessageController::class, 'send'])->name('reservations.line.send');
     Route::delete('/reservations/{reservation}/line/contacts/{contact}', [ReservationLineMessageController::class, 'destroyContact'])->name('reservations.line.contact-destroy');
+    Route::patch('/reservations/{reservation}/line/responsible-shop', [ReservationLineMessageController::class, 'updateResponsibleShop'])->name('reservations.line.responsible-shop');
     Route::get('/reservations/{reservation}/edit', [AdminReservationController::class, 'edit'])->name('reservations.edit');
     Route::put('/reservations/{reservation}', [AdminReservationController::class, 'update'])->name('reservations.update');
     Route::delete('/reservations/{reservation}', [AdminReservationController::class, 'destroy'])->name('reservations.destroy');
