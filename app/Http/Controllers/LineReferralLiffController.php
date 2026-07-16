@@ -39,15 +39,18 @@ class LineReferralLiffController extends Controller
             return response()->json(['state' => 'unauthorized'], 401);
         }
 
+        // 誰から紹介されたか（顧客登録・成約の有無に関わらず常に返す）
+        $referrer = $this->resolveReferrerInfo($lineUserId);
+
         $customer = $this->resolveCustomerByLineUserId($lineUserId);
         if (!$customer) {
-            return response()->json(['state' => 'not_linked'], 403);
+            return response()->json(['state' => 'not_linked', 'referrer' => $referrer], 403);
         }
 
         $hasCode = $customer->referralCode()->exists();
         $isContracted = $customer->contracts()->where('status', '確定')->exists();
         if (!$hasCode && !$isContracted) {
-            return response()->json(['state' => 'not_eligible']);
+            return response()->json(['state' => 'not_eligible', 'referrer' => $referrer]);
         }
 
         $code = ReferralCode::firstOrCreate(
@@ -62,7 +65,33 @@ class LineReferralLiffController extends Controller
             'state' => 'ok',
             'code' => $code->code,
             'share_url' => $shareUrl,
+            'referrer' => $referrer,
         ]);
+    }
+
+    /**
+     * 被紹介者のLINE user_id から「誰に紹介されたか」を解決する。
+     * 顧客登録・成約後も referred_line_user_id で引けるため、常に紹介者を返せる。
+     * 無効な紹介（rejected/expired）は除外。紹介がなければ null。
+     *
+     * @return array{id:int, name:string}|null
+     */
+    private function resolveReferrerInfo(string $lineUserId): ?array
+    {
+        $referral = Referral::query()
+            ->where('referred_line_user_id', $lineUserId)
+            ->whereIn('status', [
+                Referral::STATUS_LINKED,
+                Referral::STATUS_CONTRACTED,
+                Referral::STATUS_MATURED,
+            ])
+            ->with('referrer:id,name')
+            ->latest('id')
+            ->first();
+
+        return $referral?->referrer
+            ? ['id' => $referral->referrer->id, 'name' => $referral->referrer->name]
+            : null;
     }
 
     /**
@@ -96,10 +125,15 @@ class LineReferralLiffController extends Controller
         $ref = (string) $request->input('ref', '');
         $result = $linking->link($ref, $lineUserId);
 
-        // 成立時のみお礼テキスト（特典は成約後にポイント付与する旨）
+        // 成立時のみお礼テキスト（誰から紹介されたか＝紹介者の顧客ID・氏名を明示）
         if ($result['status'] === Referral::STATUS_LINKED) {
-            $text = ReferralSetting::get('referral_message_template')
-                ?: "ご登録ありがとうございます。\nご成約後、紹介特典ポイントを進呈いたします。";
+            $referrer = $result['referral']?->referrer;
+            if ($referrer) {
+                $text = "お友達登録ありがとうございます！\n[{$referrer->id}]{$referrer->name}さんから友達紹介されました！";
+            } else {
+                $text = ReferralSetting::get('referral_message_template')
+                    ?: "ご登録ありがとうございます。\nご成約後、紹介特典ポイントを進呈いたします。";
+            }
             try {
                 $messaging->pushTextToUser($lineUserId, $text);
             } catch (\Throwable $e) {

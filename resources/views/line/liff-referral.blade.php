@@ -20,6 +20,7 @@
       <div id="message"></div>
       <div id="actions"></div>
     </div>
+    <div id="referrer-block"></div>
     <p class="muted center" id="footnote">ご紹介で成約されると、紹介特典ポイントを進呈します。</p>
   </div>
 </div>
@@ -49,8 +50,21 @@
     return { status: res.status, data: await res.json().catch(() => ({})) };
   }
 
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
   function renderNotLinked() {
     showMsg('ご利用には顧客登録とLINE連携が必要です。店舗スタッフへお問い合わせください。', 'err');
+  }
+
+  // 紹介者ブロック：誰から紹介を受けたかを常に表示（紹介者がいなければ空欄）
+  function renderReferrerBlock(referrer) {
+    const val = (referrer && referrer.name)
+      ? '[' + esc(referrer.id) + '] ' + esc(referrer.name)
+      : '―';
+    el('referrer-block').innerHTML =
+      '<div class="card"><div class="kv"><span class="k">ご紹介者</span><span class="v">' + val + '</span></div></div>';
   }
 
   // 紹介者モード：自分の紹介コード・URL・QR・共有ボタン
@@ -88,6 +102,8 @@
   async function runReferrer(idToken) {
     const r = await post(ROUTES.me, { id_token: idToken });
     if (r.status === 401) { showMsg('認証に失敗しました。', 'err'); return; }
+    // 顧客登録・成約の有無に関わらず、誰から紹介されたかを常に表示
+    renderReferrerBlock(r.data.referrer);
     if (r.status === 403 || r.data.state === 'not_linked') { renderNotLinked(); return; }
     if (r.data.state === 'not_eligible') {
       el('subline').textContent = 'ご成約後にご利用いただけます';
@@ -104,15 +120,19 @@
     if (check.status === 401) { showMsg('認証に失敗しました。', 'err'); return; }
 
     showMsg('紹介から京呉服平田の公式LINEへようこそ。下のボタンで登録を完了してください。', 'ok');
-    el('actions').innerHTML = '<button class="btn btn-primary" id="linkBtn">紹介で登録する</button>'
-      + '<p class="muted center" style="margin-top:12px">公式アカウントの友だち追加がまだの場合は<a href="'+ADD_FRIEND_URL+'" style="color:var(--accent-deep)">こちら</a></p>';
+    // 初期表示は「紹介で登録する」のみ。友だち追加ボタンは登録成立後に表示する。
+    el('actions').innerHTML = '<button class="btn btn-primary" id="linkBtn">紹介で登録する</button>';
 
     el('linkBtn').onclick = async () => {
       el('linkBtn').disabled = true;
       const r = await post(ROUTES.link, { id_token: idToken, ref: REF });
       if (r.data.state === 'linked') {
         showMsg('登録ありがとうございます。特典はご成約後にポイントで進呈いたします。', 'ok');
-        el('actions').innerHTML = '';
+        // 登録が成立したら、公式アカウント友だち追加ボタンを表示する
+        el('actions').innerHTML = ADD_FRIEND_URL
+          ? '<a class="btn btn-line" id="addFriendBtn" href="'+ADD_FRIEND_URL+'" style="text-decoration:none">公式アカウントを友だち追加する</a>'
+            + '<p class="muted center" style="margin-top:12px">続けて、公式アカウントの友だち追加をお願いします（未追加の場合は特典が正しく進呈されません）。</p>'
+          : '';
       } else if (r.data.state === 'rejected') {
         showMsg('すでにご利用中、もしくは紹介条件を満たさないため特典は適用されません。', 'warn');
         el('actions').innerHTML = '';

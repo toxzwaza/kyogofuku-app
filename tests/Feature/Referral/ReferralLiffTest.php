@@ -205,4 +205,53 @@ class ReferralLiffTest extends TestCase
             ->assertJsonPath('contracts.0.contract_date', today()->format('Y-m-d'))
             ->assertJsonPath('contracts.0.total_amount', 200000);
     }
+
+    public function test_link_push_contains_referrer_id_and_name(): void
+    {
+        $this->fakeLine('Ufriend');
+        $referrer = $this->customer('紹介者花子');
+        ReferralCode::create(['customer_id' => $referrer->id, 'code' => 'ABC12345']);
+
+        $this->postJson(route('line.liff.referral.link'), ['id_token' => 'tok', 'ref' => 'ABC12345'])
+            ->assertOk()
+            ->assertJson(['state' => 'linked']);
+
+        // お礼Pushの本文に「[顧客ID]氏名さんから友達紹介されました！」が含まれる
+        Http::assertSent(function ($req) use ($referrer) {
+            if (!str_contains($req->url(), '/v2/bot/message/push')) {
+                return false;
+            }
+            $text = $req->data()['messages'][0]['text'] ?? '';
+
+            return str_contains($text, "[{$referrer->id}]紹介者花子さんから友達紹介されました");
+        });
+    }
+
+    public function test_me_returns_referrer_for_referred_user(): void
+    {
+        // 被紹介者（まだ顧客ではない・linked状態）でも、誰から紹介されたかを返す
+        $referrer = $this->customer('紹介者太郎');
+        Referral::create([
+            'referrer_customer_id' => $referrer->id,
+            'referred_line_user_id' => 'Ufriend2',
+            'status' => Referral::STATUS_LINKED,
+            'expires_at' => now()->addMonths(6),
+        ]);
+        $this->fakeLine('Ufriend2');
+
+        $this->postJson(route('line.liff.referral.me'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJson(['state' => 'not_linked'])
+            ->assertJsonPath('referrer.id', $referrer->id)
+            ->assertJsonPath('referrer.name', '紹介者太郎');
+    }
+
+    public function test_me_referrer_null_without_referral(): void
+    {
+        $this->fakeLine('Ulonely');
+
+        $this->postJson(route('line.liff.referral.me'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJson(['state' => 'not_linked', 'referrer' => null]);
+    }
 }
