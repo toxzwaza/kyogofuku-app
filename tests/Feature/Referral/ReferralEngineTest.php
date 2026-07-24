@@ -14,6 +14,7 @@ use App\Models\ReferralPoint;
 use App\Models\Shop;
 use App\Services\Referral\GiftCardService;
 use App\Services\Referral\PointGrantService;
+use App\Services\Referral\PointTransferService;
 use App\Services\Referral\ReferralLinkingService;
 use App\Services\Referral\ReferralMaturationService;
 use App\Services\Referral\ReferralPointService;
@@ -223,8 +224,9 @@ class ReferralEngineTest extends TestCase
         // 紹介者をゴールド（5%）に
         CustomerStage::where('customer_id', $referrer->id)->update(['stage' => 'gold']);
 
-        // 成約金額 税込110,000 → 税抜100,000 × 5% = 5,000pt
-        $contract = $this->contract($referred, 110000);
+        // 報酬は「紹介者本人の成約合計」が基準：税込110,000 → 税抜100,000 × 5% = 5,000pt
+        $this->contract($referrer, 110000);
+        $contract = $this->contract($referred, 110000); // maturation トリガー用（referral.contract_id）
         $referral = Referral::create([
             'referrer_customer_id' => $referrer->id,
             'referred_line_user_id' => 'Ub',
@@ -271,13 +273,14 @@ class ReferralEngineTest extends TestCase
         $referrer = $this->customer('紹介者');
         $referred = $this->customer('被紹介者');
         CustomerStage::where('customer_id', $referrer->id)->update(['stage' => 'bronze']); // 3%
+        $this->contract($referrer, 110000); // 報酬基準：紹介者の成約 税抜100,000 × 3% = 3,000
         Referral::create([
             'referrer_customer_id' => $referrer->id,
             'referred_line_user_id' => 'Um1',
             'referred_customer_id' => $referred->id,
             'status' => Referral::STATUS_LINKED,
         ]);
-        $contract = $this->contract($referred, 110000); // 税抜100,000 × 3% = 3,000
+        $contract = $this->contract($referred, 110000); // maturation トリガー用
 
         // Observerで contracted になる。contracted_at を1ヶ月以上前に偽装
         $referral = Referral::where('referred_customer_id', $referred->id)->first();
@@ -317,6 +320,7 @@ class ReferralEngineTest extends TestCase
     {
         $referrer = $this->customer('紹介者');
         $referred = $this->customer('被紹介者');
+        $this->contract($referrer, 110000); // 報酬基準：紹介者の成約 税抜100,000 × 3%（bronze）= 3,000
         Referral::create([
             'referrer_customer_id' => $referrer->id,
             'referred_line_user_id' => 'Umanual',
@@ -347,6 +351,7 @@ class ReferralEngineTest extends TestCase
     {
         $referrer = $this->customer('紹介者');
         $this->lineContact($referrer, 'UrefBoss'); // 紹介者のLINE
+        $this->contract($referrer, 110000); // 報酬>0（紹介者特典Pushの条件）
         $referred = $this->customer('被紹介者');
         Referral::create([
             'referrer_customer_id' => $referrer->id,
@@ -387,11 +392,13 @@ class ReferralEngineTest extends TestCase
         app(ReferralPointService::class)->applyDelta($customer, 2000, 'adjust');
 
         $svc = app(GiftCardService::class);
-        $gc = $svc->issue($customer, 1500, null, $this->shop->id);
+        // 交換レート 1pt=0.8円：1,000円 → 必要 ceil(1000/0.8)=1,250pt
+        $gc = $svc->issue($customer, 1000, null, $this->shop->id);
 
         $this->assertSame(GiftCard::STATUS_ISSUED, $gc->status);
-        $this->assertSame(500, (int) ReferralPoint::where('customer_id', $customer->id)->value('balance'));
-        $this->assertDatabaseHas('point_ledger', ['customer_id' => $customer->id, 'type' => 'gift_card_redeem', 'amount' => -1500]);
+        $this->assertSame(1250, (int) $gc->points_spent);
+        $this->assertSame(750, (int) ReferralPoint::where('customer_id', $customer->id)->value('balance'));
+        $this->assertDatabaseHas('point_ledger', ['customer_id' => $customer->id, 'type' => 'gift_card_redeem', 'amount' => -1250]);
 
         $svc->cancel($gc);
         $this->assertSame(2000, (int) ReferralPoint::where('customer_id', $customer->id)->value('balance'));
@@ -419,5 +426,132 @@ class ReferralEngineTest extends TestCase
         } catch (ValidationException) {
             $this->assertTrue(true);
         }
+    }
+
+    // ---- ポイント譲渡：等価で移動、残高不足・自己譲渡は拒否 ----
+    public function test_point_transfer_moves_points_between_customers(): void
+    {
+        $from = $this->customer('送り手');
+        $to = $this->customer('受け手');
+        app(ReferralPointService::class)->applyDelta($from, 3000, 'adjust');
+
+        app(PointTransferService::class)->transfer($from, $to, 1000, 'テスト譲渡');
+
+        $this->assertSame(2000, (int) ReferralPoint::where('customer_id', $from->id)->value('balance'));
+        $this->assertSame(1000, (int) ReferralPoint::where('customer_id', $to->id)->value('balance'));
+        $this->assertDatabaseHas('point_ledger', ['customer_id' => $from->id, 'type' => 'transfer_out', 'amount' => -1000]);
+        $this->assertDatabaseHas('point_ledger', ['customer_id' => $to->id, 'type' => 'transfer_in', 'amount' => 1000]);
+    }
+
+    public function test_point_transfer_rejects_insufficient_and_self(): void
+    {
+        $from = $this->customer('送り手');
+        $to = $this->customer('受け手');
+        app(ReferralPointService::class)->applyDelta($from, 500, 'adjust');
+
+        // 残高不足
+        try {
+            app(PointTransferService::class)->transfer($from, $to, 1000);
+            $this->fail('ValidationException expected (balance)');
+        } catch (ValidationException) {
+            $this->assertTrue(true);
+        }
+
+        // 自己譲渡
+        try {
+            app(PointTransferService::class)->transfer($from, $from, 100);
+            $this->fail('ValidationException expected (self)');
+        } catch (ValidationException) {
+            $this->assertTrue(true);
+        }
+
+        // 残高は変わっていない
+        $this->assertSame(500, (int) ReferralPoint::where('customer_id', $from->id)->value('balance'));
+    }
+
+    // ---- 平田ポイント：全成約者へ成約額(税抜)×率、確定1ヶ月後バッチ ----
+    public function test_hirata_points_granted_to_all_contracted_after_one_month(): void
+    {
+        // 紹介と無関係の成約顧客（税込110,000 → 税抜100,000 × 1% = 1,000pt）
+        $customer = $this->customer('成約者');
+        $this->contract($customer, 110000); // ContractObserver が hirata_eligible_at をセット
+
+        // 確定検知日を1ヶ月以上前に偽装
+        Contract::where('customer_id', $customer->id)->update(['hirata_eligible_at' => now()->subMonths(2)]);
+
+        $this->artisan('referral:mature')->assertSuccessful();
+
+        $this->assertSame(1000, (int) ReferralPoint::where('customer_id', $customer->id)->value('hirata_balance'));
+        // 紹介ポイント（balance）には入らない
+        $this->assertSame(0, (int) ReferralPoint::where('customer_id', $customer->id)->value('balance'));
+        $this->assertDatabaseHas('point_ledger', ['customer_id' => $customer->id, 'type' => 'hirata_reward', 'point_type' => 'hirata', 'amount' => 1000]);
+        $this->assertNotNull(Contract::where('customer_id', $customer->id)->value('hirata_granted_at'));
+    }
+
+    public function test_hirata_points_not_granted_before_one_month_and_idempotent(): void
+    {
+        $customer = $this->customer('成約者');
+        $this->contract($customer, 110000); // hirata_eligible_at = now（1ヶ月未満）
+
+        $this->artisan('referral:mature')->assertSuccessful();
+        $this->assertSame(0, (int) ReferralPoint::where('customer_id', $customer->id)->value('hirata_balance'));
+
+        // 1ヶ月経過後は付与、再実行しても二重付与しない
+        Contract::where('customer_id', $customer->id)->update(['hirata_eligible_at' => now()->subMonths(2)]);
+        $this->artisan('referral:mature')->assertSuccessful();
+        $this->artisan('referral:mature')->assertSuccessful();
+        $this->assertSame(1000, (int) ReferralPoint::where('customer_id', $customer->id)->value('hirata_balance'));
+    }
+
+    // ---- 平田ポイントはギフトカードに使えない（紹介ポイントのみ） ----
+    public function test_gift_card_cannot_use_hirata_points(): void
+    {
+        $customer = $this->customer('顧客');
+        // 平田ポイントのみ 2,000pt、紹介ポイントは 0
+        app(ReferralPointService::class)->applyDelta($customer, 2000, 'adjust', [], \App\Models\PointLedger::POINT_TYPE_HIRATA);
+
+        try {
+            app(GiftCardService::class)->issue($customer, 500, null, $this->shop->id); // 必要 625pt（紹介残高0）
+            $this->fail('ValidationException expected (gift needs referral points)');
+        } catch (ValidationException) {
+            $this->assertTrue(true);
+        }
+        // 平田残高は減っていない
+        $this->assertSame(2000, (int) ReferralPoint::where('customer_id', $customer->id)->value('hirata_balance'));
+    }
+
+    // ---- 物品購入・譲渡は平田を優先消費、跨る場合は分割 ----
+    public function test_purchase_and_transfer_prefer_hirata_points(): void
+    {
+        $from = $this->customer('顧客');
+        app(ReferralPointService::class)->applyDelta($from, 500, 'adjust'); // 紹介 500
+        app(ReferralPointService::class)->applyDelta($from, 800, 'adjust', [], \App\Models\PointLedger::POINT_TYPE_HIRATA); // 平田 800
+
+        // 商品購入 1,000pt → 平田800全消費 + 紹介200
+        app(ReferralPointService::class)->spendPreferHirata($from, 1000, \App\Models\PointLedger::TYPE_PRODUCT_PURCHASE, 'テスト購入');
+        $this->assertSame(0, (int) ReferralPoint::where('customer_id', $from->id)->value('hirata_balance'));
+        $this->assertSame(300, (int) ReferralPoint::where('customer_id', $from->id)->value('balance'));
+
+        // 譲渡：残った紹介300のうち200を別顧客へ（平田0なので紹介から）
+        $to = $this->customer('受け手');
+        app(PointTransferService::class)->transfer($from, $to, 200, null);
+        $this->assertSame(100, (int) ReferralPoint::where('customer_id', $from->id)->value('balance'));
+        $this->assertSame(200, (int) ReferralPoint::where('customer_id', $to->id)->value('balance'));
+    }
+
+    public function test_transfer_preserves_point_type_hirata_first(): void
+    {
+        $from = $this->customer('送り手');
+        $to = $this->customer('受け手');
+        app(ReferralPointService::class)->applyDelta($from, 300, 'adjust'); // 紹介300
+        app(ReferralPointService::class)->applyDelta($from, 400, 'adjust', [], \App\Models\PointLedger::POINT_TYPE_HIRATA); // 平田400
+
+        // 500譲渡 → 平田400 + 紹介100（受け手も同内訳）
+        app(PointTransferService::class)->transfer($from, $to, 500, null);
+
+        $this->assertSame(0, (int) ReferralPoint::where('customer_id', $from->id)->value('hirata_balance'));
+        $this->assertSame(200, (int) ReferralPoint::where('customer_id', $from->id)->value('balance'));
+        $this->assertSame(400, (int) ReferralPoint::where('customer_id', $to->id)->value('hirata_balance'));
+        $this->assertSame(100, (int) ReferralPoint::where('customer_id', $to->id)->value('balance'));
     }
 }

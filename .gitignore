@@ -18,3 +18,15 @@ yarn-error.log
 /.idea
 /.vscode
 mcp/node_modules/
+
+# OS / エディタ
+.DS_Store
+
+# 環境変数のローカルバックアップ
+.env.backup_*
+
+# 開発ツール・作業成果物
+.playwright-mcp/
+/tests/screenshots/
+*.bak.*
+docs/stash_at_*.patch

@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\CustomerTagController as AdminCustomerTagControll
 use App\Http\Controllers\Admin\StageSettingController as AdminStageSettingController;
 use App\Http\Controllers\Admin\ReferralController as AdminReferralController;
 use App\Http\Controllers\Admin\GiftCardController as AdminGiftCardController;
+use App\Http\Controllers\Admin\PointOperationController as AdminPointOperationController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CustomerCouponController as AdminCustomerCouponController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
@@ -451,6 +452,8 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     });
     Route::post('/customers/{customer}/gift-cards', [AdminGiftCardController::class, 'issue'])->name('customers.gift-cards.issue');
     Route::post('/gift-cards/{giftCard}/cancel', [AdminGiftCardController::class, 'cancel'])->name('gift-cards.cancel');
+    Route::post('/customers/{customer}/point-purchase', [AdminPointOperationController::class, 'purchase'])->name('customers.point-purchase');
+    Route::post('/customers/{customer}/point-transfers', [AdminPointOperationController::class, 'transfer'])->name('customers.point-transfers');
 
     // 任意配布クーポン
     Route::get('/coupons', [AdminCouponController::class, 'index'])->name('coupons.index');

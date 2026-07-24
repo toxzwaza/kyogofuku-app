@@ -50,6 +50,7 @@ class LineMyPageLiffController extends Controller
             'next_stage' => $data['next_stage'],
             'matured_referrals_count' => $data['matured_referrals_count'],
             'balance' => $data['balance'],
+            'hirata_balance' => $data['hirata_balance'],
             'gift_card_unit' => $data['gift_card_unit'],
             'ledger' => $data['ledger'],
             'gift_cards' => $data['gift_cards'],

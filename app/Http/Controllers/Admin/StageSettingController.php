@@ -30,6 +30,7 @@ class StageSettingController extends Controller
                 'gift_card_unit' => ReferralSetting::getInt('gift_card_unit', 500),
                 'maturation_months' => ReferralSetting::getInt('maturation_months', 1),
                 'referral_expire_months' => ReferralSetting::getInt('referral_expire_months', 6),
+                'hirata_point_rate' => ReferralSetting::getFloat('hirata_point_rate', 1),
             ],
         ]);
     }
@@ -45,6 +46,7 @@ class StageSettingController extends Controller
             'settings.gift_card_unit' => 'required|integer|min:1',
             'settings.maturation_months' => 'required|integer|min:0|max:12',
             'settings.referral_expire_months' => 'required|integer|min:1|max:60',
+            'settings.hirata_point_rate' => 'required|numeric|min:0|max:100',
         ]);
 
         foreach ($validated['stages'] as $row) {

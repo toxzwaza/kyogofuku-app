@@ -14,6 +14,8 @@ class ReferralSetting extends Model
     public const DEFAULTS = [
         'referred_bonus_points' => '10000',     // 被紹介者特典の固定ポイント
         'gift_card_unit' => '500',              // ギフトカード引換単位（円）
+        'gift_card_rate' => '0.8',              // ギフトカード交換レート（1pt=◯円分。0.8→500円で625pt）
+        'hirata_point_rate' => '1',             // 平田ポイント率（成約額(税抜)×%・全成約者一律）
         'referral_expire_months' => '6',        // 紹介の有効期限（月）
         'maturation_months' => '1',             // 成約→確定までの月数（クーリングオフ）
         'contract_amount_tax_rate' => '10',     // 成約金額の税率%（税込→税抜換算用）
@@ -35,6 +37,13 @@ class ReferralSetting extends Model
         $v = static::get($key);
 
         return $v === null ? $default : (int) $v;
+    }
+
+    public static function getFloat(string $key, float $default = 0.0): float
+    {
+        $v = static::get($key);
+
+        return $v === null ? $default : (float) $v;
     }
 
     public static function getBool(string $key, bool $default = false): bool

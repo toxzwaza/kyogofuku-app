@@ -33,6 +33,12 @@ class ContractObserver
             return;
         }
 
+        // 平田ポイント付与の起算日（確定検知日）をセット（未設定時のみ・成約1ヶ月後にバッチで付与）。
+        if ($contract->hirata_eligible_at === null) {
+            $contract->hirata_eligible_at = now();
+            $contract->saveQuietly();
+        }
+
         // 成約済顧客は紹介可能になるため、紹介コードを発行（未発行なら）。
         ReferralCode::firstOrCreate(
             ['customer_id' => $contract->customer_id],

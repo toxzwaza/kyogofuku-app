@@ -21,6 +21,7 @@ class GiftCardService
 
     /**
      * ギフトカードを発行（＝ポイント減算）。
+     * 交換レート（gift_card_rate＝1pt=◯円分）に従い、必要ポイント = 円 ÷ レート（端数切上げ）を消費する。
      *
      * @param  int  $amount  引換額（円）。引換単位の倍数・残高以内。
      */
@@ -33,16 +34,23 @@ class GiftCardService
                 'amount' => "引換額は{$unit}円単位で指定してください。",
             ]);
         }
-        if ($this->points->balanceOf($customer) < $amount) {
+
+        // 交換レート：必要ポイント = 交換額(円) ÷ レート（端数は切上げ）
+        $rate = ReferralSetting::getFloat('gift_card_rate', 0.8);
+        $rate = $rate > 0 ? $rate : 1.0;
+        $pointsNeeded = (int) ceil($amount / $rate);
+
+        if ($this->points->balanceOf($customer) < $pointsNeeded) {
             throw ValidationException::withMessages([
                 'amount' => 'ポイント残高が不足しています。',
             ]);
         }
 
-        return DB::transaction(function () use ($customer, $amount, $userId, $shopId) {
+        return DB::transaction(function () use ($customer, $amount, $pointsNeeded, $userId, $shopId) {
             $giftCard = GiftCard::create([
                 'customer_id' => $customer->id,
                 'amount' => $amount,
+                'points_spent' => $pointsNeeded,
                 'status' => GiftCard::STATUS_ISSUED,
                 'issued_by_user_id' => $userId,
                 'issued_shop_id' => $shopId,
@@ -51,9 +59,9 @@ class GiftCardService
 
             $this->points->applyDelta(
                 $customer,
-                -$amount,
+                -$pointsNeeded,
                 PointLedger::TYPE_GIFT_CARD_REDEEM,
-                ['gift_card_id' => $giftCard->id, 'note' => 'ギフトカード発行'],
+                ['gift_card_id' => $giftCard->id, 'note' => "ギフトカード発行（{$amount}円分・{$pointsNeeded}pt）"],
             );
 
             return $giftCard;
@@ -71,7 +79,10 @@ class GiftCardService
             ]);
         }
 
-        return DB::transaction(function () use ($giftCard) {
+        // 発行時に消費したポイントを返還する（旧データ＝points_spent 未記録の場合は amount=円をそのまま返還＝1pt=1円時代）
+        $refund = $giftCard->points_spent ?? $giftCard->amount;
+
+        return DB::transaction(function () use ($giftCard, $refund) {
             $giftCard->update([
                 'status' => GiftCard::STATUS_CANCELED,
                 'canceled_at' => now(),
@@ -79,9 +90,9 @@ class GiftCardService
 
             $this->points->applyDelta(
                 $giftCard->customer,
-                $giftCard->amount,
+                $refund,
                 PointLedger::TYPE_GIFT_CARD_CANCEL_REFUND,
-                ['gift_card_id' => $giftCard->id, 'note' => 'ギフトカード取消（返還）'],
+                ['gift_card_id' => $giftCard->id, 'note' => "ギフトカード取消（{$refund}pt返還）"],
             );
 
             return $giftCard->fresh();

@@ -17,7 +17,9 @@ class ReferralSummaryService
     public function forCustomer(Customer $customer): array
     {
         $stage = $customer->stage; // CustomerStage|null
-        $balance = (int) (optional($customer->referralPoint)->balance ?? 0);
+        $point = $customer->referralPoint;
+        $balance = (int) (optional($point)->balance ?? 0);
+        $hirataBalance = (int) (optional($point)->hirata_balance ?? 0);
 
         $ledger = PointLedger::query()
             ->where('customer_id', $customer->id)
@@ -28,6 +30,7 @@ class ReferralSummaryService
                 'id' => $l->id,
                 'amount' => $l->amount,
                 'type' => $l->type,
+                'point_type' => $l->point_type,
                 'note' => $l->note,
                 'created_at' => $l->created_at?->format('Y-m-d H:i'),
             ]);
@@ -89,7 +92,9 @@ class ReferralSummaryService
             'matured_referrals_count' => $maturedCount,
             'referral_code' => optional($customer->referralCode)->code,
             'balance' => $balance,
+            'hirata_balance' => $hirataBalance,
             'gift_card_unit' => \App\Models\ReferralSetting::getInt('gift_card_unit', 500),
+            'gift_card_rate' => \App\Models\ReferralSetting::getFloat('gift_card_rate', 0.8),
             'ledger' => $ledger,
             'gift_cards' => $giftCards,
             'referrals_made' => [

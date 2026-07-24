@@ -33,9 +33,6 @@ export function useAdminNav() {
                 { label: '不明メッセージ', route: 'admin.line-unknown-inbox.index',  icon: HelpCircle,    activePatterns: ['admin.line-unknown-inbox.*'] },
                 { label: '顧客タグ',       route: 'admin.customer-tags.index',       icon: Tag,           activePatterns: ['admin.customer-tags.*'] },
                 { label: '制約テンプレート', route: 'admin.constraint-templates.index', icon: Lock,        activePatterns: ['admin.constraint-templates.*'] },
-                { label: '友達紹介',       route: 'admin.referral.list',             icon: Gift,          activePatterns: ['admin.referral.list'] },
-                { label: 'ステージ設定',   route: 'admin.referral.stage-settings.index', icon: Settings,  activePatterns: ['admin.referral.stage-settings.*'] },
-                { label: 'クーポン',       route: 'admin.coupons.index',             icon: Ticket,        activePatterns: ['admin.coupons.*'] },
             ],
         },
         {
@@ -54,6 +51,14 @@ export function useAdminNav() {
             items: [
                 { label: '前撮り枠',   route: 'admin.photo-slots.index',   icon: Camera,     activePatterns: ['admin.photo-slots.*'] },
                 { label: 'スタジオ',   route: 'admin.photo-studios.index', icon: Building2,  activePatterns: ['admin.photo-studios.*'] },
+            ],
+        },
+        {
+            group: 'ポイント・クーポン',
+            items: [
+                { label: 'ポイント付与',   route: 'admin.referral.list',                 icon: Gift,      activePatterns: ['admin.referral.list'] },
+                { label: 'ポイント設定',   route: 'admin.referral.stage-settings.index', icon: Settings,  activePatterns: ['admin.referral.stage-settings.*'] },
+                { label: 'クーポン',       route: 'admin.coupons.index',                 icon: Ticket,    activePatterns: ['admin.coupons.*'] },
             ],
         },
         {

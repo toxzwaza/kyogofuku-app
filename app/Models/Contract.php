@@ -12,7 +12,13 @@ class Contract extends Model
     protected $fillable = [
         'customer_id','shop_id','plan_id','contract_date',
         'kimono_type','warranty_flag','total_amount',
-        'preparation_venue','preparation_date','user_id','remarks','status'
+        'preparation_venue','preparation_date','user_id','remarks','status',
+        'hirata_eligible_at','hirata_granted_at',
+    ];
+
+    protected $casts = [
+        'hirata_eligible_at' => 'datetime',
+        'hirata_granted_at' => 'datetime',
     ];
 
     public function customer()

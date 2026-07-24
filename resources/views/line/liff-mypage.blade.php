@@ -106,10 +106,14 @@
         + '<div class="d">'+(c.valid_until?('有効期限 '+esc(c.valid_until)):'')+(c.combinable?'　併用可':'')+'</div></div>'
         + '<span class="pill'+(usable?'':' gray')+'">'+st+'</span></div>';
     }).join('');
+    const hirata = Number(d.hirata_balance||0);
+    const total = Number(d.balance||0) + hirata;
     return ''
       + '<div class="card"><h2>ご利用可能ポイント</h2>'
-        + '<div class="hero"><div class="num">'+yen(d.balance)+'<small>pt</small></div><div class="cap">POINT</div></div>'
-        + '<p class="muted center" style="margin-top:12px">'+yen(d.gift_card_unit)+'円単位でギフトカードに引き換えできます（店舗にて）。</p></div>'
+        + '<div class="hero"><div class="num">'+yen(total)+'<small>pt</small></div><div class="cap">POINT</div></div>'
+        + '<div class="kv"><span class="k">紹介ポイント</span><span class="v">'+yen(d.balance)+' pt</span></div>'
+        + '<div class="kv"><span class="k">平田ポイント</span><span class="v">'+yen(hirata)+' pt</span></div>'
+        + '<p class="muted center" style="margin-top:12px">'+yen(d.gift_card_unit)+'円単位でギフトカードに引き換えできます（店舗にて）。<br>※ギフトカードは紹介ポイントのみ。平田ポイントは店舗での物品購入・ポイント譲渡にご利用いただけます。</p></div>'
       + (coupons ? '<div class="card"><h2>保有クーポン</h2>'+coupons+'</div>' : '')
       + '<div class="card"><h2>ポイント履歴</h2><div class="list">'+(rows||'<div class="empty">履歴はまだありません</div>')+'</div></div>'
       + (gifts ? '<div class="card"><h2>ギフトカード</h2><div class="list">'+gifts+'</div></div>' : '');

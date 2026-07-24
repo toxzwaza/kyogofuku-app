@@ -12,6 +12,7 @@ class GiftCard extends Model
     protected $fillable = [
         'customer_id',
         'amount',
+        'points_spent',
         'status',
         'issued_by_user_id',
         'issued_shop_id',
@@ -21,6 +22,7 @@ class GiftCard extends Model
 
     protected $casts = [
         'amount' => 'integer',
+        'points_spent' => 'integer',
         'issued_at' => 'datetime',
         'canceled_at' => 'datetime',
     ];

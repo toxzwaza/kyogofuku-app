@@ -1,7 +1,7 @@
 <template>
-    <Head title="ステージ設定（友達紹介）" />
-    <AdminLayout :breadcrumb="[{ label: '顧客' }, { label: 'ステージ設定' }]">
-        <UiPageHeader title="ステージ設定（友達紹介）" description="紹介人数の閾値・還元率と、特典の各設定値を管理します。" />
+    <Head title="ポイント設定" />
+    <AdminLayout :breadcrumb="[{ label: '顧客' }, { label: 'ポイント設定' }]">
+        <UiPageHeader title="ポイント設定" description="ステージ（人数閾値・還元率）、平田ポイント率、特典の各設定値を管理します。" />
 
         <UiCard variant="default" padding="md" class="mb-4">
             <template #header><h3 class="font-serif text-base">ステージ（人数閾値・還元率）</h3></template>
@@ -47,6 +47,9 @@
                 <UiFormField label="紹介の有効期限（月）" hint="友達追加からこの月数で失効">
                     <UiInput v-model.number="form.settings.referral_expire_months" type="number" min="1" max="60" size="sm" />
                 </UiFormField>
+                <UiFormField label="平田ポイント率（％）" hint="全成約者へ成約額(税抜)×この％を平田ポイントで付与">
+                    <UiInput v-model.number="form.settings.hirata_point_rate" type="number" min="0" max="100" step="0.5" size="sm" />
+                </UiFormField>
             </div>
         </UiCard>
 
@@ -80,6 +83,7 @@ const form = useForm({
         gift_card_unit: Number(props.settings.gift_card_unit),
         maturation_months: Number(props.settings.maturation_months),
         referral_expire_months: Number(props.settings.referral_expire_months),
+        hirata_point_rate: Number(props.settings.hirata_point_rate),
     },
 });
 
