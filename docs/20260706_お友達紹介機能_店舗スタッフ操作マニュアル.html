@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お友達紹介機能 店舗スタッフ操作マニュアル ｜ 京呉服平田</title>
+<style>
+  :root{
+    --ink:#2b2420; --ink-soft:#6b5f56; --line:#e3dcd2; --paper:#fbf8f3;
+    --brand:#7a1f2b; --brand-soft:#a5424f; --accent:#c8a96a; --surface:#ffffff;
+    --surface2:#f5f0e8; --ok:#2f7d4f; --warn:#b8860b; --danger:#b23a3a;
+    --blue:#2b5f8f;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; color:var(--ink); background:var(--paper);
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+    line-height:1.85; font-size:15px;
+  }
+  .wrap{max-width:920px; margin:0 auto; padding:0 24px 96px;}
+  header.cover{
+    background:linear-gradient(135deg,#7a1f2b 0%,#5a1620 100%);
+    color:#fdf6ec; padding:52px 24px 44px; text-align:center;
+    border-bottom:4px solid var(--accent);
+  }
+  header.cover .mark{
+    letter-spacing:.4em; font-size:12px; opacity:.8; margin-bottom:14px;
+  }
+  header.cover h1{
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    font-size:30px; margin:0 0 10px; font-weight:600; letter-spacing:.06em;
+  }
+  header.cover .sub{font-size:14px; opacity:.9;}
+  header.cover .meta{margin-top:22px; font-size:12px; opacity:.75;}
+
+  h2{
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    font-size:22px; color:var(--brand); margin:52px 0 6px;
+    padding-bottom:10px; border-bottom:2px solid var(--line);
+    display:flex; align-items:center; gap:12px;
+  }
+  h2 .no{
+    background:var(--brand); color:#fff; font-family:sans-serif;
+    font-size:14px; width:30px; height:30px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  h3{
+    font-size:17px; color:var(--ink); margin:32px 0 10px;
+    padding-left:12px; border-left:4px solid var(--accent);
+  }
+  h4{font-size:15px; margin:22px 0 6px; color:var(--brand-soft);}
+  p{margin:8px 0;}
+  a{color:var(--brand-soft);}
+
+  .lead{font-size:15.5px; color:var(--ink-soft);}
+  .card{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:10px; padding:18px 22px; margin:16px 0;
+    box-shadow:0 1px 2px rgba(80,60,40,.04);
+  }
+  .note{border-left:4px solid var(--blue); background:#eef4fa; padding:12px 16px; border-radius:6px; margin:14px 0;}
+  .warn{border-left:4px solid var(--warn); background:#fbf3e0; padding:12px 16px; border-radius:6px; margin:14px 0;}
+  .danger{border-left:4px solid var(--danger); background:#fbeaea; padding:12px 16px; border-radius:6px; margin:14px 0;}
+  .ok{border-left:4px solid var(--ok); background:#eaf5ee; padding:12px 16px; border-radius:6px; margin:14px 0;}
+  .note b,.warn b,.danger b,.ok b{color:var(--ink);}
+
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:14px; background:var(--surface);}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:var(--surface2); font-weight:600; color:var(--ink);}
+  tbody tr:nth-child(even){background:#faf7f1;}
+
+  .badge{display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap;}
+  .b-blue{background:#dbe8f5; color:#1e456b;}
+  .b-amber{background:#f6e6c4; color:#8a6410;}
+  .b-green{background:#d8ecdd; color:#1f6a3d;}
+  .b-gray{background:#e5e0d8; color:#5b5349;}
+  .b-red{background:#f4d9d9; color:#8f2a2a;}
+  .b-bronze{background:#f2ddc7; color:#8a5a24;}
+  .b-silver{background:#e3e3e3; color:#555;}
+  .b-gold{background:#f6ecc0; color:#8a7010;}
+  .b-plat{background:#dfe0f2; color:#3d3f7a;}
+
+  ol.steps{counter-reset:step; list-style:none; padding-left:0; margin:16px 0;}
+  ol.steps>li{
+    position:relative; padding:10px 0 10px 52px; border-bottom:1px dashed var(--line);
+  }
+  ol.steps>li:last-child{border-bottom:none;}
+  ol.steps>li::before{
+    counter-increment:step; content:counter(step);
+    position:absolute; left:6px; top:10px;
+    background:var(--accent); color:#3a2c10; font-weight:700;
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+  }
+  ul.tick{list-style:none; padding-left:4px;}
+  ul.tick>li{padding:3px 0 3px 24px; position:relative;}
+  ul.tick>li::before{content:"▪"; color:var(--accent); position:absolute; left:6px;}
+
+  .path{
+    font-family:"SF Mono",Consolas,monospace; background:var(--surface2);
+    border:1px solid var(--line); border-radius:6px; padding:2px 8px; font-size:13px; white-space:nowrap;
+  }
+  .btn{
+    display:inline-block; background:var(--brand); color:#fff; border-radius:6px;
+    padding:2px 12px; font-size:13px; font-weight:600;
+  }
+  .btn.sub{background:#efe9df; color:var(--ink);}
+  .btn.danger{background:var(--danger);}
+
+  .toc{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px 26px; margin:28px 0;}
+  .toc h2{margin:0 0 12px; font-size:18px; border:none; padding:0;}
+  .toc ol{margin:0; padding-left:22px;}
+  .toc li{margin:5px 0;}
+  .toc a{text-decoration:none;}
+  .toc a:hover{text-decoration:underline;}
+
+  .flow{display:flex; flex-wrap:wrap; align-items:stretch; gap:0; margin:18px 0;}
+  .flow .step{
+    flex:1 1 150px; background:var(--surface); border:1px solid var(--line);
+    border-radius:8px; padding:12px 14px; position:relative; min-width:140px;
+  }
+  .flow .step .t{font-weight:700; color:var(--brand); font-size:13px; margin-bottom:4px;}
+  .flow .step .d{font-size:12.5px; color:var(--ink-soft);}
+  .flow .arrow{display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:22px; padding:0 6px;}
+
+  figure.shot{margin:18px 0 22px; padding:0;}
+  figure.shot img{
+    width:100%; height:auto; display:block;
+    border:1px solid var(--line); border-radius:10px;
+    box-shadow:0 3px 10px rgba(80,60,40,.10);
+  }
+  figure.shot figcaption{
+    margin-top:8px; font-size:12.5px; color:var(--ink-soft); text-align:center;
+  }
+  figure.shot figcaption .tag{
+    display:inline-block; background:var(--brand); color:#fff; border-radius:4px;
+    padding:1px 8px; font-size:11px; font-weight:600; margin-right:6px;
+  }
+
+  /* スマホ（LINE）画面 */
+  .phone-single{margin:18px 0 22px; text-align:center;}
+  .phone-single img{
+    width:260px; max-width:70%; height:auto;
+    border:1px solid var(--line); border-radius:18px;
+    box-shadow:0 4px 14px rgba(80,60,40,.16);
+  }
+  .phone-single figcaption{margin-top:8px; font-size:12.5px; color:var(--ink-soft);}
+  .phone-grid{
+    display:flex; flex-wrap:wrap; gap:20px 16px; justify-content:center;
+    margin:20px 0 8px;
+  }
+  .phone-grid figure{
+    flex:0 0 216px; margin:0; text-align:center;
+  }
+  .phone-grid img{
+    width:216px; height:auto; display:block; margin:0 auto;
+    border:1px solid var(--line); border-radius:16px;
+    box-shadow:0 4px 12px rgba(80,60,40,.15);
+  }
+  .phone-grid figcaption{margin-top:8px; font-size:12.5px; color:var(--ink);}
+  .phone-grid figcaption .n{
+    display:inline-block; background:var(--accent); color:#3a2c10; border-radius:50%;
+    width:20px; height:20px; line-height:20px; font-size:11px; font-weight:700; margin-right:5px;
+  }
+  .phone-grid figcaption small{display:block; color:var(--ink-soft); font-size:11.5px; margin-top:2px; line-height:1.5;}
+
+  footer{margin-top:60px; padding-top:20px; border-top:2px solid var(--line); font-size:12.5px; color:var(--ink-soft); text-align:center;}
+
+  @page{ size:A4; margin:14mm 12mm; }
+  @media print{
+    body{background:#fff; font-size:12px;}
+    .wrap{padding-bottom:0;}
+    header.cover{background:#7a1f2b !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .card,.note,.warn,.danger,.ok,table,.badge,.flow .step,ol.steps>li::before{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    h2{page-break-after:avoid;} h3{page-break-after:avoid;}
+    .card,table,.flow,figure.shot,.phone-single,.phone-grid figure{page-break-inside:avoid;}
+    figure.shot img,.phone-single img,.phone-grid img{box-shadow:none;}
+    .toc{page-break-after:always;}
+  }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="mark">K Y O G O F U K U &nbsp;・&nbsp; H I R A T A</div>
+  <h1>お友達紹介機能<br>店舗スタッフ操作マニュアル</h1>
+  <div class="sub">公式LINE お友達紹介プログラム ／ 管理画面の日常運用ガイド</div>
+  <div class="meta">対象：店舗スタッフ（管理画面担当）　｜　発行日：2026年7月6日　｜　Ver.1.0</div>
+</header>
+
+<div class="wrap">
+
+<div class="note" style="margin-top:28px;">
+  このマニュアルは、公式LINEの「お友達紹介プログラム」を<b>店舗スタッフが管理画面で運用する</b>ための手引きです。
+  お客様側（LINE画面）の操作はお客様ご自身が行うため、本書では接客で必要な範囲のみ扱います。
+</div>
+
+<!-- 目次 -->
+<nav class="toc">
+  <h2>目次</h2>
+  <ol>
+    <li><a href="#s1">この機能でできること（全体像）</a></li>
+    <li><a href="#s2">仕組みの基本 ― ステージ・ポイント・特典</a></li>
+    <li><a href="#s3">管理画面のどこにあるか</a></li>
+    <li><a href="#s4">日常業務①：友達紹介一覧を確認する</a></li>
+    <li><a href="#s5">日常業務②：ギフトカードを発行する（ポイント引換）</a></li>
+    <li><a href="#s6">日常業務③：クーポンを配布・使用する</a></li>
+    <li><a href="#s7">クーポンマスタの管理</a></li>
+    <li><a href="#s8">ステージ・特典の設定変更</a></li>
+    <li><a href="#s9">お客様の流れ（LINE画面・接客のために把握）</a></li>
+    <li><a href="#s10">よくある質問・注意点</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<h2 id="s1"><span class="no">1</span>この機能でできること（全体像）</h2>
+<p class="lead">
+  既存のお客様が知人へ公式LINEを紹介し、その知人が<b>ご成約</b>に至ると、紹介した方・された方の双方に<b>ポイント</b>が付与される仕組みです。
+  貯まったポイントは<b>ギフトカード</b>に引き換えできます。
+</p>
+
+<div class="flow">
+  <div class="step"><div class="t">① 紹介</div><div class="d">既存客が公式LINEから紹介URL・QRを知人へ共有</div></div>
+  <div class="arrow">▶</div>
+  <div class="step"><div class="t">② 友達追加</div><div class="d">知人がURL経由で友達追加・LINE連携</div></div>
+  <div class="arrow">▶</div>
+  <div class="step"><div class="t">③ 成約</div><div class="d">知人が来店・ご成約</div></div>
+  <div class="arrow">▶</div>
+  <div class="step"><div class="t">④ 確定</div><div class="d">成約1ヶ月後に自動でポイント付与</div></div>
+  <div class="arrow">▶</div>
+  <div class="step"><div class="t">⑤ 引換</div><div class="d">来店時にポイントをギフトカードへ引換（店舗対応）</div></div>
+</div>
+
+<div class="card">
+  <b>スタッフが管理画面で行う主な操作は次の4つです。</b>
+  <ul class="tick">
+    <li><b>紹介状況の確認</b>（誰が誰を紹介し、今どの段階か）</li>
+    <li><b>ギフトカードの発行記録</b>（お客様のポイントを引き換える）</li>
+    <li><b>クーポンの配布・使用</b>（任意のサービスクーポン）</li>
+    <li><b>設定の確認・変更</b>（ステージ条件・還元率など。基本は初期値のまま）</li>
+  </ul>
+  <div class="ok" style="margin-bottom:0;">
+    ポイントの付与・ステージ判定は<b>システムが自動で行います</b>。スタッフが手計算する必要はありません。
+  </div>
+</div>
+
+<!-- 2 -->
+<h2 id="s2"><span class="no">2</span>仕組みの基本 ― ステージ・ポイント・特典</h2>
+
+<h3>紹介が成立する3つの条件</h3>
+<p>次の<b>3つすべて</b>を満たしたお客様が「紹介できる人」になります。</p>
+<div class="card">
+  <ol class="steps">
+    <li><b>公式LINEと連携済み</b>であること</li>
+    <li><b>顧客として登録済み</b>であること</li>
+    <li><b>ご成約済み</b>であること（金額の下限はありません）</li>
+  </ol>
+  <p style="margin-bottom:0;">未成約のお客様には紹介URLが表示されないため、紹介を始められません。</p>
+</div>
+
+<h3>ステージ（紹介実績に応じたランク）</h3>
+<p>紹介が<b>成立（確定）した人数</b>に応じて、紹介者のステージが上がり、還元率が高くなります。</p>
+<table>
+  <thead><tr><th>ステージ</th><th>成立人数（初期値）</th><th>紹介報酬の還元率（初期値）</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge b-bronze">ブロンズ</span></td><td>0〜3人</td><td>3%</td></tr>
+    <tr><td><span class="badge b-silver">シルバー</span></td><td>4〜6人</td><td>4%</td></tr>
+    <tr><td><span class="badge b-gold">ゴールド</span></td><td>7〜10人</td><td>5%</td></tr>
+    <tr><td><span class="badge b-plat">プラチナ</span></td><td>11人〜</td><td>10%</td></tr>
+  </tbody>
+</table>
+<p class="note">人数のしきい値・還元率は<b>管理画面で変更可能</b>です（→ <a href="#s8">8章</a>）。上表は初期設定値です。</p>
+
+<h3>ポイント（特典）の中身</h3>
+<table>
+  <thead><tr><th>対象</th><th>もらえるポイント</th><th>付与のタイミング</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>紹介した人</b><br>（紹介者）</td>
+      <td>被紹介者の<b>成約金額 × 自分のステージ還元率</b><br><span style="color:var(--ink-soft);font-size:13px;">例：成約20万円・シルバー4% → 8,000pt</span></td>
+      <td rowspan="2">成約から<b>1ヶ月後</b><br>（クーリングオフ期間の経過後）</td>
+    </tr>
+    <tr>
+      <td><b>紹介された人</b><br>（被紹介者）</td>
+      <td><b>固定 10,000pt</b>（初期値）</td>
+    </tr>
+  </tbody>
+</table>
+<ul class="tick">
+  <li><b>1ポイント＝1円</b>換算です。</li>
+  <li>紹介報酬の計算基準は<b>税抜・割引後の実成約額</b>です。</li>
+  <li>ポイントに<b>有効期限はありません</b>（無期限）。</li>
+  <li>紹介した人・された人は<b>共通のポイント残高</b>を持ちます。</li>
+</ul>
+
+<h3>ギフトカードへの引換</h3>
+<p>貯まったポイントは<b>500円単位</b>（初期値）でギフトカードに引き換えできます。現金でのキャッシュバックはありません。</p>
+<div class="warn">
+  ギフトカードは<b>店舗で発行してお客様にお渡し</b>します。システムは「発行済み」の記録とポイント減算を行うだけです（→ <a href="#s5">5章</a>）。
+</div>
+
+<!-- 3 -->
+<h2 id="s3"><span class="no">3</span>管理画面のどこにあるか</h2>
+<p>管理画面の左メニュー<b>「顧客」</b>グループに、紹介関連のメニューが追加されています。</p>
+<table>
+  <thead><tr><th>メニュー</th><th>用途</th><th>参照</th></tr></thead>
+  <tbody>
+    <tr><td>🎁 <b>友達紹介</b></td><td>紹介関係の一覧・ステータス確認・手動ポイント反映</td><td><a href="#s4">4章</a></td></tr>
+    <tr><td>⚙ <b>ステージ設定</b></td><td>ステージ条件・還元率・各種設定値の変更</td><td><a href="#s8">8章</a></td></tr>
+    <tr><td>🎫 <b>クーポン</b></td><td>任意配布クーポンのマスタ管理（作成・編集）</td><td><a href="#s7">7章</a></td></tr>
+  </tbody>
+</table>
+<p>個々のお客様のポイント残高・ギフトカード発行・クーポン配布は、<br>
+<span class="path">顧客詳細ページ → 「ポイント・ギフト」タブ</span> から行います（→ <a href="#s5">5章</a>）。</p>
+
+<!-- 4 -->
+<h2 id="s4"><span class="no">4</span>日常業務①：友達紹介一覧を確認する</h2>
+<p>左メニュー <span class="path">顧客 ＞ 友達紹介</span> を開くと、紹介関係の一覧が表示されます。</p>
+
+<figure class="shot">
+  <img src="img_referral_manual/referral-list-full.png" alt="友達紹介一覧の画面">
+  <figcaption><span class="tag">図1</span>友達紹介一覧（左メニュー「顧客」グループに 友達紹介／ステージ設定／クーポン が並びます）</figcaption>
+</figure>
+
+<h3>ステータスの意味</h3>
+<table>
+  <thead><tr><th>表示</th><th>意味</th><th>スタッフの対応</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge b-blue">成立待ち</span></td><td>友達追加・連携は済んだが、まだ成約していない</td><td>成約を待つ（対応不要）</td></tr>
+    <tr><td><span class="badge b-amber">成約（仮）</span></td><td>被紹介者が成約。確定（1ヶ月後）待ち</td><td>原則不要。急ぐ場合のみ手動反映可</td></tr>
+    <tr><td><span class="badge b-green">確定</span></td><td>成約1ヶ月経過し、ポイント付与済み</td><td>完了</td></tr>
+    <tr><td><span class="badge b-gray">期限切れ</span></td><td>友達追加から6ヶ月成約なしで失効</td><td>対応不要</td></tr>
+    <tr><td><span class="badge b-red">無効</span></td><td>自己紹介・既存顧客などで無効化</td><td>対応不要（右に理由が表示）</td></tr>
+  </tbody>
+</table>
+<ul class="tick">
+  <li>上部のフィルタボタンでステータス別に絞り込めます（各ボタンに件数が表示されます）。</li>
+  <li>紹介者・被紹介者の名前をクリックすると、その顧客詳細ページへ移動します。</li>
+  <li>被紹介者がまだ顧客登録されていない場合は、名前の代わりにLINE IDが表示されます。</li>
+</ul>
+
+<h3>「ポイント反映」ボタンについて</h3>
+<div class="card">
+  <p>ステータスが <span class="badge b-amber">成約（仮）</span> の行にだけ <span class="btn">ポイント反映</span> ボタンが出ます。</p>
+  <div class="ok">
+    <b>通常は押す必要はありません。</b>成約から1ヶ月後に、システムが毎日自動で確定処理を行いポイントを付与します。
+  </div>
+  <div class="warn" style="margin-bottom:0;">
+    このボタンは<b>自動処理を待たず、その場で即時にポイントを反映</b>する操作です。
+    <b>クーリングオフ期間（1ヶ月）を待たずに確定させる</b>ことになるため、押す前に必ず店長・担当者に確認してください。
+  </div>
+</div>
+<h4>操作手順（手動反映が必要な場合）</h4>
+<ol class="steps">
+  <li>対象の <span class="badge b-amber">成約（仮）</span> 行の <span class="btn">ポイント反映</span> をクリック</li>
+  <li>確認ダイアログで内容を確認し「OK」</li>
+  <li>ステータスが <span class="badge b-green">確定</span> に変わり、紹介者・被紹介者へポイントが付与されます</li>
+</ol>
+<p class="note">すでに確定済みの紹介や、成約がキャンセルされた紹介には反映できません（エラーメッセージが表示されます）。</p>
+
+<!-- 5 -->
+<h2 id="s5"><span class="no">5</span>日常業務②：ギフトカードを発行する（ポイント引換）</h2>
+<p class="lead">お客様が来店され、ポイントをギフトカードに引き換えたいと申し出たときの操作です。</p>
+
+<figure class="shot">
+  <img src="img_referral_manual/customer-referral-panel.png" alt="顧客詳細のポイント・ギフトタブ">
+  <figcaption><span class="tag">図2</span>顧客詳細 ＞「ポイント・ギフト」タブ。上から サマリ（残高・ステージ）／ギフトカード引換／クーポン／ポイント履歴。5章・6章の操作はすべてこの1画面で行います。</figcaption>
+</figure>
+
+<div class="danger">
+  <b>操作の順番に注意。</b>先に<b>店舗でギフトカードを用意・お渡し</b>してから、管理画面で「発行済みにする」を押してポイントを減算します。
+  ボタンを押すとポイントが即座に減るため、お渡しできる金額を確認してから操作してください。
+</div>
+
+<h4>操作手順</h4>
+<ol class="steps">
+  <li>対象のお客様の<b>顧客詳細ページ</b>を開く<br><span style="color:var(--ink-soft);font-size:13px;">（友達紹介一覧の名前クリック、または顧客検索から）</span></li>
+  <li><b>「ポイント・ギフト」タブ</b>を開く</li>
+  <li>上部サマリで<b>現在のポイント残高</b>を確認する</li>
+  <li>「ギフトカード引換」欄の<b>引換額（円）</b>に金額を入力する<br><span style="color:var(--ink-soft);font-size:13px;">※ 500円単位・残高の範囲内のみ入力可</span></li>
+  <li>店舗でギフトカードを発行し、お客様へお渡しする</li>
+  <li><span class="btn">発行済みにする</span> をクリック → ポイントが減算され、履歴に記録されます</li>
+</ol>
+
+<div class="card">
+  <h4 style="margin-top:0;">確認できる情報</h4>
+  <ul class="tick">
+    <li><b>サマリ</b>：ステージ／成立紹介数／ポイント残高／紹介コード</li>
+    <li><b>ギフトカード履歴</b>：金額・状態（発行済／取消）・発行日</li>
+    <li><b>ポイント履歴</b>：紹介報酬・被紹介特典・ギフト引換などの増減明細</li>
+  </ul>
+</div>
+
+<h4>発行を間違えたとき（キャンセル）</h4>
+<ol class="steps">
+  <li>ギフトカード履歴で、取り消したい行の <span class="btn danger">キャンセル</span> をクリック</li>
+  <li>確認ダイアログで「OK」</li>
+  <li>状態が「取消」に変わり、<b>ポイントが返還</b>されます</li>
+</ol>
+<p class="warn">キャンセルはポイントを戻す操作です。<b>すでにお客様にお渡し済みの実物ギフトカードは戻ってきません</b>。誤発行への対応としてのみ使用してください。</p>
+
+<!-- 6 -->
+<h2 id="s6"><span class="no">6</span>日常業務③：クーポンを配布・使用する</h2>
+<p>紹介ポイントとは別に、任意のサービスクーポンをお客様へ配布・使用できます。配布したクーポンはお客様のLINE（マイポイント画面）に表示されます。</p>
+
+<h4>配布する</h4>
+<ol class="steps">
+  <li>お客様の<b>顧客詳細ページ → 「ポイント・ギフト」タブ</b>を開く</li>
+  <li>「クーポン」欄の<b>「クーポンを配布」</b>から配布するクーポンを選ぶ<br><span style="color:var(--ink-soft);font-size:13px;">※ 選択肢に出るのは有効なクーポンのみ（マスタは7章で作成）</span></li>
+  <li><span class="btn">配布する</span> をクリック</li>
+</ol>
+
+<h4>使用（利用済みにする）</h4>
+<ol class="steps">
+  <li>同じ「クーポン」欄の保有クーポン一覧で、対象クーポンの <span class="btn">使用</span> をクリック</li>
+  <li>確認ダイアログで「OK」</li>
+  <li>状態が「使用済」に変わります</li>
+</ol>
+<div class="note">
+  クーポンの状態は <span class="badge b-blue">保有</span> → <span class="badge b-gray">使用済</span> ／ <span class="badge b-gray">期限切れ</span> と変化します。
+  「併用」欄はほかの割引と<b>併用できるか</b>を示します。
+</div>
+
+<!-- 7 -->
+<h2 id="s7"><span class="no">7</span>クーポンマスタの管理</h2>
+<p>配布できるクーポンの「種類」を作成・編集します。左メニュー <span class="path">顧客 ＞ クーポン</span> を開きます。</p>
+
+<figure class="shot">
+  <img src="img_referral_manual/coupons-list.png" alt="クーポン管理の一覧画面">
+  <figcaption><span class="tag">図3</span>クーポン一覧。割引・併用可否・有効期間・状態・配布数を一覧で確認できます。</figcaption>
+</figure>
+
+<h4>新規クーポンを作る</h4>
+<ol class="steps">
+  <li>右上の <span class="btn">＋ 新規クーポン</span> をクリック</li>
+  <li>入力欄を設定する（下表参照）</li>
+  <li><span class="btn">作成</span> をクリック</li>
+</ol>
+<figure class="shot">
+  <img src="img_referral_manual/coupons-modal.png" alt="新規クーポン作成モーダル">
+  <figcaption><span class="tag">図4</span>新規クーポン作成の入力画面。</figcaption>
+</figure>
+<table>
+  <thead><tr><th>項目</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>クーポン名</td><td>お客様に表示される名称</td></tr>
+    <tr><td>割引タイプ／割引値</td><td>「金額(円)」または「率(%)」＋その数値</td></tr>
+    <tr><td>有効日数／固定有効期限</td><td>配布からN日で失効、または特定日まで（どちらか一方）</td></tr>
+    <tr><td>利用条件</td><td>注意書き・利用条件のテキスト</td></tr>
+    <tr><td>サムネイル画像</td><td>LINEで送る際の画像（メディアライブラリから選択）</td></tr>
+    <tr><td>併用可</td><td>チェックで他割引と併用可能に</td></tr>
+    <tr><td>状態</td><td>有効／無効／アーカイブ</td></tr>
+  </tbody>
+</table>
+<ul class="tick">
+  <li><b>編集</b>：一覧の「編集」から内容を変更できます。</li>
+  <li><b>削除</b>：「削除」を押します。ただし<b>配布実績があるクーポンは削除されず「アーカイブ」</b>になります（過去の配布記録を保つため）。</li>
+  <li>「配布数」列で、そのクーポンが何件配布されたか分かります。</li>
+</ul>
+
+<!-- 8 -->
+<h2 id="s8"><span class="no">8</span>ステージ・特典の設定変更</h2>
+<div class="warn">
+  ここは<b>プログラム全体の条件を変える重要設定</b>です。変更は店長・本部の承認のもとで行ってください。通常は初期値のまま運用します。
+</div>
+<p>左メニュー <span class="path">顧客 ＞ ステージ設定</span> を開きます。</p>
+
+<figure class="shot">
+  <img src="img_referral_manual/stage-settings.png" alt="ステージ設定の画面">
+  <figcaption><span class="tag">図5</span>ステージ設定。上段でステージ別の人数しきい値・還元率、下段で特典・確定の各設定値を編集し「保存」します（画像は初期値）。</figcaption>
+</figure>
+
+<h4>ステージ（人数しきい値・還元率）</h4>
+<p>各ステージの「最小成立人数」と「還元率（%）」を編集します。判定は、成立した紹介数に対して<b>「最小成立人数 ≤ 人数」を満たす最上位ステージ</b>が採用されます。</p>
+
+<h4>特典・確定の設定値</h4>
+<table>
+  <thead><tr><th>設定項目</th><th>意味</th><th>初期値</th></tr></thead>
+  <tbody>
+    <tr><td>被紹介者特典ポイント</td><td>紹介された人が成約時にもらう固定ポイント</td><td>10,000 pt</td></tr>
+    <tr><td>ギフトカード引換単位</td><td>ポイント引換の刻み（円）</td><td>500 円</td></tr>
+    <tr><td>確定までの月数</td><td>成約から特典確定までの期間（クーリングオフ）</td><td>1 ヶ月</td></tr>
+    <tr><td>紹介の有効期限</td><td>友達追加から成約がないと失効するまでの期間</td><td>6 ヶ月</td></tr>
+  </tbody>
+</table>
+<ol class="steps">
+  <li>値を書き換える</li>
+  <li>ページ下部の <span class="btn">保存</span> をクリック</li>
+</ol>
+<p class="note">変更は<b>以後の判定・付与</b>に適用されます。すでに確定済みのポイントは変わりません。</p>
+
+<!-- 9 -->
+<h2 id="s9"><span class="no">9</span>お客様の流れ（接客のために把握）</h2>
+<p>お客様はLINEの<b>リッチメニュー（4項目）</b>から各機能を使います。スタッフが直接操作することはありませんが、お客様から「どこで見るの？」と聞かれたときに案内できるよう、各画面を把握しておきましょう。</p>
+
+<h3>リッチメニュー（トーク画面の下部）</h3>
+<p>公式LINEのトーク画面を開くと、下部に4つのボタンが並びます。ここが入口です。</p>
+<figure class="phone-single">
+  <img src="img_referral_manual/line-top.png" alt="LINEトーク画面のリッチメニュー">
+  <figcaption><span style="background:var(--brand);color:#fff;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:600;margin-right:6px;">図6</span>公式LINEのトーク画面下部のリッチメニュー（友達紹介／マイステージ／マイポイント・ギフト／顧客詳細）</figcaption>
+</figure>
+
+<h3>各メニューの画面</h3>
+<div class="phone-grid">
+  <figure>
+    <img src="img_referral_manual/line-referral.png" alt="友達紹介画面">
+    <figcaption><span class="n">1</span>友達紹介<small>専用の紹介コード・QR・紹介リンク。「LINEで友だちに紹介する」で知人へ共有</small></figcaption>
+  </figure>
+  <figure>
+    <img src="img_referral_manual/line-mystage.png" alt="マイステージ画面">
+    <figcaption><span class="n">2</span>マイステージ<small>現在のステージ・還元率と、次のステージまでの残り成立人数</small></figcaption>
+  </figure>
+  <figure>
+    <img src="img_referral_manual/line-mypoints.png" alt="マイポイント・ギフト画面">
+    <figcaption><span class="n">3</span>マイポイント・ギフト<small>利用可能ポイント・保有クーポン・ポイント履歴の確認</small></figcaption>
+  </figure>
+  <figure>
+    <img src="img_referral_manual/line-mypage.png" alt="顧客詳細（マイページ）画面">
+    <figcaption><span class="n">4</span>顧客詳細（マイページ）<small>ご登録内容・ご成約・前撮り日の確認（表示のみ）。LINE連携の解除もここ</small></figcaption>
+  </figure>
+</div>
+
+<div class="note">
+  <b>管理画面との対応：</b>お客様がここで見る「ポイント残高・履歴・保有クーポン」（上の③マイポイント・ギフト）は、スタッフが<a href="#s5">5章</a>の顧客詳細「ポイント・ギフト」タブ（図2）で操作した内容がそのまま反映されたものです。実際、図2と③は残高13,000pt・同じ履歴で一致しています。
+</div>
+
+<h3>紹介リンクを受け取った知人の画面</h3>
+<p>お客様が紹介した知人が紹介リンク（<span class="path">?ref=…</span>）を踏むと、次の画面が表示されます。</p>
+<figure class="phone-single">
+  <img src="img_referral_manual/line-referred.png" alt="紹介リンクを受け取った知人の登録画面">
+  <figcaption><span style="background:var(--brand);color:#fff;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:600;margin-right:6px;">図7</span>紹介を受けた知人の登録画面。「紹介で登録する」で登録が完了します。公式LINEをまだ友だち追加していない場合は、下の緑の「公式アカウントを友だち追加する」から追加できます。</figcaption>
+</figure>
+
+<div class="note">
+  紹介URLを受け取った知人は、URLをタップ → 友達追加 → LINE連携するだけで紹介が登録されます。
+  紹介者名はお相手には伏せられ、「お知り合いの方からのご紹介で…」とご案内されます。
+</div>
+
+<div class="warn">
+  <b>友だち追加がまだの場合：</b>紹介を受けた知人が公式LINEを友だち追加していないと、特典は正しく進呈されません。上図の緑のボタンから友だち追加していただくよう、お客様経由でもご案内ください。
+</div>
+
+<!-- 10 -->
+<h2 id="s10"><span class="no">10</span>よくある質問・注意点</h2>
+
+<div class="card">
+  <h4 style="margin-top:0;">Q. ポイントはいつ付与されますか？</h4>
+  <p>被紹介者の<b>成約から1ヶ月後</b>に、システムが毎日自動で確定処理を行い、紹介者・被紹介者の双方に付与します。スタッフの操作は不要です。</p>
+
+  <h4>Q. 成約したのに紹介一覧が「成約（仮）」のままです。</h4>
+  <p>正常です。確定（ポイント付与）は成約1ヶ月後です。急ぐ事情がある場合のみ、承認のうえ「ポイント反映」で手動確定できます（→ <a href="#s4">4章</a>）。</p>
+
+  <h4>Q. 成約後にキャンセルになったら？</h4>
+  <p>確定前（成約～1ヶ月以内）に成約が取り消されていれば、自動確定の対象から外れ、ポイントは付与されません。</p>
+
+  <h4>Q. 紹介一覧に「無効」が出ています。</h4>
+  <p>自己紹介（本人が本人を紹介）や、すでに顧客登録済みの人が紹介URLから来たケースなどで無効になります。異常ではありません。ステータス右の理由をご確認ください。</p>
+
+  <h4>Q. ギフトカード発行を取り消したい。</h4>
+  <p>顧客詳細のギフトカード履歴で「キャンセル」を押すとポイントは戻りますが、<b>お渡し済みの実物は戻りません</b>。誤発行時のみ使用してください（→ <a href="#s5">5章</a>）。</p>
+
+  <h4>Q. ポイント残高がおかしい気がします。</h4>
+  <p>顧客詳細の<b>「ポイント履歴」</b>で増減の明細（紹介報酬・被紹介特典・ギフト引換・取消返還など）を確認できます。不明な点はシステム担当へ。</p>
+</div>
+
+<div class="danger">
+  <b>取り返しのつかない操作に注意：</b>
+  「ポイント反映」（手動確定）・「発行済みにする」（ポイント減算）は、<b>お客様のポイント残高に直接影響します</b>。
+  実行前に対象顧客・金額を必ず確認し、判断に迷う場合は店長・システム担当に確認してください。
+</div>
+
+<footer>
+  京呉服平田 ｜ お友達紹介機能 店舗スタッフ操作マニュアル Ver.1.0（2026-07-06）<br>
+  ※ 画面の項目名・初期設定値は開発時点のものです。仕様変更があった場合は最新の管理画面表示を優先してください。
+</footer>
+
+</div>
+</body>
+</html>
