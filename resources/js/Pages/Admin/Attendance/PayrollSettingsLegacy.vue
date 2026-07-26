@@ -87,6 +87,25 @@
                             </div>
                         </section>
 
+                        <section class="pt-6 border-t border-gray-200">
+                            <h3 class="text-base font-semibold text-gray-800 mb-2">閾値方式の適用開始日</h3>
+                            <p class="text-sm text-gray-500 mb-4">
+                                閾値方式（勤務属性の「残業閾値」で残業を判定する新方式）を<strong>この日以降の勤務分</strong>から適用します。それより前の勤怠は従来どおり（据え置き）です。
+                            </p>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">適用開始日</label>
+                                <input
+                                    v-model="form.threshold_effective_date"
+                                    type="date"
+                                    class="w-full rounded-md border-gray-300 shadow-sm"
+                                />
+                                <p class="mt-1 text-xs text-gray-500">未設定のときは全期間に閾値方式を適用します。給与の締め期間の切り替わりに合わせることを推奨します。</p>
+                                <div v-if="form.errors.threshold_effective_date" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.threshold_effective_date }}
+                                </div>
+                            </div>
+                        </section>
+
                         <div class="mt-8">
                             <button
                                 type="submit"
@@ -115,6 +134,9 @@ const form = useForm({
     start_early_threshold_minutes: props.setting.start_early_threshold_minutes ?? 0,
     start_rounding_unit_minutes: props.setting.start_rounding_unit_minutes ?? 1,
     overtime_rounding_unit_minutes: props.setting.overtime_rounding_unit_minutes,
+    threshold_effective_date: props.setting.threshold_effective_date
+        ? String(props.setting.threshold_effective_date).slice(0, 10)
+        : '',
 });
 
 function submit() {

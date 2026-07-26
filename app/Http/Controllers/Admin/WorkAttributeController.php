@@ -49,11 +49,17 @@ class WorkAttributeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'sort_order' => 'nullable|integer|min:0|max:65535',
+            'overtime_mode' => 'required|in:base_end,threshold',
+            'overtime_threshold_minutes' => 'nullable|integer|min:1|max:1440|required_if:overtime_mode,threshold',
         ]);
 
         $wa = WorkAttribute::query()->create([
             'name' => $validated['name'],
             'sort_order' => $validated['sort_order'] ?? 0,
+            'overtime_mode' => $validated['overtime_mode'],
+            'overtime_threshold_minutes' => $validated['overtime_mode'] === WorkAttribute::OVERTIME_MODE_THRESHOLD
+                ? $validated['overtime_threshold_minutes']
+                : null,
         ]);
 
         return redirect()->route('admin.work-attributes.edit', $wa)
@@ -80,6 +86,8 @@ class WorkAttributeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'sort_order' => 'nullable|integer|min:0|max:65535',
+            'overtime_mode' => 'required|in:base_end,threshold',
+            'overtime_threshold_minutes' => 'nullable|integer|min:1|max:1440|required_if:overtime_mode,threshold',
             'pattern_times' => 'required|array',
             'pattern_times.*.pattern' => 'required|in:A,B,C',
             'pattern_times.*.day_type' => 'required|in:weekday,weekend',
@@ -91,6 +99,10 @@ class WorkAttributeController extends Controller
             $workAttribute->update([
                 'name' => $validated['name'],
                 'sort_order' => $validated['sort_order'] ?? 0,
+                'overtime_mode' => $validated['overtime_mode'],
+                'overtime_threshold_minutes' => $validated['overtime_mode'] === WorkAttribute::OVERTIME_MODE_THRESHOLD
+                    ? $validated['overtime_threshold_minutes']
+                    : null,
             ]);
 
             foreach ($validated['pattern_times'] as $row) {

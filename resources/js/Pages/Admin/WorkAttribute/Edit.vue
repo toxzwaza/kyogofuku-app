@@ -27,11 +27,29 @@
                                 <input v-model.number="form.sort_order" type="number" min="0" class="w-full rounded-md border-brand-border shadow-sm" />
                                 <div v-if="form.errors.sort_order" class="mt-1 text-sm text-red-600">{{ form.errors.sort_order }}</div>
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-brand-text mb-1">残業の判定方式 <span class="text-red-500">*</span></label>
+                                <select v-model="form.overtime_mode" class="w-full rounded-md border-brand-border shadow-sm">
+                                    <option value="base_end">パターン方式（所定終業を超えた分が残業）</option>
+                                    <option value="threshold">閾値方式（1日の実働が閾値を超えた分が残業）</option>
+                                </select>
+                                <p class="mt-1 text-xs text-brand-text-muted">正社員はパターン方式、パート・時短は閾値方式です</p>
+                                <div v-if="form.errors.overtime_mode" class="mt-1 text-sm text-red-600">{{ form.errors.overtime_mode }}</div>
+                            </div>
+                            <div v-if="form.overtime_mode === 'threshold'">
+                                <label class="block text-sm font-medium text-brand-text mb-1">残業閾値（分） <span class="text-red-500">*</span></label>
+                                <input v-model.number="form.overtime_threshold_minutes" type="number" min="1" max="1440" class="w-full rounded-md border-brand-border shadow-sm" />
+                                <p class="mt-1 text-xs text-brand-text-muted">例: 480 = 8時間 / 470 = 7時間50分<span v-if="thresholdHint">（{{ thresholdHint }}）</span></p>
+                                <div v-if="form.errors.overtime_threshold_minutes" class="mt-1 text-sm text-red-600">{{ form.errors.overtime_threshold_minutes }}</div>
+                            </div>
                         </div>
 
                         <h3 class="text-sm font-semibold text-brand-text mb-2">パターン別業務時間（A/B/C × 平日・土日）</h3>
                         <p class="text-xs text-brand-text-muted mb-3">
                             未入力の組み合わせは、その日のベース勤務として使われません。時刻は「9:00」「09:00」形式で入力してください（24時間制）。
+                            <span v-if="form.overtime_mode === 'threshold'" class="block mt-1 text-amber-600">
+                                閾値方式では残業は実働時間で判定するため、パターン時刻は任意です（時短など、早出・遅刻・早退をパターンで判定したい場合のみ入力してください）。
+                            </span>
                         </p>
                         <div class="overflow-x-auto border border-brand-border rounded-md">
                             <table class="min-w-full divide-y divide-brand-border text-sm">
@@ -90,6 +108,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps({
     workAttribute: Object,
@@ -103,6 +122,8 @@ function dayTypeLabel(dt) {
 const form = useForm({
     name: props.workAttribute.name,
     sort_order: props.workAttribute.sort_order ?? 0,
+    overtime_mode: props.workAttribute.overtime_mode ?? 'base_end',
+    overtime_threshold_minutes: props.workAttribute.overtime_threshold_minutes ?? null,
     pattern_times: props.patternMatrix.map((r) => ({
         pattern: r.pattern,
         day_type: r.day_type,
@@ -111,11 +132,21 @@ const form = useForm({
     })),
 });
 
+const thresholdHint = computed(() => {
+    const m = form.overtime_threshold_minutes;
+    if (!m || m <= 0) return '';
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    return min === 0 ? `${h}時間` : `${h}時間${min}分`;
+});
+
 function submit() {
     form
         .transform((data) => ({
             name: data.name,
             sort_order: data.sort_order,
+            overtime_mode: data.overtime_mode,
+            overtime_threshold_minutes: data.overtime_mode === 'threshold' ? data.overtime_threshold_minutes : null,
             pattern_times: data.pattern_times.map((r) => ({
                 pattern: r.pattern,
                 day_type: r.day_type,

@@ -9,6 +9,7 @@ use App\Models\AttendancePayrollSetting;
 use App\Models\AttendanceRecord;
 use App\Models\Shop;
 use App\Models\User;
+use App\Models\WorkAttribute;
 use App\Services\AttendancePayrollTimeService;
 use App\Services\AttendanceScopeService;
 use Carbon\Carbon;
@@ -40,7 +41,8 @@ class AttendanceController extends Controller
         $to = $request->filled('to') ? $request->to : $defaultTo;
 
         $query = AttendanceRecord::with([
-            'user:id,name,work_attribute_id',
+            'user:id,name,work_attribute_id,break_mode,scheduled_break_minutes',
+            'user.workAttribute:id,name,overtime_mode',
             'shop:id,name',
             'breaks',
         ]);
@@ -51,6 +53,15 @@ class AttendanceController extends Controller
         }
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
+        }
+        // 勤務属性で絞り込み（'none' は未設定のスタッフ）
+        if ($request->filled('work_attribute_id')) {
+            $waId = $request->work_attribute_id;
+            $query->whereHas('user', function ($q) use ($waId) {
+                $waId === 'none'
+                    ? $q->whereNull('work_attribute_id')
+                    : $q->where('work_attribute_id', $waId);
+            });
         }
         $query->whereDate('date', '>=', $from);
         $query->whereDate('date', '<=', $to);
@@ -115,9 +126,12 @@ class AttendanceController extends Controller
             'users' => $users,
             'usersByShop' => $usersByShop,
             'leaves' => $leaves,
+            'workAttributes' => WorkAttribute::query()
+                ->orderBy('sort_order')->orderBy('id')->get(['id', 'name']),
             'filters' => [
                 'shop_id' => $request->shop_id,
                 'user_id' => $request->user_id,
+                'work_attribute_id' => $request->work_attribute_id,
                 'from' => $from,
                 'to' => $to,
             ],
@@ -235,7 +249,7 @@ class AttendanceController extends Controller
         $to = $request->filled('to') ? $request->to : $defaultTo;
 
         $query = AttendanceRecord::with([
-            'user:id,name,work_attribute_id',
+            'user:id,name,work_attribute_id,break_mode,scheduled_break_minutes',
             'shop:id,name',
             'breaks',
         ]);
@@ -359,7 +373,7 @@ class AttendanceController extends Controller
         $userIds = $targetUsers->pluck('id')->all();
 
         // 期間内の勤怠レコード（休憩込み）をユーザー別にグループ化
-        $recordsByUser = AttendanceRecord::with(['breaks', 'user:id,name,work_attribute_id'])
+        $recordsByUser = AttendanceRecord::with(['breaks', 'user:id,name,work_attribute_id,break_mode,scheduled_break_minutes'])
             ->whereIn('user_id', $userIds)
             ->whereDate('date', '>=', $from)
             ->whereDate('date', '<=', $to)

@@ -55,6 +55,17 @@ const clockInShopId = ref('');
 
 const shopOptions = computed(() => (props.userShops || []).map((s) => ({ value: s.id, label: s.name })));
 
+// 休憩方式：fixed=所定固定休憩（休憩登録不要）/ manual=都度入力
+const isFixedBreak = computed(() => props.currentUser?.breakMode === 'fixed');
+const scheduledBreakLabel = computed(() => {
+    const m = props.currentUser?.scheduledBreakMinutes;
+    if (m === null || m === undefined) return '';
+    if (m <= 0) return '休憩なし';
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    return h === 0 ? `${min}分` : (min === 0 ? `${h}時間` : `${h}時間${min}分`);
+});
+
 const canClockIn = computed(() => {
     const shops = props.userShops || [];
     return !props.attendanceStatus?.todayRecord && (shops.length <= 1 || !!clockInShopId.value);
@@ -146,14 +157,17 @@ const selectedBreakDateInfo = computed(() =>
     (props.registrableBreakDates || []).find((d) => d.date === selectedBreakDate.value) || null
 );
 
-const hourOptions = Array.from({ length: 24 }, (_, i) => {
-    const v = String(i).padStart(2, '0');
-    return { value: v, label: v };
+// 取得分数の選択肢（15分刻み・最大120分）
+const breakMinutesOptions = Array.from({ length: 8 }, (_, i) => {
+    const m = (i + 1) * 15;
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    const hint = h === 0 ? '' : min === 0 ? `（${h}時間）` : `（${h}時間${min}分）`;
+    return { value: m, label: `${m}分${hint}` };
 });
-const minuteOptions = ['00', '10', '20', '30', '40', '50'].map((v) => ({ value: v, label: v }));
 
 function emptyBreakRow() {
-    return { start_h: '', start_m: '', end_h: '', end_m: '' };
+    return { minutes: '' };
 }
 
 function openBreakModal() {
@@ -183,17 +197,11 @@ async function submitBreak() {
     const breaks = [];
     for (let i = 0; i < breakRows.value.length; i++) {
         const r = breakRows.value[i];
-        if (!r.start_h || !r.start_m || !r.end_h || !r.end_m) {
-            breakError.value = `${i + 1}件目：休憩開始・休憩終了をすべて選択してください。`;
+        if (!r.minutes) {
+            breakError.value = `${i + 1}件目：休憩時間を選択してください。`;
             return;
         }
-        const start_time = `${r.start_h}:${r.start_m}`;
-        const end_time = `${r.end_h}:${r.end_m}`;
-        if (end_time <= start_time) {
-            breakError.value = `${i + 1}件目：休憩終了は休憩開始より後の時刻を選択してください。`;
-            return;
-        }
-        breaks.push({ start_time, end_time });
+        breaks.push({ minutes: r.minutes });
     }
 
     breakSubmitting.value = true;
@@ -324,12 +332,20 @@ const punchButtonClasses = (variant, enabled) => {
 
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-sm">
                     <button
+                        v-if="!isFixedBreak"
                         type="button"
                         @click="openBreakModal"
                         class="inline-flex items-center gap-1 text-natane-700 hover:underline"
                     >
                         <Coffee :size="14" /> 休憩登録
                     </button>
+                    <span
+                        v-else
+                        class="inline-flex items-center gap-1 text-brand-text-muted"
+                        title="所定休憩が自動で控除されるため、休憩の登録は不要です"
+                    >
+                        <Coffee :size="14" /> 所定休憩{{ scheduledBreakLabel ? `（${scheduledBreakLabel}）` : '' }}を自動控除
+                    </span>
                     <Link
                         :href="route('attendance.provisional.create')"
                         class="inline-flex items-center gap-1 text-brand-primary hover:underline"
@@ -514,21 +530,8 @@ const punchButtonClasses = (variant, enabled) => {
                     class="flex items-end gap-2"
                 >
                     <div class="flex-1">
-                        <label class="block text-[11px] text-brand-text-muted mb-1">休憩開始</label>
-                        <div class="flex items-center gap-1">
-                            <UiSelect v-model="row.start_h" :options="hourOptions" placeholder="時" size="md" />
-                            <span class="text-brand-text-muted">:</span>
-                            <UiSelect v-model="row.start_m" :options="minuteOptions" placeholder="分" size="md" />
-                        </div>
-                    </div>
-                    <span class="pb-2 text-brand-text-subtle">〜</span>
-                    <div class="flex-1">
-                        <label class="block text-[11px] text-brand-text-muted mb-1">休憩終了</label>
-                        <div class="flex items-center gap-1">
-                            <UiSelect v-model="row.end_h" :options="hourOptions" placeholder="時" size="md" />
-                            <span class="text-brand-text-muted">:</span>
-                            <UiSelect v-model="row.end_m" :options="minuteOptions" placeholder="分" size="md" />
-                        </div>
+                        <label class="block text-[11px] text-brand-text-muted mb-1">取得した休憩時間</label>
+                        <UiSelect v-model="row.minutes" :options="breakMinutesOptions" placeholder="選択してください" size="md" />
                     </div>
                     <button
                         type="button"

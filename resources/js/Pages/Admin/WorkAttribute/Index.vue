@@ -28,6 +28,14 @@
             <template #cell-name="{ value }">
                 <span class="font-medium">{{ value }}</span>
             </template>
+            <template #cell-overtime_mode="{ row }">
+                <span v-if="row.overtime_mode === 'threshold'" class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-xs">
+                    閾値方式<span v-if="row.overtime_threshold_minutes" class="ml-1 tabular-nums">（{{ minutesLabel(row.overtime_threshold_minutes) }}）</span>
+                </span>
+                <span v-else class="inline-flex items-center rounded-full bg-brand-surface-2 text-brand-text-muted px-2 py-0.5 text-xs">
+                    パターン方式
+                </span>
+            </template>
             <template #cell-actions="{ row }">
                 <div class="flex items-center justify-end gap-1.5">
                     <UiButton size="sm" variant="ghost" :href="route('admin.work-attributes.edit', row.id)">
@@ -64,10 +72,18 @@ defineProps({
 });
 
 const columns = [
-    { key: 'sort_order', label: '並び',   width: '80px' },
-    { key: 'name',       label: '名称' },
-    { key: 'actions',    label: '',       align: 'right', width: '100px', noLink: true },
+    { key: 'sort_order',    label: '並び',     width: '80px' },
+    { key: 'name',          label: '名称' },
+    { key: 'overtime_mode', label: '残業方式', width: '200px' },
+    { key: 'actions',       label: '',         align: 'right', width: '100px', noLink: true },
 ];
+
+const minutesLabel = (m) => {
+    if (!m || m <= 0) return '';
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    return min === 0 ? `${h}時間` : `${h}時間${min}分`;
+};
 
 const confirmOpen = ref(false);
 const target = ref(null);

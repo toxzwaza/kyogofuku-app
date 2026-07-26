@@ -31,6 +31,14 @@
                                 </select>
                             </div>
                             <div>
+                                <label class="block text-xs font-medium text-brand-text-muted mb-1">勤務属性</label>
+                                <select v-model="filters.work_attribute_id" class="rounded-md border-brand-border text-sm">
+                                    <option value="">すべて</option>
+                                    <option v-for="wa in workAttributes" :key="wa.id" :value="wa.id">{{ wa.name }}</option>
+                                    <option value="none">未設定</option>
+                                </select>
+                            </div>
+                            <div>
                                 <label class="block text-xs font-medium text-brand-text-muted mb-1">開始日</label>
                                 <input v-model="filters.from" type="date" class="rounded-md border-brand-border text-sm" />
                             </div>
@@ -136,6 +144,7 @@
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">ステータス</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">出勤打刻</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">退勤打刻</th>
+                                        <th class="px-4 py-2 text-left font-medium text-brand-text">休憩</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">ベース出勤</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">ベース退勤</th>
                                         <th class="px-4 py-2 text-left font-medium text-brand-text">業務開始(給与)</th>
@@ -161,6 +170,7 @@
                                         </td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.clock_in_at) }}</td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.clock_out_at) }}</td>
+                                        <td class="px-4 py-2">{{ formatBreakMinutes(r.payroll) }}</td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_start_at) }}</td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_end_at) }}</td>
                                         <td class="px-4 py-2" :class="payrollClockInClass(r.payroll)">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
@@ -194,6 +204,14 @@
                                             class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                                         />
                                         <span>{{ group.userName }}（{{ group.records.length }}件）</span>
+                                        <span
+                                            v-if="group.workAttributeName"
+                                            class="inline-flex items-center rounded-full bg-brand-primary/10 text-brand-primary px-2 py-0.5 text-xs font-normal"
+                                        >{{ group.workAttributeName }}</span>
+                                        <span
+                                            v-else
+                                            class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-xs font-normal"
+                                        >勤務属性 未設定</span>
                                     </div>
                                     <div class="overflow-x-auto">
                                         <table class="min-w-full divide-y divide-brand-border text-sm">
@@ -204,6 +222,7 @@
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">ステータス</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">出勤打刻</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">退勤打刻</th>
+                                                    <th class="px-4 py-2 text-left font-medium text-brand-text">休憩</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">ベース出勤</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">ベース退勤</th>
                                                     <th class="px-4 py-2 text-left font-medium text-brand-text">業務開始(給与)</th>
@@ -228,6 +247,7 @@
                                                     </td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.clock_in_at) }}</td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.clock_out_at) }}</td>
+                                                    <td class="px-4 py-2">{{ formatBreakMinutes(r.payroll) }}</td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_start_at) }}</td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_end_at) }}</td>
                                                     <td class="px-4 py-2" :class="payrollClockInClass(r.payroll)">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
@@ -442,6 +462,14 @@ function formatOvertimeRounded(val) {
     return `${val}分`;
 }
 
+// 休憩列：fixed=所定固定（0分でも明示）/ manual=休憩打刻の合計（0は「-」）
+function formatBreakMinutes(payroll) {
+    const v = payroll?.break_minutes;
+    if (v === null || v === undefined) return '-';
+    if (payroll?.break_is_fixed) return `${v}分（所定）`;
+    return v > 0 ? `${v}分` : '-';
+}
+
 // 業務開始(給与)セルの背景色
 // - early / no_base（打刻時刻を採用）: オレンジ
 // - late（遅刻で打刻時刻を採用）: 青
@@ -471,6 +499,7 @@ const props = defineProps({
     users: Array,
     usersByShop: Object,
     leaves: { type: Array, default: () => [] },
+    workAttributes: { type: Array, default: () => [] },
     filters: Object,
 });
 
@@ -540,6 +569,7 @@ function currentFilterParams() {
         Object.entries({
             shop_id: filters.value.shop_id,
             user_id: filters.value.user_id,
+            work_attribute_id: filters.value.work_attribute_id,
             from: filters.value.from,
             to: filters.value.to,
         }).filter(([, v]) => v)
@@ -613,14 +643,7 @@ function submitEdit() {
         breaks,
         pattern_override: editForm.value.pattern_override || null,
         substitute_for_date: editForm.value.substitute_for_date || null,
-        ...Object.fromEntries(
-            Object.entries({
-                shop_id: filters.value.shop_id,
-                user_id: filters.value.user_id,
-                from: filters.value.from,
-                to: filters.value.to,
-            }).filter(([, v]) => v)
-        ),
+        ...currentFilterParams(),
     }, {
         preserveScroll: true,
         onError: (errors) => {
@@ -648,14 +671,7 @@ function approveRecord() {
     editForm.value.processing = true;
     editForm.value.errors = {};
     router.post(route('admin.attendance.approve', r.id), {
-        ...Object.fromEntries(
-            Object.entries({
-                shop_id: filters.value.shop_id,
-                user_id: filters.value.user_id,
-                from: filters.value.from,
-                to: filters.value.to,
-            }).filter(([, v]) => v)
-        ),
+        ...currentFilterParams(),
     }, {
         preserveScroll: true,
         onError: (errors) => {
@@ -674,6 +690,7 @@ function approveRecord() {
 const filters = ref({
     shop_id: props.filters?.shop_id ?? '',
     user_id: props.filters?.user_id ?? '',
+    work_attribute_id: props.filters?.work_attribute_id ?? '',
     from: props.filters?.from ?? '',
     to: props.filters?.to ?? '',
 });
@@ -700,7 +717,12 @@ const groupedByUser = computed(() => {
         const uid = r.user_id ?? r.user?.id ?? 0;
         const name = r.user?.name ?? '-';
         if (!map.has(uid)) {
-            map.set(uid, { userId: uid, userName: name, records: [] });
+            map.set(uid, {
+                userId: uid,
+                userName: name,
+                workAttributeName: r.user?.work_attribute?.name ?? null,
+                records: [],
+            });
         }
         map.get(uid).records.push(r);
     }
@@ -837,6 +859,7 @@ function applyFilters() {
     router.get(route('admin.attendance.index'), {
         shop_id: filters.value.shop_id || undefined,
         user_id: filters.value.user_id || undefined,
+        work_attribute_id: filters.value.work_attribute_id || undefined,
         from: filters.value.from || undefined,
         to: filters.value.to || undefined,
     }, { preserveState: true });
