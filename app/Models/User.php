@@ -12,6 +12,17 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    /** 休憩の取り方：所定固定休憩を控除（休憩打刻不要） */
+    public const BREAK_MODE_FIXED = 'fixed';
+
+    /** 休憩の取り方：打刻時にモーダルで都度入力 */
+    public const BREAK_MODE_MANUAL = 'manual';
+
+    public const BREAK_MODES = [
+        self::BREAK_MODE_FIXED,
+        self::BREAK_MODE_MANUAL,
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -26,6 +37,8 @@ class User extends Authenticatable
         'theme_color',
         'attendance_role',
         'work_attribute_id',
+        'break_mode',
+        'scheduled_break_minutes',
     ];
 
     /**
@@ -45,7 +58,14 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'scheduled_break_minutes' => 'integer',
     ];
+
+    /** 休憩が所定固定方式か（休憩打刻を使わず所定分を控除する） */
+    public function usesFixedBreak(): bool
+    {
+        return $this->break_mode === self::BREAK_MODE_FIXED;
+    }
 
     /**
      * 店舗との多対多リレーション

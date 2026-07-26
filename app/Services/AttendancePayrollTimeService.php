@@ -153,6 +153,11 @@ class AttendancePayrollTimeService
             return $this->roundClockTimeToNearestMinuteUnit($actualIn->copy(), $setting);
         }
 
+        // ベース開始と同じ「分」の打刻は定刻扱い（ベース開始にそろえる）。秒差では遅刻にしない。
+        if ($actualIn->copy()->startOfMinute()->equalTo($baseStart->copy()->startOfMinute())) {
+            return $this->roundClockTimeToNearestMinuteUnit($baseStart->copy(), $setting);
+        }
+
         if ($actualIn->gte($baseStart)) {
             return $this->roundClockTimeToNearestMinuteUnit($actualIn->copy(), $setting);
         }
@@ -185,7 +190,7 @@ class AttendancePayrollTimeService
      * - null      : 出勤打刻なし
      * - 'no_base' : ベース業務開始が解決できず、打刻時刻をそのまま採用（早出と同様にオレンジ表示）
      * - 'early'   : 早出として打刻時刻を採用（オレンジ表示）
-     * - 'late'    : 遅刻（打刻 ≧ ベース開始）で打刻時刻を採用（青表示）
+     * - 'late'    : 遅刻（打刻の分がベース開始の分より後）で打刻時刻を採用（青表示）。同じ分は on_time
      * - 'on_time' : ベース開始にそろえて採用（通常表示）
      *
      * 区分は payrollClockInAt と同じ分岐に従う。
@@ -202,6 +207,11 @@ class AttendancePayrollTimeService
 
         $setting = $setting ?? AttendancePayrollSetting::current();
         $threshold = max(0, (int) $setting->start_early_threshold_minutes);
+
+        // ベース開始と同じ「分」は定刻（遅刻ではない）。それより後の分から遅刻扱い。
+        if ($actualIn->copy()->startOfMinute()->equalTo($baseStart->copy()->startOfMinute())) {
+            return 'on_time';
+        }
 
         if ($actualIn->gte($baseStart)) {
             return 'late';
@@ -334,7 +344,9 @@ class AttendancePayrollTimeService
      *   payroll_clock_out_at: string|null,
      *   clock_in_category: string|null,
      *   overtime_minutes_raw: int|null,
-     *   overtime_minutes_rounded: int|null
+     *   overtime_minutes_rounded: int|null,
+     *   break_minutes: int,
+     *   break_is_fixed: bool
      * }
      */
     public function payrollPayloadForRecord(AttendanceRecord $record, ?array $patternsByDate = null, ?AttendancePayrollSetting $setting = null): array
@@ -342,18 +354,30 @@ class AttendancePayrollTimeService
         $user = $record->user;
         $date = $record->date instanceof Carbon ? $record->date->copy()->startOfDay() : Carbon::parse($record->date)->startOfDay();
 
+        $setting = $setting ?? AttendancePayrollSetting::current();
         $overridePattern = $record->pattern_override ?: null;
         $window = $this->resolveBaseWindow($user, $date, $patternsByDate, $overridePattern);
         $baseStart = $window['start'] ?? null;
         $baseEnd = $window['end'] ?? null;
 
+        $thresholdMinutes = $this->overtimeThresholdForRecord($user, $date, $setting);
+
         $payrollIn = $this->payrollClockInAt($record->clock_in_at, $baseStart, $setting);
         $category = $this->payrollClockInCategory($record->clock_in_at, $baseStart, $setting);
-        $rawOt = $this->rawOvertimeMinutesAfterBaseEnd($record, $baseEnd);
-        $roundedOt = $baseEnd !== null
-            ? $this->roundOvertimeMinutes($rawOt, $setting)
-            : null;
-        $payrollOut = $this->payrollClockOutAt($record->clock_out_at, $baseEnd, (int) ($roundedOt ?? 0));
+
+        if ($thresholdMinutes !== null) {
+            // 閾値方式：実働 − 閾値。給与用退勤は実打刻をそのまま採用。
+            $rawOt = $this->thresholdRawOvertimeMinutes($record, $user, $thresholdMinutes);
+            $roundedOt = $this->roundOvertimeMinutes($rawOt, $setting);
+            $payrollOut = $record->clock_out_at?->copy();
+        } else {
+            // ベース終業方式（従来）
+            $rawOt = $this->rawOvertimeMinutesAfterBaseEnd($record, $baseEnd);
+            $roundedOt = $baseEnd !== null
+                ? $this->roundOvertimeMinutes($rawOt, $setting)
+                : null;
+            $payrollOut = $this->payrollClockOutAt($record->clock_out_at, $baseEnd, (int) ($roundedOt ?? 0));
+        }
 
         // 実適用パターン（上書き優先、無ければ会社カレンダー）
         $appliedPattern = $overridePattern ?: $this->calendarPatternForDate($date, $patternsByDate);
@@ -361,7 +385,9 @@ class AttendancePayrollTimeService
         // 具体的には「打刻あり・勤務属性は登録済み・その日のパターンが未確定（上書きも会社カレンダーも無い）」のとき。
         // 勤務属性未登録やパターン別時刻マスタ未登録は、パターン選択では解決しないため対象外。
         $hasWorkAttribute = $user && $user->work_attribute_id;
-        $needsPattern = $record->clock_in_at !== null
+        // 閾値方式はパターンに依存しないため「要パターン設定」の対象外。
+        $needsPattern = $thresholdMinutes === null
+            && $record->clock_in_at !== null
             && $hasWorkAttribute
             && ($appliedPattern === null || $appliedPattern === '')
             && $baseStart === null;
@@ -374,8 +400,11 @@ class AttendancePayrollTimeService
             'payroll_clock_in_at' => $payrollIn?->toIso8601String(),
             'payroll_clock_out_at' => $payrollOut?->toIso8601String(),
             'clock_in_category' => $category,
-            'overtime_minutes_raw' => $baseEnd !== null ? $rawOt : null,
+            'overtime_minutes_raw' => ($thresholdMinutes !== null || $baseEnd !== null) ? $rawOt : null,
             'overtime_minutes_rounded' => $roundedOt,
+            // 休憩控除に使う分（fixed=所定固定 / manual=休憩打刻の合計）
+            'break_minutes' => $this->effectiveBreakMinutes($record, $user),
+            'break_is_fixed' => (bool) ($user && $user->usesFixedBreak()),
             'applied_pattern' => $appliedPattern !== null && $appliedPattern !== '' ? strtoupper((string) $appliedPattern) : null,
             'needs_pattern' => $needsPattern,
             'needs_work_attribute' => $needsWorkAttribute,
@@ -416,32 +445,52 @@ class AttendancePayrollTimeService
             && ($calPattern === null || $calPattern === '')
             && empty($record->substitute_for_date);
 
+        $setting = $setting ?? AttendancePayrollSetting::current();
+        $thresholdMinutes = $this->overtimeThresholdForRecord($user, $date, $setting);
+        $breakMinutes = $this->effectiveBreakMinutes($record, $user);
+
         // 就労時間：給与用（丸め後）在社時間 − 休憩
         $payIn = $this->payrollClockInAt($clockIn, $baseStart, $setting);
-        $rawOt = $this->rawOvertimeMinutesAfterBaseEnd($record, $baseEnd);
-        $roundedOt = $baseEnd !== null ? (int) $this->roundOvertimeMinutes($rawOt, $setting) : 0;
-        $payOut = $this->payrollClockOutAt($clockOut, $baseEnd, $roundedOt);
-        $workMinutes = 0;
-        if ($payIn && $payOut && $payOut->gt($payIn)) {
-            $workMinutes = max(0, intdiv($payOut->diffInSeconds($payIn), 60) - $this->completedBreakMinutes($record));
+
+        if ($thresholdMinutes !== null) {
+            // 閾値方式：残業＝実働 − 閾値。給与用退勤は実打刻。深夜残業は末尾区間で判定。
+            $payOut = $clockOut?->copy();
+            $rawOt = $this->thresholdRawOvertimeMinutes($record, $user, $thresholdMinutes);
+            $roundedOt = (int) $this->roundOvertimeMinutes($rawOt, $setting);
+            $overtimeNight = $this->thresholdOvertimeNightMinutes($record, $roundedOt);
+        } else {
+            // ベース終業方式（従来）
+            $rawOt = $this->rawOvertimeMinutesAfterBaseEnd($record, $baseEnd);
+            $roundedOt = $baseEnd !== null ? (int) $this->roundOvertimeMinutes($rawOt, $setting) : 0;
+            $payOut = $this->payrollClockOutAt($clockOut, $baseEnd, $roundedOt);
+            $overtimeNight = ($baseEnd && $clockOut && $clockOut->gt($baseEnd))
+                ? $this->nightWorkMinutesBetween($record, $baseEnd, $clockOut)
+                : 0;
         }
 
-        // 深夜残業：全勤務のうち 22:00〜翌5:00 に重なる時間（休憩控除）
+        $workMinutes = 0;
+        if ($payIn && $payOut && $payOut->gt($payIn)) {
+            $workMinutes = max(0, intdiv($payOut->diffInSeconds($payIn), 60) - $breakMinutes);
+        }
+
+        // 深夜勤務：全勤務のうち 22:00〜翌5:00 に重なる時間（休憩控除）
         $nightMinutes = ($clockIn && $clockOut) ? $this->nightWorkMinutesBetween($record, $clockIn, $clockOut) : 0;
 
         // 普通残業：残業（丸め後）− 残業のうち深夜帯に重なる分
-        $overtimeNight = ($baseEnd && $clockOut && $clockOut->gt($baseEnd))
-            ? $this->nightWorkMinutesBetween($record, $baseEnd, $clockOut)
-            : 0;
         $overtimeNormal = max(0, $roundedOt - $overtimeNight);
 
-        // 遅早：ベース時刻が解決できた日のみ。1分でも遅刻/早退。1日あたり最大1回。
+        // 遅早：ベース時刻が解決できた日のみ。1日あたり最大1回。
+        // 遅刻は「分」で比較し、ベース開始と同じ分の打刻は遅刻にしない（それより後の分から遅刻）。
         $lateMin = 0;
         $earlyMin = 0;
         $lateEarlyCount = 0;
         if ($baseStart && $baseEnd) {
-            if ($clockIn && $clockIn->gt($baseStart)) {
-                $lateMin = intdiv($clockIn->diffInSeconds($baseStart), 60);
+            if ($clockIn) {
+                $clockInMin = $clockIn->copy()->startOfMinute();
+                $baseStartMin = $baseStart->copy()->startOfMinute();
+                if ($clockInMin->gt($baseStartMin)) {
+                    $lateMin = intdiv($clockInMin->diffInSeconds($baseStartMin), 60);
+                }
             }
             if ($clockOut && $clockOut->lt($baseEnd)) {
                 $earlyMin = intdiv($baseEnd->diffInSeconds($clockOut), 60);
@@ -460,6 +509,97 @@ class AttendancePayrollTimeService
             'late_early_count' => $lateEarlyCount,
             'late_early_minutes' => $lateMin + $earlyMin,
         ];
+    }
+
+    /**
+     * このレコードで閾値方式（実働 − 残業閾値）を適用する場合の残業閾値（分）。
+     * 適用しない場合は null（＝ベース終業方式にフォールバック）。
+     *
+     * - 勤務属性が threshold モードでない → null
+     * - 閾値が未設定 → null
+     * - 切替日（threshold_effective_date）より前の勤務 → null（過去分は従来挙動で据え置き）
+     */
+    public function overtimeThresholdForRecord(?User $user, Carbon $date, ?AttendancePayrollSetting $setting = null): ?int
+    {
+        if ($user === null || !$user->work_attribute_id) {
+            return null;
+        }
+
+        $attr = $user->workAttribute;
+        if (!$attr || !$attr->usesThresholdOvertime()) {
+            return null;
+        }
+
+        $threshold = $attr->overtime_threshold_minutes;
+        if ($threshold === null) {
+            return null;
+        }
+
+        $setting = $setting ?? AttendancePayrollSetting::current();
+        $effective = $setting->threshold_effective_date;
+        if ($effective !== null) {
+            $effStart = $effective instanceof Carbon
+                ? $effective->copy()->startOfDay()
+                : Carbon::parse((string) $effective)->startOfDay();
+            if ($date->copy()->startOfDay()->lt($effStart)) {
+                return null;
+            }
+        }
+
+        return (int) $threshold;
+    }
+
+    /**
+     * 実働算出に使う休憩控除（分）
+     * - break_mode=fixed: 所定固定休憩（scheduled_break_minutes）を控除。休憩打刻は使わない。
+     * - それ以外(manual): 休憩打刻の合計を控除。
+     */
+    public function effectiveBreakMinutes(AttendanceRecord $record, ?User $user): int
+    {
+        if ($user && $user->usesFixedBreak()) {
+            return max(0, (int) $user->scheduled_break_minutes);
+        }
+
+        return $this->completedBreakMinutes($record);
+    }
+
+    /**
+     * 閾値方式の残業（分・丸め前）: 実働（在社 − 休憩控除） − 残業閾値
+     */
+    public function thresholdRawOvertimeMinutes(AttendanceRecord $record, ?User $user, int $thresholdMinutes): int
+    {
+        $clockIn = $record->clock_in_at;
+        $clockOut = $record->clock_out_at;
+        if ($clockIn === null || $clockOut === null || $clockOut->lte($clockIn)) {
+            return 0;
+        }
+
+        $grossMinutes = intdiv($clockOut->diffInSeconds($clockIn), 60);
+        $actualMinutes = max(0, $grossMinutes - $this->effectiveBreakMinutes($record, $user));
+
+        return max(0, $actualMinutes - max(0, $thresholdMinutes));
+    }
+
+    /**
+     * 閾値方式の残業のうち深夜帯（22:00〜翌5:00）に重なる分。
+     * 残業は「実働の末尾」とみなし、退勤から残業分だけ遡った区間で深夜分を数える（休憩控除）。
+     */
+    private function thresholdOvertimeNightMinutes(AttendanceRecord $record, int $roundedOvertime): int
+    {
+        $clockIn = $record->clock_in_at;
+        $clockOut = $record->clock_out_at;
+        if ($roundedOvertime <= 0 || $clockIn === null || $clockOut === null) {
+            return 0;
+        }
+
+        $otStart = $clockOut->copy()->subMinutes($roundedOvertime);
+        if ($otStart->lt($clockIn)) {
+            $otStart = $clockIn->copy();
+        }
+
+        $night = $this->nightWorkMinutesBetween($record, $otStart, $clockOut);
+
+        return min($night, $roundedOvertime);
     }
 
     /**
@@ -586,6 +726,7 @@ class AttendancePayrollTimeService
         $dayType = $this->dayTypeForDate($dateStart);
 
         $user = new User(['work_attribute_id' => $workAttributeId]);
+        $user->setRelation('workAttribute', WorkAttribute::find($workAttributeId));
         $patternsByDate = [$dateStart->format('Y-m-d') => $pattern];
 
         $window = $this->resolveBaseWindow($user, $dateStart, $patternsByDate);
