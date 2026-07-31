@@ -88,6 +88,32 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">休憩の取り方 <span class="text-red-500">*</span></label>
+                                    <select
+                                        v-model="form.break_mode"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
+                                    >
+                                        <option value="manual">都度入力（打刻画面の「休憩」ボタンから登録）</option>
+                                        <option value="fixed">所定固定（毎回同じ休憩時間を自動控除）</option>
+                                    </select>
+                                    <p class="mt-1 text-sm text-brand-text-muted">休憩が変動する人は「都度入力」、一定の人は「所定固定」を選びます</p>
+                                    <div v-if="form.errors.break_mode" class="mt-1 text-sm text-red-600">{{ form.errors.break_mode }}</div>
+                                </div>
+
+                                <div v-if="form.break_mode === 'fixed'">
+                                    <label class="block text-sm font-medium text-brand-text mb-1">所定休憩（分） <span class="text-red-500">*</span></label>
+                                    <input
+                                        v-model.number="form.scheduled_break_minutes"
+                                        type="number"
+                                        min="0"
+                                        max="600"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
+                                    />
+                                    <p class="mt-1 text-sm text-brand-text-muted">例: 60 = 1時間 / 85 = 1時間25分 / 90 = 1時間30分 / 0 = 休憩なし<span v-if="breakHint">（{{ breakHint }}）</span></p>
+                                    <div v-if="form.errors.scheduled_break_minutes" class="mt-1 text-sm text-red-600">{{ form.errors.scheduled_break_minutes }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-brand-text mb-1">パスワード <span class="text-red-500">*</span></label>
                                     <input
                                         v-model="form.password"
@@ -174,6 +200,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps({
     shops: Array,
@@ -189,10 +216,20 @@ const form = useForm({
     login_id: '',
     theme_color: '',
     work_attribute_id: '',
+    break_mode: 'manual',
+    scheduled_break_minutes: null,
     password: '',
     password_confirmation: '',
     shop_ids: [],
     main_shop_id: null,
+});
+
+const breakHint = computed(() => {
+    const m = form.scheduled_break_minutes;
+    if (!m || m <= 0) return '';
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    return h === 0 ? `${min}分` : (min === 0 ? `${h}時間` : `${h}時間${min}分`);
 });
 
 const getShopName = (shopId) => {

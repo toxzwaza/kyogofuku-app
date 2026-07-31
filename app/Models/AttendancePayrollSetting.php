@@ -10,6 +10,11 @@ class AttendancePayrollSetting extends Model
         'start_early_threshold_minutes',
         'start_rounding_unit_minutes',
         'overtime_rounding_unit_minutes',
+        'threshold_effective_date',
+    ];
+
+    protected $casts = [
+        'threshold_effective_date' => 'date',
     ];
 
     public static function current(): self

@@ -96,6 +96,8 @@ class UserController extends Controller
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
             'work_attribute_id' => 'nullable|exists:work_attributes,id',
+            'break_mode' => 'required|in:fixed,manual',
+            'scheduled_break_minutes' => 'nullable|integer|min:0|max:600|required_if:break_mode,fixed',
         ]);
 
         $user = User::create([
@@ -105,6 +107,10 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
             'theme_color' => $validated['theme_color'] ?? null,
             'work_attribute_id' => $validated['work_attribute_id'] ?? null,
+            'break_mode' => $validated['break_mode'],
+            'scheduled_break_minutes' => $validated['break_mode'] === User::BREAK_MODE_FIXED
+                ? ($validated['scheduled_break_minutes'] ?? 0)
+                : null,
         ]);
 
         if ($request->has('shop_ids')) {
@@ -162,6 +168,8 @@ class UserController extends Controller
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
             'work_attribute_id' => 'nullable|exists:work_attributes,id',
+            'break_mode' => 'required|in:fixed,manual',
+            'scheduled_break_minutes' => 'nullable|integer|min:0|max:600|required_if:break_mode,fixed',
         ]);
 
         $user->update([
@@ -171,6 +179,10 @@ class UserController extends Controller
             'theme_color' => $validated['theme_color'] ?? null,
             'attendance_role' => $validated['attendance_role'] ?? null,
             'work_attribute_id' => $validated['work_attribute_id'] ?? null,
+            'break_mode' => $validated['break_mode'],
+            'scheduled_break_minutes' => $validated['break_mode'] === User::BREAK_MODE_FIXED
+                ? ($validated['scheduled_break_minutes'] ?? 0)
+                : null,
         ]);
 
         if ($request->filled('password')) {

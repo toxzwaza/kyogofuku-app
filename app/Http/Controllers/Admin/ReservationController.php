@@ -525,11 +525,20 @@ class ReservationController extends Controller
             ];
         } else {
             $reservation->loadMissing(['lineContacts']);
+            $eventShopsMapped = $eventShops->map(function ($shop) {
+                return [
+                    'id' => $shop->id,
+                    'name' => $shop->name,
+                ];
+            })->values()->all();
+            // 予約LINE連絡先の現在の担当店舗（受信表示先・送信元）。先頭連絡先の shop_id を採用。
+            $currentReservationShopId = $reservation->lineContacts->first()?->shop_id;
             $lineSection = [
                 'context' => 'reservation',
                 'customer_id' => null,
                 'reservation_id' => $reservation->id,
-                'shops' => [],
+                'shops' => $eventShopsMapped,
+                'shop_id' => $currentReservationShopId,
                 'can_issue_line_link' => $canIssueLineLink,
                 'line_contacts' => $reservation->lineContacts->map($mapLineContact)->values()->all(),
             ];

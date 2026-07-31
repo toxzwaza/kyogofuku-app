@@ -32,6 +32,7 @@
                                 <tr>
                                     <th class="px-4 py-2 text-left font-medium text-gray-700">並び</th>
                                     <th class="px-4 py-2 text-left font-medium text-gray-700">名称</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-700">残業方式</th>
                                     <th class="px-4 py-2 text-left font-medium text-gray-700 w-40">操作</th>
                                 </tr>
                             </thead>
@@ -39,6 +40,12 @@
                                 <tr v-for="wa in workAttributes" :key="wa.id" class="hover:bg-gray-50">
                                     <td class="px-4 py-2">{{ wa.sort_order }}</td>
                                     <td class="px-4 py-2">{{ wa.name }}</td>
+                                    <td class="px-4 py-2">
+                                        <span v-if="wa.overtime_mode === 'threshold'" class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-xs">
+                                            閾値方式<span v-if="wa.overtime_threshold_minutes" class="ml-1">（{{ minutesLabel(wa.overtime_threshold_minutes) }}）</span>
+                                        </span>
+                                        <span v-else class="inline-flex items-center rounded-full bg-gray-100 text-gray-600 px-2 py-0.5 text-xs">パターン方式</span>
+                                    </td>
                                     <td class="px-4 py-2">
                                         <Link
                                             :href="route('admin.work-attributes.edit', wa.id)"
@@ -52,7 +59,7 @@
                                     </td>
                                 </tr>
                                 <tr v-if="!workAttributes?.length">
-                                    <td colspan="3" class="px-4 py-8 text-center text-gray-500">データがありません</td>
+                                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">データがありません</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -70,6 +77,13 @@ import { Head, Link, router } from '@inertiajs/vue3';
 defineProps({
     workAttributes: Array,
 });
+
+function minutesLabel(m) {
+    if (!m || m <= 0) return '';
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    return min === 0 ? `${h}時間` : `${h}時間${min}分`;
+}
 
 function destroyWa(id) {
     if (confirm('この勤務属性を削除しますか？')) {

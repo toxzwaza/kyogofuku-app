@@ -235,6 +235,36 @@ class ReservationLineMessageController extends Controller
         ]);
     }
 
+    /**
+     * 予約に紐づく LINE 連絡先の担当店舗（受信表示先・送信元）を変更する。
+     * 顧客未紐付けの予約のみ対象。顧客紐付けありは顧客詳細から変更する。
+     */
+    public function updateResponsibleShop(Request $request, EventReservation $reservation)
+    {
+        if ($reservation->customer_id) {
+            return redirect()->back()->withErrors([
+                'line' => '顧客が紐づいているため、顧客詳細画面から担当店舗を変更してください。',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'shop_id' => 'required|exists:shops,id',
+        ]);
+
+        // customer_line_contacts.shop_id は NOT NULL。予約に紐づく全連絡先を一括で付け替える。
+        CustomerLineContact::query()
+            ->where('event_reservation_id', $reservation->id)
+            ->update(['shop_id' => $validated['shop_id']]);
+
+        Log::info('admin LINE responsible shop changed (reservation)', [
+            'user_id' => $request->user()?->id,
+            'reservation_id' => $reservation->id,
+            'shop_id' => $validated['shop_id'],
+        ]);
+
+        return redirect()->back()->with('success', '担当店舗を更新しました。');
+    }
+
     public function destroyContact(Request $request, EventReservation $reservation, CustomerLineContact $contact)
     {
         $this->assertReservationOwnsContact($reservation, $contact);

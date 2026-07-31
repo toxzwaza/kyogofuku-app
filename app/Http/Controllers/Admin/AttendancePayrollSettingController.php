@@ -38,6 +38,7 @@ class AttendancePayrollSettingController extends Controller
             'start_early_threshold_minutes' => 'required|integer|min:0|max:720',
             'start_rounding_unit_minutes' => 'required|integer|min:1|max:480',
             'overtime_rounding_unit_minutes' => 'required|integer|min:1|max:480',
+            'threshold_effective_date' => 'nullable|date',
         ]);
 
         $setting = AttendancePayrollSetting::query()->orderBy('id')->firstOrFail();
@@ -45,6 +46,7 @@ class AttendancePayrollSettingController extends Controller
             'start_early_threshold_minutes' => $validated['start_early_threshold_minutes'],
             'start_rounding_unit_minutes' => $validated['start_rounding_unit_minutes'],
             'overtime_rounding_unit_minutes' => $validated['overtime_rounding_unit_minutes'],
+            'threshold_effective_date' => $validated['threshold_effective_date'] ?? null,
         ]);
 
         return redirect()->route('admin.attendance.payroll-settings.edit')

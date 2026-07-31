@@ -83,7 +83,17 @@
                             <!-- WEB予約ボタン -->
                             <div class="border-b border-brand-border pb-8">
                                 <label class="block text-sm font-medium text-brand-text mb-2">WEB予約ボタン画像</label>
-                                <p class="text-xs text-brand-text-muted mb-3">「WEB予約」ボタンに表示する画像です。</p>
+                                <label class="mb-3 flex items-center">
+                                    <input
+                                        v-model="form.cta_web_button_enabled"
+                                        type="checkbox"
+                                        class="rounded border-brand-border text-rose-600 focus:ring-rose-500"
+                                    />
+                                    <span class="ml-2 text-sm text-brand-text">WEB予約ボタンを表示する</span>
+                                </label>
+                                <p class="text-xs text-brand-text-muted mb-3">
+                                    「WEB予約」ボタンに表示する画像です。<span v-if="!form.cta_web_button_enabled" class="text-rose-600">（現在は非表示。電話予約のみ全幅表示されます）</span>
+                                </p>
                                 <div class="flex flex-wrap gap-3 items-center">
                                     <input
                                         ref="webButtonInput"
@@ -125,7 +135,17 @@
                             <!-- 電話予約ボタン -->
                             <div class="pb-8">
                                 <label class="block text-sm font-medium text-brand-text mb-2">電話予約ボタン画像</label>
-                                <p class="text-xs text-brand-text-muted mb-3">「電話予約」ボタンに表示する画像です。</p>
+                                <label class="mb-3 flex items-center">
+                                    <input
+                                        v-model="form.cta_phone_button_enabled"
+                                        type="checkbox"
+                                        class="rounded border-brand-border text-rose-600 focus:ring-rose-500"
+                                    />
+                                    <span class="ml-2 text-sm text-brand-text">電話予約ボタンを表示する</span>
+                                </label>
+                                <p class="text-xs text-brand-text-muted mb-3">
+                                    「電話予約」ボタンに表示する画像です。<span v-if="!form.cta_phone_button_enabled" class="text-rose-600">（現在は非表示。WEB予約のみ全幅表示されます）</span>
+                                </p>
                                 <div class="flex flex-wrap gap-3 items-center">
                                     <input
                                         ref="phoneButtonInput"
@@ -256,6 +276,8 @@ const form = useForm({
     media_cta_web_button_id: null,
     media_cta_phone_button_id: null,
     cta_color_type: props.event.cta_color_type || 'red',
+    cta_web_button_enabled: props.event.cta_web_button_enabled ?? true,
+    cta_phone_button_enabled: props.event.cta_phone_button_enabled ?? true,
 });
 
 function openPicker(target) {

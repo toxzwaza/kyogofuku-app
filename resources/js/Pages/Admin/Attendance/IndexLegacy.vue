@@ -31,6 +31,14 @@
                                 </select>
                             </div>
                             <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">勤務属性</label>
+                                <select v-model="filters.work_attribute_id" class="rounded-md border-gray-300 text-sm">
+                                    <option value="">すべて</option>
+                                    <option v-for="wa in workAttributes" :key="wa.id" :value="wa.id">{{ wa.name }}</option>
+                                    <option value="none">未設定</option>
+                                </select>
+                            </div>
+                            <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">開始日</label>
                                 <input v-model="filters.from" type="date" class="rounded-md border-gray-300 text-sm" />
                             </div>
@@ -126,7 +134,7 @@
                                         <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_end_at) }}</td>
                                         <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
                                         <td class="px-4 py-2">{{ formatOvertimeRounded(r.payroll?.overtime_minutes_rounded) }}</td>
-                                        <td class="px-4 py-2">{{ formatBreaks(r.breaks) }}</td>
+                                        <td class="px-4 py-2">{{ formatBreakMinutes(r.payroll) }}</td>
                                         <td class="px-4 py-2">
                                             <button type="button" @click="openEditModal(r)" class="text-indigo-600 hover:text-indigo-800 text-sm">編集</button>
                                         </td>
@@ -155,6 +163,14 @@
                                             class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                         />
                                         <span>{{ group.userName }}（{{ group.records.length }}件）</span>
+                                        <span
+                                            v-if="group.workAttributeName"
+                                            class="inline-flex items-center rounded-full bg-indigo-100 text-indigo-800 px-2 py-0.5 text-xs font-normal"
+                                        >{{ group.workAttributeName }}</span>
+                                        <span
+                                            v-else
+                                            class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-xs font-normal"
+                                        >勤務属性 未設定</span>
                                     </div>
                                     <div class="overflow-x-auto">
                                         <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -186,7 +202,7 @@
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.base_end_at) }}</td>
                                                     <td class="px-4 py-2">{{ formatTimeJa(r.payroll?.payroll_clock_in_at) }}</td>
                                                     <td class="px-4 py-2">{{ formatOvertimeRounded(r.payroll?.overtime_minutes_rounded) }}</td>
-                                                    <td class="px-4 py-2">{{ formatBreaks(r.breaks) }}</td>
+                                                    <td class="px-4 py-2">{{ formatBreakMinutes(r.payroll) }}</td>
                                                     <td class="px-4 py-2">
                                                         <button type="button" @click="openEditModal(r)" class="text-indigo-600 hover:text-indigo-800 text-sm">編集</button>
                                                     </td>
@@ -266,6 +282,7 @@ const props = defineProps({
     shops: Array,
     users: Array,
     usersByShop: Object,
+    workAttributes: { type: Array, default: () => [] },
     filters: Object,
 });
 
@@ -354,6 +371,7 @@ function submitEdit() {
 const filters = ref({
     shop_id: props.filters?.shop_id ?? '',
     user_id: props.filters?.user_id ?? '',
+    work_attribute_id: props.filters?.work_attribute_id ?? '',
     from: props.filters?.from ?? '',
     to: props.filters?.to ?? '',
 });
@@ -380,7 +398,12 @@ const groupedByUser = computed(() => {
         const uid = r.user_id ?? r.user?.id ?? 0;
         const name = r.user?.name ?? '-';
         if (!map.has(uid)) {
-            map.set(uid, { userId: uid, userName: name, records: [] });
+            map.set(uid, {
+                userId: uid,
+                userName: name,
+                workAttributeName: r.user?.work_attribute?.name ?? null,
+                records: [],
+            });
         }
         map.get(uid).records.push(r);
     }
@@ -436,6 +459,7 @@ function applyFilters() {
     router.get(route('admin.attendance.index'), {
         shop_id: filters.value.shop_id || undefined,
         user_id: filters.value.user_id || undefined,
+        work_attribute_id: filters.value.work_attribute_id || undefined,
         from: filters.value.from || undefined,
         to: filters.value.to || undefined,
     }, { preserveState: true });
@@ -455,12 +479,11 @@ function statusClass(s) {
     return classes[s] ?? '';
 }
 
-function formatBreaks(breaks) {
-    if (!breaks || breaks.length === 0) return '-';
-    return breaks.map(b => {
-        const s = formatTimeJa(b.start_at);
-        const e = b.end_at ? formatTimeJa(b.end_at) : '〜';
-        return `${s}-${e}`;
-    }).join(', ');
+// 休憩列：fixed=所定固定（0分でも明示）/ manual=休憩打刻の合計（0は「-」）
+function formatBreakMinutes(payroll) {
+    const v = payroll?.break_minutes;
+    if (v === null || v === undefined) return '-';
+    if (payroll?.break_is_fixed) return `${v}分（所定）`;
+    return v > 0 ? `${v}分` : '-';
 }
 </script>

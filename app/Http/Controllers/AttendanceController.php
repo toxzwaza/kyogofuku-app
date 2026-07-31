@@ -95,6 +95,8 @@ class AttendanceController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'canManageAttendance' => $user->canManageAttendance(),
+                'breakMode' => $user->break_mode,
+                'scheduledBreakMinutes' => $user->scheduled_break_minutes,
             ],
             'attendanceManualUrl' => config('attendance.manual_url', ''),
             'attendanceManualUrlManager' => config('attendance.manual_url_manager', ''),
@@ -263,15 +265,16 @@ class AttendanceController extends Controller
      * 休憩の事後登録（日付指定）
      *
      * 通常はリアルタイム打刻しないため、超過取得・取得漏れの補正用。
-     * 指定日の既存勤怠レコードに休憩を1件追加する（CSV出力に反映される）。
+     * 取得した「分数」（15分刻み・最大120分）のみを受け取り、開始・終了時刻は
+     * 勤務時間内（12:00 起点、既存休憩の後ろ、退勤前に収まるよう調整）に機械的に配置する。
+     * 集計上は休憩の合計分数のみが意味を持つ。
      */
     public function breakRegister(Request $request)
     {
         $validated = $request->validate([
             'date' => 'required|date',
             'breaks' => 'required|array|min:1',
-            'breaks.*.start_time' => 'required|date_format:H:i',
-            'breaks.*.end_time' => 'required|date_format:H:i',
+            'breaks.*.minutes' => 'required|integer|multiple_of:15|min:15|max:120',
         ]);
 
         $user = $request->user();
@@ -288,23 +291,37 @@ class AttendanceController extends Controller
             ], 404);
         }
 
+        $totalNewMinutes = (int) collect($validated['breaks'])->sum('minutes');
+
+        // 配置起点：その日の 12:00。出勤時刻・既存休憩の最終終了時刻より後ろへずらす。
+        $cursor = $date->copy()->setTime(12, 0);
+        if ($record->clock_in_at && $cursor->lt($record->clock_in_at)) {
+            $cursor = $record->clock_in_at->copy();
+        }
+        $lastExistingEnd = $record->breaks
+            ->filter(fn ($b) => $b->end_at !== null)
+            ->max('end_at');
+        if ($lastExistingEnd && $cursor->lt($lastExistingEnd)) {
+            $cursor = $lastExistingEnd->copy();
+        }
+
+        // 退勤済みの場合、合計が退勤時刻までに収まらなければ退勤から逆算して前倒しする。
+        if ($record->clock_out_at) {
+            $latestStart = $record->clock_out_at->copy()->subMinutes($totalNewMinutes);
+            if ($cursor->gt($latestStart)) {
+                $cursor = $latestStart;
+            }
+            if ($record->clock_in_at && $cursor->lt($record->clock_in_at)) {
+                return response()->json(['message' => '休憩時間の合計が勤務時間内に収まりません。'], 422);
+            }
+        }
+
         $newBreaks = [];
-        foreach ($validated['breaks'] as $i => $b) {
-            $no = $i + 1;
-            $startAt = $date->copy()->setTimeFromTimeString($b['start_time']);
-            $endAt = $date->copy()->setTimeFromTimeString($b['end_time']);
-
-            if ($endAt->lte($startAt)) {
-                return response()->json(['message' => "{$no}件目：休憩終了は休憩開始より後の時刻を指定してください。"], 422);
-            }
-            if ($record->clock_in_at && $startAt->lt($record->clock_in_at)) {
-                return response()->json(['message' => "{$no}件目：休憩開始は出勤時刻より後にしてください。"], 422);
-            }
-            if ($record->clock_out_at && $endAt->gt($record->clock_out_at)) {
-                return response()->json(['message' => "{$no}件目：休憩終了は退勤時刻より前にしてください。"], 422);
-            }
-
+        foreach ($validated['breaks'] as $b) {
+            $startAt = $cursor->copy();
+            $endAt = $startAt->copy()->addMinutes((int) $b['minutes']);
             $newBreaks[] = ['start_at' => $startAt, 'end_at' => $endAt];
+            $cursor = $endAt;
         }
 
         return DB::transaction(function () use ($record, $newBreaks) {
@@ -602,7 +619,7 @@ class AttendanceController extends Controller
         $to = $request->filled('to') ? $request->input('to') : $defaultTo;
 
         $query = AttendanceRecord::where('user_id', $user->id)
-            ->with(['shop:id,name', 'breaks', 'user:id,name,work_attribute_id'])
+            ->with(['shop:id,name', 'breaks', 'user:id,name,work_attribute_id,break_mode,scheduled_break_minutes'])
             ->whereDate('date', '>=', $from)
             ->whereDate('date', '<=', $to)
             ->orderByDesc('date')
@@ -666,7 +683,7 @@ class AttendanceController extends Controller
         }
 
         $query = AttendanceRecord::where('status', AttendanceRecord::STATUS_APPLIED)
-            ->with(['user:id,name,work_attribute_id', 'shop:id,name', 'breaks']);
+            ->with(['user:id,name,work_attribute_id,break_mode,scheduled_break_minutes', 'shop:id,name', 'breaks']);
         $query = AttendanceScopeService::scopeForUser($query, $user);
         $records = $query->orderBy('date')->orderBy('created_at')->paginate(20)->withQueryString();
         $this->enrichAttendancePaginatorWithShiftAndPayroll($records, false);

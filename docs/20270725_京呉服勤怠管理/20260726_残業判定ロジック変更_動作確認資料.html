@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勤怠 残業判定ロジック変更 動作確認資料（2026-07-26）</title>
+<style>
+  :root {
+    --primary: #7c3f61;
+    --primary-light: #f7eef3;
+    --ok: #15803d;
+    --ok-bg: #dcfce7;
+    --warn: #b45309;
+    --warn-bg: #fef3c7;
+    --border: #e5e7eb;
+    --text: #1f2937;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    color: var(--text); margin: 0; background: #fafafa; line-height: 1.7;
+  }
+  header.page {
+    background: linear-gradient(135deg, var(--primary), #a05a80);
+    color: #fff; padding: 36px 40px;
+  }
+  header.page h1 { margin: 0 0 6px; font-size: 24px; }
+  header.page p { margin: 2px 0; opacity: .92; font-size: 13px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 24px 64px; }
+  h2 {
+    font-size: 19px; border-left: 5px solid var(--primary);
+    padding-left: 12px; margin: 48px 0 16px; color: var(--primary);
+  }
+  h2:first-of-type { margin-top: 24px; }
+  h3 { font-size: 15px; margin: 24px 0 8px; }
+  table { border-collapse: collapse; width: 100%; background: #fff; font-size: 13.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--primary-light); font-weight: 600; }
+  .badge {
+    display: inline-block; padding: 1px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+  }
+  .ok { background: var(--ok-bg); color: var(--ok); }
+  .warn { background: var(--warn-bg); color: var(--warn); }
+  .card {
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 24px; margin: 16px 0;
+  }
+  .shot { margin: 20px 0 32px; }
+  .shot figure { margin: 0; }
+  .shot img {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  .shot figcaption {
+    font-size: 13px; color: var(--muted); margin-top: 8px;
+  }
+  .check li { margin: 4px 0; }
+  code {
+    background: #f3f4f6; padding: 1px 6px; border-radius: 4px;
+    font-size: 12.5px; font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+  .note {
+    background: var(--warn-bg); border-left: 4px solid var(--warn);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13.5px;
+  }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px; }
+</style>
+</head>
+<body>
+
+<header class="page">
+  <h1>勤怠 残業判定ロジック変更 — 動作確認資料</h1>
+  <p>対象：kyogofuku-app（feature/attendance-fix）／確認日：2026-07-26／確認方法：Playwright によるブラウザ実機確認 + ユニットテスト</p>
+  <p>関連：残業判定ロジック変更_設計整理と疑問点.md ／ 勤怠管理者への確認事項リスト.md</p>
+</header>
+
+<main>
+
+<h2>1. 変更の概要</h2>
+<div class="card">
+  <p>残業の算出方法を、勤務属性ごとに以下の2方式から選択できるように変更した。</p>
+  <table>
+    <tr><th>属性タイプ</th><th>パターン時刻</th><th>早出/遅刻/早退</th><th>残業の決め方</th><th>残業閾値</th></tr>
+    <tr><td><strong>正社員</strong></td><td>登録あり</td><td>判定する</td><td>ベース終業（baseEnd）超過 ＝ 従来どおり</td><td>不要</td></tr>
+    <tr><td><strong>正社員(時短)</strong></td><td>登録あり</td><td>判定する</td><td><strong>実働 − 閾値</strong>（ハイブリッド）</td><td>470分</td></tr>
+    <tr><td><strong>パート各種</strong></td><td>登録なし</td><td>判定しない</td><td><strong>実働 − 閾値</strong></td><td>480分／470分</td></tr>
+  </table>
+  <p>休憩は<strong>スタッフ個人ごと</strong>に「所定固定（自動控除）」か「都度入力（打刻画面のモーダル）」を選択できる。<br>
+  閾値方式は「適用開始日」（給与計算閾値設定）以降の勤務分にのみ適用され、過去分は従来計算のまま据え置かれる。</p>
+</div>
+
+<h2>2. 確認結果サマリー</h2>
+<table>
+  <tr><th>#</th><th>確認項目</th><th>結果</th><th>備考</th></tr>
+  <tr><td>1</td><td>勤務属性マスタ一覧：残業方式列の表示</td><td><span class="badge ok">OK</span></td><td>5属性・方式と閾値時間を表示</td></tr>
+  <tr><td>2</td><td>勤務属性編集：パターン方式（正社員）</td><td><span class="badge ok">OK</span></td><td>A/B/C×平日土日の6枠</td></tr>
+  <tr><td>3</td><td>勤務属性編集：閾値方式（パート8h）</td><td><span class="badge ok">OK</span></td><td>閾値480分・パターン任意の注記表示</td></tr>
+  <tr><td>4</td><td>スタッフ編集：休憩の取り方・所定休憩</td><td><span class="badge ok">OK</span></td><td>確認中に表示漏れを発見し即修正（下記 §5）</td></tr>
+  <tr><td>5</td><td>給与計算閾値設定：閾値方式の適用開始日</td><td><span class="badge ok">OK</span></td><td>date入力欄を追加</td></tr>
+  <tr><td>6</td><td>打刻画面：fixed（所定固定）の人</td><td><span class="badge ok">OK</span></td><td>休憩登録ボタン非表示＋「所定休憩を自動控除」表示</td></tr>
+  <tr><td>7</td><td>打刻画面：manual（都度入力）の人</td><td><span class="badge ok">OK</span></td><td>従来どおり休憩登録ボタン＋モーダル</td></tr>
+  <tr><td>8</td><td>残業計算（Service 実測）</td><td><span class="badge ok">OK</span></td><td>下記 §4 のとおり期待値と一致</td></tr>
+  <tr><td>9</td><td>ユニットテスト</td><td><span class="badge ok">OK</span></td><td>21件パス（既存15の非回帰＋新規6）</td></tr>
+</table>
+
+<h2>3. 画面確認（スクリーンショット）</h2>
+
+<div class="shot">
+  <h3>3-1. 勤務属性マスタ一覧 — 残業方式列</h3>
+  <figure>
+    <img src="images/01_work_attributes_index.png" alt="勤務属性マスタ一覧">
+    <figcaption>5属性が登録され、「残業方式」列にパターン方式／閾値方式（閾値時間）が表示されている。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-2. 勤務属性編集 — 正社員（パターン方式）</h3>
+  <figure>
+    <img src="images/02_work_attribute_edit_seishain.png" alt="正社員の編集画面">
+    <figcaption>残業の判定方式＝パターン方式。A（9:45-19:00）／B（9:45-20:00）／C（13:00-20:00）を平日・土日別に登録。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-3. 勤務属性編集 — パート(8h)（閾値方式）</h3>
+  <figure>
+    <img src="images/03_work_attribute_edit_part8h.png" alt="パート8hの編集画面">
+    <figcaption>閾値方式を選ぶと「残業閾値（分）」欄が出現（480分＝8時間）。パターン時刻は任意である旨の注記も表示。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-4. スタッフ編集 — 休憩の取り方（大野さん＝所定固定85分）</h3>
+  <figure>
+    <img src="images/04_user_edit_fixed_ohno.png" alt="スタッフ編集画面">
+    <figcaption>「休憩の取り方」（都度入力／所定固定）と「所定休憩（分）」を個人ごとに設定できる。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-5. 給与計算閾値設定 — 閾値方式の適用開始日</h3>
+  <figure>
+    <img src="images/05_payroll_settings_effective_date.png" alt="給与計算閾値設定">
+    <figcaption>適用開始日より前の勤務分は従来計算のまま据え置き。未設定時は全期間適用。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-6. 打刻画面 — fixed（大野さん）</h3>
+  <figure>
+    <img src="images/06_punch_fixed_ohno.png" alt="fixed打刻画面">
+    <figcaption>「休憩登録」ボタンが消え、「所定休憩（1時間25分）を自動控除」の案内に切り替わる。休憩打刻は不要。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-7. 打刻画面 — manual（石倉さん）</h3>
+  <figure>
+    <img src="images/07_punch_manual_ishikura.png" alt="manual打刻画面">
+    <figcaption>休憩が変動する人は従来どおり「休憩登録」ボタンが表示される。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-8. 休憩登録モーダル（manual）— 取得分数の選択式</h3>
+  <figure>
+    <img src="images/08_break_modal_manual.png" alt="休憩登録モーダル">
+    <figcaption>日付を選び、<strong>取得した休憩時間を15分刻み（15分〜120分）で選択</strong>して登録する。開始・終了時刻の入力は不要（時刻は勤務時間内へ自動配置される。例：45分を選択 → 12:00〜12:45 として記録）。複数件の追加にも対応。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-9. 勤怠管理画面 — スタッフ名の右に適用中の勤務属性を表示</h3>
+  <figure>
+    <img src="images/09_admin_attendance_work_attribute_badge.png" alt="勤怠管理画面の勤務属性バッジ">
+    <figcaption>ユーザー毎表示のヘッダー「スタッフ名（○件）」の右に、適用中の勤務属性（正社員／パート(8h) 等）をバッジ表示。未割り当てのスタッフには「勤務属性 未設定」を警告色で表示し、設定漏れに気づけるようにした。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-10. 勤怠管理画面 — 勤務属性での絞り込み</h3>
+  <figure>
+    <img src="images/10_admin_attendance_filter_work_attribute.png" alt="勤務属性フィルタ">
+    <figcaption>絞り込みフォームに「勤務属性」を追加。全5属性＋「未設定」で絞り込める（画面はパート(8h)で絞り込んだ状態＝該当7名のみ表示）。CSVエクスポート・編集後のリダイレクトでもフィルタ条件は維持される。</figcaption>
+  </figure>
+</div>
+
+<div class="shot">
+  <h3>3-11. 勤怠管理画面 — 休憩列の追加</h3>
+  <figure>
+    <img src="images/11_admin_attendance_break_column.png" alt="休憩列">
+    <figcaption>退勤打刻の隣に「休憩」列を追加。所定固定の人は「85分（所定）」のように所定休憩を、都度入力の人は休憩登録の合計分を表示する（未登録は「-」）。休憩控除の根拠が一覧で確認できる。</figcaption>
+  </figure>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">遅刻判定の境界変更（2026-07-26）</h3>
+  <table>
+    <tr><th>打刻時刻（ベース出勤 9:00 の場合）</th><th>変更前</th><th>変更後</th></tr>
+    <tr><td>9:00:00 〜 9:00:59（同じ分）</td><td>遅刻扱い（青表示）</td><td><strong>定刻扱い（遅刻にしない）</strong>。給与用出勤はベース開始にそろえる</td></tr>
+    <tr><td>9:01:00 以降（後の分）</td><td>遅刻扱い</td><td>遅刻扱い（変更なし）。遅刻分数も分単位で算出</td></tr>
+  </table>
+  <p style="font-size:13px">ベース出勤より<strong>後の分に出勤した場合のみ遅刻</strong>とし、同じ分（秒差）は遅刻にならない。表示色分け・月次集計（遅早回数/分）の両方に適用。ユニットテストで境界（9:00:59 → 定刻／9:01:00 → 遅刻）を検証済み（計23件パス）。</p>
+</div>
+
+<h2>4. 残業計算の実測確認（ローカルDB実データ）</h2>
+<table>
+  <tr><th>ケース</th><th>スタッフ</th><th>勤務</th><th>休憩</th><th>期待値</th><th>実測</th><th>判定</th></tr>
+  <tr>
+    <td>閾値方式＋固定休憩</td>
+    <td>小林啓子<br>（パート8h／fixed 60分）</td>
+    <td>9:00〜19:00（600分）</td>
+    <td>所定60分を自動控除</td>
+    <td>実働540 − 480 ＝ <strong>残業60分</strong></td>
+    <td>残業60分</td>
+    <td><span class="badge ok">一致</span></td>
+  </tr>
+  <tr>
+    <td>閾値方式＋休憩打刻</td>
+    <td>石倉まち子<br>（パート7h50／manual）</td>
+    <td>10:00〜18:30（510分）</td>
+    <td>打刻30分を控除</td>
+    <td>実働480 − 470 ＝ <strong>残業10分</strong></td>
+    <td>残業10分</td>
+    <td><span class="badge ok">一致</span></td>
+  </tr>
+  <tr>
+    <td>従来方式の維持</td>
+    <td>大野繭美<br>（正社員／base_end）</td>
+    <td>—</td>
+    <td>—</td>
+    <td>閾値は適用されない（null）</td>
+    <td>null → ベース終業方式</td>
+    <td><span class="badge ok">一致</span></td>
+  </tr>
+</table>
+<p style="font-size:13px;color:var(--muted)">※ ユニットテストでは上記に加えて、切替日境界（適用開始日より前は従来計算）・深夜残業の末尾分離（22:00〜翌5:00）・丸め処理を検証済み（計21件パス）。</p>
+
+<h2>5. 確認中に発見・修正した不具合</h2>
+<div class="card">
+  <table>
+    <tr><th>事象</th><th>原因</th><th>対応</th></tr>
+    <tr>
+      <td>スタッフ<strong>編集</strong>画面（新UI）に「休憩の取り方」欄が表示されない</td>
+      <td><code>User/Edit.vue</code> のフォーム定義のみ追加され、テンプレート（入力UI）の追加が漏れていた</td>
+      <td>入力UIを追加して再ビルド。再確認で表示・保存値（所定固定85分）とも正常 <span class="badge ok">修正済</span></td>
+    </tr>
+  </table>
+  <p style="font-size:13px">※ スタッフ追加画面・旧UI（Legacy）版は当初から正常。</p>
+</div>
+
+<h2>6. マスタ投入状況（ローカルDB）</h2>
+<div class="summary-grid">
+  <div class="card">
+    <h3 style="margin-top:0">勤務属性（5種）</h3>
+    <table>
+      <tr><th>属性</th><th>方式</th><th>閾値</th><th>人数</th></tr>
+      <tr><td>正社員</td><td>パターン</td><td>—</td><td>14名</td></tr>
+      <tr><td>正社員(時短)</td><td>閾値</td><td>470分</td><td>0名※</td></tr>
+      <tr><td>パート(8h)</td><td>閾値</td><td>480分</td><td>10名</td></tr>
+      <tr><td>パート(7h50)</td><td>閾値</td><td>470分</td><td>5名</td></tr>
+      <tr><td>パート(試用/正社員候補)</td><td>閾値</td><td>470分</td><td>2名</td></tr>
+    </table>
+    <p style="font-size:12.5px;color:var(--muted)">※ 梨子木さんは産休中のため復帰時に割り当て。属性なし＝10名（対象外8名＋梨子木＋システム用）。</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">新規追加スタッフ（福井店・5名）</h3>
+    <table>
+      <tr><th>名前</th><th>属性</th><th>休憩</th></tr>
+      <tr><td>奥山 恵美子</td><td>パート(7h50)</td><td>固定30分</td></tr>
+      <tr><td>浜坂 千代子</td><td>パート(7h50)</td><td>固定30分</td></tr>
+      <tr><td>谷田 理美</td><td>パート(8h)</td><td>固定0分（なし）</td></tr>
+      <tr><td>友田 路子</td><td>パート(8h)</td><td>固定0分（なし）</td></tr>
+      <tr><td>若杉 美波</td><td>パート(8h)</td><td>固定0分（なし）</td></tr>
+    </table>
+    <p style="font-size:12.5px;color:var(--muted)">login_id：姓ローマ字_fukui（例 okuyama_fukui）／初期パスワードは別途管理。</p>
+  </div>
+</div>
+
+<h2>7. 運用開始前の残タスク</h2>
+<div class="note">
+  <strong>閾値方式の適用開始日が未設定</strong>（現在は全期間に新方式が適用される状態）。<br>
+  管理画面「給与計算閾値設定」→「閾値方式の適用開始日」に、給与締めの切り替わり日を設定すること。
+</div>
+<ul class="check">
+  <li>梨子木さん復帰時：「正社員(時短)」の割り当てと勤務時間・閾値の最終確認</li>
+  <li>永田さん・市本さんの正社員化タイミングで属性を「正社員」へ手動切替</li>
+  <li>本番反映時：マイグレーション3本の実行＋本番DBへの勤務属性・スタッフ割り当ての投入</li>
+</ul>
+
+<h2>8. 検証環境について</h2>
+<div class="card" style="font-size:13.5px">
+  <ul style="margin:0;padding-left:20px">
+    <li>ローカル環境（localhost:8000）で実施。本番環境には未反映。</li>
+    <li>検証のため一時的に変更した認証情報（検証用アカウントのパスワード・店舗端末パスワード・端末登録店舗）は、検証完了後にすべて元の値へ復元済み。</li>
+    <li>ユニットテスト：<code>tests/Unit/AttendancePayrollTimeServiceTest.php</code> — 21件パス。</li>
+    <li>フロントエンドビルド（<code>npm run build</code>）成功。</li>
+  </ul>
+</div>
+
+</main>
+
+<footer>
+  京呉服平田 勤怠管理システム — 残業判定ロジック変更 動作確認資料 ／ 作成：システム開発部門（2026-07-26）
+</footer>
+
+</body>
+</html>

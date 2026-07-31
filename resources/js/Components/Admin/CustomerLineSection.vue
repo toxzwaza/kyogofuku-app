@@ -38,25 +38,33 @@ const isEmbedded = computed(() => props.variant === 'embedded');
 
 const lineMode = computed(() => props.lineApi?.context ?? 'customer');
 
-const shopForm = useForm({ shop_id: props.customer?.shop_id ?? null });
+// 現在の担当店舗。顧客モードは顧客の shop_id、予約モードは予約LINE連絡先の shop_id。
+const currentShopId = computed(() => props.lineApi?.shop_id ?? props.customer?.shop_id ?? null);
+
+const shopForm = useForm({ shop_id: currentShopId.value });
 
 const shopDirty = computed(() => {
-    const cur = props.customer?.shop_id;
+    const cur = currentShopId.value;
     const sel = shopForm.shop_id;
     const nCur = cur === null || cur === undefined || cur === '' ? null : Number(cur);
     const nSel = sel === null || sel === undefined || sel === '' ? null : Number(sel);
     return nCur !== nSel;
 });
 
-watch(
-    () => props.customer?.shop_id,
-    (id) => {
-        shopForm.shop_id = id ?? null;
-        shopForm.clearErrors();
-    },
-);
+watch(currentShopId, (id) => {
+    shopForm.shop_id = id ?? null;
+    shopForm.clearErrors();
+});
 
 function saveResponsibleShop() {
+    // 予約モード: 予約LINE連絡先の担当店舗を更新（NOT NULL のため必須）
+    if (lineMode.value === 'reservation') {
+        shopForm.patch(route('admin.reservations.line.responsible-shop', props.lineApi.reservation_id), {
+            preserveScroll: true,
+        });
+        return;
+    }
+
     shopForm
         .transform((data) => ({
             shop_id:
@@ -68,6 +76,14 @@ function saveResponsibleShop() {
             preserveScroll: true,
         });
 }
+
+// 担当店舗変更ブロックの表示可否。予約モードは連携済み（連絡先あり）のときのみ。
+const showShopBlock = computed(() => {
+    if (lineMode.value === 'customer') {
+        return true;
+    }
+    return lineMode.value === 'reservation' && contacts.value.length > 0;
+});
 
 const page = usePage();
 
@@ -519,19 +535,23 @@ const canIssueLink = computed(() => {
                 イベントに店舗が未設定のため、ここから連携用リンクを発行できません。イベントに店舗を紐づけてください。
             </div>
 
-            <div v-if="lineMode === 'customer'" class="mb-4 pb-4 border-b border-gray-200">
-                <label for="customer-line-responsible-shop" class="block text-sm font-medium text-gray-700 mb-1">
+            <div v-if="showShopBlock" class="mb-4 pb-4 border-b border-gray-200">
+                <label for="line-responsible-shop" class="block text-sm font-medium text-gray-700 mb-1">
                     担当店舗（LINE 等）
                 </label>
-                <p class="text-xs text-gray-500 mb-2">LINE 連携・メッセージ送信の対象店舗です。</p>
+                <p class="text-xs text-gray-500 mb-2">
+                    {{ lineMode === 'reservation'
+                        ? 'LINE メッセージの受信表示先・送信元の店舗です。'
+                        : 'LINE 連携・メッセージ送信の対象店舗です。' }}
+                </p>
                 <div v-if="effectiveShops.length" class="flex flex-wrap items-end gap-2">
                     <div class="flex-1 min-w-[12rem]">
                         <select
-                            id="customer-line-responsible-shop"
+                            id="line-responsible-shop"
                             v-model="shopForm.shop_id"
                             class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
                         >
-                            <option :value="null">未設定</option>
+                            <option v-if="lineMode === 'customer'" :value="null">未設定</option>
                             <option v-for="s in effectiveShops" :key="s.id" :value="s.id">
                                 {{ s.name }}
                             </option>
@@ -547,7 +567,9 @@ const canIssueLink = computed(() => {
                         {{ shopForm.processing ? '保存中…' : '保存' }}
                     </button>
                 </div>
-                <p v-else class="text-sm text-gray-500">店舗マスタがありません。</p>
+                <p v-else class="text-sm text-gray-500">
+                    {{ lineMode === 'reservation' ? 'イベントに店舗が設定されていません。' : '店舗マスタがありません。' }}
+                </p>
             </div>
 
             <div

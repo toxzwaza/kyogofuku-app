@@ -19,6 +19,8 @@ class AttendanceRecord extends Model
         'clock_in_at',
         'clock_out_at',
         'status',
+        'pattern_override',
+        'substitute_for_date',
         'application_reason',
         'is_manual',
         'approved_at',
@@ -30,6 +32,7 @@ class AttendanceRecord extends Model
         'date' => 'date',
         'clock_in_at' => 'datetime',
         'clock_out_at' => 'datetime',
+        'substitute_for_date' => 'date',
         'approved_at' => 'datetime',
         'is_manual' => 'boolean',
     ];
