@@ -242,6 +242,7 @@
       <strong>✅ 2026-07-28 実装完了反映サマリ（Phase 1〜4 実装済み・全テストあり）</strong>
       本フローの機能は<strong>実装完了</strong>し、店舗スタッフ操作マニュアル（<code>docs/20260706_お友達紹介機能_店舗スタッフ操作マニュアル.pdf</code>）・説明スライドも作成済み。6/25版からの主な追加・変更：
       <ul style="margin:8px 0 0;">
+        <li><strong>【変更★★】紹介者報酬の基準額</strong>：<em>被紹介者の成約金額</em>（6/25案） → <strong>紹介者自身の成約金額の合計（税抜・割引後）× ステージ還元率</strong> に変更して実装（e679a86）。お友達の成約金額は紹介者報酬に影響しない。</li>
         <li><strong>【追加★】ポイントは2種別</strong>：<strong>紹介ポイント</strong>（ギフトカード交換・商品購入・譲渡すべて可）と<strong>平田ポイント</strong>（商品購入・譲渡のみ可、<strong>ギフトカード交換は不可</strong>）。残高は <code>referral_points.balance / hirata_balance</code> で別管理（→ 6.4）。</li>
         <li><strong>【追加★】平田ポイント</strong>：紹介の有無を問わず<strong>全成約者</strong>へ「成約額(税抜)×平田率（初期<strong>1%</strong>）」を確定期間経過後に自動付与（→ 6.4）。</li>
         <li><strong>【追加】ポイント移管（譲渡）</strong>：顧客間で等価譲渡。平田ポイント優先で送出し、受け手も同種別で受領（用途制限を維持）（→ 6.5）。</li>
@@ -537,7 +538,7 @@ sequenceDiagram
 
     Note over BE: ① 紹介者Aへポイント付与
     BE->>DB: stage_settings(%) 参照<br/>Aの現ステージの還元率
-    BE->>BE: 付与pt = Bの成約金額 × ステージ%
+    BE->>BE: 付与pt = A自身の成約合計(税抜) × ステージ%
     BE->>DB: referral_points(A) 残高加算<br/>point_ledger に獲得履歴INSERT
     BE->>LP: Push:「紹介者特典！◯◯pt付与」<br/>(昇格時は昇格通知も)
     LP-->>A: 通知
@@ -558,7 +559,7 @@ sequenceDiagram
 
       <div class="callout ok">
         <strong>🎯 ポイント計算（2026-06-25確定方針）</strong>
-        付与ポイント＝<strong>被紹介者の成約金額 × 紹介者の（その時点の）ステージ別還元率</strong>。<br>
+        付与ポイント＝<strong>紹介者自身の成約金額の合計（税抜・割引後） × その時点のステージ別還元率</strong>（2026-07実装確定。6/25案の「被紹介者の成約金額」基準から変更）。<br>
         還元率の初期値：ブロンズ <strong>3%</strong> ／ シルバー <strong>4%</strong> ／ ゴールド <strong>5%</strong> ／ プラチナ <strong>10%</strong>（いずれも<strong>管理画面から変更可</strong>）。<br>
         獲得ポイントは <strong>500円単位</strong>（単位も管理画面で変更可）で<strong>ギフトカードに引換</strong>（→ 6.3）。
       </div>
@@ -605,7 +606,7 @@ sequenceDiagram
       </div>
 
       <h3>6.1 ポイント獲得（自動・受取操作不要）</h3>
-      <p>特典ポイントはシナリオC（成約検知→確定）で <code>referral_points</code> 残高へ自動加算される（紹介者＝成約金額×ステージ%／被紹介者＝固定10,000pt）。ユーザーの「受け取る」操作は不要。</p>
+      <p>特典ポイントはシナリオC（成約検知→確定）で <code>referral_points</code> 残高へ自動加算される（紹介者＝自身の成約合計(税抜)×ステージ%／被紹介者＝固定10,000pt）。ユーザーの「受け取る」操作は不要。</p>
 
       <h3>6.2 ポイント引換（ギフトカードに一本化・紹介者／被紹介者 共通）</h3>
       <p>紹介者・被紹介者は<strong>共通のポイント残高</strong>を持ち、<strong>500円単位でギフトカードに引換</strong>える（キャッシュバックは採用しない・C-9/C-11）。<strong>ギフトカードの発行は店舗で実施</strong>し、システムは「<strong>発行済み</strong>」ボタン押下で<strong>ポイントを減算</strong>する（C-5。将来は管理画面から発行・送付できるようにする可能性あり）。未発行（未送付）状態のキャンセルでポイント返還も可能。</p>
@@ -668,7 +669,7 @@ sequenceDiagram
         <tbody>
           <tr>
             <td><strong>紹介ポイント</strong></td>
-            <td>紹介成立（matured）時：紹介者＝成約額(税抜)×ステージ%／被紹介者＝固定pt（初期10,000）</td>
+            <td>紹介成立（matured）時：紹介者＝<b>自身の成約合計(税抜)</b>×ステージ%／被紹介者＝固定pt（初期10,000）</td>
             <td>ギフトカード交換・商品購入・譲渡 <strong>すべて可</strong></td>
             <td><code>referral_points.balance</code></td>
           </tr>
@@ -780,7 +781,7 @@ sequenceDiagram
           <strong>成約から1ヶ月後（クーリングオフ期間後）</strong>・日次バッチ <code>referral:mature</code>
           <br>→ <code>referrals[B→A].status='matured'</code>
           <br><strong>① 紹介者A</strong>：StageEvaluator(A) で <code>stage_settings</code>（可変閾値）昇格判定 → 昇格時 <code>customer_stages[A]</code> 更新
-          <br>　ポイント付与：<code>付与pt = Bの成約金額 × Aのステージ%</code> → <code>referral_points[A]</code> 加算 ＋ <code>point_ledger</code>
+          <br>　ポイント付与：<code>付与pt = A自身の成約合計(税抜) × Aのステージ%</code> → <code>referral_points[A]</code> 加算 ＋ <code>point_ledger</code>
           <br>　昇格時のみ Aに Push: 昇格通知テキスト
           <br><strong>② 被紹介者B</strong>：固定ポイント（初期10,000pt・管理画面で変更可）を付与 → <code>referral_points[B]</code> 加算 ＋ <code>point_ledger</code>（C-10確定：紹介者と同じく成約1ヶ月後）
           <br><strong>③ LINE通知</strong>：A・Bの両方へ付与ポイントをPush（昇格時はAへ昇格通知も。送信失敗はログのみ）
