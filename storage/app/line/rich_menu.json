@@ -6,19 +6,19 @@
   "areas": [
     {
       "bounds": { "x": 0, "y": 0, "width": 1250, "height": 843 },
-      "action": { "type": "uri", "uri": "https://liff.line.me/2009633621-Wh0yxjfu?screen=referral", "label": "友達紹介" }
+      "action": { "type": "uri", "uri": "https://liff.line.me/2009633621-jR1IcrRg?screen=referral", "label": "友達紹介" }
     },
     {
       "bounds": { "x": 1250, "y": 0, "width": 1250, "height": 843 },
-      "action": { "type": "uri", "uri": "https://liff.line.me/2009633621-Wh0yxjfu?screen=my-stage", "label": "マイステージ" }
+      "action": { "type": "uri", "uri": "https://liff.line.me/2009633621-jR1IcrRg?screen=my-stage", "label": "マイステージ" }
     },
     {
       "bounds": { "x": 0, "y": 843, "width": 1250, "height": 843 },
-      "action": { "type": "uri", "uri": "https://liff.line.me/2009633621-Wh0yxjfu?screen=my-points", "label": "マイポイント・ギフト" }
+      "action": { "type": "uri", "uri": "https://liff.line.me/2009633621-jR1IcrRg?screen=my-points", "label": "マイポイント・ギフト" }
     },
     {
       "bounds": { "x": 1250, "y": 843, "width": 1250, "height": 843 },
-      "action": { "type": "uri", "uri": "https://liff.line.me/2009633621-Wh0yxjfu?screen=mypage", "label": "顧客詳細" }
+      "action": { "type": "uri", "uri": "https://liff.line.me/2009633621-jR1IcrRg?screen=mypage", "label": "顧客詳細" }
     }
   ]
 }
