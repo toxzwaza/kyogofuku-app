@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Hiragino Sans","Yu Gothic",sans-serif; color:#333; }
+  .sheet { width:210mm; height:296mm; padding:10mm 13mm; overflow:hidden; position:relative; page-break-after:always;
+    background:linear-gradient(165deg,#fdf6f7 0%,#faf3ec 100%); }
+  .sheet:last-child { page-break-after:auto; }
+  .head { display:flex; align-items:baseline; gap:12px; border-bottom:4px solid #c85a72; padding-bottom:8px; }
+  .head h1 { font-size:23px; color:#4a3f52; }
+  .head .tag { background:#c85a72; color:#fff; font-size:15px; font-weight:700; padding:3px 14px; border-radius:999px; }
+  .head .pg { margin-left:auto; font-size:14px; color:#999; }
+  h2 { font-size:18px; color:#fff; background:#c85a72; padding:5px 14px; border-radius:8px; margin:12px 0 8px; }
+  h2 .n { display:inline-block; background:#fff; color:#c85a72; width:28px; height:28px; border-radius:50%;
+    text-align:center; line-height:28px; font-size:17px; margin-right:10px; vertical-align:-2px; }
+  p, li, td, th { font-size:15px; line-height:1.55; }
+  .big { font-size:16px; }
+  b, strong { color:#c85a72; }
+  table { border-collapse:collapse; width:100%; background:#fff; margin:6px 0; }
+  th, td { border:1.5px solid #d9c6a8; padding:5px 10px; text-align:left; }
+  th { background:#f6ede1; font-size:14.5px; white-space:nowrap; } td:first-child { white-space:nowrap; }
+  .num { font-size:19px; font-weight:800; color:#c85a72; }
+  .talk { background:#fff; border:2px solid #e6b8c4; border-radius:12px; padding:7px 14px; margin:6px 0; }
+  .talk::before { content:"💬"; margin-right:8px; }
+  .steps { display:flex; gap:10px; margin:8px 0; }
+  .stp { flex:1; background:#fff; border:1.5px solid #d9c6a8; border-radius:10px; padding:7px 10px; text-align:center; }
+  .stp .no { display:inline-block; background:#4a3f52; color:#fff; width:30px; height:30px; border-radius:50%;
+    line-height:30px; font-size:17px; font-weight:800; margin-bottom:6px; }
+  .stp .t { font-size:14px; font-weight:600; line-height:1.5; }
+  .warn { background:#fff6e0; border:2px solid #e0b93f; border-radius:10px; padding:7px 14px; margin:6px 0; }
+  .warn b { color:#b58a00; }
+  .qa { background:#fff; border-radius:10px; padding:7px 14px; margin:6px 0; box-shadow:0 2px 6px rgba(0,0,0,.07); }
+  .qa .q { font-size:15.5px; font-weight:700; color:#4a3f52; }
+  .qa .q::before { content:"Q"; background:#c85a72; color:#fff; border-radius:50%; display:inline-block;
+    width:26px; height:26px; text-align:center; line-height:26px; font-size:15px; margin-right:10px; }
+  .qa .a { margin-top:4px; padding-left:36px; }
+  .qa .a::before { content:"A"; background:#4a3f52; color:#fff; border-radius:50%; display:inline-block;
+    width:26px; height:26px; text-align:center; line-height:26px; font-size:15px; margin-right:10px; margin-left:-36px; }
+  .foot { position:absolute; bottom:6mm; left:15mm; right:15mm; text-align:center; font-size:13px; color:#999;
+    border-top:1px solid #ddd; padding-top:6px; }
+  /* 操作説明（スクショ付き） */
+  .opimg { margin:5px 0 2px; }
+  .opimg .cap { display:flex; align-items:center; gap:10px; margin-bottom:2px; }
+  .opimg .cap .no { background:#4a3f52; color:#fff; width:30px; height:30px; border-radius:50%; flex-shrink:0;
+    text-align:center; line-height:30px; font-size:17px; font-weight:800; }
+  .opimg .cap .t { font-size:16.5px; font-weight:700; color:#4a3f52; white-space:nowrap; }
+  .opimg .cap .d { font-size:13.5px; color:#666; }
+  .opimg img { width:86%; border:1.5px solid #ccc; border-radius:8px; display:block; margin:0 auto; }
+  .redkey { color:#d21e1e; font-weight:700; }
+  /* LINE手順（縦長画像5枚） */
+  .lsteps { display:flex; gap:8px; margin:8px 0; }
+  .lstp { flex:1; text-align:center; }
+  .lstp img { width:100%; border:1.5px solid #ccc; border-radius:8px; display:block; }
+  .lstp .no { display:inline-block; background:#c85a72; color:#fff; width:28px; height:28px; border-radius:50%;
+    line-height:28px; font-size:16px; font-weight:800; margin:6px 0 2px; }
+  .lstp .t { font-size:13px; font-weight:600; line-height:1.45; text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- ========== 1ページ目：制度の説明とお客様への案内 ========== -->
+<div class="sheet">
+  <div class="head">
+    <h1>お友達紹介プログラム</h1>
+    <span class="tag">スタッフ用かんたんマニュアル</span>
+    <span class="pg">1/3　2026年8月版</span>
+  </div>
+
+  <h2><span class="n">1</span>どんな制度？（30秒で説明できます）</h2>
+  <p class="big">ご成約いただいたお客様が、公式LINEで<b>お友達を紹介</b>すると、<br>
+  <b>紹介したお客様</b>にも<b>紹介されたお友達</b>にも<b>ポイント</b>がもらえる制度です。</p>
+
+  <table>
+    <tr><th>どなたが</th><th>もらえる特典</th></tr>
+    <tr><td class="big">紹介された<b>お友達</b></td><td><span class="num">10,000pt</span>（ご成約で）</td></tr>
+    <tr><td class="big"><b>紹介したお客様</b></td><td>お友達の成約金額の <span class="num">3〜10%</span>（紹介人数が多いほど率アップ）</td></tr>
+  </table>
+
+  <div class="warn"><b>⚠️ 対象になるお客様</b>：成約金額 <b>165,000円（税抜）以上</b> でご成約済みの方だけが紹介できます。</div>
+
+  <h2><span class="n">2</span>お客様への声かけ例</h2>
+  <div class="talk">「ご成約の御礼に、<b>お友達紹介プログラム</b>のご案内です。お知り合いをご紹介いただくと、お客様にもお友達にもポイントをプレゼントしています。<b>公式LINEのメニュー</b>から30秒でできますよ」</div>
+
+  <h2><span class="n">3</span>お客様にしていただく操作（LINE）</h2>
+  <div class="steps">
+    <div class="stp"><span class="no">1</span><div class="t">公式LINEを開き、下のメニューの<br><b>「友達紹介」</b>を押す</div></div>
+    <div class="stp"><span class="no">2</span><div class="t">出てきた<b>紹介用URL・QR</b>を<br>お友達に送る（LINEで共有）</div></div>
+    <div class="stp"><span class="no">3</span><div class="t">お友達がURLから登録<br>→ ご来店・ご成約で特典！</div></div>
+  </div>
+  <p>※メニューを押して連携を求められた場合は、<b>3ページ目のLINE連携手順</b>をご案内ください。</p>
+
+  <h2><span class="n">4</span>ここだけは覚えてください（3つ）</h2>
+  <table>
+    <tr><th>①付与の時期</th><td>ポイントは<b>ご成約の1ヶ月後に自動で付与</b>されます（すぐには付きません）</td></tr>
+    <tr><th>②使い道</th><td>店舗でのお買い物 <b>1pt＝1円</b>／ギフトカード交換 <b>1pt＝0.8円</b>（500円単位）／<b>ご家族への譲渡</b>のみ可</td></tr>
+    <tr><th>③対象外</th><td><b>すでに当店をご利用中の方</b>の紹介登録は特典対象外です</td></tr>
+  </table>
+
+  <div class="foot">京呉服平田・京呉服好一　お友達紹介プログラム　スタッフ用かんたんマニュアル｜2026-08-01 システム開発部門</div>
+</div>
+
+<!-- ========== 2ページ目：店舗での操作（スクリーンショット付き） ========== -->
+<div class="sheet">
+  <div class="head">
+    <h1>店舗での操作（管理画面）</h1>
+    <span class="tag">スタッフ用かんたんマニュアル</span>
+    <span class="pg">2/3</span>
+  </div>
+
+  <p style="margin-top:6px;">ポイントの操作はすべて、いつもの管理画面の <b>顧客詳細 →「ポイント・ギフト」タブ</b> で行います。<span class="redkey">赤枠</span>が押す場所・入力する場所です。</p>
+
+  <div class="opimg">
+    <div class="cap"><span class="no">1</span><span class="t">ポイント残高を確認する</span>
+      <span class="d">顧客詳細を開き「ポイント・ギフト」タブを押す → <b>紹介ポイント</b>と<b>平田ポイント</b>が見られます</span></div>
+    <img src="manual_img/op_summary.png">
+  </div>
+
+  <div class="opimg">
+    <div class="cap"><span class="no">2</span><span class="t">ギフトカードに交換する</span>
+      <span class="d">「ギフトカード引換」を選ぶ → 金額を入れ、<b>カードをお渡ししてから</b>「発行済みにする」（500円＝625pt）</span></div>
+    <img src="manual_img/op_gift.png">
+  </div>
+
+  <div class="opimg">
+    <div class="cap"><span class="no">3</span><span class="t">お会計でポイントを使う（1pt＝1円）</span>
+      <span class="d">「商品購入で使用」を選ぶ → <b>使用ポイント</b>と<b>購入品名</b>を入れて「使用する」</span></div>
+    <img src="manual_img/op_buy.png">
+  </div>
+
+  <div class="opimg">
+    <div class="cap"><span class="no">4</span><span class="t">ご家族へポイントを譲渡する</span>
+      <span class="d">「ポイント譲渡」を選ぶ → <b>譲渡先を検索</b>で家族を選び、ポイントを入れて「譲渡する」　⚠️<b>ご家族の間だけ</b></span></div>
+    <img src="manual_img/op_transfer.png">
+  </div>
+
+  <p style="font-size:13.5px; color:#888; margin-top:4px;">※ギフトカード交換に使えるのは紹介ポイントのみ（平田ポイントは不可）。間違えて発行したときはギフトカード一覧の「キャンセル」でポイントが戻ります（未使用のカードのみ）。</p>
+
+  <div class="foot">京呉服平田・京呉服好一　お友達紹介プログラム　スタッフ用かんたんマニュアル｜2026-08-01 システム開発部門</div>
+</div>
+
+<!-- ========== 3ページ目：LINE友だち追加〜連携の手順 ========== -->
+<div class="sheet">
+  <div class="head">
+    <h1>お客様のLINE連携 かんたん手順</h1>
+    <span class="tag">スタッフ用かんたんマニュアル</span>
+    <span class="pg">3/3</span>
+  </div>
+
+  <p style="margin-top:6px;">「友達紹介メニューが使えない」「連携してくださいと出る」お客様には、この手順をご案内ください。<span class="redkey">赤枠</span>の場所を押していただきます。</p>
+
+  <div class="lsteps">
+    <div class="lstp">
+      <img src="manual_img/line1_add.png">
+      <span class="no">1</span>
+      <div class="t">チラシのQRを読み取り<br><b>「友だち追加」</b>を押す</div>
+    </div>
+    <div class="lstp">
+      <img src="manual_img/line2_talk.png">
+      <span class="no">2</span>
+      <div class="t"><b>「トーク」</b>を押して<br>トーク画面を開く</div>
+    </div>
+    <div class="lstp">
+      <img src="manual_img/line3_url.png">
+      <span class="no">3</span>
+      <div class="t">あいさつメッセージの<br><b>「▼LINE連携はこちら」のURL</b>を押す</div>
+    </div>
+    <div class="lstp">
+      <img src="manual_img/line4_phone.png">
+      <span class="no">4</span>
+      <div class="t"><b>ご登録の電話番号</b>を入れて<br><b>「連携する」</b>を押す</div>
+    </div>
+    <div class="lstp">
+      <img src="manual_img/line5_done.png">
+      <span class="no">5</span>
+      <div class="t"><b>「LINE連携が完了しました」</b><br>が出たら完了！</div>
+    </div>
+  </div>
+
+  <h2><span class="n">Q</span>よくある質問</h2>
+  <div class="qa"><div class="q">「ポイントがまだ付かない」と言われた</div>
+    <div class="a">ご成約の<b>1ヶ月後に自動付与</b>です。「1ヶ月ほどでLINEにお知らせが届きます」とご案内ください。</div></div>
+  <div class="qa"><div class="q">お友達が紹介URLを開いたら「すでにご利用中…」と表示された</div>
+    <div class="a">そのお友達は既にお客様として登録済みか、過去に紹介を受けた方です。特典対象外の旨をお伝えください。表示がおかしい場合は下記へ連絡。</div></div>
+  <div class="qa"><div class="q">手順④で「見つかりませんでした」と出る</div>
+    <div class="a">ご予約・ご来店時と<b>別の電話番号</b>の可能性があります。お名前と電話番号をトークに送っていただければ、後日スタッフが連携します。</div></div>
+
+  <div class="warn" style="margin-top:10px;"><b>🆘 困ったときの連絡先</b>：システム開発部門　村上（社内メール・Teams いずれでも可）</div>
+
+  <div class="foot">京呉服平田・京呉服好一　お友達紹介プログラム　スタッフ用かんたんマニュアル｜2026-08-01 システム開発部門</div>
+</div>
+
+</body>
+</html>

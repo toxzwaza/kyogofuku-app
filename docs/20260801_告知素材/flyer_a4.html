@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1240px; height:1754px; overflow:hidden;
+    font-family:"Hiragino Sans","Yu Gothic",sans-serif;
+    background:linear-gradient(165deg,#fdf4f5 0%,#fbeaed 40%,#f8f2e9 100%);
+    position:relative; color:#3a3a45; }
+  .sakura { position:absolute; color:#f2b8c6; opacity:.45; }
+  .s1{top:16px;left:22px;font-size:60px;} .s2{top:130px;right:34px;font-size:84px;opacity:.3;}
+  .s3{bottom:110px;left:26px;font-size:52px;opacity:.35;} .s4{bottom:24px;right:50px;font-size:68px;opacity:.35;}
+  .page { position:absolute; inset:26px; border:2.5px solid #caa96a; border-radius:16px; padding:30px 44px 26px; display:flex; flex-direction:column; }
+  /* ヘッダー */
+  .shop { text-align:center; font-family:"Hiragino Mincho ProN",serif; font-size:22px; letter-spacing:.35em; color:#8a6d3b; }
+  h1 { text-align:center; margin-top:8px; font-family:"Hiragino Mincho ProN",serif; font-size:52px; letter-spacing:.06em; color:#4a3f52; line-height:1.2; }
+  h1 .accent { color:#c85a72; }
+  .lead { text-align:center; margin-top:6px; font-size:20px; color:#77606a; letter-spacing:.1em; }
+  /* 対象条件バー */
+  .target { margin-top:14px; text-align:center; background:#4a3f52; color:#fff; border-radius:999px;
+    padding:10px 20px; font-size:22px; font-weight:700; letter-spacing:.04em; }
+  .target b { color:#f5cf7a; }
+  /* 特典2枚 */
+  .benefits { margin-top:16px; display:flex; gap:18px; }
+  .bcard { flex:1; background:#fff; border-radius:14px; padding:16px 20px; text-align:center;
+    box-shadow:0 3px 10px rgba(180,120,140,.12); border-top:7px solid #c85a72; }
+  .bcard.gold { border-top-color:#caa96a; }
+  .bcard .who { display:inline-block; background:#fbe9ec; color:#c85a72; font-weight:700; font-size:20px; padding:4px 20px; border-radius:999px; }
+  .bcard.gold .who { background:#f6efe1; color:#8a6d3b; }
+  .bcard .num { margin-top:8px; font-size:56px; font-weight:800; color:#c85a72; line-height:1.05; }
+  .bcard.gold .num { color:#b08a3e; }
+  .bcard .num small { font-size:28px; }
+  .bcard .sub { margin-top:4px; font-size:20px; font-weight:600; }
+  /* ステージ＋シミュレーション統合 */
+  .stage { margin-top:16px; background:#fff; border-radius:14px; padding:16px 24px 14px; box-shadow:0 3px 10px rgba(180,120,140,.10); }
+  h2 { font-size:24px; color:#4a3f52; border-left:7px solid #c85a72; padding-left:12px; letter-spacing:.06em; }
+  .stages { margin-top:12px; display:flex; gap:12px; text-align:center; }
+  .st { flex:1; border-radius:10px; padding:8px 4px; color:#fff; }
+  .st .name { font-size:19px; font-weight:700; letter-spacing:.06em; }
+  .st .cnt { font-size:15px; opacity:.9; }
+  .st .rate { font-size:28px; font-weight:800; }
+  .st .rate small { font-size:16px; }
+  .bronze{background:#b07b52;} .silver{background:#8f9bab;} .goldst{background:#c9a24d;} .platinum{background:#6e6480;}
+  /* シミュレーション */
+  .sim { margin-top:14px; border-top:1.5px dashed #e2cfae; padding-top:12px; }
+  .sim .cond { font-size:19px; font-weight:700; color:#4a3f52; }
+  .sim .cond b { color:#c85a72; }
+  .chart { margin-top:10px; display:flex; align-items:flex-end; gap:8px; height:170px; padding:0 4px; }
+  .bar { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; }
+  .bar .pt { font-size:13.5px; font-weight:700; color:#4a3f52; margin-bottom:2px; white-space:nowrap; }
+  .bar .col { width:100%; border-radius:6px 6px 0 0; }
+  .bar .lbl { margin-top:4px; font-size:14px; color:#777; white-space:nowrap; }
+  .c-bronze{background:#b07b52;} .c-silver{background:#8f9bab;} .c-gold{background:#c9a24d;} .c-platinum{background:#6e6480;}
+  .sim-total { margin-top:10px; text-align:center; background:linear-gradient(90deg,#fbe9ec,#f6efe1); border:1.5px solid #e6b8c4;
+    border-radius:12px; padding:8px; font-size:22px; font-weight:700; color:#4a3f52; }
+  .sim-total b { font-size:34px; color:#c85a72; }
+  .sim-note { margin-top:4px; font-size:14px; color:#999; text-align:center; }
+  /* ポイントの使い方 */
+  .usage { margin-top:16px; background:#fff; border-radius:14px; padding:16px 24px; box-shadow:0 3px 10px rgba(180,120,140,.10); }
+  .usage .rows { margin-top:10px; display:flex; gap:14px; }
+  .urow { flex:1; background:#fdf6f0; border-radius:10px; padding:12px 14px; text-align:center; }
+  .urow .ic { font-size:30px; }
+  .urow .t { margin-top:4px; font-size:19px; font-weight:700; color:#4a3f52; }
+  .urow .r { margin-top:2px; font-size:22px; font-weight:800; color:#b08a3e; }
+  .urow .s { margin-top:2px; font-size:14.5px; color:#888; }
+  /* 使い方3ステップ（スリム化） */
+  .howto { margin-top:16px; display:flex; align-items:center; gap:14px; background:#fff; border-radius:14px; padding:14px 24px; box-shadow:0 3px 10px rgba(180,120,140,.10); }
+  .howto .h2s { font-size:22px; font-weight:700; color:#4a3f52; border-left:7px solid #c85a72; padding-left:12px; flex-shrink:0; line-height:1.3; }
+  .hstep { flex:1; display:flex; align-items:center; gap:8px; }
+  .hstep .no { background:#c85a72; color:#fff; width:34px; height:34px; border-radius:50%; font-size:19px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .hstep .tx { font-size:17.5px; font-weight:600; line-height:1.35; }
+  .arrow { color:#caa96a; font-size:22px; }
+  /* フッター */
+  .foot { margin-top:auto; display:flex; align-items:flex-start; gap:22px; background:#fff; border-radius:14px; padding:16px 24px; box-shadow:0 3px 10px rgba(180,120,140,.10); }
+  .qr { width:130px; height:130px; border:2px dashed #caa96a; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; font-size:14px; color:#a08a5f; text-align:center; flex-shrink:0; }
+  .foot .info .line-name { font-size:22px; font-weight:700; color:#06a04a; }
+  .foot .info .add { font-size:17px; margin-top:2px; }
+  .notes { margin-top:8px; font-size:13.5px; color:#8a8a8a; line-height:1.5; }
+</style>
+</head>
+<body>
+  <div class="sakura s1">❀</div><div class="sakura s2">❀</div><div class="sakura s3">❀</div><div class="sakura s4">❀</div>
+  <div class="page">
+    <div class="shop">京呉服平田・京呉服好一</div>
+    <h1>お友達<span class="accent">紹介</span>プログラム はじまりました</h1>
+    <div class="lead">― ご紹介いただくほど、おトクが広がる ―</div>
+
+    <div class="target">ご紹介いただけるのは　成約金額 <b>165,000円（税抜）以上</b> でご成約済みのお客様</div>
+
+    <div class="benefits">
+      <div class="bcard">
+        <div class="who">ご紹介されたお友達</div>
+        <div class="num">10,000<small>pt</small></div>
+        <div class="sub">ご成約でプレゼント</div>
+      </div>
+      <div class="bcard gold">
+        <div class="who">ご紹介者さま</div>
+        <div class="num">3〜10<small>%</small></div>
+        <div class="sub">お友達の成約金額をポイント還元</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <h2>紹介ステージ制　─ ご紹介人数で還元率アップ！</h2>
+      <div class="stages">
+        <div class="st bronze"><div class="name">ブロンズ</div><div class="cnt">〜3人</div><div class="rate">3<small>%</small></div></div>
+        <div class="st silver"><div class="name">シルバー</div><div class="cnt">4人〜</div><div class="rate">4<small>%</small></div></div>
+        <div class="st goldst"><div class="name">ゴールド</div><div class="cnt">7人〜</div><div class="rate">5<small>%</small></div></div>
+        <div class="st platinum"><div class="name">プラチナ</div><div class="cnt">11人〜</div><div class="rate">10<small>%</small></div></div>
+      </div>
+      <div class="sim">
+        <div class="cond">💡 シミュレーション：お友達が <b>250,000円（税抜）</b> でご成約された場合（1人あたりの獲得ポイント）</div>
+        <div class="chart">
+          <div class="bar"><div class="pt">7,500</div><div class="col c-bronze" style="height:51px"></div><div class="lbl">1人目</div></div>
+          <div class="bar"><div class="pt">7,500</div><div class="col c-bronze" style="height:51px"></div><div class="lbl">2人目</div></div>
+          <div class="bar"><div class="pt">7,500</div><div class="col c-bronze" style="height:51px"></div><div class="lbl">3人目</div></div>
+          <div class="bar"><div class="pt">10,000</div><div class="col c-silver" style="height:68px"></div><div class="lbl">4人目</div></div>
+          <div class="bar"><div class="pt">10,000</div><div class="col c-silver" style="height:68px"></div><div class="lbl">5人目</div></div>
+          <div class="bar"><div class="pt">10,000</div><div class="col c-silver" style="height:68px"></div><div class="lbl">6人目</div></div>
+          <div class="bar"><div class="pt">12,500</div><div class="col c-gold" style="height:85px"></div><div class="lbl">7人目</div></div>
+          <div class="bar"><div class="pt">12,500</div><div class="col c-gold" style="height:85px"></div><div class="lbl">8人目</div></div>
+          <div class="bar"><div class="pt">12,500</div><div class="col c-gold" style="height:85px"></div><div class="lbl">9人目</div></div>
+          <div class="bar"><div class="pt">12,500</div><div class="col c-gold" style="height:85px"></div><div class="lbl">10人目</div></div>
+          <div class="bar"><div class="pt">25,000</div><div class="col c-platinum" style="height:170px"></div><div class="lbl">11人目</div></div>
+        </div>
+        <div class="sim-total">11人ご紹介すると… 合計 <b>127,500pt</b> 獲得！</div>
+        <div class="sim-note">※獲得ポイントは、付与時点のステージ還元率 × お友達の成約金額（税抜・割引後）で計算されます</div>
+      </div>
+    </div>
+
+    <div class="usage">
+      <h2>貯まったポイントの使い方</h2>
+      <div class="rows">
+        <div class="urow"><div class="ic">🛍️</div><div class="t">店舗でのお買い物</div><div class="r">1pt＝1円</div><div class="s">商品のご購入にそのまま利用</div></div>
+        <div class="urow"><div class="ic">🎁</div><div class="t">ギフトカード交換</div><div class="r">1pt＝0.8円</div><div class="s">500円単位で店舗にてお渡し</div></div>
+        <div class="urow"><div class="ic">👪</div><div class="t">ご家族へ譲渡</div><div class="r">等価で移行</div><div class="s">ご家族間でのみ譲渡できます</div></div>
+      </div>
+    </div>
+
+    <div class="howto">
+      <div class="h2s">ご利用は<br>かんたん</div>
+      <div class="hstep"><div class="no">1</div><div class="tx">公式LINEメニュー<br>「友達紹介」をタップ</div></div>
+      <div class="arrow">▶</div>
+      <div class="hstep"><div class="no">2</div><div class="tx">紹介URL・QRを<br>お友達にシェア</div></div>
+      <div class="arrow">▶</div>
+      <div class="hstep"><div class="no">3</div><div class="tx">お友達がご成約で<br>おふたりに特典！</div></div>
+    </div>
+
+    <div class="foot">
+      <div class="qr">公式LINE<br>友だち追加<br>QRコード</div>
+      <div class="info">
+        <div class="line-name">＠京呉服平田／京呉服好一 公式LINE</div>
+        <div class="add">友だち追加のうえ、メニューの「友達紹介」からご利用ください</div>
+        <div class="notes">
+          ※特典ポイントは、ご成約の<b>1ヶ月後に自動付与</b>されます（クーリングオフ期間経過後）　※ご成約前に契約を解約された場合は付与対象外です<br>
+          ※すでに当店をご利用中のお客様のご登録は特典対象外です　※複数の方からご紹介を受けた場合、最初のご紹介のみが有効です<br>
+          ※ご自身の紹介URLからのご登録（自己紹介）は対象外です　※お友達のご登録から6ヶ月以内のご成約が特典の対象です<br>
+          ※ポイントの有効期限はありません　※ポイントの現金への交換はできません　※還元率・特典内容は予告なく変更になる場合があります　詳しくはスタッフまで
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
