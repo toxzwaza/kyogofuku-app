@@ -4,11 +4,10 @@ namespace App\Services\Referral;
 
 use App\Models\Event;
 use App\Models\Referral;
-use App\Models\ReferralCode;
 
 /**
  * 未連携ユーザーのLIFF画面に出す「紹介者の所属店舗で開催中の公開イベント一覧」。
- * 紹介者は ?ref= の紹介コード、または referrals.referred_line_user_id から解決する。
+ * 紹介者は referrals.referred_line_user_id から解決する。
  */
 class ReferralShopEventsService
 {
@@ -36,25 +35,6 @@ class ReferralShopEventsService
             ->first();
 
         return $this->forShopId($referral?->referrer?->shop_id);
-    }
-
-    /**
-     * 紹介コードから紹介者の店舗の開催中イベントを返す。
-     *
-     * @return array<int, array{title:string, thumbnail_url:?string, reserve_url:string}>
-     */
-    public function forReferralCode(string $code): array
-    {
-        if ($code === '') {
-            return [];
-        }
-
-        $referralCode = ReferralCode::query()
-            ->where('code', $code)
-            ->with('customer:id,shop_id')
-            ->first();
-
-        return $this->forShopId($referralCode?->customer?->shop_id);
     }
 
     /**

@@ -273,20 +273,6 @@ class ReferralLiffTest extends TestCase
             ->assertJson(['state' => 'not_linked', 'events' => []]);
     }
 
-    public function test_check_ready_includes_events_for_ref_code(): void
-    {
-        $this->fakeLine('Ufriendevents');
-        $referrer = $this->customer('紹介者');
-        $code = ReferralCode::create(['customer_id' => $referrer->id, 'code' => 'EVENT123']);
-        $this->ongoingEvent($this->shop, '開催中イベント');
-
-        $this->postJson(route('line.liff.referral.check'), ['id_token' => 'tok', 'ref' => $code->code])
-            ->assertOk()
-            ->assertJson(['state' => 'ready'])
-            ->assertJsonCount(1, 'events')
-            ->assertJsonPath('events.0.title', '開催中イベント');
-    }
-
     public function test_my_points_data_not_contracted_for_reservation_linked_user(): void
     {
         $this->fakeLine('Uresvpts');
