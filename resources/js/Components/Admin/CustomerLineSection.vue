@@ -437,11 +437,11 @@ function formatLineTime(iso) {
 
 const renamingLabel = ref(false);
 
-function renameSelectedContactLabel() {
-    if (!selectedContactId.value || renamingLabel.value) {
+function renameContactLabel(contact) {
+    if (!contact?.id || renamingLabel.value) {
         return;
     }
-    const current = selectedContact.value?.label?.trim() || '';
+    const current = contact.label?.trim() || '';
     const input = window.prompt('新しい表示名を入力してください（例：本人・母）', current);
     if (input === null) {
         return;
@@ -458,11 +458,11 @@ function renameSelectedContactLabel() {
         lineMode.value === 'reservation'
             ? route('admin.reservations.line.contact-label', {
                   reservation: props.lineApi.reservation_id,
-                  contact: selectedContactId.value,
+                  contact: contact.id,
               })
             : route('admin.customers.line.contact-label', {
                   customer: props.customer.id,
-                  contact: selectedContactId.value,
+                  contact: contact.id,
               });
     router.patch(
         url,
@@ -772,11 +772,29 @@ const canIssueLink = computed(() => {
                             ]"
                             @click="selectedContactId = c.id"
                         >
-                            <span
-                                class="block truncate"
-                                :title="`${c.label}（${c.line_user_id_masked}）`"
-                            >
-                                {{ c.label }}（{{ c.line_user_id_masked }}）
+                            <span class="flex items-center justify-center gap-1 min-w-0">
+                                <span
+                                    class="truncate"
+                                    :title="`${c.label}（${c.line_user_id_masked}）`"
+                                >
+                                    {{ c.label }}（{{ c.line_user_id_masked }}）
+                                </span>
+                                <!-- button 内に button は置けないため span[role=button] にする -->
+                                <span
+                                    v-if="selectedContactId === c.id"
+                                    role="button"
+                                    tabindex="0"
+                                    class="shrink-0 p-0.5 rounded text-indigo-400 hover:text-indigo-700 hover:bg-indigo-100 transition-colors"
+                                    :class="renamingLabel ? 'opacity-50 pointer-events-none' : ''"
+                                    title="表示名を変更"
+                                    aria-label="表示名を変更"
+                                    @click.stop="renameContactLabel(c)"
+                                    @keydown.enter.stop.prevent="renameContactLabel(c)"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </span>
                             </span>
                         </button>
                         <button
@@ -800,24 +818,14 @@ const canIssueLink = computed(() => {
                         <p class="text-xs text-gray-500 max-w-xl leading-relaxed">
                             誤って連携した場合など、解除するとトーク履歴も削除され、同じ LINE を別の紐づけに使えます。
                         </p>
-                        <div class="flex shrink-0 items-center gap-2">
-                            <button
-                                type="button"
-                                class="shrink-0 px-3 py-1.5 text-sm rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                :disabled="renamingLabel || unlinking || sending || loadingMessages"
-                                @click="renameSelectedContactLabel"
-                            >
-                                {{ renamingLabel ? '変更中…' : '表示名を変更' }}
-                            </button>
-                            <button
-                                type="button"
-                                class="shrink-0 px-3 py-1.5 text-sm rounded-md border border-red-200 text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                :disabled="unlinking || sending || loadingMessages"
-                                @click="unlinkSelectedContact"
-                            >
-                                {{ unlinking ? '解除中…' : 'LINE 連携を解除' }}
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            class="shrink-0 px-3 py-1.5 text-sm rounded-md border border-red-200 text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            :disabled="unlinking || sending || loadingMessages"
+                            @click="unlinkSelectedContact"
+                        >
+                            {{ unlinking ? '解除中…' : 'LINE 連携を解除' }}
+                        </button>
                     </div>
 
                     <div class="line-chat-panel rounded-xl overflow-hidden border border-gray-200/80 shadow-inner" :class="isExpanded ? 'mb-0' : 'mb-3'">
