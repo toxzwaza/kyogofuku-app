@@ -267,6 +267,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/reservations/{reservation}/line/contacts/{contact}/messages', [ReservationLineMessageController::class, 'contactMessages'])->name('reservations.line.contact-messages');
     Route::post('/reservations/{reservation}/line/contacts/{contact}/mark-read', [ReservationLineMessageController::class, 'markRead'])->name('reservations.line.mark-read');
     Route::post('/reservations/{reservation}/line/contacts/{contact}/send', [ReservationLineMessageController::class, 'send'])->name('reservations.line.send');
+    Route::patch('/reservations/{reservation}/line/contacts/{contact}/label', [ReservationLineMessageController::class, 'updateContactLabel'])->name('reservations.line.contact-label');
     Route::delete('/reservations/{reservation}/line/contacts/{contact}', [ReservationLineMessageController::class, 'destroyContact'])->name('reservations.line.contact-destroy');
     Route::patch('/reservations/{reservation}/line/responsible-shop', [ReservationLineMessageController::class, 'updateResponsibleShop'])->name('reservations.line.responsible-shop');
     Route::get('/reservations/{reservation}/edit', [AdminReservationController::class, 'edit'])->name('reservations.edit');
@@ -353,6 +354,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/customers/{customer}/line/contacts/{contact}/messages', [CustomerLineMessageController::class, 'contactMessages'])->name('customers.line.contact-messages');
     Route::post('/customers/{customer}/line/contacts/{contact}/mark-read', [CustomerLineMessageController::class, 'markRead'])->name('customers.line.mark-read');
     Route::post('/customers/{customer}/line/contacts/{contact}/send', [CustomerLineMessageController::class, 'send'])->name('customers.line.send');
+    Route::patch('/customers/{customer}/line/contacts/{contact}/label', [CustomerLineMessageController::class, 'updateContactLabel'])->name('customers.line.contact-label');
     Route::delete('/customers/{customer}/line/contacts/{contact}', [CustomerLineMessageController::class, 'destroyContact'])->name('customers.line.contact-destroy');
 
     Route::get('/mail-previews/reservation-confirmation', ReservationConfirmationMailPreviewController::class)

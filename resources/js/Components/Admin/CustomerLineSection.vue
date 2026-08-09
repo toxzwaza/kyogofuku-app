@@ -435,6 +435,47 @@ function formatLineTime(iso) {
     return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+const renamingLabel = ref(false);
+
+function renameSelectedContactLabel() {
+    if (!selectedContactId.value || renamingLabel.value) {
+        return;
+    }
+    const current = selectedContact.value?.label?.trim() || '';
+    const input = window.prompt('新しい表示名を入力してください（例：本人・母）', current);
+    if (input === null) {
+        return;
+    }
+    const label = input.trim().slice(0, 50);
+    if (!label || label === current) {
+        return;
+    }
+    if (lineMode.value !== 'reservation' && !props.customer?.id) {
+        return;
+    }
+    renamingLabel.value = true;
+    const url =
+        lineMode.value === 'reservation'
+            ? route('admin.reservations.line.contact-label', {
+                  reservation: props.lineApi.reservation_id,
+                  contact: selectedContactId.value,
+              })
+            : route('admin.customers.line.contact-label', {
+                  customer: props.customer.id,
+                  contact: selectedContactId.value,
+              });
+    router.patch(
+        url,
+        { label },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                renamingLabel.value = false;
+            },
+        },
+    );
+}
+
 function unlinkSelectedContact() {
     if (!selectedContactId.value || unlinking.value) {
         return;
@@ -759,14 +800,24 @@ const canIssueLink = computed(() => {
                         <p class="text-xs text-gray-500 max-w-xl leading-relaxed">
                             誤って連携した場合など、解除するとトーク履歴も削除され、同じ LINE を別の紐づけに使えます。
                         </p>
-                        <button
-                            type="button"
-                            class="shrink-0 px-3 py-1.5 text-sm rounded-md border border-red-200 text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            :disabled="unlinking || sending || loadingMessages"
-                            @click="unlinkSelectedContact"
-                        >
-                            {{ unlinking ? '解除中…' : 'LINE 連携を解除' }}
-                        </button>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <button
+                                type="button"
+                                class="shrink-0 px-3 py-1.5 text-sm rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                :disabled="renamingLabel || unlinking || sending || loadingMessages"
+                                @click="renameSelectedContactLabel"
+                            >
+                                {{ renamingLabel ? '変更中…' : '表示名を変更' }}
+                            </button>
+                            <button
+                                type="button"
+                                class="shrink-0 px-3 py-1.5 text-sm rounded-md border border-red-200 text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                :disabled="unlinking || sending || loadingMessages"
+                                @click="unlinkSelectedContact"
+                            >
+                                {{ unlinking ? '解除中…' : 'LINE 連携を解除' }}
+                            </button>
+                        </div>
                     </div>
 
                     <div class="line-chat-panel rounded-xl overflow-hidden border border-gray-200/80 shadow-inner" :class="isExpanded ? 'mb-0' : 'mb-3'">

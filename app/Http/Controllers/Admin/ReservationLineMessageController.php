@@ -265,6 +265,24 @@ class ReservationLineMessageController extends Controller
         return redirect()->back()->with('success', '担当店舗を更新しました。');
     }
 
+    public function updateContactLabel(Request $request, EventReservation $reservation, CustomerLineContact $contact)
+    {
+        $this->assertReservationOwnsContact($reservation, $contact);
+
+        $validated = $request->validate([
+            'label' => 'required|string|max:50',
+        ]);
+
+        $label = mb_substr(trim($validated['label']), 0, 50);
+        if ($label === '') {
+            return redirect()->back()->withErrors(['line' => '表示名を入力してください。']);
+        }
+
+        $contact->update(['label' => $label]);
+
+        return redirect()->back()->with('success', '表示名を変更しました。');
+    }
+
     public function destroyContact(Request $request, EventReservation $reservation, CustomerLineContact $contact)
     {
         $this->assertReservationOwnsContact($reservation, $contact);

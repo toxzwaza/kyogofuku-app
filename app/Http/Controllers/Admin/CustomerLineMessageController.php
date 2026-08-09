@@ -235,6 +235,24 @@ class CustomerLineMessageController extends Controller
         ]);
     }
 
+    public function updateContactLabel(Request $request, Customer $customer, CustomerLineContact $contact)
+    {
+        $this->assertContactBelongsToCustomer($customer, $contact);
+
+        $validated = $request->validate([
+            'label' => 'required|string|max:50',
+        ]);
+
+        $label = mb_substr(trim($validated['label']), 0, 50);
+        if ($label === '') {
+            return redirect()->back()->withErrors(['line' => '表示名を入力してください。']);
+        }
+
+        $contact->update(['label' => $label]);
+
+        return redirect()->back()->with('success', '表示名を変更しました。');
+    }
+
     public function destroyContact(Request $request, Customer $customer, CustomerLineContact $contact)
     {
         $this->assertContactBelongsToCustomer($customer, $contact);
