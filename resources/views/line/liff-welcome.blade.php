@@ -25,10 +25,6 @@
             <input class="input" id="lookup_key" type="tel" inputmode="tel" maxlength="20" placeholder="例) 090-1234-5678" autocomplete="tel">
             <p class="help">ご予約／ご来店時にご登録のお電話番号（ハイフン有無どちらでも可）。</p>
 
-            <label class="fld" for="kana">お名前カナ<span class="opt">任意</span></label>
-            <input class="input" id="kana" type="text" maxlength="50" placeholder="例) ヒラタ ハナコ" autocomplete="off">
-            <p class="help">複数のご登録がある場合の照合に使います。半角・全角・スペースは問いません。</p>
-
             <button type="button" class="btn btn-line" id="btn" style="margin-top:18px">連携する</button>
             <p id="status" class="hint" aria-live="polite"></p>
         </div>
@@ -48,7 +44,6 @@
         const statusEl = document.getElementById('status');
         const btn = document.getElementById('btn');
         const lookupInput = document.getElementById('lookup_key');
-        const kanaInput = document.getElementById('kana');
 
         function setStatus(text, className) {
             statusEl.textContent = text || '';
@@ -68,8 +63,6 @@
                 setStatus('電話番号を入力してください。', 'err');
                 return;
             }
-            const kana = (kanaInput.value || '').trim();
-
             const res = await fetch(matchUrl, {
                 method: 'POST',
                 headers: {
@@ -78,7 +71,7 @@
                     'X-Requested-With': 'XMLHttpRequest',
                 },
                 credentials: 'same-origin',
-                body: JSON.stringify({ id_token: idToken, lookup_key: lookupKey, kana: kana }),
+                body: JSON.stringify({ id_token: idToken, lookup_key: lookupKey }),
             });
             const raw = await res.text();
             var data = {};
