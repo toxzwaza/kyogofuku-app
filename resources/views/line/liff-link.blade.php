@@ -157,8 +157,13 @@
                         btn.disabled = false;
                         sessionStorage.setItem('liff_link_token', linkToken);
                         sessionStorage.setItem(PENDING_KEY, '1');
+                        /** 「LINEアプリでログイン」経路ではコールバックが別タブで開かれ sessionStorage が引き継がれないため、トークン等は redirectUri のクエリでも運ぶ */
+                        var resumeParams = '?lt=' + encodeURIComponent(linkToken);
+                        if (linkFlowMode !== 'reservation' && labelInput) {
+                            resumeParams += '&lb=' + encodeURIComponent((labelInput.value || '').trim());
+                        }
                         setStatus('LINE にログインします。完了後、自動で連携処理に進みます。', 'hint');
-                        liff.login({ redirectUri: resumeUrl });
+                        liff.login({ redirectUri: resumeUrl + resumeParams });
                         return;
                     }
 
@@ -183,6 +188,11 @@
                         return;
                     }
                     sessionStorage.removeItem(PENDING_KEY);
+                    var savedLabel = sessionStorage.getItem('liff_link_label');
+                    sessionStorage.removeItem('liff_link_label');
+                    if (savedLabel && linkFlowMode !== 'reservation' && labelInput) {
+                        labelInput.value = savedLabel;
+                    }
                     btn.disabled = true;
                     setStatus('ログインを確認しました。連携を完了しています…', 'hint');
                     await postComplete();
