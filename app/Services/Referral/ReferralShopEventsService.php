@@ -59,7 +59,8 @@ class ReferralShopEventsService
 
     /**
      * 店舗IDから開催中（is_public かつ 開催期間内。start/end が NULL の側は制限なし）の
-     * イベントを開催日順に返す。
+     * イベントを、開催終了期日が近い順（end_at なしは最後）に返す。
+     * 問い合わせフォーム（form_type=contact）は予約導線がないため除外する。
      *
      * @return array<int, array{title:string, thumbnail_url:?string, reserve_url:string}>
      */
@@ -73,10 +74,12 @@ class ReferralShopEventsService
 
         return Event::query()
             ->where('is_public', true)
+            ->where('form_type', '!=', 'contact')
             ->whereHas('shops', fn ($q) => $q->where('shops.id', $shopId))
             ->where(fn ($q) => $q->whereNull('start_at')->orWhere('start_at', '<=', $today))
             ->where(fn ($q) => $q->whereNull('end_at')->orWhere('end_at', '>=', $today))
-            ->orderBy('start_at')
+            ->orderByRaw('end_at IS NULL')
+            ->orderBy('end_at')
             ->get()
             ->map(fn (Event $e) => [
                 'title' => (string) $e->title,

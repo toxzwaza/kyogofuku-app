@@ -229,11 +229,12 @@ class ReferralLiffTest extends TestCase
         $this->referredButNotLinked('Urefevents', $referrer);
 
         $target = $this->ongoingEvent($this->shop, '開催中イベント');
-        // 除外されるもの：他店舗・非公開・終了済み
+        // 除外されるもの：他店舗・非公開・終了済み・問い合わせフォーム
         $otherShop = Shop::create(['name' => '他店', 'is_active' => true]);
         $this->ongoingEvent($otherShop, '他店舗イベント');
         $this->ongoingEvent($this->shop, '非公開イベント', ['is_public' => false]);
         $this->ongoingEvent($this->shop, '終了イベント', ['end_at' => today()->subDay()]);
+        $this->ongoingEvent($this->shop, '問い合わせフォーム', ['form_type' => 'contact']);
 
         $res = $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
             ->assertStatus(403)
@@ -243,6 +244,23 @@ class ReferralLiffTest extends TestCase
 
         $this->assertStringContainsString('/event/'.$target->slug.'/reserve', (string) $res->json('events.0.reserve_url'));
         $this->assertNotEmpty($res->json('events.0.thumbnail_url'));
+    }
+
+    public function test_not_linked_events_ordered_by_end_date_asc_nulls_last(): void
+    {
+        $this->fakeLine('Ureforder');
+        $referrer = $this->customer('紹介者');
+        $this->referredButNotLinked('Ureforder', $referrer);
+
+        $this->ongoingEvent($this->shop, '期日なし', ['end_at' => null]);
+        $this->ongoingEvent($this->shop, '終了が遠い', ['end_at' => today()->addDays(30)]);
+        $this->ongoingEvent($this->shop, '終了間近', ['end_at' => today()->addDay()]);
+
+        $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJsonPath('events.0.title', '終了間近')
+            ->assertJsonPath('events.1.title', '終了が遠い')
+            ->assertJsonPath('events.2.title', '期日なし');
     }
 
     public function test_my_points_not_linked_events_empty_without_referral(): void
