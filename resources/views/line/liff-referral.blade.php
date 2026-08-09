@@ -104,6 +104,12 @@
     if (r.status === 401) { showMsg('認証に失敗しました。', 'err'); return; }
     // 顧客登録・成約の有無に関わらず、誰から紹介されたかを常に表示
     renderReferrerBlock(r.data.referrer);
+    // イベント予約経由でLINE連携済みだが顧客（成約）未紐付けの場合
+    if (r.data.state === 'not_contracted') {
+      el('subline').textContent = 'ご成約後にご利用いただけます';
+      showMsg('この機能をご利用いただくには成約が必要です。', 'warn');
+      return;
+    }
     if (r.status === 403 || r.data.state === 'not_linked') { renderNotLinked(); return; }
     if (r.data.state === 'not_eligible') {
       el('subline').textContent = 'ご成約後にご利用いただけます';

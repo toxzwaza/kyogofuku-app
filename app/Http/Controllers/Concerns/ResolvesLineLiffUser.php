@@ -44,4 +44,19 @@ trait ResolvesLineLiffUser
 
         return $contact?->customer;
     }
+
+    /**
+     * line_user_id の LINE 連携が存在するか（イベント予約経由の連携＝customer_id なしも含む）。
+     * 「顧客未紐付けだが連携済み」を not_linked と区別するために使う。
+     */
+    protected function hasLineContact(?string $lineUserId): bool
+    {
+        if (!$lineUserId) {
+            return false;
+        }
+
+        return CustomerLineContact::query()
+            ->where('line_user_id', $lineUserId)
+            ->exists();
+    }
 }

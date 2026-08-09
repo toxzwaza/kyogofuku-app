@@ -5,6 +5,8 @@ namespace Tests\Feature\Referral;
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\CustomerLineContact;
+use App\Models\Event;
+use App\Models\EventReservation;
 use App\Models\Plan;
 use App\Models\Referral;
 use App\Models\ReferralCode;
@@ -69,6 +71,29 @@ class ReferralLiffTest extends TestCase
     {
         CustomerLineContact::create([
             'customer_id' => $c->id,
+            'shop_id' => $this->shop->id,
+            'line_user_id' => $lineUserId,
+            'label' => '本人',
+        ]);
+    }
+
+    /** イベント予約経由の連携（customer_id なし・event_reservation_id あり）を作る */
+    private function linkReservation(string $lineUserId): void
+    {
+        $event = Event::create([
+            'slug' => 't-'.uniqid('', true),
+            'title' => 'E',
+            'form_type' => 'reservation',
+        ]);
+        $reservation = EventReservation::create([
+            'event_id' => $event->id,
+            'name' => '予約者',
+            'email' => 'r@example.com',
+            'phone' => '000',
+        ]);
+        CustomerLineContact::create([
+            'customer_id' => null,
+            'event_reservation_id' => $reservation->id,
             'shop_id' => $this->shop->id,
             'line_user_id' => $lineUserId,
             'label' => '本人',
@@ -168,6 +193,36 @@ class ReferralLiffTest extends TestCase
         $this->postJson(route('line.liff.referral.me'), ['id_token' => 'tok'])
             ->assertStatus(403)
             ->assertJson(['state' => 'not_linked']);
+    }
+
+    public function test_my_points_data_not_contracted_for_reservation_linked_user(): void
+    {
+        $this->fakeLine('Uresvpts');
+        $this->linkReservation('Uresvpts');
+
+        $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJson(['state' => 'not_contracted']);
+    }
+
+    public function test_mypage_data_not_contracted_for_reservation_linked_user(): void
+    {
+        $this->fakeLine('Uresvmyp');
+        $this->linkReservation('Uresvmyp');
+
+        $this->postJson(route('line.liff.mypage.data'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJson(['state' => 'not_contracted']);
+    }
+
+    public function test_me_not_contracted_for_reservation_linked_user(): void
+    {
+        $this->fakeLine('Uresvme');
+        $this->linkReservation('Uresvme');
+
+        $this->postJson(route('line.liff.referral.me'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJson(['state' => 'not_contracted']);
     }
 
     public function test_unlink_removes_contact(): void

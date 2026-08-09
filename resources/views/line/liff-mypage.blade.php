@@ -58,6 +58,16 @@
     if (b) b.onclick = function () { location.href = location.pathname + '?screen=link'; };
   }
 
+  // イベント予約経由でLINE連携済みだが顧客（成約）未紐付けの場合
+  function renderNotContracted() {
+    document.getElementById('body').innerHTML =
+      '<div class="card"><div class="msg warn">この機能をご利用いただくには成約が必要です。</div></div>';
+  }
+
+  function renderForbidden(data) {
+    return (data && data.state === 'not_contracted') ? renderNotContracted() : renderNotLinked();
+  }
+
   function renderStage(d) {
     const r = d.referrals_made || {};
     const next = d.next_stage;
@@ -170,12 +180,12 @@
 
       if (SCREEN === 'mypage') {
         const r = await post(ROUTES.mypage, { id_token: idToken });
-        if (r.status === 403) return renderNotLinked();
+        if (r.status === 403) return renderForbidden(r.data);
         body.innerHTML = renderMypage(r.data);
         wireUnlink(idToken);
       } else {
         const r = await post(ROUTES.points, { id_token: idToken });
-        if (r.status === 403) return renderNotLinked();
+        if (r.status === 403) return renderForbidden(r.data);
         body.innerHTML = (SCREEN === 'my-stage') ? renderStage(r.data) : renderPoints(r.data);
       }
     } catch (e) {

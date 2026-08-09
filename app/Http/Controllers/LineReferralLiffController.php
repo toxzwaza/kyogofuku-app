@@ -44,6 +44,11 @@ class LineReferralLiffController extends Controller
 
         $customer = $this->resolveCustomerByLineUserId($lineUserId);
         if (!$customer) {
+            // イベント予約経由の連携（customer_id なし）は連携済みだが顧客未紐付け → 成約案内を出す
+            if ($this->hasLineContact($lineUserId)) {
+                return response()->json(['state' => 'not_contracted', 'referrer' => $referrer], 403);
+            }
+
             return response()->json(['state' => 'not_linked', 'referrer' => $referrer], 403);
         }
 
