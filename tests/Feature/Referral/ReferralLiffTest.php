@@ -77,6 +77,33 @@ class ReferralLiffTest extends TestCase
         ]);
     }
 
+    /** 指定店舗で開催中の公開イベントを作る */
+    private function ongoingEvent(Shop $shop, string $title = 'イベント', array $attrs = []): Event
+    {
+        $event = Event::create(array_merge([
+            'slug' => 'ev-'.uniqid('', true),
+            'title' => $title,
+            'form_type' => 'reservation',
+            'is_public' => true,
+            'start_at' => today()->subDay(),
+            'end_at' => today()->addDay(),
+            'thumbnail_path' => 'events/thumb.png',
+        ], $attrs));
+        $event->shops()->attach($shop->id);
+
+        return $event;
+    }
+
+    /** 未連携の被紹介者（referrals レコードのみ）を作る */
+    private function referredButNotLinked(string $lineUserId, Customer $referrer): void
+    {
+        Referral::create([
+            'referrer_customer_id' => $referrer->id,
+            'referred_line_user_id' => $lineUserId,
+            'status' => Referral::STATUS_LINKED,
+        ]);
+    }
+
     /** イベント予約経由の連携（customer_id なし・event_reservation_id あり）を作る */
     private function linkReservation(string $lineUserId): void
     {
@@ -193,6 +220,71 @@ class ReferralLiffTest extends TestCase
         $this->postJson(route('line.liff.referral.me'), ['id_token' => 'tok'])
             ->assertStatus(403)
             ->assertJson(['state' => 'not_linked']);
+    }
+
+    public function test_my_points_not_linked_includes_referrer_shop_ongoing_events(): void
+    {
+        $this->fakeLine('Urefevents');
+        $referrer = $this->customer('紹介者');
+        $this->referredButNotLinked('Urefevents', $referrer);
+
+        $target = $this->ongoingEvent($this->shop, '開催中イベント');
+        // 除外されるもの：他店舗・非公開・終了済み・問い合わせフォーム
+        $otherShop = Shop::create(['name' => '他店', 'is_active' => true]);
+        $this->ongoingEvent($otherShop, '他店舗イベント');
+        $this->ongoingEvent($this->shop, '非公開イベント', ['is_public' => false]);
+        $this->ongoingEvent($this->shop, '終了イベント', ['end_at' => today()->subDay()]);
+        $this->ongoingEvent($this->shop, '問い合わせフォーム', ['form_type' => 'contact']);
+
+        $res = $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJson(['state' => 'not_linked'])
+            ->assertJsonCount(1, 'events')
+            ->assertJsonPath('events.0.title', '開催中イベント');
+
+        $this->assertStringContainsString('/event/'.$target->slug.'/reserve', (string) $res->json('events.0.reserve_url'));
+        $this->assertNotEmpty($res->json('events.0.thumbnail_url'));
+    }
+
+    public function test_not_linked_events_ordered_by_end_date_asc_nulls_last(): void
+    {
+        $this->fakeLine('Ureforder');
+        $referrer = $this->customer('紹介者');
+        $this->referredButNotLinked('Ureforder', $referrer);
+
+        $this->ongoingEvent($this->shop, '期日なし', ['end_at' => null]);
+        $this->ongoingEvent($this->shop, '終了が遠い', ['end_at' => today()->addDays(30)]);
+        $this->ongoingEvent($this->shop, '終了間近', ['end_at' => today()->addDay()]);
+
+        $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJsonPath('events.0.title', '終了間近')
+            ->assertJsonPath('events.1.title', '終了が遠い')
+            ->assertJsonPath('events.2.title', '期日なし');
+    }
+
+    public function test_my_points_not_linked_events_empty_without_referral(): void
+    {
+        $this->fakeLine('Unoreferral');
+        $this->ongoingEvent($this->shop, '開催中イベント');
+
+        $this->postJson(route('line.liff.my-points.data'), ['id_token' => 'tok'])
+            ->assertStatus(403)
+            ->assertJson(['state' => 'not_linked', 'events' => []]);
+    }
+
+    public function test_check_ready_includes_events_for_ref_code(): void
+    {
+        $this->fakeLine('Ufriendevents');
+        $referrer = $this->customer('紹介者');
+        $code = ReferralCode::create(['customer_id' => $referrer->id, 'code' => 'EVENT123']);
+        $this->ongoingEvent($this->shop, '開催中イベント');
+
+        $this->postJson(route('line.liff.referral.check'), ['id_token' => 'tok', 'ref' => $code->code])
+            ->assertOk()
+            ->assertJson(['state' => 'ready'])
+            ->assertJsonCount(1, 'events')
+            ->assertJsonPath('events.0.title', '開催中イベント');
     }
 
     public function test_my_points_data_not_contracted_for_reservation_linked_user(): void
