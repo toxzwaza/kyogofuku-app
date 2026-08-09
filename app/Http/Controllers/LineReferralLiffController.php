@@ -107,7 +107,7 @@ class LineReferralLiffController extends Controller
     /**
      * 状態確認：ref と LINE紐付け状況から、紐付け可能かを返す。
      */
-    public function check(Request $request, ReferralShopEventsService $shopEvents)
+    public function check(Request $request)
     {
         $lineUserId = $this->resolveLineUserId($request);
         if (!$lineUserId) {
@@ -119,11 +119,7 @@ class LineReferralLiffController extends Controller
             return response()->json(['state' => 'no_ref']);
         }
 
-        return response()->json([
-            'state' => 'ready',
-            // 紹介されたてのユーザー向け：紹介者の店舗で開催中のイベント一覧
-            'events' => $shopEvents->forReferralCode($ref),
-        ]);
+        return response()->json(['state' => 'ready']);
     }
 
     /**

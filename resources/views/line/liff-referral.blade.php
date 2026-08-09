@@ -144,9 +144,6 @@
     const check = await post(ROUTES.check, { id_token: idToken, ref: REF });
     if (check.status === 401) { showMsg('認証に失敗しました。', 'err'); return; }
 
-    // 紹介者の店舗で開催中のイベントを登録ブロックの上に表示
-    renderEventsBlock(check.data.events);
-
     showMsg('紹介から京呉服平田の公式LINEへようこそ。下のボタンで登録を完了してください。', 'ok');
     // 初期表示は「紹介で登録する」のみ。友だち追加ボタンは登録成立後に表示する。
     el('actions').innerHTML = '<button class="btn btn-primary" id="linkBtn">紹介で登録する</button>';
