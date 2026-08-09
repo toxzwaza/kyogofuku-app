@@ -35,8 +35,14 @@ class LineMyPageLiffController extends Controller
      */
     public function points(Request $request, ReferralSummaryService $summary)
     {
-        $customer = $this->resolveCustomerByLineUserId($this->resolveLineUserId($request));
+        $lineUserId = $this->resolveLineUserId($request);
+        $customer = $this->resolveCustomerByLineUserId($lineUserId);
         if (!$customer) {
+            // イベント予約経由の連携（customer_id なし）は連携済みだが顧客未紐付け → 成約案内を出す
+            if ($this->hasLineContact($lineUserId)) {
+                return response()->json(['state' => 'not_contracted'], 403);
+            }
+
             return response()->json(['state' => 'not_linked'], 403);
         }
 
@@ -64,8 +70,13 @@ class LineMyPageLiffController extends Controller
      */
     public function mypage(Request $request)
     {
-        $customer = $this->resolveCustomerByLineUserId($this->resolveLineUserId($request));
+        $lineUserId = $this->resolveLineUserId($request);
+        $customer = $this->resolveCustomerByLineUserId($lineUserId);
         if (!$customer) {
+            if ($this->hasLineContact($lineUserId)) {
+                return response()->json(['state' => 'not_contracted'], 403);
+            }
+
             return response()->json(['state' => 'not_linked'], 403);
         }
 
