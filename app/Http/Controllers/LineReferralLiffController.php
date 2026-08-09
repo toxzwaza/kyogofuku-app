@@ -8,6 +8,7 @@ use App\Models\ReferralCode;
 use App\Models\ReferralSetting;
 use App\Services\Line\LineMessagingService;
 use App\Services\Referral\ReferralLinkingService;
+use App\Services\Referral\ReferralShopEventsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -32,7 +33,7 @@ class LineReferralLiffController extends Controller
      * 紹介できるのは成約済（status='確定'のcontractがある）顧客のみ。既にコードがあれば有資格。
      * 有資格ならコードを発行（firstOrCreate）して返す。
      */
-    public function me(Request $request)
+    public function me(Request $request, ReferralShopEventsService $shopEvents)
     {
         $lineUserId = $this->resolveLineUserId($request);
         if (!$lineUserId) {
@@ -49,7 +50,11 @@ class LineReferralLiffController extends Controller
                 return response()->json(['state' => 'not_contracted', 'referrer' => $referrer], 403);
             }
 
-            return response()->json(['state' => 'not_linked', 'referrer' => $referrer], 403);
+            return response()->json([
+                'state' => 'not_linked',
+                'referrer' => $referrer,
+                'events' => $shopEvents->forReferredLineUserId($lineUserId),
+            ], 403);
         }
 
         $hasCode = $customer->referralCode()->exists();
@@ -102,7 +107,7 @@ class LineReferralLiffController extends Controller
     /**
      * 状態確認：ref と LINE紐付け状況から、紐付け可能かを返す。
      */
-    public function check(Request $request)
+    public function check(Request $request, ReferralShopEventsService $shopEvents)
     {
         $lineUserId = $this->resolveLineUserId($request);
         if (!$lineUserId) {
@@ -114,7 +119,11 @@ class LineReferralLiffController extends Controller
             return response()->json(['state' => 'no_ref']);
         }
 
-        return response()->json(['state' => 'ready']);
+        return response()->json([
+            'state' => 'ready',
+            // 紹介されたてのユーザー向け：紹介者の店舗で開催中のイベント一覧
+            'events' => $shopEvents->forReferralCode($ref),
+        ]);
     }
 
     /**

@@ -127,6 +127,12 @@
   #status.ok{ color:var(--accent-deep); font-weight:700; }
   #status.hint{ color:var(--ink-soft); }
 
+  /* 開催中イベント一覧（未連携ユーザー向け・サムネイル縦並び） */
+  .event-list{ display:flex; flex-direction:column; gap:12px; }
+  .event-card{ display:block; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; text-decoration:none; }
+  .event-card img{ width:100%; height:auto; display:block; }
+  .event-card .event-card-title{ padding:20px 14px; text-align:center; font-weight:700; font-size:14px; color:var(--ink); font-family:var(--mincho); letter-spacing:1px; }
+
   /* 還元率バッジ */
   .rate{ display:inline-flex; align-items:baseline; gap:3px; margin-top:8px; padding:4px 12px; border-radius:20px;
     background:var(--accent-soft); color:var(--accent-deep); font-weight:700; }

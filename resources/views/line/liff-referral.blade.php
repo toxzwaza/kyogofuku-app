@@ -16,6 +16,7 @@
       <div class="rule"></div>
       <div class="sub" id="subline">大切な方をご紹介ください</div>
     </div>
+    <div id="events-block"></div>
     <div class="card">
       <div id="message"></div>
       <div id="actions"></div>
@@ -56,6 +57,20 @@
 
   function renderNotLinked() {
     showMsg('ご利用には顧客登録とLINE連携が必要です。店舗スタッフへお問い合わせください。', 'err');
+  }
+
+  // 紹介者の店舗で開催中のイベント（サムネイル縦並び。タップで予約ページへ）
+  function renderEventsBlock(events) {
+    if (!events || !events.length) { el('events-block').innerHTML = ''; return; }
+    const items = events.map((e) => {
+      const inner = e.thumbnail_url
+        ? '<img src="' + esc(e.thumbnail_url) + '" alt="' + esc(e.title) + '" loading="lazy">'
+        : '<div class="event-card-title">' + esc(e.title) + '</div>';
+      return '<a class="event-card" href="' + esc(e.reserve_url) + '">' + inner + '</a>';
+    }).join('');
+    el('events-block').innerHTML =
+      '<div class="card"><h2>開催中のイベント</h2><div class="event-list">' + items + '</div>'
+      + '<p class="muted center" style="margin-top:10px">画像をタップすると予約ページへ移動します。</p></div>';
   }
 
   // 紹介者ブロック：誰から紹介を受けたかを常に表示（紹介者がいなければ空欄）
@@ -110,7 +125,11 @@
       showMsg('この機能をご利用いただくには成約が必要です。', 'warn');
       return;
     }
-    if (r.status === 403 || r.data.state === 'not_linked') { renderNotLinked(); return; }
+    if (r.status === 403 || r.data.state === 'not_linked') {
+      renderEventsBlock(r.data.events);
+      renderNotLinked();
+      return;
+    }
     if (r.data.state === 'not_eligible') {
       el('subline').textContent = 'ご成約後にご利用いただけます';
       showMsg('ご成約後に、紹介リンクをご利用いただけます。', 'warn');
@@ -124,6 +143,9 @@
     el('subline').textContent = 'ご紹介ありがとうございます';
     const check = await post(ROUTES.check, { id_token: idToken, ref: REF });
     if (check.status === 401) { showMsg('認証に失敗しました。', 'err'); return; }
+
+    // 紹介者の店舗で開催中のイベントを登録ブロックの上に表示
+    renderEventsBlock(check.data.events);
 
     showMsg('紹介から京呉服平田の公式LINEへようこそ。下のボタンで登録を完了してください。', 'ok');
     // 初期表示は「紹介で登録する」のみ。友だち追加ボタンは登録成立後に表示する。

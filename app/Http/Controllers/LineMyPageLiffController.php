@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesLineLiffUser;
 use App\Models\CustomerLineContact;
+use App\Services\Referral\ReferralShopEventsService;
 use App\Services\Referral\ReferralSummaryService;
 use Illuminate\Http\Request;
 
@@ -33,7 +34,7 @@ class LineMyPageLiffController extends Controller
     /**
      * マイステージ＋マイポイントのデータ（残高・ステージ・履歴・ギフト）
      */
-    public function points(Request $request, ReferralSummaryService $summary)
+    public function points(Request $request, ReferralSummaryService $summary, ReferralShopEventsService $shopEvents)
     {
         $lineUserId = $this->resolveLineUserId($request);
         $customer = $this->resolveCustomerByLineUserId($lineUserId);
@@ -43,7 +44,10 @@ class LineMyPageLiffController extends Controller
                 return response()->json(['state' => 'not_contracted'], 403);
             }
 
-            return response()->json(['state' => 'not_linked'], 403);
+            return response()->json([
+                'state' => 'not_linked',
+                'events' => $shopEvents->forReferredLineUserId($lineUserId),
+            ], 403);
         }
 
         $data = $summary->forCustomer($customer);
@@ -68,7 +72,7 @@ class LineMyPageLiffController extends Controller
     /**
      * 顧客詳細（マイページ）：顧客情報・成約・前撮り日（表示専用）
      */
-    public function mypage(Request $request)
+    public function mypage(Request $request, ReferralShopEventsService $shopEvents)
     {
         $lineUserId = $this->resolveLineUserId($request);
         $customer = $this->resolveCustomerByLineUserId($lineUserId);
@@ -77,7 +81,10 @@ class LineMyPageLiffController extends Controller
                 return response()->json(['state' => 'not_contracted'], 403);
             }
 
-            return response()->json(['state' => 'not_linked'], 403);
+            return response()->json([
+                'state' => 'not_linked',
+                'events' => $shopEvents->forReferredLineUserId($lineUserId),
+            ], 403);
         }
 
         $customer->load([

@@ -49,9 +49,23 @@
     return { status: res.status, data: await res.json().catch(() => ({})) };
   }
 
-  function renderNotLinked() {
+  // 紹介者の店舗で開催中のイベント（サムネイル縦並び。タップで予約ページへ）
+  function renderEventListHtml(events) {
+    if (!events || !events.length) return '';
+    var items = events.map(function (e) {
+      var inner = e.thumbnail_url
+        ? '<img src="' + esc(e.thumbnail_url) + '" alt="' + esc(e.title) + '" loading="lazy">'
+        : '<div class="event-card-title">' + esc(e.title) + '</div>';
+      return '<a class="event-card" href="' + esc(e.reserve_url) + '">' + inner + '</a>';
+    }).join('');
+    return '<div class="card"><h2>開催中のイベント</h2><div class="event-list">' + items + '</div>'
+      + '<p class="muted center" style="margin-top:10px">画像をタップすると予約ページへ移動します。</p></div>';
+  }
+
+  function renderNotLinked(events) {
     document.getElementById('body').innerHTML =
-      '<div class="card"><div class="msg warn">ご利用にはLINE連携が必要です。下のボタンから、ご予約・お客様情報と連携してください。</div>'
+      renderEventListHtml(events)
+      + '<div class="card"><div class="msg warn">ご利用にはLINE連携が必要です。下のボタンから、ご予約・お客様情報と連携してください。</div>'
       + '<button class="btn btn-line" id="linkBtn">LINE連携する</button>'
       + '<p class="muted center" style="margin-top:12px">連携がお済みでない場合のみ表示されます。</p></div>';
     var b = document.getElementById('linkBtn');
@@ -65,7 +79,7 @@
   }
 
   function renderForbidden(data) {
-    return (data && data.state === 'not_contracted') ? renderNotContracted() : renderNotLinked();
+    return (data && data.state === 'not_contracted') ? renderNotContracted() : renderNotLinked(data && data.events);
   }
 
   function renderStage(d) {
