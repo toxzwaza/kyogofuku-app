@@ -27,7 +27,9 @@
             }
 
             (async function () {
-                var token = sessionStorage.getItem('liff_link_token');
+                /** 「LINEアプリでログイン」経路では別タブで開かれ sessionStorage が空になるため、redirectUri のクエリ（?lt=）を優先して読む */
+                var qs = new URLSearchParams(location.search);
+                var token = qs.get('lt') || sessionStorage.getItem('liff_link_token');
                 if (!token) {
                     fail('セッションが見つかりません。最初の連携リンクから開き直してください。');
                     return;
@@ -44,6 +46,12 @@
                     // この URL に付いた ?code= &state= を LIFF が処理し、ログイン状態になる
                     await liff.init({ liffId: liffId });
                     sessionStorage.removeItem('liff_link_token');
+                    // ここから先は同一タブで遷移するため、自動連携フラグと表示名を sessionStorage で引き継げる
+                    sessionStorage.setItem('liff_pending_line_link', '1');
+                    var label = qs.get('lb');
+                    if (label) {
+                        sessionStorage.setItem('liff_link_label', label);
+                    }
                     location.replace(linkBase + '/' + encodeURIComponent(token));
                 } catch (e) {
                     fail('初期化に失敗しました: ' + (e && e.message ? e.message : String(e)));
