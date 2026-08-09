@@ -435,6 +435,47 @@ function formatLineTime(iso) {
     return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+const renamingLabel = ref(false);
+
+function renameContactLabel(contact) {
+    if (!contact?.id || renamingLabel.value) {
+        return;
+    }
+    const current = contact.label?.trim() || '';
+    const input = window.prompt('新しい表示名を入力してください（例：本人・母）', current);
+    if (input === null) {
+        return;
+    }
+    const label = input.trim().slice(0, 50);
+    if (!label || label === current) {
+        return;
+    }
+    if (lineMode.value !== 'reservation' && !props.customer?.id) {
+        return;
+    }
+    renamingLabel.value = true;
+    const url =
+        lineMode.value === 'reservation'
+            ? route('admin.reservations.line.contact-label', {
+                  reservation: props.lineApi.reservation_id,
+                  contact: contact.id,
+              })
+            : route('admin.customers.line.contact-label', {
+                  customer: props.customer.id,
+                  contact: contact.id,
+              });
+    router.patch(
+        url,
+        { label },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                renamingLabel.value = false;
+            },
+        },
+    );
+}
+
 function unlinkSelectedContact() {
     if (!selectedContactId.value || unlinking.value) {
         return;
@@ -731,11 +772,29 @@ const canIssueLink = computed(() => {
                             ]"
                             @click="selectedContactId = c.id"
                         >
-                            <span
-                                class="block truncate"
-                                :title="`${c.label}（${c.line_user_id_masked}）`"
-                            >
-                                {{ c.label }}（{{ c.line_user_id_masked }}）
+                            <span class="flex items-center justify-center gap-1 min-w-0">
+                                <span
+                                    class="truncate"
+                                    :title="`${c.label}（${c.line_user_id_masked}）`"
+                                >
+                                    {{ c.label }}（{{ c.line_user_id_masked }}）
+                                </span>
+                                <!-- button 内に button は置けないため span[role=button] にする -->
+                                <span
+                                    v-if="selectedContactId === c.id"
+                                    role="button"
+                                    tabindex="0"
+                                    class="shrink-0 p-0.5 rounded text-indigo-400 hover:text-indigo-700 hover:bg-indigo-100 transition-colors"
+                                    :class="renamingLabel ? 'opacity-50 pointer-events-none' : ''"
+                                    title="表示名を変更"
+                                    aria-label="表示名を変更"
+                                    @click.stop="renameContactLabel(c)"
+                                    @keydown.enter.stop.prevent="renameContactLabel(c)"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </span>
                             </span>
                         </button>
                         <button
