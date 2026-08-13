@@ -4,6 +4,31 @@
         <UiPageHeader title="ポイント付与一覧" description="友達紹介（紹介者報酬・被紹介者特典）と、ご成約（平田ポイント）の付与状況を確認できます。" />
 
         <UiCard variant="default" padding="md" class="mb-4">
+            <form class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4" @submit.prevent="applySearch">
+                <div>
+                    <label class="block text-xs font-medium text-brand-text mb-1">顧客名</label>
+                    <input v-model="searchForm.name" type="text" placeholder="例）山田" class="w-full rounded-soft border-brand-border text-sm focus:border-brand-primary focus:ring-brand-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-brand-text mb-1">ふりがな</label>
+                    <input v-model="searchForm.kana" type="text" placeholder="例）やまだ" class="w-full rounded-soft border-brand-border text-sm focus:border-brand-primary focus:ring-brand-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-brand-text mb-1">電話番号</label>
+                    <input v-model="searchForm.phone_number" type="text" placeholder="例）090" class="w-full rounded-soft border-brand-border text-sm focus:border-brand-primary focus:ring-brand-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-brand-text mb-1">担当店舗</label>
+                    <select v-model="searchForm.shop_id" class="w-full rounded-soft border-brand-border text-sm focus:border-brand-primary focus:ring-brand-primary">
+                        <option value="">すべて</option>
+                        <option v-for="s in shops" :key="s.id" :value="s.id">{{ s.name }}</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="px-4 py-2 rounded-soft text-sm bg-brand-primary text-brand-on-primary hover:opacity-90">検索</button>
+                    <button type="button" class="px-4 py-2 rounded-soft text-sm bg-brand-surface text-brand-text border border-brand-border hover:bg-brand-surface-2" @click="clearSearch">クリア</button>
+                </div>
+            </form>
             <div class="flex flex-wrap gap-4 items-center">
                 <div class="flex flex-wrap gap-2 items-center">
                     <span class="text-xs text-brand-text-muted">種類</span>
@@ -107,13 +132,22 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
 import { UiPageHeader, UiCard } from '@/Components/UI';
 
 const props = defineProps({
     grants: Object,
     counts: Object,
     filters: Object,
+    shops: { type: Array, default: () => [] },
+});
+
+// 顧客の基本情報での絞り込みフォーム
+const searchForm = reactive({
+    name: props.filters.name || '',
+    kana: props.filters.kana || '',
+    phone_number: props.filters.phone_number || '',
+    shop_id: props.filters.shop_id || '',
 });
 
 const kindList = [
@@ -135,9 +169,30 @@ const subtypeLabel = (t) => ({
     hirata_reward: '平田ポイント',
 }[t] || t);
 
+const buildQuery = () => ({
+    kind: props.filters.kind,
+    status: props.filters.status,
+    name: searchForm.name,
+    kana: searchForm.kana,
+    phone_number: searchForm.phone_number,
+    shop_id: searchForm.shop_id,
+});
+
 const applyFilter = (key, value) => {
-    const q = { kind: props.filters.kind, status: props.filters.status, [key]: value };
+    const q = { ...buildQuery(), [key]: value };
     router.get(route('admin.referral.list'), q, { preserveState: true, preserveScroll: true });
+};
+
+const applySearch = () => {
+    router.get(route('admin.referral.list'), buildQuery(), { preserveState: true, preserveScroll: true });
+};
+
+const clearSearch = () => {
+    searchForm.name = '';
+    searchForm.kana = '';
+    searchForm.phone_number = '';
+    searchForm.shop_id = '';
+    applySearch();
 };
 
 const processingId = ref(null);

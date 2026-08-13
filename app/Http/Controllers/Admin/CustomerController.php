@@ -17,6 +17,7 @@ use App\Models\PhotoSlot;
 use App\Models\PhotoStudio;
 use App\Models\PhotoType;
 use App\Models\Plan;
+use App\Models\Referral;
 use App\Models\Shop;
 use App\Models\User;
 use App\Services\Line\ReservationLineContactMigrator;
@@ -560,9 +561,13 @@ class CustomerController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'discount_type', 'discount_value', 'combinable']);
 
+        // 被紹介者として「誰から紹介されたか」（詳細情報タブ・お友達紹介ブロック用）
+        $referredBy = $this->resolveReferredBy($customer);
+
         return Inertia::render($this->viewFor('Admin/Customer/Show'), [
             'customer' => $customerForInertia,
             'referral' => $referralSummary,
+            'referredBy' => $referredBy,
             'distributableCoupons' => $distributableCoupons,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
             'ceremonyAreas' => $ceremonyAreas,
@@ -985,11 +990,14 @@ class CustomerController extends Controller
             'kimono_type' => 'required|in:振袖,袴',
             'status' => 'required|in:保留,確定,キャンセル',
             'warranty_flag' => 'boolean',
-            'total_amount' => 'nullable|integer|min:0',
+            'total_amount' => 'required|integer|min:0',
             'preparation_venue' => 'nullable|string|max:255',
             'preparation_date' => 'nullable|date',
             'user_id' => 'nullable|exists:users,id',
             'remarks' => 'nullable|string',
+        ], [
+            'total_amount.required' => '成約金額（税込）を入力してください。',
+            'total_amount.integer' => '成約金額（税込）は数値で入力してください。',
         ]);
 
         $validated['customer_id'] = $customer->id;
@@ -1017,11 +1025,14 @@ class CustomerController extends Controller
             'kimono_type' => 'required|in:振袖,袴',
             'status' => 'required|in:保留,確定,キャンセル',
             'warranty_flag' => 'boolean',
-            'total_amount' => 'nullable|integer|min:0',
+            'total_amount' => 'required|integer|min:0',
             'preparation_venue' => 'nullable|string|max:255',
             'preparation_date' => 'nullable|date',
             'user_id' => 'nullable|exists:users,id',
             'remarks' => 'nullable|string',
+        ], [
+            'total_amount.required' => '成約金額（税込）を入力してください。',
+            'total_amount.integer' => '成約金額（税込）は数値で入力してください。',
         ]);
 
         $validated['warranty_flag'] = $request->has('warranty_flag') ? (bool) $request->warranty_flag : false;
@@ -1663,5 +1674,104 @@ class CustomerController extends Controller
 
         return redirect()->route('admin.customers.index')
             ->with('success', '顧客情報を削除しました。');
+    }
+
+    /**
+     * 被紹介者として有効な紹介（誰から紹介されたか）を解決する。
+     * 「最初の紹介者のみ有効」ルールに合わせ最古の1件。rejected/expired は除外。
+     */
+    private function findActiveReferredReferral(Customer $customer): ?Referral
+    {
+        $lineUserIds = $customer->lineContacts()
+            ->pluck('line_user_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return Referral::query()
+            ->where(function ($q) use ($customer, $lineUserIds) {
+                $q->where('referred_customer_id', $customer->id);
+                if ($lineUserIds) {
+                    $q->orWhereIn('referred_line_user_id', $lineUserIds);
+                }
+            })
+            ->whereIn('status', [
+                Referral::STATUS_LINKED,
+                Referral::STATUS_CONTRACTED,
+                Referral::STATUS_MATURED,
+            ])
+            ->with('referrer:id,name')
+            ->orderBy('id')
+            ->first();
+    }
+
+    /**
+     * 詳細情報タブ「お友達紹介」ブロック用の表示データ。
+     *
+     * @return array{id:int, referrer_id:?int, referrer_name:?string, status:string, status_label:string, locked:bool}|null
+     */
+    private function resolveReferredBy(Customer $customer): ?array
+    {
+        $referral = $this->findActiveReferredReferral($customer);
+        if (! $referral) {
+            return null;
+        }
+
+        $statusLabel = [
+            Referral::STATUS_LINKED => '登録済み（成約待ち）',
+            Referral::STATUS_CONTRACTED => 'ご成約（ポイント付与待ち）',
+            Referral::STATUS_MATURED => 'ポイント付与済み',
+        ][$referral->status] ?? $referral->status;
+
+        return [
+            'id' => $referral->id,
+            'referrer_id' => $referral->referrer_customer_id,
+            'referrer_name' => $referral->referrer?->name,
+            'status' => $referral->status,
+            'status_label' => $statusLabel,
+            // ポイント反映（matured）済みは紹介者を変更できない
+            'locked' => $referral->status === Referral::STATUS_MATURED,
+        ];
+    }
+
+    /**
+     * 「お友達紹介」ブロックからの紹介者変更。
+     * ポイント反映済み（matured）は変更不可。自己紹介も不可。
+     */
+    public function updateReferredBy(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'referrer_customer_id' => 'required|integer|exists:customers,id',
+        ]);
+
+        $referral = $this->findActiveReferredReferral($customer);
+        if (! $referral) {
+            return back()->withErrors(['referred_by' => 'この顧客には有効な紹介がありません。']);
+        }
+        if ($referral->status === Referral::STATUS_MATURED) {
+            return back()->withErrors(['referred_by' => 'ポイント反映済みのため紹介者は変更できません。']);
+        }
+
+        $newReferrerId = (int) $validated['referrer_customer_id'];
+        if ($newReferrerId === (int) $customer->id) {
+            return back()->withErrors(['referred_by' => 'ご本人を紹介者に設定することはできません。']);
+        }
+        if ($newReferrerId === (int) $referral->referrer_customer_id) {
+            return back()->with('success', '紹介者に変更はありません。');
+        }
+
+        $oldReferrerId = $referral->referrer_customer_id;
+        $referral->update(['referrer_customer_id' => $newReferrerId]);
+
+        Log::info('admin referral referrer changed', [
+            'user_id' => $request->user()?->id,
+            'referral_id' => $referral->id,
+            'referred_customer_id' => $customer->id,
+            'old_referrer_customer_id' => $oldReferrerId,
+            'new_referrer_customer_id' => $newReferrerId,
+        ]);
+
+        return back()->with('success', '紹介者を変更しました。');
     }
 }

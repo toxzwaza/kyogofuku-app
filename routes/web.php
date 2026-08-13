@@ -335,6 +335,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
     Route::patch('/customers/{customer}/responsible-shop', [AdminCustomerController::class, 'updateResponsibleShop'])->name('customers.update-responsible-shop');
     Route::post('/customers/{customer}/contracts', [AdminCustomerController::class, 'storeContract'])->name('customers.contracts.store');
+    Route::patch('/customers/{customer}/referred-by', [AdminCustomerController::class, 'updateReferredBy'])->name('customers.referred-by.update');
     Route::put('/customers/{customer}/contracts/{contract}', [AdminCustomerController::class, 'updateContract'])->name('customers.contracts.update');
     Route::delete('/customers/{customer}/contracts/{contract}', [AdminCustomerController::class, 'destroyContract'])->name('customers.contracts.destroy');
     Route::post('/customers/{customer}/photo-slots', [AdminCustomerController::class, 'storePhotoSlot'])->name('customers.photo-slots.store');
