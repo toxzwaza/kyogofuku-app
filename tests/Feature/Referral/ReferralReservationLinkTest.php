@@ -158,6 +158,16 @@ class ReferralReservationLinkTest extends TestCase
         ])->assertSessionHasErrors('line_referral_id');
     }
 
+    public function test_reserve_redirect_preserves_referral_query_for_non_lp_event(): void
+    {
+        // LPテンプレ未設定イベントは /reserve → 紹介ページへリダイレクトされるが、
+        // 紹介クエリ（line_ref / referred_by_name）は引き継がれる
+        $event = $this->reservationEvent();
+
+        $this->get(route('event.reserve.page', ['slug' => $event->slug, 'line_ref' => 6, 'referred_by_name' => '紹介 花子']))
+            ->assertRedirect(route('event.show', ['slug' => $event->slug, 'line_ref' => 6, 'referred_by_name' => '紹介 花子']));
+    }
+
     public function test_liff_events_reserve_url_contains_referral_context(): void
     {
         Http::fake([
