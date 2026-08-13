@@ -882,6 +882,7 @@ const form = useForm({
     parking_car_count: null,
     considering_plans: getUrlParamArray('considering_plans', []),
     referred_by_name: getUrlParam('referred_by_name', ''),
+    line_referral_id: getUrlParam('line_ref', '') || null,
     inquiry_message: getUrlParam('inquiry_message', ''),
     privacy_agreed: true,
 });

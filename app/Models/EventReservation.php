@@ -25,6 +25,7 @@ class EventReservation extends Model
         'birth_date',
         'seijin_year',
         'referred_by_name',
+        'line_referral_id',
         'reservation_datetime',
         'furigana',
         'school_name',
@@ -81,6 +82,14 @@ class EventReservation extends Model
     /**
      * イベントとのリレーション
      */
+    /**
+     * LINE友達紹介経由の予約 → 紹介レコード
+     */
+    public function lineReferral()
+    {
+        return $this->belongsTo(\App\Models\Referral::class, 'line_referral_id');
+    }
+
     public function event()
     {
         return $this->belongsTo(Event::class);

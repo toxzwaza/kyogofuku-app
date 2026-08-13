@@ -30,11 +30,11 @@ class ReferralShopEventsService
                 Referral::STATUS_CONTRACTED,
                 Referral::STATUS_MATURED,
             ])
-            ->with('referrer:id,shop_id')
+            ->with('referrer:id,name,shop_id')
             ->latest('id')
             ->first();
 
-        return $this->forShopId($referral?->referrer?->shop_id);
+        return $this->forShopId($referral?->referrer?->shop_id, $referral);
     }
 
     /**
@@ -44,10 +44,20 @@ class ReferralShopEventsService
      *
      * @return array<int, array{title:string, thumbnail_url:?string, reserve_url:string}>
      */
-    public function forShopId(?int $shopId): array
+    public function forShopId(?int $shopId, ?Referral $referral = null): array
     {
         if (!$shopId) {
             return [];
+        }
+
+        // 紹介経由の場合、予約フォームに紹介コンテキストを引き継ぐ
+        // （line_ref=紹介ID: 予約との紐付け・担当者初期値用／referred_by_name: ご紹介者様欄の初期値）
+        $referralQuery = '';
+        if ($referral && $referral->referrer) {
+            $referralQuery = '?'.http_build_query([
+                'line_ref' => $referral->id,
+                'referred_by_name' => $referral->referrer->name,
+            ]);
         }
 
         $today = now()->startOfDay();
@@ -65,7 +75,7 @@ class ReferralShopEventsService
                 'title' => (string) $e->title,
                 'thumbnail_url' => $e->thumbnail_url,
                 // 条件を満たさないイベントはサーバー側で紹介ページへリダイレクトされる
-                'reserve_url' => route('event.reserve.page', ['slug' => $e->slug]),
+                'reserve_url' => route('event.reserve.page', ['slug' => $e->slug]).$referralQuery,
             ])
             ->values()
             ->all();

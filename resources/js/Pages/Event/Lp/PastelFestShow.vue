@@ -540,7 +540,14 @@ function formatVenueDates(dateStrings) {
 }
 
 function goReserve() {
-    router.visit(route('event.reserve.page', props.event.slug));
+    // LINE友達紹介経由（line_ref / referred_by_name）のクエリを予約ページへ引き継ぐ
+    const params = new URLSearchParams(window.location.search);
+    const query = {};
+    for (const key of ['line_ref', 'referred_by_name']) {
+        const v = params.get(key);
+        if (v) query[key] = v;
+    }
+    router.visit(route('event.reserve.page', { slug: props.event.slug, ...query }));
 }
 </script>
 

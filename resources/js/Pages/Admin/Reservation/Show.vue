@@ -108,6 +108,16 @@
                 <UiDetailField v-if="reservation.parking_usage === 'あり'" label="駐車台数" :value="(reservation.parking_car_count || '—') + '台'" :icon="Car" />
                 <UiDetailField label="検討中のプラン" :value="reservation.considering_plans && reservation.considering_plans.length > 0 ? reservation.considering_plans.join('、') : '—'" :icon="Book" :span="2" />
                 <UiDetailField label="ご紹介者様" :value="reservation.referred_by_name || '—'" :icon="User" />
+                <UiDetailField label="LINE友達紹介者" :icon="Users">
+                  <Link
+                    v-if="lineReferralInfo?.referrer_customer_id"
+                    :href="route('admin.customers.show', lineReferralInfo.referrer_customer_id)"
+                    class="text-brand-primary hover:underline"
+                  >
+                    [{{ lineReferralInfo.referrer_customer_id }}] {{ lineReferralInfo.referrer_name || '—' }}
+                  </Link>
+                  <span v-else>—</span>
+                </UiDetailField>
               </UiDetailSection>
             </template>
 
@@ -135,6 +145,16 @@
                 <UiDetailField v-if="reservation.parking_usage === 'あり'" label="台数" :value="(reservation.parking_car_count || '—') + '台'" :icon="Car" />
                 <UiDetailField label="検討中のプラン" :value="reservation.considering_plans && reservation.considering_plans.length > 0 ? reservation.considering_plans.join('、') : '—'" :icon="Book" :span="2" />
                 <UiDetailField label="ご紹介者様" :value="reservation.referred_by_name || '—'" :icon="User" />
+                <UiDetailField label="LINE友達紹介者" :icon="Users">
+                  <Link
+                    v-if="lineReferralInfo?.referrer_customer_id"
+                    :href="route('admin.customers.show', lineReferralInfo.referrer_customer_id)"
+                    class="text-brand-primary hover:underline"
+                  >
+                    [{{ lineReferralInfo.referrer_customer_id }}] {{ lineReferralInfo.referrer_name || '—' }}
+                  </Link>
+                  <span v-else>—</span>
+                </UiDetailField>
               </UiDetailSection>
             </template>
 
@@ -1133,6 +1153,10 @@ const props = defineProps({
   },
   reservation: Object,
   event: Object,
+  lineReferralInfo: {
+    type: Object,
+    default: null,
+  },
   venues: Array,
   notes: Array,
   schedule: Object,
