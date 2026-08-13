@@ -50,18 +50,25 @@ class EventController extends Controller
             return $event;
         }
 
+        // LINE友達紹介経由のクエリ（line_ref / referred_by_name）はリダイレクト先へ引き継ぐ
+        // （LPテンプレ未設定イベント等で紹介コンテキストが消えるのを防ぐ）
+        $referralQuery = array_filter(
+            $request->only(['line_ref', 'referred_by_name']),
+            fn ($v) => $v !== null && $v !== ''
+        );
+
         if (!$event->activeLpDesignSlug()) {
-            return redirect()->route('event.show', ['slug' => $event->slug]);
+            return redirect()->route('event.show', ['slug' => $event->slug] + $referralQuery);
         }
 
         if (!$event->usesTimeslotReservation()) {
-            return redirect()->route('event.show', ['slug' => $event->slug]);
+            return redirect()->route('event.show', ['slug' => $event->slug] + $referralQuery);
         }
 
         $today = Carbon::today();
         $isEnded = $event->end_at && $today->gt($event->end_at);
         if ($isEnded) {
-            return redirect()->route('event.show', ['slug' => $event->slug]);
+            return redirect()->route('event.show', ['slug' => $event->slug] + $referralQuery);
         }
 
         $utmSource = $request->input('utm_source') ?: 'NONE';
