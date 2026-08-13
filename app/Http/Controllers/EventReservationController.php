@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Contract;
 use App\Models\Event;
 use App\Models\EventReservation;
 use App\Models\EventTimeslot;
+use App\Models\Referral;
 use App\Services\EventReservationScheduleBootstrapService;
 use App\Services\ReservationConfirmationMailer;
 use Illuminate\Http\Request;
@@ -64,6 +66,7 @@ class EventReservationController extends Controller
             $rules['has_visited_before'] = 'boolean';
             $rules['seijin_year'] = 'nullable|integer|min:2000|max:2100';
             $rules['referred_by_name'] = 'nullable|string|max:255';
+            $rules['line_referral_id'] = 'nullable|integer|exists:referrals,id';
             $rules['school_name'] = 'nullable|string|max:255';
             $rules['staff_name'] = 'nullable|string|max:255';
         }
@@ -89,6 +92,7 @@ class EventReservationController extends Controller
             ];
             $rules['parking_car_count'] = 'nullable|integer|min:1|required_if:parking_usage,あり';
             $rules['referred_by_name'] = 'nullable|string|max:255';
+            $rules['line_referral_id'] = 'nullable|integer|exists:referrals,id';
         }
 
         // 共通項目
@@ -197,9 +201,36 @@ class EventReservationController extends Controller
             $reservationDatetime = $request->reservation_datetime;
         }
 
+        // LINE友達紹介経由の場合：紹介レコードを紐付け、担当者初期値に
+        // 紹介者の最新の確定成約の担当スタッフ名をセットする（後から変更可能）
+        $lineReferralId = null;
+        $adminAssignee = null;
+        if (in_array($event->form_type, ['reservation', 'reservation_hakama'], true) && $request->filled('line_referral_id')) {
+            $lineReferral = Referral::query()
+                ->whereIn('status', [
+                    Referral::STATUS_LINKED,
+                    Referral::STATUS_CONTRACTED,
+                    Referral::STATUS_MATURED,
+                ])
+                ->find($request->input('line_referral_id'));
+            if ($lineReferral) {
+                $lineReferralId = $lineReferral->id;
+                $latestContract = Contract::query()
+                    ->where('customer_id', $lineReferral->referrer_customer_id)
+                    ->where('status', '確定')
+                    ->orderByDesc('contract_date')
+                    ->orderByDesc('id')
+                    ->with('user:id,name')
+                    ->first();
+                $adminAssignee = $latestContract?->user?->name;
+            }
+        }
+
         $reservation = EventReservation::create([
             'event_id' => $event->id,
             'document_id' => $request->document_id,
+            'line_referral_id' => $lineReferralId,
+            'admin_assignee' => $adminAssignee,
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,

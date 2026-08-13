@@ -894,6 +894,7 @@ const form = useForm({
     birth_date: urlBirthDate,
     seijin_year: initialSeijinYear,
     referred_by_name: getUrlParam('referred_by_name', ''),
+    line_referral_id: getUrlParam('line_ref', '') || null,
     furigana: getUrlParam('furigana', ''),
     school_name: '',
     staff_name: '',

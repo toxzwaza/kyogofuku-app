@@ -544,9 +544,18 @@ class ReservationController extends Controller
             ];
         }
 
+        // LINE友達紹介経由の予約：実際の紹介者（お客様入力の referred_by_name と別に表示）
+        $reservation->loadMissing('lineReferral.referrer:id,name');
+        $lineReferralInfo = $reservation->lineReferral ? [
+            'referral_id' => $reservation->lineReferral->id,
+            'referrer_customer_id' => $reservation->lineReferral->referrer_customer_id,
+            'referrer_name' => $reservation->lineReferral->referrer?->name,
+        ] : null;
+
         return Inertia::render($this->viewFor('Admin/Reservation/Show'), [
             'reservation' => $reservation,
             'event' => $reservation->event,
+            'lineReferralInfo' => $lineReferralInfo,
             'indexFilters' => $indexFilters,
             'venues' => $reservation->event->venues()->where('is_active', true)->get(),
             'notes' => $reservation->notes()->with('user')->orderBy('created_at', 'desc')->get(),
