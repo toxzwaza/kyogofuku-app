@@ -116,7 +116,7 @@ class MediaTagHierarchyTest extends TestCase
         $m2 = $this->media('m2');
         $m1->mediaTags()->sync([$existing->id]); // 既存タグは維持されること
 
-        (new MediaFileController())->bulkTag(Request::create('/', 'POST', [
+        app(MediaFileController::class)->bulkTag(Request::create('/', 'POST', [
             'media_ids' => [$m1->id, $m2->id],
             'tag_ids' => [$tag->id],
         ]));
@@ -141,7 +141,7 @@ class MediaTagHierarchyTest extends TestCase
             'storage_disk' => 's3',
         ]);
 
-        (new MediaFileController())->bulkDestroy(Request::create('/', 'POST', [
+        app(MediaFileController::class)->bulkDestroy(Request::create('/', 'POST', [
             'media_ids' => [$free->id, $used->id],
         ]));
 
@@ -156,7 +156,7 @@ class MediaTagHierarchyTest extends TestCase
         $media = $this->media('m');
         $media->mediaTags()->sync([$tagA->id]);
 
-        (new MediaFileController())->update(
+        app(MediaFileController::class)->update(
             Request::create('/', 'PATCH', ['alt' => 'updated', 'tag_ids' => [$tagB->id]]),
             $media
         );
