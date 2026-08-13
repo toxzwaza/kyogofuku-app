@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\DeviceRegistration;
 use App\Models\MediaFile;
+use App\Models\MediaTag;
 use App\Services\MediaUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -54,9 +55,14 @@ class MediaUploadController extends Controller
             ], 422, [], JSON_UNESCAPED_UNICODE);
         }
 
+        $deviceTagId = $this->resolveDeviceTagId($device);
+
         // 冪等性：同一ファイルの再送（リトライ・二重送信）は既存レコードを返す
         $existing = MediaFile::where('sha256', $sha256)->first();
         if ($existing) {
+            // 初回登録時にタグ付与まで到達できていなかった場合に備えて再付与（既存タグは維持）
+            $existing->mediaTags()->syncWithoutDetaching([$deviceTagId]);
+
             return response()->json([
                 'duplicated' => true,
                 'media' => $this->formatMedia($existing),
@@ -74,7 +80,7 @@ class MediaUploadController extends Controller
         $mediaFile = $this->mediaUploadService->processAndStore(
             $file,
             $manager,
-            null,
+            [$deviceTagId],
             $device->id,
             $sha256,
         );
@@ -90,6 +96,24 @@ class MediaUploadController extends Controller
             'duplicated' => false,
             'media' => $this->formatMedia($mediaFile),
         ], 201, [], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * 「タブレット画像 > 端末ID」の階層タグを取得（なければ自動作成）し、端末タグのIDを返す
+     *
+     * 端末タグ名は label（台帳の端末ID。例: KI-IPAD-01）を優先し、未設定なら device_code を使う。
+     * 親タグ「タブレット画像」で絞り込むと全端末分が表示される（既存のタグ絞り込みが子孫を含むため）。
+     */
+    private function resolveDeviceTagId(DeviceRegistration $device): int
+    {
+        $parent = MediaTag::firstOrCreate(['parent_id' => null, 'name' => 'タブレット画像']);
+
+        $child = MediaTag::firstOrCreate([
+            'parent_id' => $parent->id,
+            'name' => $device->label ?: $device->device_code,
+        ]);
+
+        return $child->id;
     }
 
     private function formatMedia(MediaFile $media): array

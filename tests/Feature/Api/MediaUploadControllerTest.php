@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\DeviceRegistration;
 use App\Models\MediaFile;
+use App\Models\MediaTag;
 use App\Models\Shop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -60,6 +61,56 @@ class MediaUploadControllerTest extends TestCase
         $this->assertSame(640, $media->width);
         $this->assertSame(hash_file('sha256', $file->getRealPath()), $media->sha256);
         Storage::disk('s3_public')->assertExists($media->path);
+    }
+
+    public function test_アップロード時に「タブレット画像・端末ID」の階層タグが自動作成され付与される(): void
+    {
+        $this->upload(UploadedFile::fake()->image('IMG_0010.jpg'))->assertStatus(201);
+
+        $parent = MediaTag::where('name', 'タブレット画像')->whereNull('parent_id')->first();
+        $this->assertNotNull($parent);
+
+        $child = MediaTag::where('name', 'KI-IPAD-01')->where('parent_id', $parent->id)->first();
+        $this->assertNotNull($child);
+
+        $this->assertTrue(MediaFile::first()->mediaTags->contains($child->id));
+    }
+
+    public function test_2台目の端末は既存の親タグ配下に端末タグだけ追加される(): void
+    {
+        $this->upload(UploadedFile::fake()->image('IMG_0011.jpg'))->assertStatus(201);
+
+        $token2 = Str::random(64);
+        DeviceRegistration::create([
+            'shop_id' => $this->shop->id,
+            'device_code' => DeviceRegistration::generateUniqueDeviceCode(),
+            'token_hash' => DeviceRegistration::hashToken($token2),
+            'label' => 'KI-IPAD-02',
+            'last_used_at' => now(),
+        ]);
+
+        $this->upload(UploadedFile::fake()->image('IMG_0012.jpg', 100, 100), $token2)->assertStatus(201);
+
+        $this->assertSame(1, MediaTag::where('name', 'タブレット画像')->count());
+        $parent = MediaTag::where('name', 'タブレット画像')->first();
+        $this->assertSame(
+            ['KI-IPAD-01', 'KI-IPAD-02'],
+            MediaTag::where('parent_id', $parent->id)->orderBy('name')->pluck('name')->all(),
+        );
+    }
+
+    public function test_重複再送でも端末タグが付与される(): void
+    {
+        $file = UploadedFile::fake()->image('IMG_0013.jpg');
+        $this->upload($file)->assertStatus(201);
+
+        // 端末タグを外した状態で再送 → 再付与される
+        MediaFile::first()->mediaTags()->detach();
+        $again = UploadedFile::fake()->createWithContent('IMG_0013.jpg', file_get_contents($file->getRealPath()));
+        $this->upload($again)->assertStatus(200);
+
+        $child = MediaTag::where('name', 'KI-IPAD-01')->first();
+        $this->assertTrue(MediaFile::first()->mediaTags->contains($child->id));
     }
 
     public function test_同一ファイルの再送は重複登録されず既存レコードが返る(): void
