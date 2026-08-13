@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\ResolvesUiView;
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
+use App\Models\Customer;
 use App\Models\PointLedger;
 use App\Models\Referral;
+use App\Models\Shop;
 use App\Services\Referral\PointGrantService;
 use App\Services\Referral\ReferralMaturationService;
 use Illuminate\Http\Request;
@@ -25,6 +27,24 @@ class ReferralController extends Controller
     {
         $kind = (string) $request->input('kind', 'all');     // all / referral / contract
         $status = (string) $request->input('status', 'all'); // all / granted / pending
+
+        // 顧客の基本情報（顧客名・ふりがな・電話番号・担当店舗）での絞り込み
+        $custName = trim((string) $request->input('name', ''));
+        $custKana = trim((string) $request->input('kana', ''));
+        $custPhone = trim((string) $request->input('phone_number', ''));
+        $custShopId = $request->input('shop_id');
+        $customerFilterActive = $custName !== '' || $custKana !== '' || $custPhone !== '' || ($custShopId !== null && $custShopId !== '');
+        $customerIdSet = null;
+        if ($customerFilterActive) {
+            $customerIdSet = Customer::query()
+                ->when($custName !== '', fn ($q) => $q->where('name', 'LIKE', '%'.$custName.'%'))
+                ->when($custKana !== '', fn ($q) => $q->where('kana', 'LIKE', '%'.$custKana.'%'))
+                ->when($custPhone !== '', fn ($q) => $q->where('phone_number', 'LIKE', '%'.$custPhone.'%'))
+                ->when($custShopId !== null && $custShopId !== '', fn ($q) => $q->where('shop_id', (int) $custShopId))
+                ->pluck('id')
+                ->flip()
+                ->all();
+        }
         $maturationMonths = \App\Models\ReferralSetting::getInt('maturation_months', 1); // 起算日→付与予定日の月数
 
         $rows = collect();
@@ -124,6 +144,9 @@ class ReferralController extends Controller
         $filtered = $rows
             ->when($kind !== 'all', fn ($c) => $c->where('kind', $kind))
             ->when($status !== 'all', fn ($c) => $c->where('status', $status))
+            ->when($customerIdSet !== null, fn ($c) => $c->filter(
+                fn ($row) => $row['customer_id'] !== null && isset($customerIdSet[$row['customer_id']])
+            ))
             ->sortByDesc('date')
             ->values();
 
@@ -145,7 +168,15 @@ class ReferralController extends Controller
                 'last_page' => $paginator->lastPage(),
             ],
             'counts' => $counts,
-            'filters' => ['kind' => $kind, 'status' => $status],
+            'filters' => [
+                'kind' => $kind,
+                'status' => $status,
+                'name' => $custName,
+                'kana' => $custKana,
+                'phone_number' => $custPhone,
+                'shop_id' => $custShopId !== null && $custShopId !== '' ? (int) $custShopId : '',
+            ],
+            'shops' => Shop::query()->where('is_active', true)->orderBy('id')->get(['id', 'name']),
         ]);
     }
 

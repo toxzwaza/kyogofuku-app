@@ -387,6 +387,112 @@
                         </div>
                 </UiCard>
 
+                <!-- お友達紹介 -->
+                <UiCard variant="default" padding="lg">
+                    <template #header>
+                        <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                            <Users :size="15" class="text-brand-primary" />
+                            お友達紹介
+                        </h3>
+                    </template>
+                    <div v-if="referredBy">
+                        <div class="flex flex-wrap items-center gap-6">
+                            <div>
+                                <div class="text-xs text-brand-text-muted mb-1">紹介者（誰から紹介されたか）</div>
+                                <Link
+                                    v-if="referredBy.referrer_id"
+                                    :href="route('admin.customers.show', referredBy.referrer_id)"
+                                    class="text-brand-primary hover:underline font-medium text-sm"
+                                >
+                                    [{{ referredBy.referrer_id }}] {{ referredBy.referrer_name || '—' }}
+                                </Link>
+                                <span v-else class="text-sm text-brand-text-muted">—</span>
+                            </div>
+                            <div>
+                                <div class="text-xs text-brand-text-muted mb-1">状態</div>
+                                <span
+                                    :class="referredBy.locked ? 'bg-green-100 text-green-900' : 'bg-amber-100 text-amber-900'"
+                                    class="px-2 py-1 text-xs rounded-full"
+                                >
+                                    {{ referredBy.status_label }}
+                                </span>
+                            </div>
+                            <div class="ml-auto">
+                                <button
+                                    v-if="!referredBy.locked && !referrerEditOpen"
+                                    type="button"
+                                    class="px-3 py-1.5 rounded-md text-sm border border-brand-border bg-brand-surface text-brand-text hover:bg-brand-surface-2"
+                                    @click="referrerEditOpen = true"
+                                >
+                                    紹介者を変更
+                                </button>
+                                <span v-if="referredBy.locked" class="inline-flex items-center gap-1.5 text-xs text-brand-text-muted">
+                                    <Lock :size="13" />
+                                    ポイント反映済みのため変更できません
+                                </span>
+                            </div>
+                        </div>
+                        <div v-if="referrerEditOpen && !referredBy.locked" class="mt-5 border-t border-brand-border pt-4">
+                            <label class="block text-xs font-medium text-brand-text mb-1">新しい紹介者を顧客名で検索</label>
+                            <div class="relative max-w-md">
+                                <input
+                                    v-model="referrerSearchQuery"
+                                    type="text"
+                                    placeholder="顧客名を入力（2文字以上）"
+                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
+                                    @input="onReferrerSearchInput"
+                                />
+                                <div
+                                    v-if="referrerSearchResults.length"
+                                    class="absolute z-20 mt-1 w-full bg-brand-surface border border-brand-border rounded-md shadow-lg max-h-64 overflow-auto"
+                                >
+                                    <button
+                                        v-for="c in referrerSearchResults"
+                                        :key="c.id"
+                                        type="button"
+                                        class="w-full text-left px-3 py-2 text-sm hover:bg-brand-surface-2"
+                                        @click="selectReferrerCandidate(c)"
+                                    >
+                                        [{{ c.id }}] {{ c.name }}
+                                        <span v-if="c.phone_number" class="text-brand-text-muted">／ {{ c.phone_number }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div v-if="selectedReferrer" class="mt-3 flex flex-wrap items-center gap-3">
+                                <span class="text-sm">変更先：<b>[{{ selectedReferrer.id }}] {{ selectedReferrer.name }}</b></span>
+                                <button
+                                    type="button"
+                                    :disabled="referrerSubmitting"
+                                    class="px-3 py-1.5 rounded-md text-sm bg-brand-primary text-brand-on-primary hover:opacity-90 disabled:opacity-50"
+                                    @click="submitReferrerChange"
+                                >
+                                    {{ referrerSubmitting ? '保存中…' : '変更を保存' }}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="px-3 py-1.5 rounded-md text-sm border border-brand-border bg-brand-surface text-brand-text hover:bg-brand-surface-2"
+                                    @click="cancelReferrerEdit"
+                                >
+                                    キャンセル
+                                </button>
+                            </div>
+                            <div v-else class="mt-3">
+                                <button
+                                    type="button"
+                                    class="px-3 py-1.5 rounded-md text-sm border border-brand-border bg-brand-surface text-brand-text hover:bg-brand-surface-2"
+                                    @click="cancelReferrerEdit"
+                                >
+                                    閉じる
+                                </button>
+                            </div>
+                            <p v-if="$page.props.errors?.referred_by" class="mt-2 text-sm text-red-600">{{ $page.props.errors.referred_by }}</p>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8 text-brand-text-muted">
+                        お友達紹介の登録はありません
+                    </div>
+                </UiCard>
+
                 <!-- 成約情報 -->
                 <UiCard variant="default" padding="lg">
                     <template #header>
@@ -1289,14 +1395,16 @@
                                 </div>
                                 <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                                     <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
-                                        成約金額（税込）
+                                        成約金額（税込） <span class="text-red-500">*</span>
                                     </label>
                                     <input
                                         v-model.number="contractForm.total_amount"
                                         type="number"
                                         min="0"
+                                        required
                                         class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                     />
+                                    <p v-if="contractForm.errors.total_amount" class="mt-1 text-xs text-red-600">{{ contractForm.errors.total_amount }}</p>
                                 </div>
                                 <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                                     <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">
@@ -1441,8 +1549,9 @@
                                     </select>
                                 </div>
                                 <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">成約金額（税込）</label>
-                                    <input v-model.number="editContractForm.total_amount" type="number" min="0" class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
+                                    <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">成約金額（税込） <span class="text-red-500">*</span></label>
+                                    <input v-model.number="editContractForm.total_amount" type="number" min="0" required class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
+                                    <p v-if="editContractForm.errors.total_amount" class="mt-1 text-xs text-red-600">{{ editContractForm.errors.total_amount }}</p>
                                 </div>
                                 <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
                                     <label class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2">プラン <span class="text-red-500">*</span></label>
@@ -2413,6 +2522,10 @@ const props = defineProps({
     referral: {
         type: Object,
         default: () => ({}),
+    },
+    referredBy: {
+        type: Object,
+        default: null,
     },
     distributableCoupons: {
         type: Array,
@@ -3781,6 +3894,64 @@ const deleteCustomer = () => {
             showDeleteConfirmModal.value = false;
         },
     });
+};
+
+// ===== お友達紹介ブロック：紹介者の変更（ポイント反映前のみ） =====
+const referrerEditOpen = ref(false);
+const referrerSearchQuery = ref('');
+const referrerSearchResults = ref([]);
+const selectedReferrer = ref(null);
+const referrerSubmitting = ref(false);
+let referrerSearchTimer = null;
+
+const cancelReferrerEdit = () => {
+    referrerEditOpen.value = false;
+    referrerSearchQuery.value = '';
+    referrerSearchResults.value = [];
+    selectedReferrer.value = null;
+};
+
+const onReferrerSearchInput = () => {
+    clearTimeout(referrerSearchTimer);
+    selectedReferrer.value = null;
+    const q = referrerSearchQuery.value.trim();
+    if (q.length < 2) {
+        referrerSearchResults.value = [];
+        return;
+    }
+    referrerSearchTimer = setTimeout(async () => {
+        try {
+            const res = await fetch(route('admin.customers.search') + '?name=' + encodeURIComponent(q), {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            });
+            const data = await res.json();
+            // 本人は紹介者に選べない
+            referrerSearchResults.value = (data.customers || []).filter((c) => c.id !== props.customer.id);
+        } catch (e) {
+            referrerSearchResults.value = [];
+        }
+    }, 300);
+};
+
+const selectReferrerCandidate = (c) => {
+    selectedReferrer.value = c;
+    referrerSearchQuery.value = c.name;
+    referrerSearchResults.value = [];
+};
+
+const submitReferrerChange = () => {
+    if (!selectedReferrer.value || referrerSubmitting.value) return;
+    referrerSubmitting.value = true;
+    router.patch(
+        route('admin.customers.referred-by.update', props.customer.id),
+        { referrer_customer_id: selectedReferrer.value.id },
+        {
+            preserveScroll: true,
+            onSuccess: () => cancelReferrerEdit(),
+            onFinish: () => { referrerSubmitting.value = false; },
+        },
+    );
 };
 </script>
 
