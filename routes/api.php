@@ -43,6 +43,17 @@ Route::post('/tools/execute', [NaturalLanguageController::class, 'executeTool'])
 Route::post('/media/upload', [\App\Http\Controllers\Api\MediaUploadController::class, 'store'])
     ->middleware('throttle:60,1');
 
+// iPad 写真アップロードアプリ用 端末登録API
+// web.php の /device/* と同じコントローラ。API 側は CSRF 検証がないため外部アプリから呼べる
+Route::post('/device/register', [\App\Http\Controllers\DeviceController::class, 'register'])
+    ->middleware('throttle:20,1');
+Route::post('/device/status', [\App\Http\Controllers\DeviceController::class, 'status'])
+    ->middleware('throttle:60,1');
+
+// 端末登録画面の店舗選択用（登録可能な店舗の id・名前のみ）
+Route::get('/public/shops', [\App\Http\Controllers\Api\PublicShopController::class, 'index'])
+    ->middleware('throttle:60,1');
+
 // 外部WP（kouichi/hirata）連携用 公開API（認証なし、CORS で許可ドメインのみ）
 Route::prefix('public')->group(function () {
     Route::get('/events', [PublicEventController::class, 'index']);
