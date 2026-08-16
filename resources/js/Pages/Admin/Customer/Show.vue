@@ -792,6 +792,17 @@
                                     <div class="flex flex-nowrap gap-2">
                                         <button
                                             type="button"
+                                            @click="openMediaLibrary"
+                                            class="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-md border border-brand-border bg-brand-surface text-sm font-medium text-brand-text hover:bg-brand-surface-2"
+                                        >
+                                            <svg class="w-5 h-5 text-brand-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14l2.5-3 2 2.5L14 11l2.5 3H8z" />
+                                            </svg>
+                                            メディアライブラリ
+                                        </button>
+                                        <button
+                                            type="button"
                                             @click="photoFileInputCamera?.click()"
                                             class="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-md border border-brand-border bg-brand-surface text-sm font-medium text-brand-text hover:bg-brand-surface-2"
                                         >
@@ -861,14 +872,90 @@
                             <div class="mt-4 flex justify-end">
                                 <button
                                     type="submit"
-                                    :disabled="photoForm.processing || !photoForm.photo"
+                                    :disabled="photoForm.processing || mediaPhotoSubmitting || (!photoForm.photo && !selectedMediaFile)"
                                     class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <span v-if="photoForm.processing">アップロード中...</span>
+                                    <span v-if="photoForm.processing || mediaPhotoSubmitting">アップロード中...</span>
                                     <span v-else>写真を追加</span>
                                 </button>
                             </div>
                         </form>
+
+                        <!-- メディアライブラリ選択モーダル -->
+                        <div
+                            v-if="showMediaLibraryModal"
+                            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                            @click.self="showMediaLibraryModal = false"
+                        >
+                            <div class="bg-brand-surface rounded-lg shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+                                <div class="flex items-center justify-between px-5 py-4 border-b border-brand-border">
+                                    <h3 class="text-base font-semibold text-brand-text">メディアライブラリから選択</h3>
+                                    <button type="button" class="text-brand-text-muted hover:text-brand-text" @click="showMediaLibraryModal = false">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                                <div class="px-5 py-3 border-b border-brand-border flex flex-wrap items-center gap-4">
+                                    <div class="text-sm text-brand-text">
+                                        タグ：<span class="font-semibold">{{ mediaLibrary.parentTag || 'タブレット画像' }}</span>（固定）
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-xs text-brand-text-muted">配下タグ</label>
+                                        <select
+                                            v-model="mediaLibraryTagId"
+                                            class="rounded-md border-brand-border text-sm focus:border-brand-primary focus:ring-brand-primary"
+                                            @change="fetchMediaLibrary(1)"
+                                        >
+                                            <option value="">すべて</option>
+                                            <option v-for="t in mediaLibrary.deviceTags" :key="t.id" :value="t.id">{{ t.name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex-1 overflow-y-auto p-5">
+                                    <p v-if="mediaLibraryLoading" class="text-center text-sm text-brand-text-muted py-10">読み込み中…</p>
+                                    <template v-else>
+                                        <p v-if="!mediaLibrary.deviceTags.length" class="text-center text-sm text-brand-text-muted py-10">
+                                            「{{ mediaLibrary.parentTag }}」配下に {{ mediaLibrary.prefix }} から始まるタグがありません。
+                                        </p>
+                                        <p v-else-if="!mediaLibrary.mediaFiles?.data?.length" class="text-center text-sm text-brand-text-muted py-10">
+                                            該当する画像がありません。
+                                        </p>
+                                        <div v-else class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                            <button
+                                                v-for="m in mediaLibrary.mediaFiles.data"
+                                                :key="m.id"
+                                                type="button"
+                                                class="group relative rounded-lg overflow-hidden border border-brand-border hover:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                                @click="selectMediaFromLibrary(m)"
+                                            >
+                                                <img :src="m.url" :alt="m.original_filename" loading="lazy" class="w-full h-28 object-cover" />
+                                                <div class="absolute inset-x-0 bottom-0 bg-black/55 text-white text-[10px] px-1.5 py-1 truncate text-left">
+                                                    {{ m.created_at }}
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div v-if="(mediaLibrary.mediaFiles?.last_page || 1) > 1" class="px-5 py-3 border-t border-brand-border flex items-center justify-center gap-3">
+                                    <button
+                                        type="button"
+                                        :disabled="mediaLibrary.mediaFiles.current_page <= 1 || mediaLibraryLoading"
+                                        class="px-3 py-1.5 rounded-md border border-brand-border text-sm disabled:opacity-40"
+                                        @click="fetchMediaLibrary(mediaLibrary.mediaFiles.current_page - 1)"
+                                    >
+                                        前へ
+                                    </button>
+                                    <span class="text-xs text-brand-text-muted">{{ mediaLibrary.mediaFiles.current_page }} / {{ mediaLibrary.mediaFiles.last_page }}</span>
+                                    <button
+                                        type="button"
+                                        :disabled="mediaLibrary.mediaFiles.current_page >= mediaLibrary.mediaFiles.last_page || mediaLibraryLoading"
+                                        class="px-3 py-1.5 rounded-md border border-brand-border text-sm disabled:opacity-40"
+                                        @click="fetchMediaLibrary(mediaLibrary.mediaFiles.current_page + 1)"
+                                    >
+                                        次へ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- 写真一覧 -->
                         <div v-if="customer.photos && customer.photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -3178,10 +3265,54 @@ const photoForm = useForm({
     remarks: '',
 });
 
+// ===== メディアライブラリからの写真選択 =====
+const showMediaLibraryModal = ref(false);
+const mediaLibraryLoading = ref(false);
+const mediaLibraryTagId = ref('');
+const mediaLibrary = ref({ parentTag: 'タブレット画像', prefix: '', deviceTags: [], mediaFiles: { data: [], current_page: 1, last_page: 1 } });
+const selectedMediaFile = ref(null);
+const mediaPhotoSubmitting = ref(false);
+
+const fetchMediaLibrary = async (page = 1) => {
+    mediaLibraryLoading.value = true;
+    try {
+        const params = new URLSearchParams();
+        if (mediaLibraryTagId.value) params.set('tag_id', mediaLibraryTagId.value);
+        params.set('page', String(page));
+        const res = await fetch(route('admin.customers.media-library') + '?' + params.toString(), {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+        mediaLibrary.value = await res.json();
+    } catch (e) {
+        mediaLibrary.value = { parentTag: 'タブレット画像', prefix: '', deviceTags: [], mediaFiles: { data: [], current_page: 1, last_page: 1 } };
+    } finally {
+        mediaLibraryLoading.value = false;
+    }
+};
+
+const openMediaLibrary = () => {
+    showMediaLibraryModal.value = true;
+    fetchMediaLibrary(1);
+};
+
+const selectMediaFromLibrary = (m) => {
+    selectedMediaFile.value = m;
+    // ファイル選択・カメラ撮影の状態はクリア（どちらか一方のみ有効）
+    photoForm.photo = null;
+    isPdfSelected.value = false;
+    pdfFileName.value = '';
+    photoPreview.value = m.url;
+    showMediaLibraryModal.value = false;
+    if (photoFileInputCamera.value) photoFileInputCamera.value.value = '';
+    if (photoFileInputFile.value) photoFileInputFile.value.value = '';
+};
+
 // 写真ファイル選択時の処理
 const onPhotoFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
+        selectedMediaFile.value = null;
         photoForm.photo = file;
         const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
         if (isPdf) {
@@ -3259,24 +3390,47 @@ const deleteCustomerPhoto = (photo) => {
     });
 };
 
+// 写真追加フォームの状態をリセット
+const resetPhotoFormState = () => {
+    photoForm.reset();
+    selectedMediaFile.value = null;
+    photoPreview.value = null;
+    isPdfSelected.value = false;
+    pdfFileName.value = '';
+    closePhotoPreviewModal();
+    // ファイル入力もリセット
+    if (photoFileInputCamera.value) photoFileInputCamera.value.value = '';
+    if (photoFileInputFile.value) photoFileInputFile.value.value = '';
+};
+
 // 顧客写真追加
 const storeCustomerPhoto = () => {
+    // メディアライブラリ選択時はコピー登録エンドポイントへ
+    if (selectedMediaFile.value) {
+        mediaPhotoSubmitting.value = true;
+        router.post(
+            route('admin.customers.photos.from-media', props.customer.id),
+            {
+                media_file_id: selectedMediaFile.value.id,
+                photo_type_id: photoForm.photo_type_id,
+                remarks: photoForm.remarks,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => resetPhotoFormState(),
+                onFinish: () => { mediaPhotoSubmitting.value = false; },
+            },
+        );
+        return;
+    }
+
     if (!photoForm.photo) {
         return;
     }
 
     photoForm.post(route('admin.customers.photos.store', props.customer.id), {
         preserveScroll: true,
-        onSuccess: () => {
-            photoForm.reset();
-            photoPreview.value = null;
-            isPdfSelected.value = false;
-            pdfFileName.value = '';
-            closePhotoPreviewModal();
-            // ファイル入力もリセット
-            if (photoFileInputCamera.value) photoFileInputCamera.value.value = '';
-            if (photoFileInputFile.value) photoFileInputFile.value.value = '';
-        },
+        onSuccess: () => resetPhotoFormState(),
     });
 };
 
