@@ -13,6 +13,8 @@ use App\Models\CustomerNote;
 use App\Models\CustomerPhoto;
 use App\Models\CustomerTag;
 use App\Models\EventReservation;
+use App\Models\MediaFile;
+use App\Models\MediaTag;
 use App\Models\PhotoSlot;
 use App\Models\PhotoStudio;
 use App\Models\PhotoType;
@@ -1674,6 +1676,143 @@ class CustomerController extends Controller
 
         return redirect()->route('admin.customers.index')
             ->with('success', '顧客情報を削除しました。');
+    }
+
+    /** メディアライブラリ連携で使う固定の親タグ名 */
+    private const TABLET_MEDIA_TAG = 'タブレット画像';
+
+    /**
+     * ログインユーザーのメイン所属店舗から、タブレット画像の配下タグのプレフィックスを決める。
+     * 福井店 → HIRATA- ／ それ以外 → KOUICHI-
+     */
+    private function tabletTagPrefixForUser(Request $request): string
+    {
+        $mainShop = $request->user()?->shops()
+            ->where('shops.is_active', true)
+            ->orderByDesc('shop_user.main')
+            ->orderBy('shops.id')
+            ->first();
+
+        return $mainShop?->name === '福井店' ? 'HIRATA-' : 'KOUICHI-';
+    }
+
+    /**
+     * タブレット画像の配下タグのうち、ログインユーザーの店舗プレフィックスに一致するもの。
+     *
+     * @return \Illuminate\Support\Collection<int, MediaTag>
+     */
+    private function tabletDeviceTagsForUser(Request $request)
+    {
+        $parent = MediaTag::query()
+            ->whereNull('parent_id')
+            ->where('name', self::TABLET_MEDIA_TAG)
+            ->first();
+        if (! $parent) {
+            return collect();
+        }
+
+        return $parent->children()
+            ->where('name', 'like', $this->tabletTagPrefixForUser($request).'%')
+            ->orderBy('name')
+            ->get(['id', 'name', 'parent_id']);
+    }
+
+    /**
+     * 顧客写真「メディアライブラリ」モーダル用の画像一覧。
+     * タグ=タブレット画像（固定）配下の、自店舗プレフィックス（HIRATA-/KOUICHI-）タグ付き画像のみ返す。
+     */
+    public function mediaLibraryImages(Request $request)
+    {
+        $deviceTags = $this->tabletDeviceTagsForUser($request);
+        $deviceTagIds = $deviceTags->pluck('id')->all();
+
+        $selectedTagId = (int) $request->input('tag_id', 0);
+        $filterIds = $selectedTagId !== 0 && in_array($selectedTagId, $deviceTagIds, true)
+            ? [$selectedTagId]
+            : $deviceTagIds;
+
+        $mediaFiles = MediaFile::query()
+            ->with('mediaTags:id,name')
+            ->where('mime_type', 'like', 'image/%')
+            ->whereHas('mediaTags', fn ($q) => $q->whereIn('media_tags.id', $filterIds ?: [0]))
+            ->orderByDesc('created_at')
+            ->paginate(24)
+            ->through(fn (MediaFile $m) => [
+                'id' => $m->id,
+                'url' => $m->url,
+                'original_filename' => $m->original_filename,
+                'created_at' => $m->created_at?->format('Y-m-d H:i'),
+                'tag_names' => $m->mediaTags->pluck('name')->values(),
+            ]);
+
+        return response()->json([
+            'parentTag' => self::TABLET_MEDIA_TAG,
+            'prefix' => $this->tabletTagPrefixForUser($request),
+            'deviceTags' => $deviceTags->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+            'mediaFiles' => $mediaFiles,
+        ]);
+    }
+
+    /**
+     * メディアライブラリで選択した画像を顧客写真として登録する。
+     * 既存アップロードと同様に WebP 変換して S3（s3_private）へコピー保存（元メディアはそのまま）。
+     */
+    public function storeCustomerPhotoFromMedia(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'media_file_id' => 'required|integer|exists:media_files,id',
+            'photo_type_id' => 'required|exists:photo_types,id',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $media = MediaFile::with('mediaTags')->findOrFail($validated['media_file_id']);
+
+        // 自店舗プレフィックスのタブレット画像タグが付いたものだけ許可（ID直指定での越権を防ぐ）
+        $allowedTagIds = $this->tabletDeviceTagsForUser($request)->pluck('id')->all();
+        $isAllowed = $media->mediaTags->contains(fn ($t) => in_array($t->id, $allowedTagIds, true));
+        if (! $isAllowed) {
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('error', 'このメディアは顧客写真として選択できません。');
+        }
+
+        if (! str_starts_with((string) $media->mime_type, 'image/')) {
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('error', '画像以外のメディアは登録できません。');
+        }
+
+        $manager = $this->createImageManager();
+        if (! $manager) {
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('error', 'WebP変換に必要な画像ドライバー（GD/Imagick）が利用できません。');
+        }
+
+        try {
+            $sourceDisk = ($media->storage_disk ?? 'public') === 's3' ? 's3_public' : 'public';
+            $contents = Storage::disk($sourceDisk)->get(str_replace('\\', '/', $media->path));
+
+            $webpPath = 'customers/'.$customer->id.'/'.Str::random(40).'.webp';
+            $image = $manager->read($contents);
+            $tmpPath = tempnam(sys_get_temp_dir(), 'webp');
+            $image->toWebp(80)->save($tmpPath);
+            Storage::disk('s3_private')->put($webpPath, file_get_contents($tmpPath));
+            @unlink($tmpPath);
+        } catch (\Exception $e) {
+            Log::error('メディアライブラリからの顧客写真登録エラー (customer='.$customer->id.', media='.$media->id.'): '.$e->getMessage());
+
+            return redirect()->route('admin.customers.show', $customer)
+                ->with('error', '画像の取得・変換に失敗しました。');
+        }
+
+        CustomerPhoto::create([
+            'customer_id' => $customer->id,
+            'photo_type_id' => $validated['photo_type_id'],
+            'file_path' => $webpPath,
+            'storage_disk' => 's3',
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', 'メディアライブラリから写真を追加しました。');
     }
 
     /**
