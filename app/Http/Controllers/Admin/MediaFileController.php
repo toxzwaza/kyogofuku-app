@@ -12,14 +12,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Concerns\ResolvesUiView;
+use App\Services\MediaUploadService;
 use Inertia\Inertia;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver as GdDriver;
-use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class MediaFileController extends Controller
 {
     use ResolvesUiView;
+
+    public function __construct(private MediaUploadService $mediaUploadService)
+    {
+    }
 
     /**
      * メディアライブラリ一覧
@@ -60,7 +62,7 @@ class MediaFileController extends Controller
             'tag_ids.*' => 'integer|exists:media_tags,id',
         ]);
 
-        $manager = $this->createImageManager();
+        $manager = $this->mediaUploadService->createImageManager();
         if (!$manager) {
             return redirect()->route('admin.media.index')
                 ->with('error', 'WebP変換に必要な画像ドライバー（GD/Imagick）が利用できません。');
@@ -68,7 +70,7 @@ class MediaFileController extends Controller
 
         $uploaded = 0;
         foreach ($request->file('images') as $file) {
-            $mediaFile = $this->processAndStoreUpload($file, $manager, $request->input('tag_ids'));
+            $mediaFile = $this->mediaUploadService->processAndStore($file, $manager, $request->input('tag_ids'));
             if ($mediaFile) {
                 $uploaded++;
             }
@@ -95,7 +97,7 @@ class MediaFileController extends Controller
             'tag_ids.*' => 'integer|exists:media_tags,id',
         ]);
 
-        $manager = $this->createImageManager();
+        $manager = $this->mediaUploadService->createImageManager();
         if (!$manager) {
             return response()->json(['error' => '画像ドライバーが利用できません。'], 500);
         }
@@ -103,7 +105,7 @@ class MediaFileController extends Controller
         $allTags = $this->loadAllTags();
         $results = [];
         foreach ($request->file('images') as $file) {
-            $mediaFile = $this->processAndStoreUpload($file, $manager, $request->input('tag_ids'));
+            $mediaFile = $this->mediaUploadService->processAndStore($file, $manager, $request->input('tag_ids'));
             if ($mediaFile) {
                 $results[] = $this->formatMedia($mediaFile->load('mediaTags'), $allTags);
             }
@@ -354,49 +356,6 @@ class MediaFileController extends Controller
     }
 
     /**
-     * アップロードファイルをWebP変換してS3に保存し、MediaFileレコードを作成
-     */
-    private function processAndStoreUpload($uploadedFile, $manager, ?array $tagIds = null): ?MediaFile
-    {
-        try {
-            $originalFilename = $uploadedFile->getClientOriginalName();
-            $webpPath = 'media/' . Str::uuid() . '.webp';
-
-            $image = $manager->read($uploadedFile->getRealPath());
-            $width = $image->width();
-            $height = $image->height();
-
-            $tmpPath = tempnam(sys_get_temp_dir(), 'webp');
-            $image->toWebp(80)->save($tmpPath);
-            $content = file_get_contents($tmpPath);
-            $fileSize = strlen($content);
-            @unlink($tmpPath);
-
-            Storage::disk('s3_public')->put($webpPath, $content);
-
-            $mediaFile = MediaFile::create([
-                'original_filename' => $originalFilename,
-                'path' => $webpPath,
-                'storage_disk' => 's3',
-                'mime_type' => 'image/webp',
-                'file_size' => $fileSize,
-                'width' => $width,
-                'height' => $height,
-                'alt' => pathinfo($originalFilename, PATHINFO_FILENAME),
-            ]);
-
-            if (!empty($tagIds)) {
-                $mediaFile->mediaTags()->sync($tagIds);
-            }
-
-            return $mediaFile;
-        } catch (\Exception $e) {
-            \Log::error('メディアアップロードエラー: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
      * 全タグ（件数付き）をロード
      */
     private function loadAllTags()
@@ -464,25 +423,4 @@ class MediaFileController extends Controller
         ])->values()->all();
     }
 
-    /**
-     * 利用可能なドライバーでImageManagerを作成
-     */
-    private function createImageManager()
-    {
-        if (extension_loaded('gd') && function_exists('imagecreatetruecolor')) {
-            try {
-                return new ImageManager(new GdDriver());
-            } catch (\Exception $e) {
-                \Log::warning("GDドライバーの初期化に失敗: " . $e->getMessage());
-            }
-        }
-        if (extension_loaded('imagick')) {
-            try {
-                return new ImageManager(new ImagickDriver());
-            } catch (\Exception $e) {
-                \Log::warning("Imagickドライバーの初期化に失敗: " . $e->getMessage());
-            }
-        }
-        return null;
-    }
 }

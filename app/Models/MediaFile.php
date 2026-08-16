@@ -20,6 +20,8 @@ class MediaFile extends Model
         'height',
         'alt',
         'tags',
+        'device_registration_id',
+        'sha256',
     ];
 
     protected $casts = [
@@ -37,6 +39,14 @@ class MediaFile extends Model
     public function mediaTags()
     {
         return $this->belongsToMany(MediaTag::class, 'media_file_tag');
+    }
+
+    /**
+     * アップロード元の登録端末（iPad アプリ等）。管理画面からのアップロードは null
+     */
+    public function deviceRegistration()
+    {
+        return $this->belongsTo(DeviceRegistration::class);
     }
 
     /**
