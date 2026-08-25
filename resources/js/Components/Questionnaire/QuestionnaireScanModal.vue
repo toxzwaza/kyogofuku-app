@@ -750,8 +750,8 @@ function onFileSelected(e) {
 }
 
 /**
- * 静止画（ファイル取り込み）に対してカメラと同じ検出パイプラインを適用する
- * マーカー検出 → 四角形検出 → いずれも失敗なら手動四隅指定へ
+ * 静止画（ファイル取り込み）はスキャン補正をかけず、そのままインポートする。
+ * 必要なら「範囲を手動調整」で四隅指定→台形補正もできる。
  */
 function processStillImage(fullCanvas) {
     stopDetectLoop();
@@ -759,54 +759,23 @@ function processStillImage(fullCanvas) {
         mediaStream.getTracks().forEach((t) => t.stop());
         mediaStream = null;
     }
-    capturedFrameCanvas = fullCanvas;
     errorMessage.value = '';
 
-    // マーカー検出（信頼条件 count>=2 を満たすため同一静止画で2回実行）
-    markerCache = {};
-    const frames = [...new Set(MARKER_DETECT_WIDTHS.map((w) => Math.min(w, fullCanvas.width)))].map((w) => {
-        const h = Math.round(fullCanvas.height * w / fullCanvas.width);
-        const c = document.createElement('canvas');
-        c.width = w;
-        c.height = h;
-        c.getContext('2d').drawImage(fullCanvas, 0, 0, w, h);
-        return { canvas: c, scale: DETECT_WIDTH / w };
-    });
-    detectByMarkers(frames);
-    const markerResult = detectByMarkers(frames);
-
-    let corners = null;
-    if (markerResult?.corners) {
-        corners = markerResult.corners;
-        if (page.value !== markerResult.page) {
-            page.value = markerResult.page;
-        }
+    // 過大な画像はアップロードサイズ制限に収まるよう長辺2400pxまで縮小
+    const MAX_SIDE = 2400;
+    let canvas = fullCanvas;
+    const longSide = Math.max(fullCanvas.width, fullCanvas.height);
+    if (longSide > MAX_SIDE) {
+        const ratio = MAX_SIDE / longSide;
+        canvas = document.createElement('canvas');
+        canvas.width = Math.round(fullCanvas.width * ratio);
+        canvas.height = Math.round(fullCanvas.height * ratio);
+        canvas.getContext('2d').drawImage(fullCanvas, 0, 0, canvas.width, canvas.height);
     }
+    capturedFrameCanvas = canvas;
 
-    // フォールバック: 四角形検出
-    if (!corners) {
-        const h = Math.round(fullCanvas.height * DETECT_WIDTH / fullCanvas.width);
-        const small = document.createElement('canvas');
-        small.width = DETECT_WIDTH;
-        small.height = h;
-        small.getContext('2d').drawImage(fullCanvas, 0, 0, DETECT_WIDTH, h);
-        corners = findDocumentCorners(small, DETECT_WIDTH, h);
-    }
-
-    if (corners) {
-        try {
-            const scaled = scaleCorners(corners, fullCanvas.width / DETECT_WIDTH);
-            const paper = scanner.extractPaper(fullCanvas, OUTPUT_WIDTH, OUTPUT_HEIGHT, scaled);
-            if (paper) {
-                previewImgSrc.value = paper.toDataURL('image/jpeg', 0.92);
-                phase.value = 'preview';
-                return;
-            }
-        } catch (e) {
-            // 補正失敗時は手動指定へ
-        }
-    }
-    enterManualMode();
+    previewImgSrc.value = canvas.toDataURL('image/jpeg', 0.92);
+    phase.value = 'preview';
 }
 
 async function enterManualMode() {
