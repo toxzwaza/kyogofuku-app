@@ -20,8 +20,11 @@ const OUTPUT_WIDTH = 1240;
 const OUTPUT_HEIGHT = 1754;
 // 検出用の縮小幅
 const DETECT_WIDTH = 640;
-// 検出対象とみなす最小面積（フレーム面積に対する比率）
-const MIN_AREA_RATIO = 0.12;
+// 検出対象とみなす面積（フレーム面積に対する比率）
+const MIN_AREA_RATIO = 0.08;
+const MAX_AREA_RATIO = 0.85; // 画面ほぼ全体はマットや机の縁なので除外
+// 紙とみなす最低の平均輝度（0-255）。フォールバック検出で使用
+const MIN_PAPER_BRIGHTNESS = 110;
 // 自動撮影: 四隅の移動量(縮小px)がこの値未満のフレームが連続したら撮影
 const STABLE_DIST_THRESHOLD = 10;
 const STABLE_FRAMES_REQUIRED = 10;
@@ -100,13 +103,14 @@ async function start() {
 
 /**
  * 用紙の四隅を検出する（自前パイプライン）
- * グレースケール → ぼかし → Canny → 膨張 → 輪郭抽出 → 凸四角形近似
- * jscanify標準の「最大輪郭」方式より照明・背景条件に強い。
+ * グレースケール → ぼかし → Canny → 膨張 → 輪郭抽出 → 凸四角形近似で候補を集め、
+ * 「面積 × 明るさ²」スコアで最も紙らしい四角形を選ぶ。
+ * （最大面積だけで選ぶと、紙より大きいデスクマットや机の縁が勝ってしまうため）
  */
 function findDocumentCorners(canvasEl, frameWidth, frameHeight) {
     const cv = window.cv;
     let src = null, gray = null, edges = null, kernel = null, contours = null, hierarchy = null;
-    let bestApprox = null;
+    const candidates = [];
     try {
         src = cv.imread(canvasEl);
         gray = new cv.Mat();
@@ -118,40 +122,79 @@ function findDocumentCorners(canvasEl, frameWidth, frameHeight) {
         cv.dilate(edges, edges, kernel);
         contours = new cv.MatVector();
         hierarchy = new cv.Mat();
-        cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+        // RETR_EXTERNAL だとマットや机の内側に置かれた紙の輪郭が候補から漏れるため全輪郭を対象にする
+        cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
 
-        let bestArea = frameWidth * frameHeight * MIN_AREA_RATIO;
+        const frameArea = frameWidth * frameHeight;
         for (let i = 0; i < contours.size(); i++) {
             const contour = contours.get(i);
             const area = cv.contourArea(contour);
-            if (area > bestArea) {
+            if (area > frameArea * MIN_AREA_RATIO && area < frameArea * MAX_AREA_RATIO) {
                 const peri = cv.arcLength(contour, true);
                 const approx = new cv.Mat();
                 cv.approxPolyDP(contour, approx, 0.03 * peri, true);
                 if (approx.rows === 4 && cv.isContourConvex(approx)) {
-                    if (bestApprox) bestApprox.delete();
-                    bestApprox = approx;
-                    bestArea = area;
-                } else {
-                    approx.delete();
+                    const pts = [];
+                    for (let k = 0; k < 4; k++) {
+                        pts.push({ x: approx.data32S[k * 2], y: approx.data32S[k * 2 + 1] });
+                    }
+                    candidates.push({ corners: orderCorners(pts), area });
                 }
+                approx.delete();
             }
             contour.delete();
         }
-
-        if (!bestApprox) return null;
-        const pts = [];
-        for (let i = 0; i < 4; i++) {
-            pts.push({ x: bestApprox.data32S[i * 2], y: bestApprox.data32S[i * 2 + 1] });
-        }
-        return orderCorners(pts);
     } catch (e) {
         return null;
     } finally {
         [src, gray, edges, kernel, hierarchy].forEach((m) => m && m.delete());
         if (contours) contours.delete();
-        if (bestApprox) bestApprox.delete();
     }
+
+    if (candidates.length === 0) return null;
+
+    // 内部の明るさで「紙らしさ」をスコアリング
+    const imageData = canvasEl.getContext('2d').getImageData(0, 0, frameWidth, frameHeight);
+    let best = null;
+    let bestScore = -1;
+    for (const cand of candidates) {
+        const brightness = quadMeanBrightness(imageData, cand.corners, frameWidth);
+        const score = cand.area * Math.pow(brightness / 255, 2);
+        if (score > bestScore) {
+            bestScore = score;
+            best = { ...cand, brightness };
+        }
+    }
+    // 明るさが紙とは思えない場合は不採用（暗いマット等の誤検出防止）
+    if (best.brightness < MIN_PAPER_BRIGHTNESS) return null;
+
+    return best.corners;
+}
+
+/**
+ * 四角形内部の平均輝度（0-255）
+ * 四隅の双一次補間で内部を格子サンプリングする（外周1割は避ける）
+ */
+function quadMeanBrightness(imageData, c, frameWidth) {
+    const { topLeftCorner: tl, topRightCorner: tr, bottomRightCorner: br, bottomLeftCorner: bl } = c;
+    const data = imageData.data;
+    let sum = 0;
+    let count = 0;
+    const N = 12;
+    for (let i = 1; i < N; i++) {
+        for (let j = 1; j < N; j++) {
+            const u = i / N;
+            const v = j / N;
+            const x = Math.round((1 - v) * ((1 - u) * tl.x + u * tr.x) + v * ((1 - u) * bl.x + u * br.x));
+            const y = Math.round((1 - v) * ((1 - u) * tl.y + u * tr.y) + v * ((1 - u) * bl.y + u * br.y));
+            const idx = (y * frameWidth + x) * 4;
+            if (idx >= 0 && idx < data.length) {
+                sum += 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+                count++;
+            }
+        }
+    }
+    return count ? sum / count : 0;
 }
 
 // 4点を左上・右上・右下・左下に並べ替える
@@ -190,10 +233,10 @@ function detectFrame() {
     small.height = detectHeight;
     small.getContext('2d').drawImage(video, 0, 0, DETECT_WIDTH, detectHeight);
 
-    // 1) 自前の四角形検出
+    // 1) 自前の四角形検出（明るさスコアで紙らしい四角形を選ぶ）
     let corners = findDocumentCorners(small, DETECT_WIDTH, detectHeight);
 
-    // 2) フォールバック: jscanifyの最大輪郭方式（面積フィルタ付き）
+    // 2) フォールバック: jscanifyの最大輪郭方式（面積・明るさフィルタ付き）
     if (!corners) {
         let mat = null;
         let contour = null;
@@ -204,7 +247,10 @@ function detectFrame() {
                 const c = scanner.getCornerPoints(contour);
                 if (c && c.topLeftCorner && c.topRightCorner && c.bottomLeftCorner && c.bottomRightCorner
                     && quadArea(c) > DETECT_WIDTH * detectHeight * MIN_AREA_RATIO) {
-                    corners = c;
+                    const imageData = small.getContext('2d').getImageData(0, 0, DETECT_WIDTH, detectHeight);
+                    if (quadMeanBrightness(imageData, c, DETECT_WIDTH) >= MIN_PAPER_BRIGHTNESS) {
+                        corners = c;
+                    }
                 }
             }
         } catch (e) {
