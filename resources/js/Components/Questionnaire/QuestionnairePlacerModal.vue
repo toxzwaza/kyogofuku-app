@@ -2,7 +2,7 @@
 import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Canvas, FabricImage, Rect } from 'fabric';
+import { Canvas, FabricImage } from 'fabric';
 import Modal from '@/Components/Modal.vue';
 import { UiButton } from '@/Components/UI';
 import { Image as ImageIcon, Trash2, X as XIcon, Save } from 'lucide-vue-next';
@@ -86,22 +86,6 @@ async function initCanvas() {
         bg.scaleX = CANVAS_WIDTH / bg.width;
         bg.scaleY = CANVAS_HEIGHT / bg.height;
         fabricCanvas.backgroundImage = bg;
-
-        // 写真添付欄ガイド（点線・合成画像には含めない）
-        const guide = new Rect({
-            left: GUIDE_AREA.left * CANVAS_WIDTH,
-            top: GUIDE_AREA.top * CANVAS_HEIGHT,
-            width: (GUIDE_AREA.right - GUIDE_AREA.left) * CANVAS_WIDTH,
-            height: (GUIDE_AREA.bottom - GUIDE_AREA.top) * CANVAS_HEIGHT,
-            fill: 'transparent',
-            stroke: '#3b82f6',
-            strokeDashArray: [6, 4],
-            strokeWidth: 1.5,
-            selectable: false,
-            evented: false,
-            excludeFromExport: true,
-        });
-        fabricCanvas.add(guide);
 
         // 保存済み配置の復元
         for (const placement of (props.questionnaire.placements || [])) {
@@ -249,8 +233,7 @@ onBeforeUnmount(disposeCanvas);
                 <!-- パレット -->
                 <div class="flex-1 min-w-0 flex flex-col">
                     <p class="text-xs text-brand-text-muted mb-2">
-                        クリックで配置 → ドラッグで移動、四隅ハンドルで拡大縮小・回転。<br>
-                        青い点線が写真添付欄の目安です。
+                        クリックで配置 → ドラッグで移動、四隅ハンドルで拡大縮小・回転。
                     </p>
                     <div class="flex-1 overflow-y-auto max-h-[60vh] grid grid-cols-3 gap-2 content-start">
                         <button
