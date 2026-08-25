@@ -5,7 +5,7 @@ import jscanify from 'jscanify/client';
 import Modal from '@/Components/Modal.vue';
 import { UiButton } from '@/Components/UI';
 import { Camera, RefreshCw, Check, X as XIcon, Move } from 'lucide-vue-next';
-import { loadOpenCv } from './useOpenCv';
+import { loadOpenCv, loadAruco } from './useOpenCv';
 
 const props = defineProps({
     show: { type: Boolean, default: false },
@@ -20,11 +20,18 @@ const OUTPUT_WIDTH = 1240;
 const OUTPUT_HEIGHT = 1754;
 // 検出用の縮小幅
 const DETECT_WIDTH = 640;
+// マーカー検出用の幅（マーカーは小さいので高解像度で検出する）
+const MARKER_DETECT_WIDTH = 1024;
 // 検出対象とみなす面積（フレーム面積に対する比率）
 const MIN_AREA_RATIO = 0.08;
 const MAX_AREA_RATIO = 0.85; // 画面ほぼ全体はマットや机の縁なので除外
 // 紙とみなす最低の平均輝度（0-255）。フォールバック検出で使用
 const MIN_PAPER_BRIGHTNESS = 110;
+// 用紙四隅のArUcoマーカーID（印刷テンプレートと対応）
+const MARKER_GROUPS = [
+    { page: 1, ids: [0, 1, 2, 3] }, // TL, TR, BR, BL
+    { page: 2, ids: [4, 5, 6, 7] },
+];
 // 自動撮影: 四隅の移動量(縮小px)がこの値未満のフレームが連続したら撮影
 const STABLE_DIST_THRESHOLD = 10;
 const STABLE_FRAMES_REQUIRED = 10;
@@ -45,6 +52,7 @@ const manualWrapRef = ref(null);
 let mediaStream = null;
 let detectTimer = null;
 let scanner = null;
+let markerDetector = null;
 let lastCorners = null;
 let capturedFrameCanvas = null; // 手動指定用のフル解像度スナップショット
 
@@ -72,8 +80,9 @@ async function start() {
 
     try {
         detectStatus.value = 'スキャンエンジンを読み込み中…（初回のみ数秒かかります）';
-        await loadOpenCv();
+        await Promise.all([loadOpenCv(), loadAruco()]);
         scanner = scanner || new jscanify();
+        markerDetector = markerDetector || new window.AR.Detector({ dictionaryName: 'ARUCO_MIP_36h12' });
 
         detectStatus.value = 'カメラを起動中…';
         mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -220,6 +229,70 @@ function quadArea(c) {
     return Math.abs(area) / 2;
 }
 
+/**
+ * 四隅のArUcoマーカーで用紙を検出する（最優先の検出方式）
+ * @returns {page, corners, found} または null（4個未満のときはfoundに検出数）
+ */
+function detectByMarkers(imageData) {
+    let markers = [];
+    try {
+        markers = markerDetector.detect(imageData);
+    } catch (e) {
+        return null;
+    }
+
+    let partial = null;
+    for (const group of MARKER_GROUPS) {
+        const found = {};
+        for (const m of markers) {
+            if (group.ids.includes(m.id)) found[m.id] = m;
+        }
+        const count = Object.keys(found).length;
+        if (count === 4) {
+            // 4マーカーの中心の重心から見て、各マーカーの最も外側の角＝用紙の四隅
+            const centers = group.ids.map((id) => markerCenter(found[id]));
+            const cx = centers.reduce((s, c) => s + c.x, 0) / 4;
+            const cy = centers.reduce((s, c) => s + c.y, 0) / 4;
+            const outer = (id) => outermostCorner(found[id], cx, cy);
+            const [tl, tr, br, bl] = group.ids;
+            return {
+                page: group.page,
+                corners: {
+                    topLeftCorner: outer(tl),
+                    topRightCorner: outer(tr),
+                    bottomRightCorner: outer(br),
+                    bottomLeftCorner: outer(bl),
+                },
+            };
+        }
+        if (count > 0 && (!partial || count > partial.found)) {
+            partial = { page: group.page, corners: null, found: count };
+        }
+    }
+    return partial;
+}
+
+function markerCenter(marker) {
+    const c = marker.corners;
+    return {
+        x: (c[0].x + c[1].x + c[2].x + c[3].x) / 4,
+        y: (c[0].y + c[1].y + c[2].y + c[3].y) / 4,
+    };
+}
+
+function outermostCorner(marker, cx, cy) {
+    let best = marker.corners[0];
+    let bestDist = -1;
+    for (const p of marker.corners) {
+        const d = Math.hypot(p.x - cx, p.y - cy);
+        if (d > bestDist) {
+            bestDist = d;
+            best = { x: p.x, y: p.y };
+        }
+    }
+    return best;
+}
+
 function detectFrame() {
     const video = videoRef.value;
     const overlay = overlayRef.value;
@@ -233,11 +306,35 @@ function detectFrame() {
     small.height = detectHeight;
     small.getContext('2d').drawImage(video, 0, 0, DETECT_WIDTH, detectHeight);
 
-    // 1) 自前の四角形検出（明るさスコアで紙らしい四角形を選ぶ）
-    let corners = findDocumentCorners(small, DETECT_WIDTH, detectHeight);
+    // 1) 四隅マーカー検出（最優先・確実。マーカーは小さいため高解像度で検出）
+    let corners = null;
+    let markerHint = '';
+    const mw = Math.min(MARKER_DETECT_WIDTH, video.videoWidth);
+    const mh = Math.round(video.videoHeight * mw / video.videoWidth);
+    const markerCanvas = document.createElement('canvas');
+    markerCanvas.width = mw;
+    markerCanvas.height = mh;
+    markerCanvas.getContext('2d').drawImage(video, 0, 0, mw, mh);
+    const markerImageData = markerCanvas.getContext('2d').getImageData(0, 0, mw, mh);
+    const markerResult = detectByMarkers(markerImageData);
+    if (markerResult?.corners) {
+        // マーカー座標系(mw)→検出座標系(DETECT_WIDTH)へ変換
+        corners = scaleCorners(markerResult.corners, DETECT_WIDTH / mw);
+        if (page.value !== markerResult.page) {
+            page.value = markerResult.page; // 用紙のマーカーからページを自動判定
+        }
+        markerHint = `${markerResult.page}ページ目のマーカーを検出`;
+    } else if (markerResult?.found) {
+        markerHint = `マーカー ${markerResult.found}/4 検出中…四隅すべてが映るようにしてください`;
+    }
 
-    // 2) フォールバック: jscanifyの最大輪郭方式（面積・明るさフィルタ付き）
+    // 2) 自前の四角形検出（明るさスコアで紙らしい四角形を選ぶ）
     if (!corners) {
+        corners = findDocumentCorners(small, DETECT_WIDTH, detectHeight);
+    }
+
+    // 3) フォールバック: jscanifyの最大輪郭方式（面積・明るさフィルタ付き）
+    if (!corners && !markerHint) {
         let mat = null;
         let contour = null;
         try {
@@ -270,7 +367,8 @@ function detectFrame() {
             stableCount.value = 1;
         }
         lastCorners = corners;
-        detectStatus.value = `用紙を検出しました（自動撮影まで ${Math.max(0, STABLE_FRAMES_REQUIRED - stableCount.value)}）`;
+        const label = markerHint || '用紙を検出しました';
+        detectStatus.value = `${label}（自動撮影まで ${Math.max(0, STABLE_FRAMES_REQUIRED - stableCount.value)}）`;
 
         if (stableCount.value >= STABLE_FRAMES_REQUIRED) {
             capture(corners, DETECT_WIDTH);
@@ -278,7 +376,8 @@ function detectFrame() {
     } else {
         stableCount.value = 0;
         lastCorners = null;
-        detectStatus.value = '用紙全体が映るようにかざしてください（検出できない場合は手動シャッター）';
+        detectStatus.value = markerHint
+            || '用紙全体が映るようにかざしてください（検出できない場合は「手動で四隅指定」）';
     }
 }
 
