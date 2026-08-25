@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AttendancePayrollSimulatorController as AdminAtte
 use App\Http\Controllers\Admin\CompanyCalendarController as AdminCompanyCalendarController;
 use App\Http\Controllers\Admin\ConstraintTemplateController as AdminConstraintTemplateController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
+use App\Http\Controllers\Admin\CustomerQuestionnaireController as AdminCustomerQuestionnaireController;
 use App\Http\Controllers\Admin\DeviceRegistrationController as AdminDeviceRegistrationController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\Admin\CustomerLineMessageController;
@@ -345,6 +346,10 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/customers/{customer}/photos/from-media', [AdminCustomerController::class, 'storeCustomerPhotoFromMedia'])->name('customers.photos.from-media');
     Route::post('/customers/{customer}/photos/{photo}/migrate-to-s3', [AdminCustomerController::class, 'migrateCustomerPhotoToS3'])->name('customers.photos.migrate-to-s3');
     Route::delete('/customers/{customer}/photos/{photo}', [AdminCustomerController::class, 'destroyCustomerPhoto'])->name('customers.photos.destroy');
+    Route::get('/customers/{customer}/questionnaire/print', [AdminCustomerQuestionnaireController::class, 'print'])->name('customers.questionnaire.print');
+    Route::post('/customers/{customer}/questionnaire/scans', [AdminCustomerQuestionnaireController::class, 'storeScan'])->name('customers.questionnaire.scans.store');
+    Route::put('/customers/{customer}/questionnaire/placements', [AdminCustomerQuestionnaireController::class, 'updatePlacements'])->name('customers.questionnaire.placements.update');
+    Route::delete('/customers/{customer}/questionnaire/scans/{page}', [AdminCustomerQuestionnaireController::class, 'destroyScan'])->name('customers.questionnaire.scans.destroy');
     Route::post('/customers/{customer}/tags', [AdminCustomerController::class, 'attachTag'])->name('customers.attach-tag');
     Route::delete('/customers/{customer}/tags/{customerTag}', [AdminCustomerController::class, 'detachTag'])->name('customers.detach-tag');
     Route::get('/customers/{customer}/constraints/sign', [AdminCustomerController::class, 'constraintSignForm'])->name('customers.constraints.sign');

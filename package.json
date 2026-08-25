@@ -29,6 +29,7 @@
         "@panzoom/panzoom": "^4.6.1",
         "chart.js": "^4.5.1",
         "fabric": "^6.9.1",
+        "jscanify": "^1.4.3",
         "lucide-vue-next": "^1.0.0",
         "marked": "^17.0.1",
         "qrcode": "^1.5.4",

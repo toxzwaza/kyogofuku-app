@@ -21,6 +21,7 @@ class PhotoTypeSeeder extends Seeder
             ['name' => '半身アップ', 'code' => 'half_body', 'sort_order' => 2],
             ['name' => '商品一覧', 'code' => 'product_list', 'sort_order' => 3],
             ['name' => '成約伝票', 'code' => 'contract_document', 'sort_order' => 4],
+            ['name' => 'アンケート用紙', 'code' => 'questionnaire', 'sort_order' => 5],
             ['name' => 'その他', 'code' => 'other', 'sort_order' => 99],
         ]);
     }
