@@ -30,6 +30,22 @@ const errorMessage = ref('');
 const hasSelection = ref(false);
 
 let fabricCanvas = null;
+let objectUrls = [];
+
+/**
+ * S3署名URLの画像をBlob経由で読み込む。
+ * <img>タグが同じURLをCORSなしで先に読み込むとブラウザキャッシュに
+ * CORSヘッダーなしの応答が残り、crossOrigin付きの読み込みが失敗するため、
+ * cache: 'no-store' でキャッシュを迂回してBlob URLに変換する
+ * （Blob URLは同一オリジン扱いなのでcanvasも汚染されない）
+ */
+async function fetchAsObjectUrl(url) {
+    const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+    if (!res.ok) throw new Error(`画像の取得に失敗しました (${res.status})`);
+    const objectUrl = URL.createObjectURL(await res.blob());
+    objectUrls.push(objectUrl);
+    return objectUrl;
+}
 
 // 配置候補: 顧客写真のうち画像のみ（PDF・アンケートスキャン自体は除外）
 const palettePhotos = computed(() => {
@@ -66,7 +82,7 @@ async function initCanvas() {
 
     try {
         // 背景 = 2ページ目スキャン
-        const bg = await FabricImage.fromURL(props.questionnaire.page2_url, { crossOrigin: 'anonymous' });
+        const bg = await FabricImage.fromURL(await fetchAsObjectUrl(props.questionnaire.page2_url));
         bg.scaleX = CANVAS_WIDTH / bg.width;
         bg.scaleY = CANVAS_HEIGHT / bg.height;
         fabricCanvas.backgroundImage = bg;
@@ -95,13 +111,21 @@ async function initCanvas() {
         }
 
         fabricCanvas.requestRenderAll();
+        // モーダルの開閉アニメーション（scale変形）中に計算した座標オフセットがずれるため再計算
+        setTimeout(() => fabricCanvas && fabricCanvas.calcOffset(), 350);
     } catch (e) {
         errorMessage.value = '画像の読み込みに失敗しました。再度開き直してください。';
     }
 }
 
 async function addPhotoToCanvas(photo, placement = null) {
-    const img = await FabricImage.fromURL(photo.url, { crossOrigin: 'anonymous' });
+    let img;
+    try {
+        img = await FabricImage.fromURL(await fetchAsObjectUrl(photo.url));
+    } catch (e) {
+        errorMessage.value = '写真の読み込みに失敗しました。ページを再読み込みしてお試しください。';
+        return;
+    }
     img.customerPhotoId = photo.id;
 
     if (placement) {
@@ -195,6 +219,8 @@ function disposeCanvas() {
         fabricCanvas.dispose();
         fabricCanvas = null;
     }
+    objectUrls.forEach((u) => URL.revokeObjectURL(u));
+    objectUrls = [];
     hasSelection.value = false;
 }
 
@@ -215,8 +241,8 @@ onBeforeUnmount(disposeCanvas);
             </div>
 
             <div class="flex gap-4">
-                <!-- キャンバス -->
-                <div class="flex-shrink-0 border border-brand-border rounded-lg overflow-hidden bg-brand-surface-2">
+                <!-- キャンバス（touch-none: タブレットでドラッグがスクロールに奪われるのを防ぐ） -->
+                <div class="flex-shrink-0 border border-brand-border rounded-lg overflow-hidden bg-brand-surface-2 touch-none">
                     <canvas ref="canvasElRef"></canvas>
                 </div>
 
