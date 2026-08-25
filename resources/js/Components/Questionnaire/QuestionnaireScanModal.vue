@@ -370,6 +370,8 @@ function manualShutter() {
 }
 
 async function enterManualMode() {
+    if (!capturedFrameCanvas) return;
+    errorMessage.value = '';
     phase.value = 'manual';
     await nextTick();
     // 初期ハンドル位置: 表示領域の10%内側
@@ -540,6 +542,9 @@ onBeforeUnmount(cleanup);
                     <UiButton variant="primary" @click="manualShutter">
                         <Camera :size="16" /> シャッター
                     </UiButton>
+                    <UiButton variant="ghost" @click="capture(null, DETECT_WIDTH)">
+                        <Move :size="16" /> 手動で四隅指定
+                    </UiButton>
                     <UiButton variant="ghost" @click="emit('close')">キャンセル</UiButton>
                 </div>
             </div>
@@ -594,6 +599,9 @@ onBeforeUnmount(cleanup);
                 <div class="flex justify-center gap-3 mt-3">
                     <UiButton variant="primary" :loading="phase === 'uploading'" @click="upload">
                         <Check :size="16" /> {{ pageLabel }}として取り込む
+                    </UiButton>
+                    <UiButton variant="ghost" :disabled="phase === 'uploading'" @click="enterManualMode">
+                        <Move :size="16" /> 範囲を手動調整
                     </UiButton>
                     <UiButton variant="ghost" :disabled="phase === 'uploading'" @click="retake">
                         <RefreshCw :size="16" /> 撮り直す
