@@ -21,7 +21,7 @@ const OUTPUT_HEIGHT = 1754;
 // 検出用の縮小幅
 const DETECT_WIDTH = 640;
 // マーカー検出用の幅（マーカーは小さいので高解像度で検出する）
-const MARKER_DETECT_WIDTH = 1024;
+const MARKER_DETECT_WIDTH = 1600;
 // 検出対象とみなす面積（フレーム面積に対する比率）
 const MIN_AREA_RATIO = 0.08;
 const MAX_AREA_RATIO = 0.85; // 画面ほぼ全体はマットや机の縁なので除外
@@ -40,6 +40,7 @@ const page = ref(props.initialPage);
 const phase = ref('loading'); // loading | detecting | preview | manual | uploading | error
 const errorMessage = ref('');
 const detectStatus = ref('');
+const diagInfo = ref(''); // 診断表示（カメラ解像度・マーカー検出数）
 const stableCount = ref(0);
 
 const videoRef = ref(null);
@@ -257,6 +258,7 @@ function detectByMarkers(imageData) {
             const [tl, tr, br, bl] = group.ids;
             return {
                 page: group.page,
+                markers,
                 corners: {
                     topLeftCorner: outer(tl),
                     topRightCorner: outer(tr),
@@ -266,10 +268,10 @@ function detectByMarkers(imageData) {
             };
         }
         if (count > 0 && (!partial || count > partial.found)) {
-            partial = { page: group.page, corners: null, found: count };
+            partial = { page: group.page, corners: null, found: count, markers };
         }
     }
-    return partial;
+    return partial || { page: null, corners: null, found: 0, markers };
 }
 
 function markerCenter(marker) {
@@ -317,9 +319,10 @@ function detectFrame() {
     markerCanvas.getContext('2d').drawImage(video, 0, 0, mw, mh);
     const markerImageData = markerCanvas.getContext('2d').getImageData(0, 0, mw, mh);
     const markerResult = detectByMarkers(markerImageData);
+    const markerScale = DETECT_WIDTH / mw;
     if (markerResult?.corners) {
         // マーカー座標系(mw)→検出座標系(DETECT_WIDTH)へ変換
-        corners = scaleCorners(markerResult.corners, DETECT_WIDTH / mw);
+        corners = scaleCorners(markerResult.corners, markerScale);
         if (page.value !== markerResult.page) {
             page.value = markerResult.page; // 用紙のマーカーからページを自動判定
         }
@@ -327,6 +330,10 @@ function detectFrame() {
     } else if (markerResult?.found) {
         markerHint = `マーカー ${markerResult.found}/4 検出中…四隅すべてが映るようにしてください`;
     }
+    diagInfo.value = `カメラ ${video.videoWidth}×${video.videoHeight} ／ マーカー検出 ${markerResult?.markers?.length ?? 0}個`;
+    const markerOutlines = (markerResult?.markers ?? []).map((m) =>
+        m.corners.map((p) => ({ x: p.x * markerScale, y: p.y * markerScale }))
+    );
 
     // 2) 自前の四角形検出（明るさスコアで紙らしい四角形を選ぶ）
     if (!corners) {
@@ -358,7 +365,7 @@ function detectFrame() {
         }
     }
 
-    drawOverlay(corners, DETECT_WIDTH, detectHeight);
+    drawOverlay(corners, DETECT_WIDTH, detectHeight, markerOutlines);
 
     if (corners) {
         if (lastCorners && cornersDistance(corners, lastCorners) < STABLE_DIST_THRESHOLD) {
@@ -386,7 +393,7 @@ function cornersDistance(a, b) {
     return keys.reduce((sum, k) => sum + Math.hypot(a[k].x - b[k].x, a[k].y - b[k].y), 0);
 }
 
-function drawOverlay(corners, detectWidth, detectHeight) {
+function drawOverlay(corners, detectWidth, detectHeight, markerOutlines = []) {
     const overlay = overlayRef.value;
     const video = videoRef.value;
     if (!overlay || !video) return;
@@ -398,10 +405,24 @@ function drawOverlay(corners, detectWidth, detectHeight) {
 
     const ctx = overlay.getContext('2d');
     ctx.clearRect(0, 0, overlay.width, overlay.height);
-    if (!corners) return;
 
     const sx = overlay.width / detectWidth;
     const sy = overlay.height / detectHeight;
+
+    // 検出できた個々のマーカーを青枠で表示（診断用・部分検出でも見える）
+    for (const outline of markerOutlines) {
+        ctx.beginPath();
+        outline.forEach((p, i) => {
+            i === 0 ? ctx.moveTo(p.x * sx, p.y * sy) : ctx.lineTo(p.x * sx, p.y * sy);
+        });
+        ctx.closePath();
+        ctx.strokeStyle = 'rgb(59, 130, 246)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    if (!corners) return;
+
     const pts = [corners.topLeftCorner, corners.topRightCorner, corners.bottomRightCorner, corners.bottomLeftCorner];
 
     ctx.beginPath();
@@ -637,6 +658,7 @@ onBeforeUnmount(cleanup);
                     <canvas ref="overlayRef" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
                 </div>
                 <p class="text-sm text-brand-text-muted text-center mt-2">{{ detectStatus }}</p>
+                <p v-if="diagInfo" class="text-[10px] text-brand-text-muted/70 text-center mt-0.5">{{ diagInfo }}</p>
                 <div class="flex justify-center gap-3 mt-3">
                     <UiButton variant="primary" @click="manualShutter">
                         <Camera :size="16" /> シャッター
