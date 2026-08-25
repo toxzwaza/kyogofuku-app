@@ -28,10 +28,11 @@
     .page {
       margin: 0;
       box-shadow: none;
-      page-break-after: always;
+      /* 297mmちょうどだと環境によって丸め誤差で溢れて空白ページが出るため僅かに縮める */
+      height: 296.5mm;
     }
-    /* last-child だと末尾の script タグに阻まれて効かないため last-of-type を使う */
-    .page:last-of-type { page-break-after: auto; }
+    /* 改ページは「2ページ目以降の前」にのみ入れる（末尾の改ページによる白紙ページを防ぐ） */
+    .page + .page { page-break-before: always; }
   }
 
   /* ===== 共通パーツ ===== */

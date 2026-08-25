@@ -19,10 +19,12 @@ const emit = defineEmits(['close']);
 const OUTPUT_WIDTH = 1240;
 const OUTPUT_HEIGHT = 1754;
 // 検出用の縮小幅
-const DETECT_WIDTH = 480;
+const DETECT_WIDTH = 640;
+// 検出対象とみなす最小面積（フレーム面積に対する比率）
+const MIN_AREA_RATIO = 0.12;
 // 自動撮影: 四隅の移動量(縮小px)がこの値未満のフレームが連続したら撮影
-const STABLE_DIST_THRESHOLD = 8;
-const STABLE_FRAMES_REQUIRED = 12;
+const STABLE_DIST_THRESHOLD = 10;
+const STABLE_FRAMES_REQUIRED = 10;
 
 const page = ref(props.initialPage);
 const phase = ref('loading'); // loading | detecting | preview | manual | uploading | error
@@ -96,6 +98,85 @@ async function start() {
     }
 }
 
+/**
+ * 用紙の四隅を検出する（自前パイプライン）
+ * グレースケール → ぼかし → Canny → 膨張 → 輪郭抽出 → 凸四角形近似
+ * jscanify標準の「最大輪郭」方式より照明・背景条件に強い。
+ */
+function findDocumentCorners(canvasEl, frameWidth, frameHeight) {
+    const cv = window.cv;
+    let src = null, gray = null, edges = null, kernel = null, contours = null, hierarchy = null;
+    let bestApprox = null;
+    try {
+        src = cv.imread(canvasEl);
+        gray = new cv.Mat();
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+        cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
+        edges = new cv.Mat();
+        cv.Canny(gray, edges, 50, 150);
+        kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+        cv.dilate(edges, edges, kernel);
+        contours = new cv.MatVector();
+        hierarchy = new cv.Mat();
+        cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+        let bestArea = frameWidth * frameHeight * MIN_AREA_RATIO;
+        for (let i = 0; i < contours.size(); i++) {
+            const contour = contours.get(i);
+            const area = cv.contourArea(contour);
+            if (area > bestArea) {
+                const peri = cv.arcLength(contour, true);
+                const approx = new cv.Mat();
+                cv.approxPolyDP(contour, approx, 0.03 * peri, true);
+                if (approx.rows === 4 && cv.isContourConvex(approx)) {
+                    if (bestApprox) bestApprox.delete();
+                    bestApprox = approx;
+                    bestArea = area;
+                } else {
+                    approx.delete();
+                }
+            }
+            contour.delete();
+        }
+
+        if (!bestApprox) return null;
+        const pts = [];
+        for (let i = 0; i < 4; i++) {
+            pts.push({ x: bestApprox.data32S[i * 2], y: bestApprox.data32S[i * 2 + 1] });
+        }
+        return orderCorners(pts);
+    } catch (e) {
+        return null;
+    } finally {
+        [src, gray, edges, kernel, hierarchy].forEach((m) => m && m.delete());
+        if (contours) contours.delete();
+        if (bestApprox) bestApprox.delete();
+    }
+}
+
+// 4点を左上・右上・右下・左下に並べ替える
+function orderCorners(pts) {
+    const bySum = [...pts].sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    const byDiff = [...pts].sort((a, b) => (a.x - a.y) - (b.x - b.y));
+    return {
+        topLeftCorner: bySum[0],
+        bottomRightCorner: bySum[3],
+        bottomLeftCorner: byDiff[0],
+        topRightCorner: byDiff[3],
+    };
+}
+
+// 四角形の面積（靴ひも公式）
+function quadArea(c) {
+    const p = [c.topLeftCorner, c.topRightCorner, c.bottomRightCorner, c.bottomLeftCorner];
+    let area = 0;
+    for (let i = 0; i < 4; i++) {
+        const j = (i + 1) % 4;
+        area += p[i].x * p[j].y - p[j].x * p[i].y;
+    }
+    return Math.abs(area) / 2;
+}
+
 function detectFrame() {
     const video = videoRef.value;
     const overlay = overlayRef.value;
@@ -109,23 +190,29 @@ function detectFrame() {
     small.height = detectHeight;
     small.getContext('2d').drawImage(video, 0, 0, DETECT_WIDTH, detectHeight);
 
-    let corners = null;
-    let mat = null;
-    let contour = null;
-    try {
-        mat = window.cv.imread(small);
-        contour = scanner.findPaperContour(mat);
-        if (contour) {
-            const c = scanner.getCornerPoints(contour);
-            if (c && c.topLeftCorner && c.topRightCorner && c.bottomLeftCorner && c.bottomRightCorner) {
-                corners = c;
+    // 1) 自前の四角形検出
+    let corners = findDocumentCorners(small, DETECT_WIDTH, detectHeight);
+
+    // 2) フォールバック: jscanifyの最大輪郭方式（面積フィルタ付き）
+    if (!corners) {
+        let mat = null;
+        let contour = null;
+        try {
+            mat = window.cv.imread(small);
+            contour = scanner.findPaperContour(mat);
+            if (contour) {
+                const c = scanner.getCornerPoints(contour);
+                if (c && c.topLeftCorner && c.topRightCorner && c.bottomLeftCorner && c.bottomRightCorner
+                    && quadArea(c) > DETECT_WIDTH * detectHeight * MIN_AREA_RATIO) {
+                    corners = c;
+                }
             }
+        } catch (e) {
+            // 検出エラーは次フレームで再試行
+        } finally {
+            if (contour) contour.delete();
+            if (mat) mat.delete();
         }
-    } catch (e) {
-        // 検出エラーは次フレームで再試行
-    } finally {
-        if (contour) contour.delete();
-        if (mat) mat.delete();
     }
 
     drawOverlay(corners, DETECT_WIDTH, detectHeight);
