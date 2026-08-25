@@ -32,6 +32,14 @@ function openScan(page) {
     showScanModal.value = true;
 }
 
+// タイルに表示する画像URL（2ページ目は写真合成済みを優先）
+function pageDisplayUrl(page) {
+    if (page === 2 && props.questionnaire?.composed_page2_url) {
+        return props.questionnaire.composed_page2_url;
+    }
+    return props.questionnaire?.[`page${page}_url`];
+}
+
 function deleteScan(page) {
     if (!confirm(`アンケート${page}ページ目のスキャンを削除しますか？`)) return;
     router.delete(
@@ -76,18 +84,27 @@ function deleteScan(page) {
                     <UiBadge v-else variant="neutral">未取込</UiBadge>
                 </div>
                 <template v-if="questionnaire?.[`page${page}_url`]">
+                    <!-- 2ページ目は写真合成済みならその画像を表示する -->
                     <img
-                        :src="questionnaire[`page${page}_url`]"
+                        :src="pageDisplayUrl(page)"
                         class="w-full h-36 object-contain bg-brand-surface-2 rounded cursor-pointer"
                         :alt="`アンケート${page}ページ目`"
-                        @click="previewUrl = questionnaire[`page${page}_url`]"
+                        @click="previewUrl = pageDisplayUrl(page)"
                     >
-                    <div class="flex gap-2 mt-2">
+                    <div class="flex flex-wrap gap-2 mt-2">
                         <UiButton variant="ghost" size="sm" @click="openScan(page)">
                             <Camera :size="13" /> 差し替え
                         </UiButton>
                         <UiButton variant="ghost" size="sm" @click="deleteScan(page)">
                             <Trash2 :size="13" /> 削除
+                        </UiButton>
+                        <UiButton
+                            v-if="page === 2"
+                            variant="primary"
+                            size="sm"
+                            @click="showPlacerModal = true"
+                        >
+                            <ImageIcon :size="13" /> 写真を配置する
                         </UiButton>
                     </div>
                 </template>
@@ -101,34 +118,6 @@ function deleteScan(page) {
                     </button>
                 </template>
             </div>
-        </div>
-
-        <!-- 写真添付欄 -->
-        <div class="border-t border-brand-border pt-3">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-brand-text flex items-center gap-1.5">
-                    <ImageIcon :size="14" class="text-brand-primary" /> 写真添付欄（2ページ目）
-                </span>
-                <UiButton
-                    variant="primary"
-                    size="sm"
-                    :disabled="!questionnaire?.page2_url"
-                    @click="showPlacerModal = true"
-                >
-                    <ImageIcon :size="13" /> 写真を配置する
-                </UiButton>
-            </div>
-            <p v-if="!questionnaire?.page2_url" class="text-xs text-brand-text-muted">
-                2ページ目のスキャンを取り込むと、登録済みの顧客写真を写真添付欄に配置できます。
-            </p>
-            <img
-                v-else-if="questionnaire?.composed_page2_url"
-                :src="questionnaire.composed_page2_url"
-                class="w-full max-w-xs h-44 object-contain bg-brand-surface-2 rounded cursor-pointer"
-                alt="写真配置済み2ページ目"
-                @click="previewUrl = questionnaire.composed_page2_url"
-            >
-            <p v-else class="text-xs text-brand-text-muted">写真はまだ配置されていません。</p>
         </div>
 
         <!-- 拡大プレビュー -->
