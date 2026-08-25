@@ -30,7 +30,8 @@
       box-shadow: none;
       page-break-after: always;
     }
-    .page:last-child { page-break-after: auto; }
+    /* last-child だと末尾の script タグに阻まれて効かないため last-of-type を使う */
+    .page:last-of-type { page-break-after: auto; }
   }
 
   /* ===== 共通パーツ ===== */
