@@ -89,8 +89,8 @@ async function start() {
         await Promise.all([loadOpenCv(), loadAruco()]);
         scanner = scanner || new jscanify();
         // maxHammingDistance: 辞書デフォルト(tau=12)は緩すぎて表の枠線等を誤検出するため厳格化。
-        // 検出後にID 0-7へ絞り込むため、4ビットまで許容しても誤検出は実質起きない
-        markerDetector = markerDetector || new window.AR.Detector({ dictionaryName: 'ARUCO_MIP_36h12', maxHammingDistance: 4 });
+        // 検出後にID 0-7へ絞り込み＋四隅の位置関係チェックがあるため、6ビットまで許容しても実害はない
+        markerDetector = markerDetector || new window.AR.Detector({ dictionaryName: 'ARUCO_MIP_36h12', maxHammingDistance: 6 });
 
         detectStatus.value = 'カメラを起動中…';
         mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -263,28 +263,41 @@ function detectByMarkers(imageData) {
     for (const group of MARKER_GROUPS) {
         const found = group.ids.filter((id) => markerCache[id]);
         if (found.length === 4) {
-            // 4マーカーの中心の重心から見て、各マーカーの最も外側の角＝用紙の四隅
             const centers = group.ids.map((id) => markerCenter(markerCache[id]));
-            const cx = centers.reduce((s, c) => s + c.x, 0) / 4;
-            const cy = centers.reduce((s, c) => s + c.y, 0) / 4;
-            const outer = (id) => outermostCorner(markerCache[id], cx, cy);
-            const [tl, tr, br, bl] = group.ids;
-            return {
-                page: group.page,
-                markers,
-                corners: {
-                    topLeftCorner: outer(tl),
-                    topRightCorner: outer(tr),
-                    bottomRightCorner: outer(br),
-                    bottomLeftCorner: outer(bl),
-                },
-            };
+            // 位置関係の妥当性: TL→TR→BR→BLが時計回りに並んでいること（誤ID混入を排除）
+            if (signedQuadArea(centers) > 0) {
+                // 4マーカーの中心の重心から見て、各マーカーの最も外側の角＝用紙の四隅
+                const cx = centers.reduce((s, c) => s + c.x, 0) / 4;
+                const cy = centers.reduce((s, c) => s + c.y, 0) / 4;
+                const outer = (id) => outermostCorner(markerCache[id], cx, cy);
+                const [tl, tr, br, bl] = group.ids;
+                return {
+                    page: group.page,
+                    markers,
+                    corners: {
+                        topLeftCorner: outer(tl),
+                        topRightCorner: outer(tr),
+                        bottomRightCorner: outer(br),
+                        bottomLeftCorner: outer(bl),
+                    },
+                };
+            }
         }
         if (found.length > 0 && (!partial || found.length > partial.found)) {
             partial = { page: group.page, corners: null, found: found.length, markers };
         }
     }
     return partial || { page: null, corners: null, found: 0, markers };
+}
+
+// 4点（TL→TR→BR→BL順）の符号付き面積。画面座標系で時計回りなら正
+function signedQuadArea(p) {
+    let area = 0;
+    for (let i = 0; i < 4; i++) {
+        const j = (i + 1) % 4;
+        area += p[i].x * p[j].y - p[j].x * p[i].y;
+    }
+    return area / 2;
 }
 
 function markerCenter(marker) {
