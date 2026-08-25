@@ -22,6 +22,7 @@ use App\Models\Plan;
 use App\Models\Referral;
 use App\Models\Shop;
 use App\Models\User;
+use App\Services\CustomerPhotoStorageService;
 use App\Services\Line\ReservationLineContactMigrator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -31,9 +32,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
-use Intervention\Image\Drivers\Gd\Driver as GdDriver;
-use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
-use Intervention\Image\ImageManager;
 
 class CustomerController extends Controller
 {
@@ -566,8 +564,30 @@ class CustomerController extends Controller
         // 被紹介者として「誰から紹介されたか」（詳細情報タブ・お友達紹介ブロック用）
         $referredBy = $this->resolveReferredBy($customer);
 
+        // 振袖アンケート（スキャン・写真添付欄）
+        $questionnaireModel = $customer->questionnaire()->first();
+        $questionnaire = null;
+        if ($questionnaireModel) {
+            $s3Url = function (?string $path) {
+                return $path
+                    ? Storage::disk('s3_private')->temporaryUrl(str_replace('\\', '/', $path), now()->addMinutes(60))
+                    : null;
+            };
+            $page1 = $questionnaireModel->page1Photo;
+            $page2 = $questionnaireModel->page2Photo;
+            $questionnaire = [
+                'page1_photo_id' => $questionnaireModel->page1_photo_id,
+                'page2_photo_id' => $questionnaireModel->page2_photo_id,
+                'page1_url' => $s3Url($page1?->file_path),
+                'page2_url' => $s3Url($page2?->file_path),
+                'placements' => $questionnaireModel->placements,
+                'composed_page2_url' => $s3Url($questionnaireModel->composed_page2_path),
+            ];
+        }
+
         return Inertia::render($this->viewFor('Admin/Customer/Show'), [
             'customer' => $customerForInertia,
+            'questionnaire' => $questionnaire,
             'referral' => $referralSummary,
             'referredBy' => $referredBy,
             'distributableCoupons' => $distributableCoupons,
@@ -1311,23 +1331,7 @@ class CustomerController extends Controller
      */
     private function createImageManager()
     {
-        if (extension_loaded('gd') && function_exists('imagecreatetruecolor')) {
-            try {
-                return new ImageManager(new GdDriver);
-            } catch (\Exception $e) {
-                Log::warning('GDドライバーの初期化に失敗: '.$e->getMessage());
-            }
-        }
-        if (extension_loaded('imagick')) {
-            try {
-                return new ImageManager(new ImagickDriver);
-            } catch (\Exception $e) {
-                Log::warning('Imagickドライバーの初期化に失敗: '.$e->getMessage());
-            }
-        }
-        Log::warning('画像処理ドライバー（GD/Imagick）が利用できません。');
-
-        return null;
+        return app(CustomerPhotoStorageService::class)->createImageManager();
     }
 
     /**
@@ -1337,24 +1341,7 @@ class CustomerController extends Controller
      */
     private function convertUploadToWebpAndPutS3Private($uploadedFile, int $customerId, $manager)
     {
-        if (! $manager) {
-            return null;
-        }
-        try {
-            $webpPath = 'customers/'.$customerId.'/'.Str::random(40).'.webp';
-            $image = $manager->read($uploadedFile->getRealPath());
-            $tmpPath = tempnam(sys_get_temp_dir(), 'webp');
-            $image->toWebp(80)->save($tmpPath);
-            $content = file_get_contents($tmpPath);
-            @unlink($tmpPath);
-            Storage::disk('s3_private')->put($webpPath, $content);
-
-            return $webpPath;
-        } catch (\Exception $e) {
-            Log::error('WebP変換エラー (S3 customers/'.$customerId.'): '.$e->getMessage());
-
-            return null;
-        }
+        return app(CustomerPhotoStorageService::class)->convertUploadToWebpAndPutS3Private($uploadedFile, $customerId, $manager);
     }
 
     /**
@@ -1365,16 +1352,7 @@ class CustomerController extends Controller
      */
     private function putUploadToS3Private($uploadedFile, int $customerId, string $ext): ?string
     {
-        try {
-            $path = 'customers/'.$customerId.'/'.Str::random(40).'.'.$ext;
-            Storage::disk('s3_private')->put($path, file_get_contents($uploadedFile->getRealPath()));
-
-            return $path;
-        } catch (\Exception $e) {
-            Log::error('ファイル保存エラー (S3 customers/'.$customerId.'): '.$e->getMessage());
-
-            return null;
-        }
+        return app(CustomerPhotoStorageService::class)->putUploadToS3Private($uploadedFile, $customerId, $ext);
     }
 
     /**

@@ -743,6 +743,9 @@
                         </div>
                 </UiCard>
 
+                <!-- 振袖アンケート -->
+                <QuestionnaireBlock :customer="customer" :questionnaire="questionnaire" />
+
                 <!-- 顧客写真 -->
                 <UiCard variant="default" padding="lg">
                     <template #header>
@@ -2601,11 +2604,16 @@ import axios from 'axios';
 import { Canvas, FabricImage, PencilBrush } from 'fabric';
 import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue';
 import CustomerLineSection from '@/Components/Admin/CustomerLineSection.vue';
+import QuestionnaireBlock from '@/Components/Questionnaire/QuestionnaireBlock.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     customer: Object,
+    questionnaire: {
+        type: Object,
+        default: null,
+    },
     referral: {
         type: Object,
         default: () => ({}),

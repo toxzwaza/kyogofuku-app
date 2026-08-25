@@ -99,6 +99,11 @@ class Customer extends Model
         return $this->hasMany(CustomerPhoto::class);
     }
 
+    public function questionnaire()
+    {
+        return $this->hasOne(CustomerQuestionnaire::class);
+    }
+
     public function photoSlots()
     {
         return $this->hasMany(PhotoSlot::class);
