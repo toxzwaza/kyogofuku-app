@@ -56,6 +56,10 @@ let scanner = null;
 let markerDetector = null;
 let lastCorners = null;
 let capturedFrameCanvas = null; // 手動指定用のフル解像度スナップショット
+// 直近に検出したマーカーの記憶（id → {corners, time}）。
+// 4個が同一フレームで同時に写る必要をなくし、チラつきに強くする
+let markerCache = {};
+const MARKER_CACHE_MS = 1200;
 
 // 手動四隅指定のハンドル位置（表示px）
 const manualHandles = ref([]);
@@ -78,12 +82,15 @@ async function start() {
     previewImgSrc.value = '';
     stableCount.value = 0;
     lastCorners = null;
+    markerCache = {};
 
     try {
         detectStatus.value = 'スキャンエンジンを読み込み中…（初回のみ数秒かかります）';
         await Promise.all([loadOpenCv(), loadAruco()]);
         scanner = scanner || new jscanify();
-        markerDetector = markerDetector || new window.AR.Detector({ dictionaryName: 'ARUCO_MIP_36h12' });
+        // maxHammingDistance: 辞書デフォルト(tau=12)は緩すぎて表の枠線等を誤検出するため厳格化。
+        // 検出後にID 0-7へ絞り込むため、4ビットまで許容しても誤検出は実質起きない
+        markerDetector = markerDetector || new window.AR.Detector({ dictionaryName: 'ARUCO_MIP_36h12', maxHammingDistance: 4 });
 
         detectStatus.value = 'カメラを起動中…';
         mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -235,26 +242,32 @@ function quadArea(c) {
  * @returns {page, corners, found} または null（4個未満のときはfoundに検出数）
  */
 function detectByMarkers(imageData) {
-    let markers = [];
+    let raw = [];
     try {
-        markers = markerDetector.detect(imageData);
+        raw = markerDetector.detect(imageData);
     } catch (e) {
         return null;
     }
 
+    // 対象IDのみ採用し、直近検出キャッシュを更新
+    const now = performance.now();
+    const markers = raw.filter((m) => m.id >= 0 && m.id <= 7);
+    for (const m of markers) {
+        markerCache[m.id] = { corners: m.corners.map((p) => ({ x: p.x, y: p.y })), time: now };
+    }
+    for (const id of Object.keys(markerCache)) {
+        if (now - markerCache[id].time > MARKER_CACHE_MS) delete markerCache[id];
+    }
+
     let partial = null;
     for (const group of MARKER_GROUPS) {
-        const found = {};
-        for (const m of markers) {
-            if (group.ids.includes(m.id)) found[m.id] = m;
-        }
-        const count = Object.keys(found).length;
-        if (count === 4) {
+        const found = group.ids.filter((id) => markerCache[id]);
+        if (found.length === 4) {
             // 4マーカーの中心の重心から見て、各マーカーの最も外側の角＝用紙の四隅
-            const centers = group.ids.map((id) => markerCenter(found[id]));
+            const centers = group.ids.map((id) => markerCenter(markerCache[id]));
             const cx = centers.reduce((s, c) => s + c.x, 0) / 4;
             const cy = centers.reduce((s, c) => s + c.y, 0) / 4;
-            const outer = (id) => outermostCorner(found[id], cx, cy);
+            const outer = (id) => outermostCorner(markerCache[id], cx, cy);
             const [tl, tr, br, bl] = group.ids;
             return {
                 page: group.page,
@@ -267,8 +280,8 @@ function detectByMarkers(imageData) {
                 },
             };
         }
-        if (count > 0 && (!partial || count > partial.found)) {
-            partial = { page: group.page, corners: null, found: count, markers };
+        if (found.length > 0 && (!partial || found.length > partial.found)) {
+            partial = { page: group.page, corners: null, found: found.length, markers };
         }
     }
     return partial || { page: null, corners: null, found: 0, markers };
@@ -336,7 +349,9 @@ function detectFrame() {
     );
 
     // 2) 自前の四角形検出（明るさスコアで紙らしい四角形を選ぶ）
-    if (!corners) {
+    // マーカーが1個でも見えている場合はマーカー付き用紙なので、輪郭検出による
+    // 誤った範囲（表の枠など）での自動撮影を避け、4隅そろうのを待つ
+    if (!corners && !markerHint) {
         corners = findDocumentCorners(small, DETECT_WIDTH, detectHeight);
     }
 
@@ -556,6 +571,7 @@ async function retake() {
     capturedFrameCanvas = null;
     stableCount.value = 0;
     lastCorners = null;
+    markerCache = {};
     phase.value = 'detecting';
     await nextTick();
     // カメラが生きていれば再開、切れていれば再起動
