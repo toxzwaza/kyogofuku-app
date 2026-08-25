@@ -98,7 +98,9 @@ async function initCanvas() {
         fabricCanvas.backgroundImage = bg;
 
         // 保存済み配置の復元（写真・テキスト）
-        for (const placement of (props.questionnaire.placements || [])) {
+        // 既存データは数値が文字列で保存されている場合があるため必ず数値化して扱う
+        for (const raw of (props.questionnaire.placements || [])) {
+            const placement = normalizePlacement(raw);
             if ((placement.type ?? 'photo') === 'text') {
                 addTextToCanvas(placement);
                 continue;
@@ -172,6 +174,18 @@ function addTextToCanvas(placement = null) {
         fabricCanvas.setActiveObject(text);
     }
     fabricCanvas.requestRenderAll();
+}
+
+// 保存済み配置の数値項目を数値化する（FormData経由で文字列化された既存データ対策）
+function normalizePlacement(raw) {
+    const p = { ...raw };
+    for (const key of ['left', 'top', 'angle', 'scale', 'scale_x', 'scale_y', 'font_size', 'width']) {
+        if (p[key] !== undefined && p[key] !== null) p[key] = Number(p[key]);
+    }
+    if (p.customer_photo_id !== undefined && p.customer_photo_id !== null) {
+        p.customer_photo_id = Number(p.customer_photo_id);
+    }
+    return p;
 }
 
 function removeSelected() {

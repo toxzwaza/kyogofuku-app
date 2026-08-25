@@ -170,9 +170,23 @@ class CustomerQuestionnaireController extends Controller
             return response()->json(['message' => '合成画像の保存に失敗しました。'], 500);
         }
 
+        // FormData経由の値はすべて文字列になるため、数値項目を正規化して保存する
+        // （文字列のままだとフロント復元時のID照合が厳密比較で失敗する）
+        $normalized = collect($placements)->map(function ($p) {
+            foreach (['left', 'top', 'angle', 'scale', 'scale_x', 'scale_y', 'font_size', 'width'] as $key) {
+                if (isset($p[$key])) {
+                    $p[$key] = (float) $p[$key];
+                }
+            }
+            if (isset($p['customer_photo_id'])) {
+                $p['customer_photo_id'] = (int) $p['customer_photo_id'];
+            }
+            return $p;
+        })->values()->all();
+
         $oldComposedPath = $questionnaire->composed_page2_path;
         $questionnaire->update([
-            'placements' => $placements,
+            'placements' => $normalized,
             'composed_page2_path' => $storedPath,
         ]);
         if ($oldComposedPath) {
