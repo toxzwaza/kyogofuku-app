@@ -119,11 +119,17 @@ class CustomerQuestionnaireController extends Controller
     {
         $validated = $request->validate([
             'placements' => 'nullable|array',
-            'placements.*.customer_photo_id' => 'required|integer',
+            'placements.*.type' => 'nullable|in:photo,text',
+            'placements.*.customer_photo_id' => 'nullable|integer',
+            'placements.*.text' => 'nullable|string|max:500',
             'placements.*.left' => 'required|numeric',
             'placements.*.top' => 'required|numeric',
-            'placements.*.scale' => 'required|numeric',
             'placements.*.angle' => 'required|numeric',
+            'placements.*.scale' => 'nullable|numeric',
+            'placements.*.scale_x' => 'nullable|numeric',
+            'placements.*.scale_y' => 'nullable|numeric',
+            'placements.*.font_size' => 'nullable|numeric',
+            'placements.*.width' => 'nullable|numeric',
             'composed_image' => 'required|file|mimes:jpeg,png,jpg,webp|max:20480',
         ]);
 
@@ -132,9 +138,21 @@ class CustomerQuestionnaireController extends Controller
             return response()->json(['message' => '先に2ページ目のスキャンを取り込んでください。'], 422);
         }
 
-        // 配置写真がすべて当該顧客のものであることを確認
         $placements = $validated['placements'] ?? [];
-        $photoIds = collect($placements)->pluck('customer_photo_id')->unique()->values();
+        foreach ($placements as $item) {
+            $type = $item['type'] ?? 'photo';
+            if ($type === 'photo' && empty($item['customer_photo_id'])) {
+                return response()->json(['message' => '配置データが不正です。'], 422);
+            }
+            if ($type === 'text' && trim($item['text'] ?? '') === '') {
+                return response()->json(['message' => 'テキストが空の配置が含まれています。'], 422);
+            }
+        }
+
+        // 配置写真がすべて当該顧客のものであることを確認
+        $photoIds = collect($placements)
+            ->filter(fn ($p) => ($p['type'] ?? 'photo') === 'photo')
+            ->pluck('customer_photo_id')->unique()->values();
         if ($photoIds->isNotEmpty()) {
             $ownedCount = CustomerPhoto::where('customer_id', $customer->id)
                 ->whereIn('id', $photoIds)->count();

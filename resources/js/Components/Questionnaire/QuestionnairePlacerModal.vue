@@ -2,10 +2,10 @@
 import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Canvas, FabricImage } from 'fabric';
+import { Canvas, FabricImage, Textbox } from 'fabric';
 import Modal from '@/Components/Modal.vue';
 import { UiButton } from '@/Components/UI';
-import { Image as ImageIcon, Trash2, X as XIcon, Save } from 'lucide-vue-next';
+import { Image as ImageIcon, Trash2, X as XIcon, Save, Type as TypeIcon, RotateCcw } from 'lucide-vue-next';
 
 const props = defineProps({
     show: { type: Boolean, default: false },
@@ -23,6 +23,16 @@ const EXPORT_MULTIPLIER = 1240 / CANVAS_WIDTH;
 
 // 写真添付欄のガイド領域（用紙比率。print.blade.php のレイアウトから算出）
 const GUIDE_AREA = { left: 0.057, top: 0.18, right: 0.943, bottom: 0.85 };
+
+// 選択枠・ハンドルのスタイル（背景のスキャン上でも見やすい赤）
+const SELECTION_STYLE = {
+    borderColor: '#ef4444',
+    cornerColor: '#ef4444',
+    cornerStrokeColor: '#ffffff',
+    cornerSize: 12,
+    transparentCorners: false,
+    borderScaleFactor: 2,
+};
 
 const canvasElRef = ref(null);
 const saving = ref(false);
@@ -87,8 +97,12 @@ async function initCanvas() {
         bg.scaleY = CANVAS_HEIGHT / bg.height;
         fabricCanvas.backgroundImage = bg;
 
-        // 保存済み配置の復元
+        // 保存済み配置の復元（写真・テキスト）
         for (const placement of (props.questionnaire.placements || [])) {
+            if ((placement.type ?? 'photo') === 'text') {
+                addTextToCanvas(placement);
+                continue;
+            }
             const photo = (props.customer.photos || []).find((p) => p.id === placement.customer_photo_id);
             if (!photo?.url) continue;
             await addPhotoToCanvas(photo, placement);
@@ -128,31 +142,82 @@ async function addPhotoToCanvas(photo, placement = null) {
             top: GUIDE_AREA.top * CANVAS_HEIGHT + 12 + (fabricCanvas.getObjects().length * 16) % 80,
         });
     }
+    img.set(SELECTION_STYLE);
 
     fabricCanvas.add(img);
     fabricCanvas.setActiveObject(img);
     fabricCanvas.requestRenderAll();
 }
 
+/**
+ * テキストを追加（placement指定時は保存済みの復元）
+ * ダブルクリック（ダブルタップ）で内容を編集できる
+ */
+function addTextToCanvas(placement = null) {
+    const text = new Textbox(placement?.text ?? 'テキストを入力', {
+        left: placement ? placement.left * CANVAS_WIDTH : GUIDE_AREA.left * CANVAS_WIDTH + 20,
+        top: placement ? placement.top * CANVAS_HEIGHT : GUIDE_AREA.top * CANVAS_HEIGHT + 20,
+        angle: placement?.angle ?? 0,
+        fontSize: (placement?.font_size ?? 24 / CANVAS_WIDTH) * CANVAS_WIDTH,
+        width: (placement?.width ?? 200 / CANVAS_WIDTH) * CANVAS_WIDTH,
+        scaleX: placement?.scale_x ?? 1,
+        scaleY: placement?.scale_y ?? 1,
+        fill: '#111111',
+        fontFamily: 'sans-serif',
+        ...SELECTION_STYLE,
+    });
+    text.isPlacedText = true;
+    fabricCanvas.add(text);
+    if (!placement) {
+        fabricCanvas.setActiveObject(text);
+    }
+    fabricCanvas.requestRenderAll();
+}
+
 function removeSelected() {
     const active = fabricCanvas?.getActiveObject();
-    if (active && active.customerPhotoId) {
+    if (active && (active.customerPhotoId || active.isPlacedText)) {
         fabricCanvas.remove(active);
         fabricCanvas.discardActiveObject();
         fabricCanvas.requestRenderAll();
     }
 }
 
+// 配置をすべて消してまっさらな状態から編集し直す
+function resetPlacements() {
+    if (!fabricCanvas) return;
+    if (!confirm('配置した写真・テキストをすべて消してやり直しますか？')) return;
+    fabricCanvas.remove(...fabricCanvas.getObjects());
+    fabricCanvas.discardActiveObject();
+    fabricCanvas.requestRenderAll();
+}
+
 function collectPlacements() {
     return fabricCanvas.getObjects()
-        .filter((o) => o.customerPhotoId)
-        .map((o) => ({
-            customer_photo_id: o.customerPhotoId,
-            left: o.left / CANVAS_WIDTH,
-            top: o.top / CANVAS_HEIGHT,
-            scale: (o.scaleX * o.width) / CANVAS_WIDTH, // 用紙幅に対する表示幅の比率
-            angle: o.angle || 0,
-        }));
+        .filter((o) => o.customerPhotoId || o.isPlacedText)
+        .map((o) => {
+            if (o.isPlacedText) {
+                return {
+                    type: 'text',
+                    text: o.text,
+                    left: o.left / CANVAS_WIDTH,
+                    top: o.top / CANVAS_HEIGHT,
+                    angle: o.angle || 0,
+                    font_size: o.fontSize / CANVAS_WIDTH,
+                    width: o.width / CANVAS_WIDTH,
+                    scale_x: o.scaleX,
+                    scale_y: o.scaleY,
+                };
+            }
+            return {
+                type: 'photo',
+                customer_photo_id: o.customerPhotoId,
+                left: o.left / CANVAS_WIDTH,
+                top: o.top / CANVAS_HEIGHT,
+                scale: (o.scaleX * o.width) / CANVAS_WIDTH, // 用紙幅に対する表示幅の比率
+                angle: o.angle || 0,
+            };
+        });
 }
 
 async function save() {
@@ -173,13 +238,14 @@ async function save() {
 
         const fd = new FormData();
         fd.append('_method', 'PUT');
-        const placements = collectPlacements();
+        const placements = collectPlacements()
+            .filter((p) => p.type !== 'text' || p.text.trim() !== '');
         placements.forEach((p, i) => {
-            fd.append(`placements[${i}][customer_photo_id]`, p.customer_photo_id);
-            fd.append(`placements[${i}][left]`, p.left);
-            fd.append(`placements[${i}][top]`, p.top);
-            fd.append(`placements[${i}][scale]`, p.scale);
-            fd.append(`placements[${i}][angle]`, p.angle);
+            for (const [key, value] of Object.entries(p)) {
+                if (value !== undefined && value !== null) {
+                    fd.append(`placements[${i}][${key}]`, value);
+                }
+            }
         });
         fd.append('composed_image', blob, 'composed_page2.jpg');
 
@@ -233,7 +299,8 @@ onBeforeUnmount(disposeCanvas);
                 <!-- パレット -->
                 <div class="flex-1 min-w-0 flex flex-col">
                     <p class="text-xs text-brand-text-muted mb-2">
-                        クリックで配置 → ドラッグで移動、四隅ハンドルで拡大縮小・回転。
+                        クリックで配置 → ドラッグで移動、四隅ハンドルで拡大縮小・回転。<br>
+                        テキストはダブルクリック（ダブルタップ）で内容を編集できます。
                     </p>
                     <div class="flex-1 overflow-y-auto max-h-[60vh] grid grid-cols-3 gap-2 content-start">
                         <button
@@ -248,9 +315,15 @@ onBeforeUnmount(disposeCanvas);
                             配置できる顧客写真がありません。<br>先に「顧客写真」から写真を追加してください。
                         </p>
                     </div>
-                    <div class="flex gap-2 mt-3">
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <UiButton variant="ghost" size="sm" @click="addTextToCanvas()">
+                            <TypeIcon :size="14" /> テキストを追加
+                        </UiButton>
                         <UiButton variant="danger" size="sm" :disabled="!hasSelection" @click="removeSelected">
                             <Trash2 :size="14" /> 選択中を削除
+                        </UiButton>
+                        <UiButton variant="ghost" size="sm" @click="resetPlacements">
+                            <RotateCcw :size="14" /> リセット
                         </UiButton>
                     </div>
                 </div>

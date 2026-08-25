@@ -4,7 +4,7 @@ import { router } from '@inertiajs/vue3';
 import jscanify from 'jscanify/client';
 import Modal from '@/Components/Modal.vue';
 import { UiButton } from '@/Components/UI';
-import { Camera, RefreshCw, Check, X as XIcon, Move } from 'lucide-vue-next';
+import { Camera, RefreshCw, Check, X as XIcon, Move, FolderOpen } from 'lucide-vue-next';
 import { loadOpenCv } from './useOpenCv';
 
 const props = defineProps({
@@ -66,6 +66,7 @@ const videoWrapRef = ref(null);
 const previewImgSrc = ref('');
 const manualImgRef = ref(null);
 const manualWrapRef = ref(null);
+const fileInputRef = ref(null);
 
 let mediaStream = null;
 let detectTimer = null;
@@ -723,6 +724,91 @@ function manualShutter() {
     capture(lastCorners, DETECT_WIDTH);
 }
 
+// ===== ファイルからの取り込み =====
+
+function openFilePicker() {
+    fileInputRef.value?.click();
+}
+
+function onFileSelected(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+        const full = document.createElement('canvas');
+        full.width = img.naturalWidth;
+        full.height = img.naturalHeight;
+        full.getContext('2d').drawImage(img, 0, 0);
+        URL.revokeObjectURL(img.src);
+        processStillImage(full);
+    };
+    img.onerror = () => {
+        errorMessage.value = '画像ファイルを読み込めませんでした。';
+    };
+    img.src = URL.createObjectURL(file);
+}
+
+/**
+ * 静止画（ファイル取り込み）に対してカメラと同じ検出パイプラインを適用する
+ * マーカー検出 → 四角形検出 → いずれも失敗なら手動四隅指定へ
+ */
+function processStillImage(fullCanvas) {
+    stopDetectLoop();
+    if (mediaStream) {
+        mediaStream.getTracks().forEach((t) => t.stop());
+        mediaStream = null;
+    }
+    capturedFrameCanvas = fullCanvas;
+    errorMessage.value = '';
+
+    // マーカー検出（信頼条件 count>=2 を満たすため同一静止画で2回実行）
+    markerCache = {};
+    const frames = [...new Set(MARKER_DETECT_WIDTHS.map((w) => Math.min(w, fullCanvas.width)))].map((w) => {
+        const h = Math.round(fullCanvas.height * w / fullCanvas.width);
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        c.getContext('2d').drawImage(fullCanvas, 0, 0, w, h);
+        return { canvas: c, scale: DETECT_WIDTH / w };
+    });
+    detectByMarkers(frames);
+    const markerResult = detectByMarkers(frames);
+
+    let corners = null;
+    if (markerResult?.corners) {
+        corners = markerResult.corners;
+        if (page.value !== markerResult.page) {
+            page.value = markerResult.page;
+        }
+    }
+
+    // フォールバック: 四角形検出
+    if (!corners) {
+        const h = Math.round(fullCanvas.height * DETECT_WIDTH / fullCanvas.width);
+        const small = document.createElement('canvas');
+        small.width = DETECT_WIDTH;
+        small.height = h;
+        small.getContext('2d').drawImage(fullCanvas, 0, 0, DETECT_WIDTH, h);
+        corners = findDocumentCorners(small, DETECT_WIDTH, h);
+    }
+
+    if (corners) {
+        try {
+            const scaled = scaleCorners(corners, fullCanvas.width / DETECT_WIDTH);
+            const paper = scanner.extractPaper(fullCanvas, OUTPUT_WIDTH, OUTPUT_HEIGHT, scaled);
+            if (paper) {
+                previewImgSrc.value = paper.toDataURL('image/jpeg', 0.92);
+                phase.value = 'preview';
+                return;
+            }
+        } catch (e) {
+            // 補正失敗時は手動指定へ
+        }
+    }
+    enterManualMode();
+}
+
 async function enterManualMode() {
     if (!capturedFrameCanvas) return;
     errorMessage.value = '';
@@ -886,10 +972,23 @@ onBeforeUnmount(cleanup);
                 </div>
             </div>
 
+            <input
+                ref="fileInputRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="hidden"
+                @change="onFileSelected"
+            >
+
             <!-- エラー -->
             <div v-if="phase === 'error'" class="p-6 text-center">
                 <p class="text-red-600 mb-4">{{ errorMessage }}</p>
-                <UiButton variant="ghost" @click="start">再試行</UiButton>
+                <div class="flex justify-center gap-3">
+                    <UiButton variant="ghost" @click="start">再試行</UiButton>
+                    <UiButton variant="ghost" @click="openFilePicker">
+                        <FolderOpen :size="16" /> ファイルから選択
+                    </UiButton>
+                </div>
             </div>
 
             <!-- ローディング -->
@@ -906,9 +1005,12 @@ onBeforeUnmount(cleanup);
                 </div>
                 <p class="text-sm text-brand-text-muted text-center mt-2">{{ detectStatus }}</p>
                 <p v-if="diagInfo" class="text-[10px] text-brand-text-muted/70 text-center mt-0.5">{{ diagInfo }}</p>
-                <div class="flex justify-center gap-3 mt-3">
+                <div class="flex flex-wrap justify-center gap-3 mt-3">
                     <UiButton variant="primary" @click="manualShutter">
                         <Camera :size="16" /> シャッター
+                    </UiButton>
+                    <UiButton variant="ghost" @click="openFilePicker">
+                        <FolderOpen :size="16" /> ファイルから選択
                     </UiButton>
                     <UiButton variant="ghost" @click="capture(null, DETECT_WIDTH)">
                         <Move :size="16" /> 手動で四隅指定

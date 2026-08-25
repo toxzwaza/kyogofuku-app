@@ -58,9 +58,6 @@ function deleteScan(page) {
             <UiButton variant="ghost" size="sm" @click="openPrint({ blank: 1 })">
                 <Printer :size="14" /> 空欄で印刷
             </UiButton>
-            <UiButton variant="primary" size="sm" @click="openScan(questionnaire?.page1_url ? 2 : 1)">
-                <Camera :size="14" /> スキャン取り込み
-            </UiButton>
             <UiButton v-if="hasAnyScan" variant="ghost" size="sm" @click="openPrint({ mode: 'scan' })">
                 <Printer :size="14" /> スキャン済みを印刷
             </UiButton>
@@ -100,7 +97,7 @@ function deleteScan(page) {
                         @click="openScan(page)"
                     >
                         <Camera :size="22" class="mb-1" />
-                        <span class="text-xs">カメラで取り込む</span>
+                        <span class="text-xs">カメラ・ファイルから取り込む</span>
                     </button>
                 </template>
             </div>
