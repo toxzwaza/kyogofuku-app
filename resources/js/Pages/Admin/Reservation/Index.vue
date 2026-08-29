@@ -3071,6 +3071,15 @@ const formatDateTime = (datetime) => formatDateTimeJa(datetime);
 // 時間のみを表示（yyyy年mm月dd日 hh:mm:ss形式で統一）
 const formatTimeOnly = (datetime) => formatDateTimeJa(datetime);
 
+// 印刷用のコンパクトな予約日時フォーマット（例: 8/29 10:00）
+const formatDateTimeCompact = (datetime) => {
+  if (!datetime) return "-";
+  const d = new Date(datetime);
+  if (isNaN(d.getTime())) return "-";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${pad(d.getMinutes())}`;
+};
+
 // 選択肢などで使用する日時フォーマット
 const formatDateTimeForOption = (datetime) => formatDateTimeJa(datetime);
 
@@ -3679,7 +3688,7 @@ const getColumnValue = (reservation, columnKey) => {
       return reservation.phone || "-";
     case "reservation_datetime":
       return reservation.reservation_datetime
-        ? formatTimeOnly(reservation.reservation_datetime)
+        ? formatDateTimeCompact(reservation.reservation_datetime)
         : "-";
     case "venue":
       return reservation.venue ? reservation.venue.name : "-";
