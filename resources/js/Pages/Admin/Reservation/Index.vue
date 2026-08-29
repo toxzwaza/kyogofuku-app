@@ -2279,18 +2279,34 @@
                   <div
                     v-for="column in printColumns"
                     :key="column.key"
-                    class="mb-2"
+                    class="mb-2 flex items-center gap-2"
                   >
-                    <label class="flex items-center">
+                    <label class="flex items-center flex-1 min-w-0">
                       <input
                         type="checkbox"
                         v-model="selectedPrintColumns"
                         :value="column.key"
                         class="mr-2 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                       />
-                      <span class="text-sm text-brand-text">{{ column.label }}</span>
+                      <span class="text-sm text-brand-text truncate">{{ column.label }}</span>
                     </label>
+                    <template v-if="selectedPrintColumns.includes(column.key)">
+                      <span class="text-xs text-brand-text-muted whitespace-nowrap">幅</span>
+                      <input
+                        type="number"
+                        v-model.number="printColumnWidths[column.key]"
+                        min="3"
+                        max="80"
+                        step="1"
+                        placeholder="自動"
+                        class="w-20 rounded-md border-brand-border shadow-sm text-sm py-1 focus:border-brand-primary focus:ring-brand-primary"
+                      />
+                      <span class="text-xs text-brand-text-muted">%</span>
+                    </template>
                   </div>
+                  <p class="text-xs text-brand-text-muted mt-2">
+                    幅は表全体に対する%です。空欄の列は残り幅を自動で均等配分します。
+                  </p>
                 </div>
               </div>
             </div>
@@ -2416,7 +2432,8 @@ const loadPrintSettings = () => {
         fontSize: settings.fontSize || '12',
         selectedColumns: settings.selectedColumns || [],
         memoEnabled: settings.memoEnabled !== undefined ? settings.memoEnabled : false,
-        memoSize: settings.memoSize || '100'
+        memoSize: settings.memoSize || '100',
+        columnWidths: settings.columnWidths || {}
       };
     } catch (e) {
       console.error('Failed to load print settings:', e);
@@ -2428,7 +2445,8 @@ const loadPrintSettings = () => {
     fontSize: '12',
     selectedColumns: [],
     memoEnabled: false,
-    memoSize: '100'
+    memoSize: '100',
+    columnWidths: {}
   };
 };
 
@@ -2440,7 +2458,8 @@ const savePrintSettings = () => {
     fontSize: printFontSize.value,
     selectedColumns: selectedPrintColumns.value,
     memoEnabled: printMemoEnabled.value,
-    memoSize: printMemoSize.value
+    memoSize: printMemoSize.value,
+    columnWidths: printColumnWidths.value
   };
   localStorage.setItem('printSettings', JSON.stringify(settings));
 };
@@ -2456,6 +2475,8 @@ const printFontSize = ref(Number(initialSettings.fontSize));
 const selectedPrintColumns = ref(initialSettings.selectedColumns);
 const printMemoEnabled = ref(initialSettings.memoEnabled);
 const printMemoSize = ref(Number(initialSettings.memoSize));
+// 印刷時の列幅（key → 表全体に対する%。未設定は自動）
+const printColumnWidths = ref(initialSettings.columnWidths || {});
 
 // 行の高さは固定値（30px）
 const printRowHeight = 30;
@@ -3574,6 +3595,7 @@ const openPrintModal = () => {
   printFontSize.value = settings.fontSize;
   printMemoEnabled.value = settings.memoEnabled !== undefined ? settings.memoEnabled : false;
   printMemoSize.value = settings.memoSize || 100;
+  printColumnWidths.value = settings.columnWidths || {};
   
   // カラムが保存されていない、または無効な場合は全カラムを選択
   if (settings.selectedColumns.length === 0 || 
@@ -3665,6 +3687,15 @@ const getColumnValue = (reservation, columnKey) => {
 };
 
 // テーブルを印刷
+// 列幅スタイル（メモ欄はpx指定、他の列はモーダルで設定した%指定。未設定は自動）
+const printColumnWidthStyle = (col) => {
+  if (col.key === 'memo') {
+    return `width: ${printMemoSize.value}px;`;
+  }
+  const w = Number(printColumnWidths.value?.[col.key]);
+  return w > 0 ? `width: ${w}%;` : '';
+};
+
 const printTable = () => {
   if (selectedPrintColumns.value.length === 0) {
     alert("少なくとも1つのカラムを選択してください。");
@@ -3703,7 +3734,7 @@ const printTable = () => {
         pageHTML += '<thead><tr>';
         finalColumns.forEach((col) => {
           const isMemo = col.key === 'memo';
-          const widthStyle = isMemo ? `width: ${printMemoSize.value}px;` : '';
+          const widthStyle = printColumnWidthStyle(col);
           pageHTML += `<th style="border: 1px solid #9ca3af; padding: 2px 4px; text-align: left; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4; background: linear-gradient(to bottom, #f3f4f6, #e5e7eb); font-weight: 600; font-size: ${parseFloat(printFontSize.value) - 1}px; color: #374151; height: ${printRowHeight - 2}px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; overflow: hidden; ${widthStyle}">${col.label}</th>`;
         });
         pageHTML += '</tr></thead><tbody>';
@@ -3712,7 +3743,7 @@ const printTable = () => {
           finalColumns.forEach((col) => {
             const isMemo = col.key === 'memo';
             const value = isMemo ? '' : getColumnValue(reservation, col.key);
-            const widthStyle = isMemo ? `width: ${printMemoSize.value}px;` : '';
+            const widthStyle = printColumnWidthStyle(col);
             pageHTML += `<td style="border: 1px solid #9ca3af; padding: 3px 5px; text-align: left; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4; font-size: ${printFontSize.value}px; color: #1f2937; height: ${printRowHeight}px; vertical-align: top; overflow: hidden; ${widthStyle}">${value}</td>`;
           });
           pageHTML += '</tr>';
@@ -3725,7 +3756,7 @@ const printTable = () => {
       pageHTML += '<thead><tr>';
       finalColumns.forEach((col) => {
         const isMemo = col.key === 'memo';
-        const widthStyle = isMemo ? `width: ${printMemoSize.value}px;` : '';
+        const widthStyle = printColumnWidthStyle(col);
         pageHTML += `<th style="border: 1px solid #9ca3af; padding: 4px 6px; text-align: left; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4; background: linear-gradient(to bottom, #f3f4f6, #e5e7eb); font-weight: 600; font-size: ${parseFloat(printFontSize.value) - 1}px; color: #374151; height: ${printRowHeight - 2}px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; overflow: hidden; ${widthStyle}">${col.label}</th>`;
       });
       pageHTML += '</tr></thead><tbody>';
@@ -3734,7 +3765,7 @@ const printTable = () => {
         finalColumns.forEach((col) => {
           const isMemo = col.key === 'memo';
           const value = isMemo ? '' : getColumnValue(reservation, col.key);
-          const widthStyle = isMemo ? `width: ${printMemoSize.value}px;` : '';
+          const widthStyle = printColumnWidthStyle(col);
           pageHTML += `<td style="border: 1px solid #9ca3af; padding: 8px 12px; text-align: left; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4; font-size: ${printFontSize.value}px; color: #1f2937; height: ${printRowHeight}px; vertical-align: top; overflow: hidden; ${widthStyle}">${value}</td>`;
         });
         pageHTML += '</tr>';
