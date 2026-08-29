@@ -8,7 +8,6 @@ use App\Models\CustomerLineMessage;
 use App\Services\Line\EventLineShopResolver;
 use App\Services\Line\LineIdTokenVerifier;
 use App\Services\Line\LineMessagingService;
-use App\Services\Line\ShopLineGroupNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +18,6 @@ class LineLiffController extends Controller
         private LineIdTokenVerifier $idTokenVerifier,
         private LineMessagingService $lineMessaging,
         private EventLineShopResolver $eventLineShopResolver,
-        private ShopLineGroupNotifier $shopNotifier,
     ) {}
 
     /**
@@ -168,9 +166,6 @@ class LineLiffController extends Controller
             ->where('line_user_id', $lineUserId)
             ->exists();
 
-        // 新規連携かどうかは updateOrCreate 実行前の $existing で判定
-        $wasNewlyLinked = $this->wasNewlyLinkedForCustomer($existing, $link);
-
         DB::transaction(function () use ($link, $lineUserId, $label, $customer) {
             CustomerLineContact::query()->updateOrCreate(
                 [
@@ -190,13 +185,6 @@ class LineLiffController extends Controller
 
         if (! $hadContactBefore) {
             $this->sendLinkWelcomeToLineUser($lineUserId);
-        }
-
-        if ($wasNewlyLinked) {
-            $contact = CustomerLineContact::query()->where('line_user_id', $lineUserId)->first();
-            if ($contact) {
-                $this->shopNotifier->notifySystemLinked($contact);
-            }
         }
 
         return response()->json(['message' => '連携が完了しました。この画面を閉じて LINE に戻ってください。']);
@@ -236,8 +224,6 @@ class LineLiffController extends Controller
             ->where('line_user_id', $lineUserId)
             ->exists();
 
-        $wasNewlyLinked = $this->wasNewlyLinkedForReservation($existing, $link);
-
         DB::transaction(function () use ($link, $lineUserId, $shopId) {
             CustomerLineContact::query()->updateOrCreate(
                 [
@@ -259,40 +245,7 @@ class LineLiffController extends Controller
             $this->sendLinkWelcomeToLineUser($lineUserId);
         }
 
-        if ($wasNewlyLinked) {
-            $contact = CustomerLineContact::query()->where('line_user_id', $lineUserId)->first();
-            if ($contact) {
-                $this->shopNotifier->notifySystemLinked($contact);
-            }
-        }
-
         return response()->json(['message' => '連携が完了しました。この画面を閉じて LINE に戻ってください。']);
-    }
-
-    /**
-     * 顧客向け：updateOrCreate 実行前の existing と新しい link から、
-     * 「今回が新規連携か」を判定する。
-     */
-    private function wasNewlyLinkedForCustomer(?CustomerLineContact $existing, CustomerLineLinkToken $link): bool
-    {
-        if ($existing === null) {
-            return true; // 完全新規
-        }
-
-        return (int) $existing->customer_id !== (int) $link->customer_id;
-    }
-
-    /**
-     * 予約向け：updateOrCreate 実行前の existing と新しい link から、
-     * 「今回が新規連携か」を判定する。
-     */
-    private function wasNewlyLinkedForReservation(?CustomerLineContact $existing, CustomerLineLinkToken $link): bool
-    {
-        if ($existing === null) {
-            return true;
-        }
-
-        return (int) $existing->event_reservation_id !== (int) $link->event_reservation_id;
     }
 
     /**

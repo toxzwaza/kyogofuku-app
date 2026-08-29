@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Log;
 /**
  * 店舗LINEグループ宛ての通知を一元化するサービス。
  *
- * - notifySystemLinked(): システム連携完了を店舗グループに通知
  * - notifyInboundMessage(): 連携済みユーザーからのメッセージを店舗グループに通知
  *
  * 既存 LineWebhookController::pushToLineGroup を再利用し、通知失敗は
@@ -17,20 +16,6 @@ use Illuminate\Support\Facades\Log;
  */
 class ShopLineGroupNotifier
 {
-    public function notifySystemLinked(CustomerLineContact $contact): void
-    {
-        $groupId = $this->resolveGroupId($contact);
-        if ($groupId === null) {
-            return;
-        }
-
-        $name = $this->resolveName($contact);
-        $message = "{$name}さんがシステム連携が完了しました。";
-        $detailUrl = $this->resolveDetailUrl($contact);
-
-        $this->push($groupId, $message, $detailUrl, $contact, 'system_linked');
-    }
-
     public function notifyInboundMessage(CustomerLineContact $contact, string $text): void
     {
         $groupId = $this->resolveGroupId($contact);

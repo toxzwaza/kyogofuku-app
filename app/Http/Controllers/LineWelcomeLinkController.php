@@ -9,7 +9,6 @@ use App\Models\EventReservation;
 use App\Services\Line\EventLineShopResolver;
 use App\Services\Line\LineIdTokenVerifier;
 use App\Services\Line\LineMessagingService;
-use App\Services\Line\ShopLineGroupNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -28,7 +27,6 @@ class LineWelcomeLinkController extends Controller
         private LineIdTokenVerifier $idTokenVerifier,
         private LineMessagingService $lineMessaging,
         private EventLineShopResolver $eventLineShopResolver,
-        private ShopLineGroupNotifier $shopNotifier,
     ) {}
 
     public function show(Request $request): Response
@@ -204,9 +202,6 @@ class LineWelcomeLinkController extends Controller
         $existing = CustomerLineContact::query()
             ->where('line_user_id', $lineUserId)
             ->first();
-        $wasNewlyLinked = $existing === null
-            || (int) $existing->event_reservation_id !== (int) $reservation->id;
-
         $hadContactBefore = $existing !== null;
 
         DB::transaction(function () use ($reservation, $lineUserId, $shopId): void {
@@ -225,13 +220,6 @@ class LineWelcomeLinkController extends Controller
             $this->sendWelcomePushAndRecord($lineUserId);
         }
 
-        if ($wasNewlyLinked) {
-            $contact = CustomerLineContact::query()->where('line_user_id', $lineUserId)->first();
-            if ($contact) {
-                $this->shopNotifier->notifySystemLinked($contact);
-            }
-        }
-
         return response()->json(['message' => 'ご予約と連携しました。LINE 画面にお戻りください。']);
     }
 
@@ -247,9 +235,6 @@ class LineWelcomeLinkController extends Controller
         if ($existing && $existing->customer_id !== null && (int) $existing->customer_id !== (int) $customer->id) {
             return response()->json(['message' => 'この LINE アカウントは別のお客様に連携済みです。'], 422);
         }
-
-        $wasNewlyLinked = $existing === null
-            || (int) $existing->customer_id !== (int) $customer->id;
 
         $hadContactBefore = $existing !== null;
 
@@ -267,13 +252,6 @@ class LineWelcomeLinkController extends Controller
 
         if (! $hadContactBefore) {
             $this->sendWelcomePushAndRecord($lineUserId);
-        }
-
-        if ($wasNewlyLinked) {
-            $contact = CustomerLineContact::query()->where('line_user_id', $lineUserId)->first();
-            if ($contact) {
-                $this->shopNotifier->notifySystemLinked($contact);
-            }
         }
 
         return response()->json(['message' => 'お客様情報と連携しました。LINE 画面にお戻りください。']);
