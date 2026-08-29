@@ -2279,35 +2279,74 @@
                   <div
                     v-for="column in printColumns"
                     :key="column.key"
-                    class="mb-2 flex items-center gap-2"
+                    class="mb-2"
                   >
-                    <label class="flex items-center flex-1 min-w-0">
+                    <label class="flex items-center">
                       <input
                         type="checkbox"
                         v-model="selectedPrintColumns"
                         :value="column.key"
                         class="mr-2 rounded border-brand-border text-brand-primary focus:ring-brand-primary"
                       />
-                      <span class="text-sm text-brand-text truncate">{{ column.label }}</span>
+                      <span class="text-sm text-brand-text">{{ column.label }}</span>
                     </label>
-                    <template v-if="selectedPrintColumns.includes(column.key)">
-                      <span class="text-xs text-brand-text-muted whitespace-nowrap">幅</span>
-                      <input
-                        type="number"
-                        v-model.number="printColumnWidths[column.key]"
-                        min="3"
-                        max="80"
-                        step="1"
-                        placeholder="自動"
-                        class="w-20 rounded-md border-brand-border shadow-sm text-sm py-1 focus:border-brand-primary focus:ring-brand-primary"
-                      />
-                      <span class="text-xs text-brand-text-muted">%</span>
-                    </template>
                   </div>
-                  <p class="text-xs text-brand-text-muted mt-2">
-                    幅は表全体に対する%です。空欄の列は残り幅を自動で均等配分します。
-                  </p>
                 </div>
+              </div>
+
+              <!-- 印刷プレビュー（列幅調整） -->
+              <div class="mb-6" v-if="printPreviewColumns.length > 0">
+                <label class="block text-sm font-medium text-brand-text mb-2">
+                  印刷プレビュー（列の境界をドラッグして幅を調整）
+                </label>
+                <div class="border border-brand-border rounded-lg bg-gray-100 p-3 overflow-x-auto">
+                  <table
+                    class="bg-white w-full select-none"
+                    style="table-layout: fixed; border-collapse: collapse;"
+                  >
+                    <thead>
+                      <tr>
+                        <th
+                          v-for="(col, i) in printPreviewColumns"
+                          :key="col.key"
+                          :style="previewColStyle(col)"
+                          class="relative border border-gray-400 bg-gray-100 px-1 py-1 text-left align-middle"
+                        >
+                          <div class="text-xs font-semibold text-gray-700 truncate">{{ col.label }}</div>
+                          <div class="text-[10px] text-gray-400 font-normal">
+                            {{ col.key === 'memo' ? printMemoSize + 'px' : (printColumnWidths[col.key] || 0) + '%' }}
+                          </div>
+                          <span
+                            v-if="i < printPreviewColumns.length - 1 && printPreviewColumns[i + 1].key !== 'memo'"
+                            class="absolute top-0 -right-1 h-full w-2 cursor-col-resize touch-none z-10 hover:bg-indigo-400/50"
+                            @pointerdown="startColResize(i, $event)"
+                          ></span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(row, ri) in printPreviewRows" :key="ri">
+                        <td
+                          v-for="col in printPreviewColumns"
+                          :key="col.key"
+                          :style="previewColStyle(col)"
+                          class="border border-gray-300 px-1 py-1 text-[11px] text-gray-700 truncate whitespace-nowrap overflow-hidden"
+                        >{{ col.key === 'memo' ? '' : getColumnValue(row, col.key) }}</td>
+                      </tr>
+                      <tr v-if="printPreviewRows.length === 0">
+                        <td
+                          v-for="col in printPreviewColumns"
+                          :key="col.key"
+                          :style="previewColStyle(col)"
+                          class="border border-gray-300 px-1 py-2 text-[11px] text-gray-400"
+                        >&nbsp;</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="text-xs text-brand-text-muted mt-2">
+                  列の幅の比率がそのまま印刷に反映されます（メモ欄の幅は上の「メモ欄のサイズ」で調整）。
+                </p>
               </div>
             </div>
 
@@ -3607,6 +3646,8 @@ const openPrintModal = () => {
     selectedPrintColumns.value = settings.selectedColumns;
   }
   
+  ensurePrintColumnWidths();
+
   showPrintModal.value = true;
 };
 
@@ -3687,6 +3728,92 @@ const getColumnValue = (reservation, columnKey) => {
 };
 
 // テーブルを印刷
+// ===== 印刷プレビューの列幅ドラッグ調整 =====
+
+// プレビューに表示する列（選択カラム＋メモ欄）
+const printPreviewColumns = computed(() => {
+  const cols = [...selectedPrintColumnsList.value];
+  if (printMemoEnabled.value) {
+    cols.push({ key: 'memo', label: 'メモ' });
+  }
+  return cols;
+});
+
+// プレビューに表示するサンプル行（先頭4件）
+const printPreviewRows = computed(() => sortedReservations.value.slice(0, 4));
+
+// プレビューの列スタイル
+const previewColStyle = (col) => {
+  if (col.key === 'memo') {
+    return { width: `${printMemoSize.value}px` };
+  }
+  const w = Number(printColumnWidths.value?.[col.key]);
+  return w > 0 ? { width: `${w}%` } : {};
+};
+
+// 選択中の列に幅%を割り当てる（未設定があれば均等配分、選択変更時は合計100%に正規化）
+const ensurePrintColumnWidths = () => {
+  const keys = selectedPrintColumnsList.value.map((c) => c.key);
+  if (keys.length === 0) return;
+  const current = printColumnWidths.value || {};
+  const allSet = keys.every((k) => Number(current[k]) > 0);
+  const next = {};
+  if (!allSet) {
+    const eq = Math.round(1000 / keys.length) / 10;
+    keys.forEach((k) => { next[k] = eq; });
+  } else {
+    const total = keys.reduce((sum, k) => sum + Number(current[k]), 0);
+    keys.forEach((k) => { next[k] = Math.round((Number(current[k]) / total) * 1000) / 10; });
+  }
+  printColumnWidths.value = next;
+};
+
+// 選択カラムが変わったら幅を再配分（モーダル表示中のみ）
+watch(selectedPrintColumns, () => {
+  if (showPrintModal.value) ensurePrintColumnWidths();
+}, { deep: true });
+
+// 境界ドラッグ: 左右の列で幅を受け渡す（合計は不変）
+let colResizeState = null;
+
+const startColResize = (index, e) => {
+  const keys = selectedPrintColumnsList.value.map((c) => c.key);
+  const table = e.target.closest('table');
+  if (!table || index >= keys.length - 1) return;
+  e.preventDefault();
+  colResizeState = {
+    leftKey: keys[index],
+    rightKey: keys[index + 1],
+    startX: e.clientX,
+    tableWidth: table.getBoundingClientRect().width,
+    leftStart: Number(printColumnWidths.value[keys[index]]),
+    rightStart: Number(printColumnWidths.value[keys[index + 1]]),
+  };
+  window.addEventListener('pointermove', onColResizeMove);
+  window.addEventListener('pointerup', endColResize);
+};
+
+const onColResizeMove = (e) => {
+  if (!colResizeState) return;
+  const deltaPct = ((e.clientX - colResizeState.startX) / colResizeState.tableWidth) * 100;
+  const MIN = 3;
+  let left = colResizeState.leftStart + deltaPct;
+  let right = colResizeState.rightStart - deltaPct;
+  if (left < MIN) { right -= (MIN - left); left = MIN; }
+  if (right < MIN) { left -= (MIN - right); right = MIN; }
+  printColumnWidths.value = {
+    ...printColumnWidths.value,
+    [colResizeState.leftKey]: Math.round(left * 10) / 10,
+    [colResizeState.rightKey]: Math.round(right * 10) / 10,
+  };
+};
+
+const endColResize = () => {
+  colResizeState = null;
+  window.removeEventListener('pointermove', onColResizeMove);
+  window.removeEventListener('pointerup', endColResize);
+};
+
 // 列幅スタイル（メモ欄はpx指定、他の列はモーダルで設定した%指定。未設定は自動）
 const printColumnWidthStyle = (col) => {
   if (col.key === 'memo') {
