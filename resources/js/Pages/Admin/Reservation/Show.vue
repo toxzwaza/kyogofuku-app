@@ -900,7 +900,7 @@
                     :aria-selected="rightPanelTab === 'memo'"
                     @click="rightPanelTab = 'memo'"
                   >
-                    メモ ({{ notes.length }})
+                    メモ ({{ mergedNotes.length }})
                   </button>
                   <button
                     type="button"
@@ -948,80 +948,53 @@
                     </button>
                   </form>
 
+                  <!-- メモ一覧（予約メモ＋紐づく顧客のメモを時系列で統合表示） -->
                   <div class="space-y-4">
                     <div
-                      v-for="note in notes"
-                      :key="note.id"
+                      v-for="note in mergedNotes"
+                      :key="note.kind + '-' + note.id"
                       class="border-b border-brand-border pb-4 last:border-b-0 last:pb-0"
                     >
                       <div class="flex justify-between items-start mb-2">
                         <div>
-                          <p class="text-sm font-medium text-brand-text">
+                          <p class="text-sm font-medium text-brand-text flex items-center gap-2">
                             {{ note.user ? note.user.name : "不明" }}
+                            <span
+                              v-if="note.kind === 'customer'"
+                              class="px-1.5 py-0.5 text-[10px] rounded bg-brand-surface-2 text-brand-text-muted border border-brand-border"
+                              >顧客メモ</span
+                            >
                           </p>
                           <p class="text-xs text-brand-text-muted">
                             {{ formatDateTime(note.created_at) }}
                           </p>
                         </div>
                         <button
+                          v-if="note.kind === 'reservation'"
                           type="button"
                           @click="deleteNote(note.id)"
                           class="text-red-600 hover:text-red-900 text-sm"
                         >
                           削除
                         </button>
+                        <Link
+                          v-else-if="reservation.customer_id"
+                          :href="route('admin.customers.show', reservation.customer_id)"
+                          class="text-xs text-brand-primary hover:underline shrink-0"
+                        >
+                          顧客詳細を開く
+                        </Link>
                       </div>
                       <p class="text-sm text-brand-text whitespace-pre-wrap">
                         {{ note.content }}
                       </p>
                     </div>
                     <p
-                      v-if="notes.length === 0"
+                      v-if="mergedNotes.length === 0"
                       class="text-sm text-brand-text-muted text-center py-4"
                     >
                       メモがありません
                     </p>
-                  </div>
-
-                  <!-- 顧客メモ（参照表示・編集は顧客詳細側で行う） -->
-                  <div
-                    v-if="customerNotes.length > 0"
-                    class="mt-6 pt-4 border-t border-brand-border"
-                  >
-                    <div class="flex items-center justify-between mb-1">
-                      <h4 class="text-sm font-semibold text-brand-text">
-                        顧客メモ（参照） ({{ customerNotes.length }})
-                      </h4>
-                      <Link
-                        v-if="reservation.customer_id"
-                        :href="route('admin.customers.show', reservation.customer_id)"
-                        class="text-xs text-brand-primary hover:underline"
-                      >
-                        顧客詳細を開く
-                      </Link>
-                    </div>
-                    <p class="text-xs text-brand-text-muted mb-4">
-                      紐づく顧客のメモです。追加・削除は顧客詳細から行ってください。
-                    </p>
-                    <div class="space-y-4">
-                      <div
-                        v-for="note in customerNotes"
-                        :key="'cn-' + note.id"
-                        class="border-b border-brand-border pb-4 last:border-b-0 last:pb-0"
-                      >
-                        <div class="mb-2">
-                          <p class="text-sm font-medium text-brand-text">
-                            {{ note.user ? note.user.name : "不明" }}
-                          </p>
-                          <p class="text-xs text-brand-text-muted">
-                            {{ formatDateTime(note.created_at) }}
-                          </p>
-                        </div>
-                        <p class="text-sm text-brand-text whitespace-pre-wrap">
-                          {{ note.content }}
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -1494,6 +1467,13 @@ const syncGoogleCalendar = () => {
 const noteForm = useForm({
   content: "",
 });
+
+// 予約メモ＋紐づく顧客のメモを時系列（新しい順）で統合表示する。
+// 顧客メモは参照専用（kind: 'customer'）で削除ボタンの代わりに顧客詳細リンクを出す。
+const mergedNotes = computed(() => [
+  ...props.notes.map((n) => ({ ...n, kind: "reservation" })),
+  ...props.customerNotes.map((n) => ({ ...n, kind: "customer" })),
+].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
 
 const submitNote = () => {
   noteForm.post(route("admin.reservations.notes.store", props.reservation.id), {
