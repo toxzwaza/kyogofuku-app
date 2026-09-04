@@ -1063,12 +1063,8 @@
                                     >
                                         <div class="flex justify-between items-start mb-2">
                                             <div>
-                                                <p class="text-sm font-medium text-brand-text flex items-center gap-2">
+                                                <p class="text-sm font-medium text-brand-text">
                                                     {{ note.user ? note.user.name : "不明" }}
-                                                    <span
-                                                        v-if="note.kind === 'reservation'"
-                                                        class="px-1.5 py-0.5 text-[10px] rounded bg-brand-surface-2 text-brand-text-muted border border-brand-border"
-                                                    >予約メモ</span>
                                                 </p>
                                                 <p class="text-xs text-brand-text-muted">
                                                     {{ formatDateTime(note.created_at) }}
