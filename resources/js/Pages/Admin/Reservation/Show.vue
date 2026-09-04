@@ -982,6 +982,47 @@
                       メモがありません
                     </p>
                   </div>
+
+                  <!-- 顧客メモ（参照表示・編集は顧客詳細側で行う） -->
+                  <div
+                    v-if="customerNotes.length > 0"
+                    class="mt-6 pt-4 border-t border-brand-border"
+                  >
+                    <div class="flex items-center justify-between mb-1">
+                      <h4 class="text-sm font-semibold text-brand-text">
+                        顧客メモ（参照） ({{ customerNotes.length }})
+                      </h4>
+                      <Link
+                        v-if="reservation.customer_id"
+                        :href="route('admin.customers.show', reservation.customer_id)"
+                        class="text-xs text-brand-primary hover:underline"
+                      >
+                        顧客詳細を開く
+                      </Link>
+                    </div>
+                    <p class="text-xs text-brand-text-muted mb-4">
+                      紐づく顧客のメモです。追加・削除は顧客詳細から行ってください。
+                    </p>
+                    <div class="space-y-4">
+                      <div
+                        v-for="note in customerNotes"
+                        :key="'cn-' + note.id"
+                        class="border-b border-brand-border pb-4 last:border-b-0 last:pb-0"
+                      >
+                        <div class="mb-2">
+                          <p class="text-sm font-medium text-brand-text">
+                            {{ note.user ? note.user.name : "不明" }}
+                          </p>
+                          <p class="text-xs text-brand-text-muted">
+                            {{ formatDateTime(note.created_at) }}
+                          </p>
+                        </div>
+                        <p class="text-sm text-brand-text whitespace-pre-wrap">
+                          {{ note.content }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div v-show="rightPanelTab === 'history'">
@@ -1159,6 +1200,10 @@ const props = defineProps({
   },
   venues: Array,
   notes: Array,
+  customerNotes: {
+    type: Array,
+    default: () => [],
+  },
   schedule: Object,
   canRestore: {
     type: Boolean,

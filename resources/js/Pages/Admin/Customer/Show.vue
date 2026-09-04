@@ -1087,6 +1087,47 @@
                                     </p>
                                 </div>
                         </UiCard>
+
+                        <!-- 予約メモ（参照表示・編集は予約詳細側で行う） -->
+                        <UiCard v-if="reservationNotes.length > 0" variant="default" padding="lg">
+                            <template #header>
+                                <h3 class="font-serif text-base font-semibold flex items-center gap-2 text-brand-text">
+                                    <MessageSquare :size="15" class="text-brand-text-muted" />
+                                    予約メモ（参照） ({{ reservationNotes.length }})
+                                </h3>
+                            </template>
+                            <p class="text-xs text-brand-text-muted mb-4">
+                                紐づく予約のメモです。追加・削除は各予約詳細から行ってください。
+                            </p>
+                            <div class="space-y-4">
+                                <div
+                                    v-for="note in reservationNotes"
+                                    :key="'rn-' + note.id"
+                                    class="border-b border-brand-border pb-4 last:border-b-0 last:pb-0"
+                                >
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <p class="text-sm font-medium text-brand-text">
+                                                {{ note.user ? note.user.name : "不明" }}
+                                            </p>
+                                            <p class="text-xs text-brand-text-muted">
+                                                {{ formatDateTime(note.created_at) }}
+                                            </p>
+                                        </div>
+                                        <Link
+                                            v-if="note.reservation"
+                                            :href="route('admin.reservations.show', note.reservation.id)"
+                                            class="text-xs text-brand-primary hover:underline shrink-0"
+                                        >
+                                            {{ note.reservation.event?.title || '予約' }}を開く
+                                        </Link>
+                                    </div>
+                                    <p class="text-sm text-brand-text whitespace-pre-wrap">
+                                        {{ note.content }}
+                                    </p>
+                                </div>
+                            </div>
+                        </UiCard>
                         </div>
                     </template>
 
@@ -2627,6 +2668,10 @@ const props = defineProps({
         default: () => [],
     },
     notes: {
+        type: Array,
+        default: () => [],
+    },
+    reservationNotes: {
         type: Array,
         default: () => [],
     },
