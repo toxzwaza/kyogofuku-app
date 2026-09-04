@@ -193,6 +193,17 @@
                                                 class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
                                         </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">顧客写真（全身）</label>
+                                            <select
+                                                v-model="searchForm.full_body_photo_presence"
+                                                class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
+                                            >
+                                                <option :value="null">全て</option>
+                                                <option value="写真なし">写真なし</option>
+                                                <option value="写真あり">写真あり</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1132,6 +1143,7 @@ const searchForm = reactive({
     constraint_explainer_user_id: props.filters?.constraint_explainer_user_id != null && props.filters.constraint_explainer_user_id !== ''
         ? Number(props.filters.constraint_explainer_user_id)
         : null,
+    full_body_photo_presence: props.filters?.full_body_photo_presence || null,
 });
 
 // 担当店舗フィルタ（複数選択）。['all'] = 全店舗、[id,...] = 選択店舗のみ
@@ -1217,6 +1229,7 @@ const filterChips = computed(() => {
     }
     text('created_at_from', '登録日(開始)');
     text('created_at_to', '登録日(終了)');
+    text('full_body_photo_presence', '顧客写真(全身)');
 
     // 成人式情報
     text('seijin_preparation_venue', '仕度会場');
@@ -1380,6 +1393,7 @@ const resetSearch = () => {
     searchForm.constraint_signed_at_from = '';
     searchForm.constraint_signed_at_to = '';
     searchForm.constraint_explainer_user_id = null;
+    searchForm.full_body_photo_presence = null;
     router.get(route('admin.customers.index'), {}, {
         preserveState: false,
         preserveScroll: false,
