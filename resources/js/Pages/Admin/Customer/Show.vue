@@ -1054,11 +1054,11 @@
                                     </button>
                                 </form>
 
-                                <!-- メモ一覧 -->
+                                <!-- メモ一覧（顧客メモ＋紐づく予約のメモを時系列で統合表示） -->
                                 <div class="space-y-4">
                                     <div
-                                        v-for="note in notes"
-                                        :key="note.id"
+                                        v-for="note in mergedNotes"
+                                        :key="note.kind + '-' + note.id"
                                         class="border-b border-brand-border pb-4 last:border-b-0 last:pb-0"
                                     >
                                         <div class="flex justify-between items-start mb-2">
@@ -1071,18 +1071,26 @@
                                                 </p>
                                             </div>
                                             <button
+                                                v-if="note.kind === 'customer'"
                                                 type="button"
                                                 @click="deleteNote(note.id)"
                                                 class="text-red-600 hover:text-red-900 text-sm"
                                             >
                                                 削除
                                             </button>
+                                            <Link
+                                                v-else-if="note.reservation"
+                                                :href="route('admin.reservations.show', note.reservation.id)"
+                                                class="text-xs text-brand-primary hover:underline shrink-0"
+                                            >
+                                                予約詳細を開く
+                                            </Link>
                                         </div>
                                         <p class="text-sm text-brand-text whitespace-pre-wrap">
                                             {{ note.content }}
                                         </p>
                                     </div>
-                                    <p v-if="notes.length === 0" class="text-sm text-brand-text-muted text-center py-4">
+                                    <p v-if="mergedNotes.length === 0" class="text-sm text-brand-text-muted text-center py-4">
                                         メモがありません
                                     </p>
                                 </div>
@@ -2630,6 +2638,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    reservationNotes: {
+        type: Array,
+        default: () => [],
+    },
     ceremonyAreas: Array,
     shops: Array,
     plans: Array,
@@ -3971,6 +3983,13 @@ const formatTime = (timeString) => {
 const noteForm = useForm({
     content: '',
 });
+
+// 顧客メモ＋紐づく予約のメモを時系列（新しい順）で統合表示する。
+// 予約メモは参照専用（kind: 'reservation'）で削除ボタンの代わりに予約詳細リンクを出す。
+const mergedNotes = computed(() => [
+    ...props.notes.map((n) => ({ ...n, kind: 'customer' })),
+    ...props.reservationNotes.map((n) => ({ ...n, kind: 'reservation' })),
+].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
 
 const submitNote = () => {
     noteForm.post(route('admin.customers.notes.store', props.customer.id), {

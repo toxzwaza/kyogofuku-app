@@ -603,6 +603,12 @@ class CustomerController extends Controller
             'referredBy' => $referredBy,
             'distributableCoupons' => $distributableCoupons,
             'notes' => $customer->notes()->with('user')->orderBy('created_at', 'desc')->get(),
+            // 紐づく予約のメモ（参照表示用・編集は予約詳細側で行う）
+            'reservationNotes' => \App\Models\ReservationNote::query()
+                ->with(['user:id,name', 'reservation:id,event_id,reservation_datetime', 'reservation.event:id,title'])
+                ->whereIn('event_reservation_id', $customer->eventReservations->pluck('id'))
+                ->orderBy('created_at', 'desc')
+                ->get(),
             'ceremonyAreas' => $ceremonyAreas,
             'shops' => $shops,
             'plans' => $plans,

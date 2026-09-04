@@ -559,6 +559,14 @@ class ReservationController extends Controller
             'indexFilters' => $indexFilters,
             'venues' => $reservation->event->venues()->where('is_active', true)->get(),
             'notes' => $reservation->notes()->with('user')->orderBy('created_at', 'desc')->get(),
+            // 紐づく顧客のメモ（参照表示用・編集は顧客詳細側で行う）
+            'customerNotes' => $reservation->customer_id
+                ? \App\Models\CustomerNote::query()
+                    ->with('user:id,name')
+                    ->where('customer_id', $reservation->customer_id)
+                    ->orderBy('created_at', 'desc')
+                    ->get()
+                : [],
             'activity_logs' => $activityLogs,
             'schedule' => $reservation->schedule ? [
                 'id' => $reservation->schedule->id,
