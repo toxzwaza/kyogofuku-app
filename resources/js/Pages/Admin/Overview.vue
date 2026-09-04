@@ -12,10 +12,13 @@ import {
     CalendarDays, Users, TrendingUp, TrendingDown, AlertCircle,
     ArrowRight, Store, Clock, BarChart3, PieChart, Grid3x3,
     MessageCircle, ChevronDown, Image as ImageIcon,
+    ClipboardList, ImageOff, FileX, ShieldAlert,
 } from 'lucide-vue-next';
 
 const props = defineProps({
     stats: { type: Object, required: true },
+    input_alerts: { type: Object, default: () => ({}) },
+    user_shop_ids: { type: Array, default: () => [] },
     recent_reservations: { type: Array, default: () => [] },
     shop_ranking: { type: Array, default: () => [] },
     week_range: { type: Object, default: () => ({}) },
@@ -23,6 +26,29 @@ const props = defineProps({
     status_dist: { type: Array, default: () => [] },
     heatmap: { type: Object, default: () => ({ cells: {}, max: 0 }) },
     line_inbound: { type: Object, default: () => ({ groups: [], unread_total: 0, total: 0 }) },
+});
+
+// 入力もれチェックカード。クリックで顧客一覧の該当フィルタへ遷移する。
+// customer_shop_id を明示的に渡し、顧客一覧のデフォルト「メイン店舗のみ」適用を
+// 回避してカードの数字と一覧件数を一致させる。所属店舗がない場合はリンクなし
+// （デフォルト店舗フォールバックで全顧客が表示される事故を防ぐ）。
+const alertCards = computed(() => {
+    const hasShops = props.user_shop_ids.length > 0;
+    const link = (extra) => hasShops
+        ? route('admin.customers.index', { customer_shop_id: props.user_shop_ids, ...extra })
+        : null;
+    return [
+        { key: 'pending_contracts',       title: '成約ステータス（保留）', value: props.input_alerts.pending_contracts ?? 0,
+          icon: Clock,        link: link({ contract_status: '保留' }) },
+        { key: 'undecided_photo_slots',   title: '前撮り詳細未決定',       value: props.input_alerts.undecided_photo_slots ?? 0,
+          icon: ClipboardList, link: link({ photo_slot_details_undecided: '1' }) },
+        { key: 'missing_full_body_photo', title: '全身写真 未登録',        value: props.input_alerts.missing_full_body_photo ?? 0,
+          icon: ImageOff,     link: link({ full_body_photo_presence: '写真なし' }) },
+        { key: 'missing_contract',        title: '成約情報 未登録',        value: props.input_alerts.missing_contract ?? 0,
+          icon: FileX,        link: link({ contract_status: '成約なし' }) },
+        { key: 'missing_constraint',      title: '制約情報 未登録',        value: props.input_alerts.missing_constraint ?? 0,
+          icon: ShieldAlert,  link: link({ constraint_presence: '制約なし' }) },
+    ];
 });
 
 // LINE受信ブロック：お客様グループの展開状態
@@ -119,6 +145,38 @@ const maxShopCnt = computed(() =>
                 </UiButton>
             </template>
         </UiPageHeader>
+
+        <!-- 入力もれチェック -->
+        <section class="mb-8">
+            <h2 class="font-serif text-base mb-3 flex items-center gap-2">
+                <AlertCircle :size="16" class="text-brand-warning" />
+                入力もれチェック
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <component
+                    :is="c.link ? Link : 'div'"
+                    v-for="c in alertCards"
+                    :key="c.key"
+                    :href="c.link ?? undefined"
+                    class="block"
+                >
+                    <UiCard variant="default" class="h-full" :class="c.link ? 'hover:border-brand-primary transition-colors cursor-pointer' : ''">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="text-xs text-brand-text-muted">{{ c.title }}</div>
+                                <div
+                                    class="mt-1.5 font-serif text-3xl leading-none"
+                                    :class="c.value > 0 ? 'text-brand-warning' : ''"
+                                >{{ c.value }}<span class="text-sm text-brand-text-muted ml-1">人</span></div>
+                            </div>
+                            <div class="w-10 h-10 rounded-soft bg-natane-50 dark:bg-natane-900 flex items-center justify-center shrink-0">
+                                <component :is="c.icon" :size="20" class="text-brand-warning" />
+                            </div>
+                        </div>
+                    </UiCard>
+                </component>
+            </div>
+        </section>
 
         <!-- KPI カード -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

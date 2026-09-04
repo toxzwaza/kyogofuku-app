@@ -203,6 +203,16 @@ class CustomerController extends Controller
             });
         }
 
+        // 顧客写真（全身）の有無での検索
+        $fullBodyTypeId = PhotoType::where('code', 'full_body')->value('id');
+        if ($request->filled('full_body_photo_presence') && $fullBodyTypeId) {
+            if ($request->full_body_photo_presence === '写真なし') {
+                $query->whereDoesntHave('photos', fn ($q) => $q->where('photo_type_id', $fullBodyTypeId));
+            } elseif ($request->full_body_photo_presence === '写真あり') {
+                $query->whereHas('photos', fn ($q) => $q->where('photo_type_id', $fullBodyTypeId));
+            }
+        }
+
         // 前撮り詳細未決定での検索（前撮り情報の担当店舗で絞り込み）
         if ($request->filled('photo_slot_details_undecided') || $request->filled('photo_slot_shop_id')) {
             if ($request->filled('photo_slot_details_undecided')) {
@@ -225,8 +235,8 @@ class CustomerController extends Controller
         }
 
         $customers = $query->with([
-            'photos' => function ($q) {
-                $q->where('photo_type_id', 1)->orderBy('created_at', 'desc')->limit(1);
+            'photos' => function ($q) use ($fullBodyTypeId) {
+                $q->where('photo_type_id', $fullBodyTypeId ?? 1)->orderBy('created_at', 'desc')->limit(1);
             },
             'tags',
         ])->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
@@ -312,6 +322,7 @@ class CustomerController extends Controller
                 'constraint_presence', 'constraint_template_id', 'constraint_signed_at_from',
                 'constraint_signed_at_to', 'constraint_explainer_user_id',
                 'photo_slot_details_undecided', 'photo_slot_shop_id',
+                'full_body_photo_presence',
             ]), [
                 // 担当店舗フィルタの実効値（未指定時はデフォルト店舗、全店舗時は 'all'）を返してUIの選択状態に反映
                 'customer_shop_id' => $customerShopFilterValue,
