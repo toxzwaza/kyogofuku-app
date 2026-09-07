@@ -77,7 +77,7 @@ const img = (file) => `/images/manual/attendance/${file}`;
 
         <UiPageHeader
             title="勤怠マニュアル"
-            description="出勤・休憩・退勤の打刻、仮登録、申請から、管理者向けの承認・閾値設定まで、本システムの勤怠機能の使い方をまとめています。"
+            description="出勤・退勤の打刻、休憩登録、仮登録、申請から、管理者向けの承認・休暇登録・残業判定方式・閾値設定・月次集計CSVまで、本システムの勤怠機能の使い方をまとめています。"
         >
             <template #actions>
                 <div class="flex items-center gap-3 flex-wrap">
@@ -117,9 +117,14 @@ const img = (file) => `/images/manual/attendance/${file}`;
                         </template>
                         <div class="prose prose-sm max-w-none text-brand-text leading-relaxed">
                             <p>
-                                本システムでは、出勤・退勤・休憩の打刻から、月次の勤怠履歴の確認、申請、承認、給与計算用の閾値設定まで、勤怠管理に必要な機能を一通り提供します。
+                                本システムでは、出勤・退勤の打刻から、休憩の登録、月次の勤怠履歴の確認、申請、承認、休暇（有給・特別休暇・欠勤）の登録、残業判定方式・給与計算閾値の設定、月次集計CSVの出力まで、勤怠管理に必要な機能を一通り提供します。
                             </p>
                             <p>このマニュアルは、サイドバー左側の <strong>「勤怠」</strong>グループ内にあるすべての機能の使い方をまとめたものです。 ご自身のロール（一般スタッフ／管理者／勤怠管理者）に応じて、表示される章だけ参照すれば OK です。</p>
+                            <UiAlert variant="warning" class="mt-3">
+                                <span class="text-xs">
+                                    <strong>休憩の登録方法が変わりました。</strong> 以前の「休憩開始／休憩終了」ボタンによるリアルタイム打刻は廃止され、<strong>休憩登録モーダルから取得した休憩時間（分）を後から登録する方式</strong>になりました。所定休憩が決まっている方は登録自体が不要です（自動控除）。詳しくは「打刻」章をご覧ください。
+                                </span>
+                            </UiAlert>
                             <UiAlert variant="info" class="mt-3">
                                 <span class="text-xs">
                                     あなたの現在のロール:
@@ -159,7 +164,41 @@ const img = (file) => `/images/manual/attendance/${file}`;
                             <div>
                                 <dt class="font-semibold text-brand-text">ベース業務（シフト）</dt>
                                 <dd class="text-brand-text-muted mt-1">
-                                    会社カレンダーのパターン × あなたの勤務属性 × 平日/土日 で決まる、その日の業務開始～終了時刻です。残業は <strong>「打刻退勤がベース業務終了より後」</strong>のときだけ発生します。
+                                    会社カレンダーのパターン × あなたの勤務属性 × 平日/土日 で決まる、その日の業務開始～終了時刻です。 早出・遅刻・早退の判定は、このベース時刻が取得できる勤務属性でのみ行われます。
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold text-brand-text">残業の判定方式（パターン方式 / 閾値方式）</dt>
+                                <dd class="text-brand-text-muted mt-1">
+                                    残業の決め方は勤務属性ごとに2種類あります。
+                                    <strong>パターン方式</strong>＝退勤打刻が<strong>ベース業務終了より後</strong>になった分を残業とする方式（主に正社員）。
+                                    <strong>閾値方式</strong>＝1日の<strong>実働時間が「残業閾値」（例：480分＝8時間）を超えた分</strong>を残業とする方式（主にパート・時短）。 どちらを使うかは勤怠管理者が勤務属性ごとに設定します。
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold text-brand-text">深夜残業</dt>
+                                <dd class="text-brand-text-muted mt-1">
+                                    残業のうち <strong>22:00〜翌5:00</strong> の時間帯に重なる分です。 月次集計CSVでは「普通残業」と「深夜残業」に分けて集計されます。
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold text-brand-text">休憩方式（所定固定 / 都度入力）</dt>
+                                <dd class="text-brand-text-muted mt-1">
+                                    休憩の扱いはスタッフごとに設定されます。
+                                    <strong>所定固定</strong>＝毎回の休憩時間が一定の方。所定分数（例：60分）が自動控除され、打刻・登録は不要です。
+                                    <strong>都度入力</strong>＝休憩が変動する方。打刻画面の「休憩登録」から取得した休憩時間（分）を登録します。
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold text-brand-text">休暇区分（有給 / 特別休暇 / 欠勤）</dt>
+                                <dd class="text-brand-text-muted mt-1">
+                                    管理者が登録する休暇の種類です。打刻とは別に登録し、月次集計CSVの「有給日数／特別休暇日数／欠勤日数」に反映されます。
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold text-brand-text">振替出勤・振替対象日</dt>
+                                <dd class="text-brand-text-muted mt-1">
+                                    会社カレンダーにパターンの無い日（休日など）に出勤した場合、管理者が「適用パターン」を手動指定してベース時刻を算出します。 このとき<strong>「振替対象日」</strong>（代わりに休んだ出勤予定日）を登録すると<strong>振替勤務</strong>として扱われ、<strong>休日出勤日数には計上されません</strong>。
                                 </dd>
                             </div>
                             <div>
@@ -182,8 +221,8 @@ const img = (file) => `/images/manual/attendance/${file}`;
                         </template>
                         <div class="space-y-4 text-sm leading-relaxed">
                             <p>
-                                サイドバー「勤怠 → 打刻」を開くと、デジタル時計と4つのボタン（出勤／休憩開始／休憩終了／退勤）が表示されます。
-                                各ボタンは現在の状態に応じて自動で有効化／無効化されます。
+                                サイドバー「勤怠 → 打刻」を開くと、デジタル時計と<strong>「出勤」「退勤」</strong>のボタンが表示されます。
+                                ボタンは現在の状態に応じて自動で有効化／無効化されます。
                             </p>
                             <figure>
                                 <img :src="img('01_punch_initial.png')" alt="打刻トップ画面（初期状態）" class="rounded-soft border border-brand-border" />
@@ -197,14 +236,8 @@ const img = (file) => `/images/manual/attendance/${file}`;
                                     <span class="text-brand-text-muted text-xs">複数店舗に所属している場合は、押す前に「店舗」プルダウンから選択してください。</span>
                                 </li>
                                 <li>
-                                    <strong>休憩開始</strong> — 休憩に入るとき押します。
-                                    <figure class="mt-2">
-                                        <img :src="img('03_after_breakstart.png')" alt="休憩開始後" class="rounded-soft border border-brand-border" />
-                                        <figcaption class="text-xs text-brand-text-muted mt-1">▲ 休憩中はオレンジ色の「休憩中」バッジが表示されます。</figcaption>
-                                    </figure>
-                                </li>
-                                <li>
-                                    <strong>休憩終了</strong> — 休憩から戻ったら押します。 1日に複数回の休憩を取ることもできます。
+                                    <strong>（必要な場合のみ）休憩登録</strong> — 休憩の登録が必要な方は「休憩登録」から入力します。<br>
+                                    <span class="text-brand-text-muted text-xs">後述「休憩の登録」を参照。通常は登録不要です。</span>
                                 </li>
                                 <li>
                                     <strong>退勤</strong> — 業務終了時に押します。
@@ -215,8 +248,43 @@ const img = (file) => `/images/manual/attendance/${file}`;
                                 </li>
                             </ol>
 
-                            <UiAlert variant="info" class="mt-3">
-                                <span class="text-xs">休憩中は退勤できません。先に「休憩終了」を押してから「退勤」してください。</span>
+                            <h3 class="font-semibold text-brand-text mt-4">休憩の登録（重要：方式が変わりました）</h3>
+                            <p>
+                                以前の「休憩開始／休憩終了」ボタンによるリアルタイム打刻は廃止されました。 現在の休憩の扱いは、あなたの<strong>休憩方式</strong>によって異なります。
+                            </p>
+                            <div class="rounded-soft border border-brand-border overflow-hidden">
+                                <table class="w-full text-xs">
+                                    <thead class="bg-brand-surface-2 text-brand-text">
+                                        <tr>
+                                            <th class="text-left px-3 py-2 font-semibold">休憩方式</th>
+                                            <th class="text-left px-3 py-2 font-semibold">打刻画面の表示</th>
+                                            <th class="text-left px-3 py-2 font-semibold">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-brand-text-muted">
+                                        <tr class="border-t border-brand-border">
+                                            <td class="px-3 py-2"><strong>所定固定</strong></td>
+                                            <td class="px-3 py-2">「所定休憩（◯時間◯分）を自動控除」と表示</td>
+                                            <td class="px-3 py-2">操作不要。所定分が自動で差し引かれます。</td>
+                                        </tr>
+                                        <tr class="border-t border-brand-border">
+                                            <td class="px-3 py-2"><strong>都度入力</strong></td>
+                                            <td class="px-3 py-2">「休憩登録」リンク（コーヒーアイコン）が表示</td>
+                                            <td class="px-3 py-2">必要時のみ、取得した休憩時間（分）を登録します。</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="mt-2">
+                                「都度入力」方式で<strong>「休憩登録」</strong>を押すとモーダルが開きます。 入力するのは<strong>「取得した休憩時間（分）」のプルダウン</strong>だけで、開始・終了の時刻は不要です（15分刻み・最大120分。複数行の追加可）。 対象日をプルダウンで選べるため、当日だけでなく過去日（出勤打刻済みの直近2か月）の休憩も後から登録できます。
+                            </p>
+                            <UiAlert variant="info" class="mt-2">
+                                <span class="text-xs">
+                                    <strong>通常、休憩の登録は不要です。</strong> 所定の休憩どおりに取得した場合は登録しなくて構いません。 <strong>所定より超過して休憩した場合や、休憩を取得できなかった場合など、実態が所定と異なるときだけ</strong>登録してください。 登録した休憩はその日の勤怠に反映され、就労時間の計算・CSV出力に使われます。
+                                </span>
+                            </UiAlert>
+                            <UiAlert variant="info" class="mt-2">
+                                <span class="text-xs">出勤していない状態では退勤できません。また、退勤後は当日の打刻ボタンはグレーアウトします。</span>
                             </UiAlert>
                         </div>
                     </UiCard>
@@ -233,14 +301,15 @@ const img = (file) => `/images/manual/attendance/${file}`;
                         <div class="space-y-3 text-sm leading-relaxed">
                             <p>誤って打ってしまった打刻は、画面右側「打刻履歴」の <span class="text-akane-600 font-semibold">取消</span> ボタンで取り消せます。</p>
                             <p class="text-brand-text-muted">
-                                取消できるのは <strong>「一番最後に行った打刻」</strong>のみです。優先順位は次のとおり：
+                                取消できるのは <strong>「一番最後に行ったアクション」</strong>のみです。優先順位は次のとおり：
                             </p>
                             <ul class="text-xs list-disc list-inside text-brand-text-muted space-y-1">
-                                <li>休憩中なら「休憩開始」を取消</li>
-                                <li>退勤後なら「退勤」を取消</li>
-                                <li>休憩終了後なら「休憩終了」を取消</li>
-                                <li>出勤直後なら「出勤」を取消（レコードごと削除）</li>
+                                <li>退勤後なら「退勤」を取消（勤務中に戻る）</li>
+                                <li>出勤だけの状態なら「出勤」を取消（レコードごと削除）</li>
                             </ul>
+                            <p class="text-xs text-brand-text-muted">
+                                ※ 誤って登録した休憩を消したい場合は、勤怠履歴の「編集」（未申請のみ）や、管理者の勤怠管理画面から修正できます。
+                            </p>
                             <figure>
                                 <img :src="img('06_after_cancel.png')" alt="退勤を取消した直後" class="rounded-soft border border-brand-border" />
                                 <figcaption class="text-xs text-brand-text-muted mt-1">▲ 退勤を取り消すと「勤務中」状態に戻ります。</figcaption>
@@ -265,6 +334,9 @@ const img = (file) => `/images/manual/attendance/${file}`;
                                 <img :src="img('07_provisional_form.png')" alt="仮登録フォーム" class="rounded-soft border border-brand-border" />
                                 <figcaption class="text-xs text-brand-text-muted mt-1">▲ 仮登録フォーム。 日付・店舗が必須。出退勤時刻と休憩は任意です。</figcaption>
                             </figure>
+                            <p>
+                                <strong>休憩欄</strong>もこのフォームから入力できます。「休憩を追加」で行を増やし、各行に<strong>開始時刻・終了時刻</strong>を入力します（複数可・不要なら空のままでOK）。 打刻画面の休憩登録が「分数」で入力するのに対し、仮登録は<strong>開始・終了の時刻ペア</strong>で入力する点にご注意ください。
+                            </p>
                             <p>
                                 登録すると <UiBadge variant="neutral" size="sm">未申請</UiBadge> ステータスで保存され、勤怠履歴から何度でも編集できます。
                                 準備が整ったら <strong>申請</strong>ボタンで管理者に承認依頼を送ります。
@@ -295,6 +367,15 @@ const img = (file) => `/images/manual/attendance/${file}`;
                                 <img :src="img('09_history.png')" alt="勤怠履歴一覧" class="rounded-soft border border-brand-border" />
                                 <figcaption class="text-xs text-brand-text-muted mt-1">▲ 勤怠履歴。残業は会社カレンダーのシフトと比較して自動算出されます。</figcaption>
                             </figure>
+                            <h3 class="font-semibold text-brand-text mt-3">表示される列</h3>
+                            <p class="text-brand-text-muted">
+                                日付／店舗／ステータス／<strong>シフトパターン（A/B/C）</strong>／シフト出勤／シフト退勤／打刻出勤／打刻退勤／<strong>残業（丸め後）</strong>／<strong>休憩（合計）</strong>／操作 が表示されます。
+                            </p>
+                            <ul class="list-disc list-inside text-brand-text-muted space-y-1 text-xs">
+                                <li><strong>残業（丸め後）</strong> … セルにマウスを乗せると、丸める前の実分（休憩控除後）がツールチップで確認できます。算出できない日は「—」。</li>
+                                <li><strong>休憩（合計）</strong> … 終了時刻まで揃った休憩を合算して「◯時間◯分」で表示。マウスオーバーで内訳が出ます。</li>
+                                <li>シフトが取得できない日は「?」アイコンで理由（会社カレンダー未設定・勤務属性未割当など）が表示されます。</li>
+                            </ul>
                             <h3 class="font-semibold text-brand-text mt-3">期間の動かし方</h3>
                             <ul class="list-disc list-inside text-brand-text-muted space-y-1">
                                 <li><strong>「前月」「次月」</strong>ボタン … 締め単位で1か月ずつ移動します</li>
@@ -307,7 +388,7 @@ const img = (file) => `/images/manual/attendance/${file}`;
                             </figure>
                             <UiAlert variant="info" class="mt-2">
                                 <span class="text-xs">
-                                    <strong>残業（丸め後）</strong> は、シフト退勤より後の打刻時間から休憩を控除し、給与閾値の「残業・丸め単位（分）」で丸めて表示します。 シフトが取得できない日（会社カレンダーが未設定など）は「？」アイコンで理由が表示されます。
+                                    <strong>残業（丸め後）</strong> は、勤務属性の残業判定方式に応じて算出されます。<strong>パターン方式</strong>の方はシフト退勤より後の打刻分から休憩を控除した時間、<strong>閾値方式</strong>の方は1日の実働が残業閾値を超えた分が残業になり、給与閾値の「残業・丸め単位（分）」で切り捨てて表示します。 出勤の早出・丸めは「始業」設定に従います。 シフト（ベース時刻）が取得できない日は「？」アイコンで理由が表示されます。
                                 </span>
                             </UiAlert>
                         </div>
@@ -382,19 +463,68 @@ const img = (file) => `/images/manual/attendance/${file}`;
                         </template>
                         <div class="space-y-3 text-sm leading-relaxed">
                             <p>
-                                サイドバー「勤怠 → 勤怠管理」で、所属スタッフ全員の勤怠を一覧・編集・CSVエクスポートできます。
+                                サイドバー「勤怠 → 勤怠管理」で、所属スタッフ全員の勤怠を一覧・編集・承認・CSV出力できます。 さらに休暇登録・振替出勤のパターン設定もここから行います。
                             </p>
                             <figure>
                                 <img :src="img('18_admin_attendance_top.png')" alt="勤怠管理画面" class="rounded-soft border border-brand-border" />
                                 <figcaption class="text-xs text-brand-text-muted mt-1">▲ 勤怠管理画面。ユーザー毎にグループ化される表示モードがデフォルト。</figcaption>
                             </figure>
-                            <h3 class="font-semibold text-brand-text mt-3">主な操作</h3>
+
+                            <h3 class="font-semibold text-brand-text mt-3">絞り込みと表示</h3>
                             <ul class="list-disc list-inside text-brand-text-muted space-y-1">
-                                <li><strong>絞り込み</strong> … 店舗・ユーザー・期間で抽出</li>
-                                <li><strong>表示方法切替</strong> … テーブル形式 / ユーザー毎</li>
-                                <li><strong>CSVダウンロード</strong> … 対象ユーザーをチェックしてエクスポート</li>
-                                <li><strong>編集</strong> … 各行から時刻・休憩を直接修正可能（モーダル）</li>
+                                <li><strong>絞り込み</strong> … 店舗・ユーザー・<strong>勤務属性</strong>（「未設定」も選択可）・期間で抽出。既定の期間は前月21日〜当月20日。</li>
+                                <li><strong>表示方法切替</strong> … 「テーブル表示」／「ユーザー毎」（既定）。「ユーザー毎」では各スタッフのブロック下に月次集計表が付きます。</li>
+                                <li><strong>休憩列</strong> … 所定固定の方は「◯分（所定）」、都度入力の方は打刻合計を「◯分」表示。</li>
+                                <li><strong>色分けバッジ</strong> … 遅刻（青）／早出（オレンジ）／残業（紫）、および要対応の「要パターン設定」「要勤務属性設定」。</li>
                             </ul>
+
+                            <h3 class="font-semibold text-brand-text mt-3">編集・承認（各行「詳細」）</h3>
+                            <ul class="list-disc list-inside text-brand-text-muted space-y-1">
+                                <li><strong>時刻の修正</strong> … 出勤・退勤時刻を修正できます（退勤は出勤より後）。</li>
+                                <li><strong>休憩</strong> … 開始・終了の時刻ペアで複数追加・削除可能（保存時に入れ直し）。</li>
+                                <li><strong>適用パターン／振替対象日</strong> … 会社カレンダーにパターンの無い日はオレンジ枠の案内が出ます（下記）。</li>
+                                <li><strong>承認</strong> … 未申請・申請済の勤怠は「この勤怠を承認する」で確定。時刻を直したときは先に「変更を保存」してください。</li>
+                            </ul>
+
+                            <h3 class="font-semibold text-brand-text mt-3">休暇登録（有給・特別休暇・欠勤）</h3>
+                            <p class="text-brand-text-muted">
+                                絞り込みフォーム下の琥珀色<strong>「＋ 休暇登録」</strong>ボタンからモーダルを開き、<strong>スタッフ・日付・区分（有給／特別休暇／欠勤）・メモ（任意）</strong>を入力して登録します。 打刻が無い日でも登録でき、月次集計CSVの「有給日数／特別休暇日数／欠勤日数」に反映されます。 同一スタッフ・同一日は1区分のみで、再登録すると上書きされます。 登録済みの休暇はボタン下の「登録済みの休暇」一覧から「削除」できます。
+                            </p>
+
+                            <h3 class="font-semibold text-brand-text mt-3">振替出勤（適用パターンの手動指定）</h3>
+                            <p class="text-brand-text-muted">
+                                会社カレンダーにパターンの無い日に出勤があると、その行は<strong>オレンジ背景</strong>＋「要パターン設定」バッジで強調されます。 「詳細」を開くとオレンジ枠の案内が出るので、<strong>適用パターン（A/B/C）</strong>を選ぶとベース出勤・退勤が再計算されます。 このとき<strong>「振替対象日」</strong>（代わりに休んだ出勤予定日）も登録すると<strong>振替勤務</strong>扱いとなり、休日出勤日数に計上されません。 振替対象日を空のままにすると「休日出勤」として1日カウントされます。
+                            </p>
+
+                            <h3 class="font-semibold text-brand-text mt-3">CSV出力（2種類）</h3>
+                            <div class="rounded-soft border border-brand-border overflow-hidden">
+                                <table class="w-full text-xs">
+                                    <thead class="bg-brand-surface-2 text-brand-text">
+                                        <tr>
+                                            <th class="text-left px-3 py-2 font-semibold">種類</th>
+                                            <th class="text-left px-3 py-2 font-semibold">粒度</th>
+                                            <th class="text-left px-3 py-2 font-semibold">対象</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-brand-text-muted">
+                                        <tr class="border-t border-brand-border">
+                                            <td class="px-3 py-2"><strong>CSVダウンロード</strong>（日次明細）</td>
+                                            <td class="px-3 py-2">1勤怠＝1行。打刻・給与用時刻・休憩の明細。</td>
+                                            <td class="px-3 py-2"><strong>チェックで選んだユーザー</strong>のみ。</td>
+                                        </tr>
+                                        <tr class="border-t border-brand-border">
+                                            <td class="px-3 py-2"><strong>月次集計CSV</strong>（藍色ボタン）</td>
+                                            <td class="px-3 py-2">1スタッフ＝1行の月合計（下記12列）。</td>
+                                            <td class="px-3 py-2"><strong>絞り込み条件内の全員</strong>（チェック無関係）。</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-brand-text-muted mt-2">
+                                <strong>月次集計CSVの列（前月21日〜当月20日が既定）：</strong>
+                                社員番号／氏名／出勤日数／休日出勤日数／有給日数／特別休暇日数／欠勤日数／就労時間／普通残業／深夜残業／遅早回数／遅早時間。
+                                「ユーザー毎」表示では各スタッフの集計表の行末「詳細（計算ロジック）」から、列ごとの計算根拠と日別の寄与データを確認できます。
+                            </p>
                         </div>
                     </UiCard>
                 </section>
@@ -409,12 +539,32 @@ const img = (file) => `/images/manual/attendance/${file}`;
                         </template>
                         <div class="space-y-3 text-sm leading-relaxed">
                             <p>
-                                サイドバー「勤怠 → 勤務属性」で、社員・パートなどの<strong>属性ごとの業務時間（A/B/C × 平日/土日）</strong>を管理します。
+                                サイドバー「勤怠 → 勤務属性」で、社員・パートなどの<strong>属性ごとの業務時間（A/B/C × 平日/土日）</strong>と<strong>残業の判定方式</strong>を管理します。
                             </p>
                             <figure>
                                 <img :src="img('19_work_attributes.png')" alt="勤務属性マスタ一覧" class="rounded-soft border border-brand-border" />
                                 <figcaption class="text-xs text-brand-text-muted mt-1">▲ 勤務属性の一覧。「新規追加」または既存の編集アイコンから操作。</figcaption>
                             </figure>
+
+                            <h3 class="font-semibold text-brand-text mt-3">残業の判定方式</h3>
+                            <p class="text-brand-text-muted">
+                                属性の追加・編集画面で「残業の判定方式」を選びます。
+                            </p>
+                            <dl class="text-sm space-y-2">
+                                <div>
+                                    <dt class="font-semibold text-brand-text">パターン方式（所定終業を超えた分が残業）</dt>
+                                    <dd class="text-brand-text-muted">主に<strong>正社員</strong>向け。A/B/Cパターンの所定終業時刻を超えた分を残業とします。パターン時刻の登録が必要です。</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-semibold text-brand-text">閾値方式（1日の実働が閾値を超えた分が残業）</dt>
+                                    <dd class="text-brand-text-muted">主に<strong>パート・時短</strong>向け。「残業閾値（分）」（例：480＝8時間、470＝7時間50分）を登録し、1日の実働がそれを超えた分を残業とします。時短でパターン時刻も登録した場合は、早出・遅刻・早退の判定にだけパターンが使われます。</dd>
+                                </div>
+                            </dl>
+                            <UiAlert variant="info" class="mt-2">
+                                <span class="text-xs">
+                                    閾値方式は<strong>「給与計算閾値」画面の「閾値方式の適用開始日」以降の勤務分</strong>から有効になります（それより前は従来どおり据え置き）。
+                                </span>
+                            </UiAlert>
                             <UiAlert variant="warning" class="mt-2">
                                 <span class="text-xs">
                                     すでにスタッフに割り当てられている勤務属性は<strong>削除できません</strong>。 該当スタッフの「勤務属性」を別のものに切り替えてから削除してください。
@@ -477,6 +627,10 @@ const img = (file) => `/images/manual/attendance/${file}`;
                                     <dt class="font-semibold text-brand-text">残業・丸め単位（分）</dt>
                                     <dd class="text-brand-text-muted">残業時間をこの単位で<strong>切り捨て</strong>ます（短い方へ丸め。例：単位15分なら38分→30分）。</dd>
                                 </div>
+                                <div>
+                                    <dt class="font-semibold text-brand-text">閾値方式の適用開始日</dt>
+                                    <dd class="text-brand-text-muted">勤務属性の<strong>閾値方式</strong>（残業閾値で残業を判定する新方式）を<strong>この日以降の勤務分</strong>から適用します。それより前の勤怠は従来どおり据え置きです。未設定なら全期間に適用されます。<strong>給与の締め期間の切り替わりに合わせる</strong>ことを推奨します。</dd>
+                                </div>
                             </dl>
                         </div>
                     </UiCard>
@@ -517,9 +671,15 @@ const img = (file) => `/images/manual/attendance/${file}`;
                         </template>
                         <div class="space-y-4 text-sm leading-relaxed">
                             <div>
+                                <p class="font-semibold text-brand-text">Q. 休憩の「開始／終了」ボタンが見当たりません。</p>
+                                <p class="text-brand-text-muted mt-1">
+                                    A. 休憩の打刻方式は変更されました。所定休憩が決まっている方は<strong>自動控除</strong>のため操作不要です。 都度入力の方は「休憩登録」から<strong>取得した休憩時間（分）</strong>を後から登録します（通常は登録不要。所定と異なるときだけ登録）。
+                                </p>
+                            </div>
+                            <div>
                                 <p class="font-semibold text-brand-text">Q. 退勤ボタンが押せません。</p>
                                 <p class="text-brand-text-muted mt-1">
-                                    A. 休憩中の状態では退勤できません。先に「休憩終了」を押してください。 また、まだ出勤打刻していない場合も退勤できません。
+                                    A. まだ出勤打刻していない場合や、すでに退勤済みの場合は退勤できません。
                                 </p>
                             </div>
                             <div>
@@ -537,7 +697,19 @@ const img = (file) => `/images/manual/attendance/${file}`;
                             <div>
                                 <p class="font-semibold text-brand-text">Q. 残業時間が0分のままになります。</p>
                                 <p class="text-brand-text-muted mt-1">
-                                    A. 残業はシフト退勤時刻より後に打刻された場合にのみ発生します。 シフト時刻が取得できていない場合や、シフト終了より早く退勤している場合は0分になります。
+                                    A. 残業の発生条件は勤務属性の判定方式によります。<strong>パターン方式</strong>はシフト退勤より後に打刻された場合、<strong>閾値方式</strong>は1日の実働が残業閾値を超えた場合にのみ発生します。 いずれにも達しない場合は0分です。 閾値方式は「閾値方式の適用開始日」以降の勤務分から有効になる点にもご注意ください。
+                                </p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-brand-text">Q. 有給や欠勤はどこで登録しますか？</p>
+                                <p class="text-brand-text-muted mt-1">
+                                    A. 休暇は本人の打刻ではなく、<strong>管理者が勤怠管理画面の「＋ 休暇登録」</strong>から登録します（有給／特別休暇／欠勤）。 登録内容は月次集計CSVの休暇日数に反映されます。
+                                </p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-brand-text">Q. 休日に出勤した行がオレンジ色になっています。</p>
+                                <p class="text-brand-text-muted mt-1">
+                                    A. 会社カレンダーにその日のパターンが無いためです。管理者が「詳細」から<strong>適用パターン</strong>を選ぶとベース時刻が算出されます。 振替出勤の場合は「振替対象日」も登録すると休日出勤にカウントされません。
                                 </p>
                             </div>
                             <div>
