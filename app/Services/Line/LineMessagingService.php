@@ -112,6 +112,86 @@ class LineMessagingService
     }
 
     /**
+     * 共通 Messaging API チャネルで複数ユーザーへ同一メッセージを一括送信する（Multicast API）
+     *
+     * 仕様: to は最大500件、messages は最大5件。呼び出し側で500件以下にチャンクすること。
+     *
+     * @param  array<int, string>  $lineUserIds
+     * @param  array<int, array<string, mixed>>  $messages  LINE メッセージオブジェクトの配列
+     * @throws \RuntimeException
+     */
+    public function multicast(array $lineUserIds, array $messages): void
+    {
+        $token = (string) config('line.messaging.channel_access_token', '');
+        if ($token === '') {
+            throw new \RuntimeException('LINE Messaging API のチャネルアクセストークンが未設定です（.env の LINE_MESSAGING_CHANNEL_ACCESS_TOKEN）。');
+        }
+
+        if (count($lineUserIds) === 0) {
+            return;
+        }
+        if (count($lineUserIds) > 500) {
+            throw new \RuntimeException('Multicast の宛先は最大500件です（'.count($lineUserIds).'件が指定されました）。');
+        }
+
+        try {
+            $response = Http::withToken($token, 'Bearer')
+                ->acceptJson()
+                ->timeout(20)
+                ->post('https://api.line.me/v2/bot/message/multicast', [
+                    'to' => array_values($lineUserIds),
+                    'messages' => $messages,
+                ]);
+        } catch (\Throwable $e) {
+            Log::warning('LINE multicast HTTP exception', [
+                'to_count' => count($lineUserIds),
+                'exception' => $e::class.': '.$e->getMessage(),
+            ]);
+            throw new \RuntimeException('LINE への一括送信中に HTTP 例外: '.$e->getMessage(), 0, $e);
+        }
+
+        if (! $response->successful()) {
+            Log::warning('LINE multicast failed', [
+                'to_count' => count($lineUserIds),
+                'status' => $response->status(),
+                'body' => mb_substr($response->body(), 0, 1000),
+            ]);
+            throw new \RuntimeException('LINE への一括送信に失敗しました: HTTP '.$response->status());
+        }
+    }
+
+    /**
+     * 共通 Messaging API チャネルで 1:1 で任意のメッセージ配列を送信する
+     *
+     * @param  array<int, array<string, mixed>>  $messages  LINE メッセージオブジェクトの配列（最大5件）
+     * @throws \RuntimeException
+     */
+    public function pushMessagesToUser(string $lineUserId, array $messages): void
+    {
+        $token = (string) config('line.messaging.channel_access_token', '');
+        if ($token === '') {
+            throw new \RuntimeException('LINE Messaging API のチャネルアクセストークンが未設定です（.env の LINE_MESSAGING_CHANNEL_ACCESS_TOKEN）。');
+        }
+
+        $response = Http::withToken($token, 'Bearer')
+            ->acceptJson()
+            ->timeout(15)
+            ->post('https://api.line.me/v2/bot/message/push', [
+                'to' => $lineUserId,
+                'messages' => $messages,
+            ]);
+
+        if (! $response->successful()) {
+            Log::warning('LINE push (messages) failed', [
+                'line_user_id' => $lineUserId,
+                'status' => $response->status(),
+                'body' => mb_substr($response->body(), 0, 1000),
+            ]);
+            throw new \RuntimeException('LINE への送信に失敗しました: HTTP '.$response->status());
+        }
+    }
+
+    /**
      * Webhook で受信した画像メッセージのバイナリを LINE API から取得
      *
      * 仕様: 送信から約10分以内に取得する必要あり (期限切れは 410)

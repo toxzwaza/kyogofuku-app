@@ -5,7 +5,7 @@ import {
     Camera, Building2,
     Store, Settings,
     Clock, History, CheckCircle2, Briefcase, DollarSign, Calculator, AlarmClock,
-    FileText, Sparkles, BookOpen, LifeBuoy, MonitorSmartphone, Gift,
+    FileText, Sparkles, BookOpen, LifeBuoy, MonitorSmartphone, Gift, Megaphone,
 } from 'lucide-vue-next';
 
 /**
@@ -30,6 +30,7 @@ export function useAdminNav() {
             items: [
                 { label: '顧客一覧',       route: 'admin.customers.index',           icon: Users,         activePatterns: ['admin.customers.*'] },
                 { label: 'LINE連携',       route: 'admin.line-contacts.index',       icon: MessageCircle, activePatterns: ['admin.line-contacts.*'] },
+                { label: 'LINE広告',       route: 'admin.line-broadcasts.index',     icon: Megaphone,     activePatterns: ['admin.line-broadcasts.*'] },
                 { label: '不明メッセージ', route: 'admin.line-unknown-inbox.index',  icon: HelpCircle,    activePatterns: ['admin.line-unknown-inbox.*'] },
                 { label: '顧客タグ',       route: 'admin.customer-tags.index',       icon: Tag,           activePatterns: ['admin.customer-tags.*'] },
                 { label: '制約テンプレート', route: 'admin.constraint-templates.index', icon: Lock,        activePatterns: ['admin.constraint-templates.*'] },
