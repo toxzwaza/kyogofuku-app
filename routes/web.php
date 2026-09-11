@@ -373,6 +373,25 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/line-contacts', [\App\Http\Controllers\Admin\LineContactListController::class, 'index'])->name('line-contacts.index');
     Route::delete('/line-contacts/{contact}', [\App\Http\Controllers\Admin\LineContactListController::class, 'destroy'])->name('line-contacts.destroy');
 
+    // LINE広告（キャンペーン一斉配信）
+    Route::prefix('line-broadcasts')->name('line-broadcasts.')->group(function () {
+        $controller = \App\Http\Controllers\Admin\LineBroadcastController::class;
+        Route::get('/', [$controller, 'index'])->name('index');
+        Route::get('/create', [$controller, 'create'])->name('create');
+        Route::post('/', [$controller, 'store'])->name('store');
+        Route::get('/contact-search', [$controller, 'contactSearch'])->name('contact-search');
+        Route::get('/{broadcast}', [$controller, 'show'])->name('show');
+        Route::get('/{broadcast}/edit', [$controller, 'edit'])->name('edit');
+        Route::put('/{broadcast}', [$controller, 'update'])->name('update');
+        Route::delete('/{broadcast}', [$controller, 'destroy'])->name('destroy');
+        Route::post('/{broadcast}/duplicate', [$controller, 'duplicate'])->name('duplicate');
+        Route::post('/{broadcast}/test-send', [$controller, 'testSend'])->name('test-send');
+        Route::get('/{broadcast}/recipients', [$controller, 'selectRecipients'])->name('recipients');
+        Route::get('/{broadcast}/search/customers', [$controller, 'searchCustomers'])->name('search.customers');
+        Route::get('/{broadcast}/search/reservations', [$controller, 'searchReservations'])->name('search.reservations');
+        Route::post('/{broadcast}/send', [$controller, 'send'])->name('send');
+    });
+
     // 制約テンプレート管理
     Route::get('/constraint-templates', [AdminConstraintTemplateController::class, 'index'])->name('constraint-templates.index');
     Route::get('/constraint-templates/create', [AdminConstraintTemplateController::class, 'create'])->name('constraint-templates.create');
