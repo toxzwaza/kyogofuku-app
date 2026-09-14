@@ -23,16 +23,6 @@
     overflow: hidden;
   }
 
-  /* スキャン位置決め用ArUcoマーカー（四隅） */
-  .aruco {
-    position: absolute;
-    width: 12mm;
-    height: 12mm;
-  }
-  .aruco.tl { left: 1mm;  top: 1mm; }
-  .aruco.tr { right: 1mm; top: 1mm; }
-  .aruco.br { right: 1mm; bottom: 1mm; }
-  .aruco.bl { left: 1mm;  bottom: 1mm; }
   @page { size: A4 portrait; margin: 0; }
   @media print {
     html, body { background: #fff; }
@@ -227,11 +217,6 @@
 <!-- ============ 1ページ目：お客様記入欄 ============ -->
 <div class="page page1">
 
-  <img class="aruco tl" src="{{ asset('images/aruco/aruco_0.svg') }}" alt="">
-  <img class="aruco tr" src="{{ asset('images/aruco/aruco_1.svg') }}" alt="">
-  <img class="aruco br" src="{{ asset('images/aruco/aruco_2.svg') }}" alt="">
-  <img class="aruco bl" src="{{ asset('images/aruco/aruco_3.svg') }}" alt="">
-
   <!-- 基本情報 -->
   <div class="sec">
     <table>
@@ -261,13 +246,13 @@
       </tr>
       <tr>
         <td class="label">身長</td>
-        <td>　　　　　　　㎝</td>
+        <td style="text-align:right">㎝</td>
       </tr>
       <tr>
         <td class="label" rowspan="2">お電話</td>
         <td><span class="label" style="border:none; padding:0 8px 0 0; background:none">ご自宅</span>&nbsp;</td>
         <td class="label" rowspan="2">足のサイズ</td>
-        <td rowspan="2">　　　　　　　㎝</td>
+        <td rowspan="2" style="text-align:right">㎝</td>
       </tr>
       <tr>
         <td><span class="label" style="border:none; padding:0 8px 0 0; background:none">携　帯</span>{{ $v($customer->phone_number, '') }}&nbsp;</td>
@@ -416,11 +401,6 @@
 
 <!-- ============ 2ページ目：店舗管理欄 ============ -->
 <div class="page page2">
-
-  <img class="aruco tl" src="{{ asset('images/aruco/aruco_4.svg') }}" alt="">
-  <img class="aruco tr" src="{{ asset('images/aruco/aruco_5.svg') }}" alt="">
-  <img class="aruco br" src="{{ asset('images/aruco/aruco_6.svg') }}" alt="">
-  <img class="aruco bl" src="{{ asset('images/aruco/aruco_7.svg') }}" alt="">
 
   <div class="title-band" style="font-size:12pt; padding:3px 4px; margin-bottom:4mm">店舗管理欄（社内用）</div>
 
