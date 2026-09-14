@@ -39,13 +39,20 @@
                                         type="button"
                                         @click="setActiveFilterTab(tab.key)"
                                         :class="[
-                                            'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors',
+                                            'relative px-3 py-1.5 text-xs font-semibold rounded-md transition-colors',
                                             activeFilterTab === tab.key
                                                 ? 'bg-brand-primary text-white'
                                                 : 'text-brand-text-muted hover:bg-brand-surface-2'
                                         ]"
                                     >
                                         {{ tab.label }}
+                                        <!-- 適用中フィルタ件数バッジ -->
+                                        <span
+                                            v-if="filterTabCounts[tab.key]"
+                                            class="absolute -top-1.5 -left-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white"
+                                        >
+                                            {{ filterTabCounts[tab.key] }}
+                                        </span>
                                     </button>
                                 </div>
 
@@ -312,6 +319,26 @@
                                                 type="date"
                                                 class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                             />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">成約金額（円）※両方同じ値で一致検索</label>
+                                            <div class="flex items-center gap-1">
+                                                <input
+                                                    v-model="searchForm.contract_amount_min"
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder="下限"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
+                                                />
+                                                <span class="shrink-0 text-xs text-brand-text">〜</span>
+                                                <input
+                                                    v-model="searchForm.contract_amount_max"
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder="上限"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
+                                                />
+                                            </div>
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">店舗</label>
@@ -976,6 +1003,7 @@ import { UiPageHeader, UiButton } from '@/Components/UI';
 import { Plus, Search, Filter, RotateCcw, Eye } from 'lucide-vue-next';
 import ActionButton from '@/Components/ActionButton.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
+import { buildCustomerFilterChips, countChipsByTab } from '@/composables/useCustomerFilterChips.js';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
 
@@ -1118,6 +1146,8 @@ const searchForm = reactive({
     created_at_to: props.filters?.created_at_to || '',
     contract_date_from: props.filters?.contract_date_from || '',
     contract_date_to: props.filters?.contract_date_to || '',
+    contract_amount_min: props.filters?.contract_amount_min || '',
+    contract_amount_max: props.filters?.contract_amount_max || '',
     shop_id: props.filters?.shop_id || null,
     plan_id: props.filters?.plan_id || null,
     kimono_type: props.filters?.kimono_type || null,
@@ -1188,81 +1218,17 @@ const clearCeremonyAreas = () => {
 };
 
 // 適用中の絞り込み条件（実際に結果へ反映されている props.filters ベース）をチップ表示用に整形
-const filterChips = computed(() => {
-    const f = props.filters || {};
-    const chips = [];
-    const findName = (list, id, field = 'name') =>
-        (list || []).find((x) => x.id == id)?.[field] ?? `#${id}`;
-    const boolLabel = (v) => {
-        if (v === true || v === 'true' || v === 1 || v === '1') return 'あり';
-        if (v === false || v === 'false' || v === 0 || v === '0') return 'なし';
-        return null;
-    };
-    const text = (key, label) => {
-        const v = f[key];
-        if (v !== null && v !== undefined && v !== '') chips.push({ key, label, value: String(v) });
-    };
-    const bool = (key, label) => {
-        const v = f[key];
-        if (v === null || v === undefined || v === '') return;
-        const b = boolLabel(v);
-        if (b) chips.push({ key, label, value: b });
-    };
-    const idChip = (key, label, list, field = 'name') => {
-        const v = f[key];
-        if (v !== null && v !== undefined && v !== '') chips.push({ key, label, value: findName(list, v, field) });
-    };
-    const toArray = (v) =>
-        Array.isArray(v) ? v : (v !== null && v !== undefined && v !== '' ? [v] : []);
+// 各チップに tab（filterTabs の key）を持たせ、タブボタンの適用中件数バッジにも使う
+const filterChips = computed(() => buildCustomerFilterChips(props.filters, {
+    shops: props.shops,
+    plans: props.plans,
+    users: props.users,
+    ceremonyAreas: props.ceremonyAreas,
+    constraintTemplates: props.constraintTemplates,
+}));
 
-    // 基本情報
-    text('name', '顧客名');
-    text('kana', 'ふりがな');
-    text('phone_number', '電話番号');
-    const shopIds = toArray(f.customer_shop_id).filter((x) => x !== 'all');
-    if (shopIds.length) {
-        chips.push({ key: 'customer_shop_id', label: '担当店舗', value: shopIds.map((id) => findName(props.shops, id)).join('、') });
-    }
-    const areaIds = toArray(f.ceremony_area_id);
-    if (areaIds.length) {
-        chips.push({ key: 'ceremony_area_id', label: '成人式エリア', value: areaIds.map((id) => findName(props.ceremonyAreas, id)).join('、') });
-    }
-    text('created_at_from', '登録日(開始)');
-    text('created_at_to', '登録日(終了)');
-    text('full_body_photo_presence', '顧客写真(全身)');
-
-    // 成人式情報
-    text('seijin_preparation_venue', '仕度会場');
-    text('seijin_preparation_time', '時間');
-    bool('other_store_preparation', '他店お支度');
-    text('other_store_salon_name', '美容室名');
-    text('kimono_ship_date', '着物発送日');
-
-    // 成約情報
-    text('contract_status', '成約ステータス');
-    text('contract_date_from', '成約日(開始)');
-    text('contract_date_to', '成約日(終了)');
-    idChip('shop_id', '成約店舗', props.shops);
-    idChip('plan_id', 'プラン', props.plans);
-    text('kimono_type', '着物種別');
-    bool('warranty_flag', '安心保証');
-    idChip('user_id', '担当スタッフ', props.users);
-    text('preparation_venue', 'お仕度会場');
-    text('preparation_date', 'お仕度日程');
-
-    // 制約情報
-    text('constraint_presence', '制約');
-    idChip('constraint_template_id', '制約テンプレート', props.constraintTemplates);
-    text('constraint_signed_at_from', '署名日(開始)');
-    text('constraint_signed_at_to', '署名日(終了)');
-    idChip('constraint_explainer_user_id', '説明担当', props.users);
-
-    // 前撮り情報
-    idChip('photo_slot_shop_id', '前撮り担当店舗', props.shops);
-    bool('photo_slot_details_undecided', '前撮り詳細未決定');
-
-    return chips;
-});
+// タブごとの適用中フィルタ件数（タブボタンの赤丸バッジ用）
+const filterTabCounts = computed(() => countChipsByTab(filterChips.value));
 
 // 来店動機をフォーム用に正規化（SNS広告・WEB広告はSNS・WEB広告に統合）
 const normalizeVisitReasonsForForm = (reasons) => {
@@ -1378,6 +1344,8 @@ const resetSearch = () => {
     searchForm.created_at_to = '';
     searchForm.contract_date_from = '';
     searchForm.contract_date_to = '';
+    searchForm.contract_amount_min = '';
+    searchForm.contract_amount_max = '';
     searchForm.shop_id = null;
     searchForm.plan_id = null;
     searchForm.kimono_type = null;

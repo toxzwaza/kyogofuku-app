@@ -6,13 +6,20 @@
                 v-for="tab in filterTabs"
                 :key="tab.key"
                 type="button"
-                class="px-2.5 py-1.5 text-xs rounded-md border transition-colors"
+                class="relative px-2.5 py-1.5 text-xs rounded-md border transition-colors"
                 :class="activeFilterTab === tab.key
                     ? 'bg-brand-primary text-brand-on-primary border-brand-primary'
                     : 'bg-brand-surface text-brand-text-muted border-brand-border hover:bg-brand-surface-2'"
                 @click="setActiveFilterTab(tab.key)"
             >
                 {{ tab.label }}
+                <!-- 適用中フィルタ件数バッジ -->
+                <span
+                    v-if="tabCounts[tab.key]"
+                    class="absolute -top-1.5 -left-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white"
+                >
+                    {{ tabCounts[tab.key] }}
+                </span>
             </button>
         </div>
 
@@ -182,6 +189,14 @@
                     <input v-model="form.contract_date_to" type="date" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
                 </div>
                 <div>
+                    <label class="block text-xs font-medium text-brand-text mb-1">成約金額（円）※両方同じ値で一致検索</label>
+                    <div class="flex items-center gap-1">
+                        <input v-model="form.contract_amount_min" type="number" min="0" placeholder="下限" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
+                        <span class="shrink-0 text-xs text-brand-text">〜</span>
+                        <input v-model="form.contract_amount_max" type="number" min="0" placeholder="上限" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
+                    </div>
+                </div>
+                <div>
                     <label class="block text-xs font-medium text-brand-text mb-1">店舗</label>
                     <select v-model="form.shop_id" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
                         <option :value="null">全て</option>
@@ -317,6 +332,8 @@ const props = defineProps({
     ceremonyAreas:       { type: Array, default: () => [] },
     constraintTemplates: { type: Array, default: () => [] },
     idPrefix:            { type: String, default: 'customer-filter' },
+    /** タブごとの適用中フィルタ件数（key: filterTabs の key）。タブボタンの赤丸バッジ表示用 */
+    tabCounts:           { type: Object, default: () => ({}) },
 });
 
 defineEmits(['search', 'reset']);
