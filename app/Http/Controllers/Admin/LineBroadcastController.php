@@ -283,7 +283,13 @@ class LineBroadcastController extends Controller
             'plans' => Plan::orderBy('name')->get(['id', 'name']),
             'users' => User::orderBy('name')->get(['id', 'name']),
             'constraintTemplates' => ConstraintTemplate::orderBy('name')->get(['id', 'name']),
-            'events' => Event::orderByDesc('id')->get(['id', 'title']),
+            // イベント選択テーブル用：開催日の新しい順＋予約数・開催店舗付き（start_at 未設定は末尾）
+            'events' => Event::withCount('reservations')
+                ->with('shops:id,name')
+                ->orderByRaw('start_at IS NULL')
+                ->orderByDesc('start_at')
+                ->orderByDesc('id')
+                ->get(['id', 'title', 'start_at', 'end_at', 'is_public']),
         ]);
     }
 

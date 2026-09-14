@@ -37,8 +37,18 @@ class ReservationController extends Controller
      */
     public function index(Request $request, Event $event)
     {
-        // 会場リストを取得（会場ID昇順）
+        // 会場リストを取得（各会場の最初の予約枠開始日の早い順。枠のない会場は末尾・同日はID順）
         $venues = $event->venues()->where('venues.is_active', true)->orderBy('id')->get();
+        if ($event->usesTimeslotReservation()) {
+            $firstSlotDatesByVenue = $event->timeslots()
+                ->where('is_active', true)
+                ->get()
+                ->groupBy('venue_id')
+                ->map(fn ($slots) => $slots->min('start_at'));
+            $venues = $venues->sortBy(function ($venue) use ($firstSlotDatesByVenue) {
+                return $firstSlotDatesByVenue->get($venue->id) ?? Carbon::createFromDate(9999, 12, 31);
+            })->values();
+        }
 
         // 表示する開始日・終了日（予約フォームの場合のみ）。開始日デフォルトは本日、終了日は未指定で上限なし
         $today = Carbon::today();
@@ -87,8 +97,8 @@ class ReservationController extends Controller
 
         $reservations = $reservationsQuery
             ->orderBy('cancel_flg', 'asc')
-            ->orderBy('reservation_datetime', 'desc')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('reservation_datetime', 'asc')
+            ->orderBy('created_at', 'asc')
             ->get()->map(function ($reservation) {
                 return [
                     'id' => $reservation->id,

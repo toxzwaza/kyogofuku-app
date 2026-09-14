@@ -47,8 +47,9 @@
         </div>
 
         <!-- ============ 顧客から選ぶ ============ -->
-        <div v-show="activeTab === 'customers'" class="flex flex-col lg:flex-row gap-6 lg:items-start">
-            <aside class="w-full lg:w-72 shrink-0">
+        <div v-show="activeTab === 'customers'" class="flex flex-col lg:flex-row-reverse gap-6 lg:items-start">
+            <!-- 右：検索条件（顧客一覧と同配置） -->
+            <aside class="w-full lg:w-[22rem] shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
                 <UiCard variant="default" padding="md">
                     <CustomerSearchFilterPanel
                         :form="customerFilter"
@@ -57,6 +58,7 @@
                         :users="users"
                         :ceremony-areas="ceremonyAreas"
                         :constraint-templates="constraintTemplates"
+                        :tab-counts="customerFilterTabCounts"
                         id-prefix="broadcast-recipients"
                         @search="searchCustomers(1)"
                         @reset="resetCustomerFilter"
@@ -64,6 +66,7 @@
                 </UiCard>
             </aside>
 
+            <!-- 左：検索結果 -->
             <div class="flex-1 min-w-0 w-full">
                 <UiCard variant="default" padding="none">
                     <div class="px-4 py-3 border-b border-brand-border flex flex-wrap items-center justify-between gap-2 bg-brand-surface-2/60">
@@ -76,6 +79,23 @@
                         <UiButton size="sm" variant="subtle" type="button" :disabled="!customerSendableRows.length" @click="selectAllCustomersOnPage">
                             このページの送信可能な顧客を全て選択
                         </UiButton>
+                    </div>
+                    <!-- 適用中の絞り込み条件（顧客一覧と同表示） -->
+                    <div
+                        v-if="customerFilterChips.length"
+                        class="px-4 py-2.5 border-b border-brand-border bg-brand-surface flex flex-wrap items-center gap-1.5"
+                    >
+                        <span class="inline-flex items-center gap-1 text-xs font-medium text-brand-text-muted mr-1">
+                            <Filter :size="13" />
+                            絞り込み中
+                        </span>
+                        <span
+                            v-for="chip in customerFilterChips"
+                            :key="chip.key"
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-medium"
+                        >
+                            <span class="text-brand-text-muted">{{ chip.label }}:</span>{{ chip.value }}
+                        </span>
                     </div>
 
                     <div v-if="customerLoading" class="p-8 text-center text-sm text-brand-text-muted">検索中…</div>
@@ -129,9 +149,11 @@
         </div>
 
         <!-- ============ イベント予約者から選ぶ ============ -->
-        <div v-show="activeTab === 'reservations'" class="space-y-4">
+        <div v-show="activeTab === 'reservations'" class="flex flex-col lg:flex-row-reverse gap-6 lg:items-start">
+            <!-- 右：検索条件（顧客から選ぶと同配置） -->
+            <aside class="w-full lg:w-[22rem] shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
             <UiCard variant="default" padding="md">
-                <form @submit.prevent="searchReservations(1)" class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-end">
+                <form @submit.prevent="searchReservations(1)" class="space-y-3">
                     <UiFormField label="キーワード" hint="名前・ふりがな・電話番号で検索">
                         <UiInput v-model="reservationFilter.q" placeholder="例: 山田 / ヤマダ / 090…" size="sm" />
                     </UiFormField>
@@ -146,35 +168,91 @@
                             size="sm"
                         />
                     </UiFormField>
-                    <div class="flex items-end gap-2">
-                        <UiButton variant="primary" size="sm" type="submit">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-medium text-brand-text">
+                                イベントで絞り込み（複数選択可）
+                                <span v-if="reservationFilter.event_ids.length" class="ml-1 font-semibold text-brand-primary">{{ reservationFilter.event_ids.length }}件選択中</span>
+                            </span>
+                            <button type="button" class="text-xs text-brand-text-muted hover:underline" @click="reservationFilter.event_ids = []">全解除</button>
+                        </div>
+                        <!-- イベント一覧の絞り込み（開催店舗・状態） -->
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-text mb-1">開催店舗</label>
+                                <select v-model="eventShopFilter" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
+                                    <option :value="null">全て</option>
+                                    <option v-for="shop in shops" :key="shop.id" :value="shop.id">{{ shop.name }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-text mb-1">状態</label>
+                                <select v-model="eventStatusFilter" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm">
+                                    <option :value="null">全て</option>
+                                    <option value="upcoming">開催前</option>
+                                    <option value="ongoing">開催中</option>
+                                    <option value="ended">終了</option>
+                                    <option value="unscheduled">日程未設定</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- 開催日の新しい順のイベント選択テーブル -->
+                        <div class="rounded-lg border border-brand-border max-h-80 overflow-y-auto">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-brand-surface-2 sticky top-0 z-[1]">
+                                    <tr class="text-left text-xs text-brand-text-muted">
+                                        <th class="px-3 py-2 w-8"></th>
+                                        <th class="px-3 py-2">イベント</th>
+                                        <th class="px-3 py-2 text-right whitespace-nowrap">状態</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-brand-surface divide-y divide-brand-border">
+                                    <tr v-if="!filteredEvents.length">
+                                        <td colspan="3" class="px-3 py-6 text-center text-xs text-brand-text-muted">条件に合うイベントがありません</td>
+                                    </tr>
+                                    <tr
+                                        v-for="ev in filteredEvents"
+                                        :key="ev.id"
+                                        class="cursor-pointer transition-colors align-top"
+                                        :class="reservationFilter.event_ids.includes(ev.id) ? 'bg-brand-primary/5' : 'hover:bg-brand-surface-2'"
+                                        @click="toggleEventFilter(ev.id)"
+                                    >
+                                        <td class="px-3 py-2">
+                                            <input
+                                                type="checkbox"
+                                                :value="ev.id"
+                                                v-model="reservationFilter.event_ids"
+                                                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
+                                                @click.stop
+                                            />
+                                        </td>
+                                        <td class="px-3 py-2 min-w-0">
+                                            <div class="font-medium text-brand-text">{{ ev.title }}</div>
+                                            <div class="text-xs tabular-nums text-brand-text-muted">{{ formatEventPeriod(ev) }}</div>
+                                            <div v-if="eventShopNames(ev)" class="text-xs text-brand-text-muted">{{ eventShopNames(ev) }}</div>
+                                        </td>
+                                        <td class="px-3 py-2 text-right whitespace-nowrap">
+                                            <UiBadge :variant="eventStatus(ev).variant" size="sm">{{ eventStatus(ev).label }}</UiBadge>
+                                            <div class="mt-0.5 text-xs tabular-nums text-brand-text-muted">予約{{ ev.reservations_count ?? 0 }}件</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-1">
+                        <UiButton variant="primary" size="sm" type="submit" class="flex-1">
                             <template #leading><Search :size="13" /></template>
                             検索
                         </UiButton>
                         <UiButton variant="ghost" size="sm" type="button" @click="resetReservationFilter">リセット</UiButton>
                     </div>
                 </form>
-                <div class="mt-3">
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="text-xs font-medium text-brand-text">イベントで絞り込み（複数選択可）</span>
-                        <div class="flex gap-2">
-                            <button type="button" class="text-xs text-brand-text-muted hover:underline" @click="reservationFilter.event_ids = []">全解除</button>
-                        </div>
-                    </div>
-                    <div class="rounded-md border border-brand-border bg-brand-surface max-h-36 overflow-y-auto p-2 grid grid-cols-1 md:grid-cols-2 gap-1">
-                        <label v-for="ev in events" :key="ev.id" class="flex items-center gap-2 text-sm text-brand-text cursor-pointer">
-                            <input
-                                type="checkbox"
-                                :value="ev.id"
-                                v-model="reservationFilter.event_ids"
-                                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
-                            />
-                            <span class="truncate">{{ ev.title }}</span>
-                        </label>
-                    </div>
-                </div>
             </UiCard>
+            </aside>
 
+            <!-- 左：検索結果 -->
+            <div class="flex-1 min-w-0 w-full">
             <UiCard variant="default" padding="none">
                 <div class="px-4 py-3 border-b border-brand-border flex flex-wrap items-center justify-between gap-2 bg-brand-surface-2/60">
                     <div class="flex items-center gap-3">
@@ -241,6 +319,7 @@
                     @change="searchReservations"
                 />
             </UiCard>
+            </div>
         </div>
 
         <!-- スペーサー（固定トレイと重ならないように） -->
@@ -309,7 +388,9 @@ import {
     UiPageHeader, UiButton, UiBadge, UiCard, UiDialog, UiFormField, UiInput, UiSelect,
 } from '@/Components/UI';
 import CustomerSearchFilterPanel from '@/Components/Admin/CustomerSearchFilterPanel.vue';
-import { Search, Send } from 'lucide-vue-next';
+import { Filter, Search, Send } from 'lucide-vue-next';
+import { buildCustomerFilterChips, countChipsByTab } from '@/composables/useCustomerFilterChips.js';
+import { formatDateJa } from '@/utils/dateFormat.js';
 
 const props = defineProps({
     broadcast:           { type: Object, required: true },
@@ -437,7 +518,8 @@ const defaultCustomerFilter = () => ({
     created_at_from: '', created_at_to: '', full_body_photo_presence: null,
     seijin_preparation_venue: '', seijin_preparation_time: '', other_store_preparation: null,
     other_store_salon_name: '', kimono_ship_date: '',
-    contract_status: null, contract_date_from: '', contract_date_to: '', shop_id: null,
+    contract_status: null, contract_date_from: '', contract_date_to: '',
+    contract_amount_min: '', contract_amount_max: '', shop_id: null,
     plan_id: null, kimono_type: null, warranty_flag: null, user_id: null,
     preparation_venue: '', preparation_date: '',
     constraint_presence: null, constraint_template_id: null,
@@ -449,6 +531,17 @@ const customerFilter = reactive(defaultCustomerFilter());
 const customerResult = reactive({ data: [], current_page: 1, last_page: 1, total: 0 });
 const customerLoading = ref(false);
 let customerInitialized = false;
+
+// 実際に結果へ反映されている検索条件（検索レスポンスの applied）。チップ・タブバッジ表示用
+const customerAppliedFilters = ref({});
+const customerFilterChips = computed(() => buildCustomerFilterChips(customerAppliedFilters.value, {
+    shops: props.shops,
+    plans: props.plans,
+    users: props.users,
+    ceremonyAreas: props.ceremonyAreas,
+    constraintTemplates: props.constraintTemplates,
+}));
+const customerFilterTabCounts = computed(() => countChipsByTab(customerFilterChips.value));
 
 function customerSearchParams(page) {
     const params = { page };
@@ -471,6 +564,7 @@ async function searchCustomers(page = 1) {
         customerResult.current_page = data.customers.current_page;
         customerResult.last_page = data.customers.last_page;
         customerResult.total = data.customers.total;
+        customerAppliedFilters.value = data.applied || {};
         if (!customerInitialized) {
             const applied = data.applied?.customer_shop_id;
             customerFilter.customer_shop_id = applied === 'all' ? ['all'] : (Array.isArray(applied) ? applied : [applied]).filter(Boolean);
@@ -502,6 +596,50 @@ function selectAllCustomersOnPage() {
 // ---------------------------------------------------------------
 const defaultReservationFilter = () => ({ q: '', customer_linked: 'all', event_ids: [] });
 const reservationFilter = reactive(defaultReservationFilter());
+
+// ---- イベント選択テーブル ----
+function toggleEventFilter(id) {
+    const idx = reservationFilter.event_ids.indexOf(id);
+    if (idx >= 0) reservationFilter.event_ids.splice(idx, 1);
+    else reservationFilter.event_ids.push(id);
+}
+
+function formatEventPeriod(ev) {
+    const from = ev.start_at ? formatDateJa(ev.start_at) : null;
+    const to = ev.end_at ? formatDateJa(ev.end_at) : null;
+    if (from && to) return from === to ? from : `${from} 〜 ${to}`;
+    return from || to || '—';
+}
+
+function eventStatusKey(ev) {
+    if (!ev.start_at) return 'unscheduled';
+    const now = new Date();
+    if (new Date(ev.start_at) > now) return 'upcoming';
+    if (ev.end_at && new Date(ev.end_at) < now) return 'ended';
+    return 'ongoing';
+}
+
+const EVENT_STATUS_DISPLAY = {
+    unscheduled: { label: '日程未設定', variant: 'neutral' },
+    upcoming: { label: '開催前', variant: 'primary' },
+    ongoing: { label: '開催中', variant: 'success' },
+    ended: { label: '終了', variant: 'neutral' },
+};
+
+function eventStatus(ev) {
+    return EVENT_STATUS_DISPLAY[eventStatusKey(ev)];
+}
+
+const eventShopNames = (ev) => (ev.shops || []).map((s) => s.name).join('・');
+
+// イベント一覧の絞り込み（開催店舗・状態）
+const eventShopFilter = ref(null);
+const eventStatusFilter = ref(null);
+const filteredEvents = computed(() => (props.events || []).filter((ev) => {
+    if (eventShopFilter.value !== null && !(ev.shops || []).some((s) => s.id === eventShopFilter.value)) return false;
+    if (eventStatusFilter.value !== null && eventStatusKey(ev) !== eventStatusFilter.value) return false;
+    return true;
+}));
 const reservationResult = reactive({ data: [], current_page: 1, last_page: 1, total: 0 });
 const reservationLoading = ref(false);
 
@@ -529,6 +667,8 @@ async function searchReservations(page = 1) {
 
 function resetReservationFilter() {
     Object.assign(reservationFilter, defaultReservationFilter());
+    eventShopFilter.value = null;
+    eventStatusFilter.value = null;
     searchReservations(1);
 }
 
