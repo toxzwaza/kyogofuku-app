@@ -9,6 +9,7 @@ use App\Services\Line\LineMessageMediaStore;
 use App\Services\Line\LineMessagingService;
 use App\Services\Line\ShopLineGroupNotifier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class LineMessagingWebhookController extends Controller
@@ -90,6 +91,11 @@ class LineMessagingWebhookController extends Controller
                 'created_at' => now(),
             ]);
 
+            // このブランチは連携済みユーザーも通るため、未連携のときだけ連携案内を返す
+            if (! CustomerLineContact::query()->where('line_user_id', $lineUserId)->exists()) {
+                $this->sendLinkPromptIfNeeded($event, $lineUserId);
+            }
+
             return;
         }
 
@@ -138,6 +144,63 @@ class LineMessagingWebhookController extends Controller
             }
             throw $e;
         }
+
+        $this->sendLinkPromptIfNeeded($event, $lineUserId);
+    }
+
+    /**
+     * 未連携ユーザーへ LINE連携を促す自動返信を送る。
+     *
+     * - replyToken を使うため月間メッセージ数の上限を消費しない
+     * - 同一ユーザーへは cooldown_hours（既定24時間）に1回まで（連投スパム防止）
+     * - 返信失敗しても Webhook 全体は継続する（200 を返す）
+     */
+    private function sendLinkPromptIfNeeded(array $event, string $lineUserId): void
+    {
+        if (! config('line.link_prompt.enabled', true)) {
+            return;
+        }
+
+        $replyToken = isset($event['replyToken']) ? (string) $event['replyToken'] : '';
+        if ($replyToken === '') {
+            return;
+        }
+
+        $cooldownHours = max(1, (int) config('line.link_prompt.cooldown_hours', 24));
+        $cacheKey = 'line:link-prompt-sent:'.$lineUserId;
+
+        // Cache::add は既に存在すると false（クールダウン中は再送しない）
+        if (! Cache::add($cacheKey, 1, now()->addHours($cooldownHours))) {
+            return;
+        }
+
+        try {
+            $this->lineMessaging->replyTextToUser($replyToken, $this->linkPromptText());
+        } catch (\Throwable $e) {
+            // 送信できなかった場合は次回の受信で再送できるようクールダウンを解除
+            Cache::forget($cacheKey);
+            Log::warning('LINE link prompt reply failed', [
+                'line_user_id' => $lineUserId,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function linkPromptText(): string
+    {
+        $custom = (string) config('line.link_prompt.text', '');
+        if ($custom !== '') {
+            return $custom;
+        }
+
+        $liffId = config('line.liff.welcome_id') ?: config('line.liff.id');
+        $liffUrl = $liffId ? 'https://liff.line.me/'.$liffId : url('/line/liff/welcome');
+
+        return "本アカウントでは、ご予約・ご相談・ご案内をお届けしておりますが、LINE連携を行っていただかないとメッセージの確認・ご連絡ができません。\n\n"
+            ."お手数ですが、下記よりお電話番号でのご登録（連携）をお願いいたします。\n\n"
+            ."▼LINE連携はこちら\n"
+            .$liffUrl."\n\n"
+            .'※見つからない場合は、お名前とお電話番号をこのトークにお送りください。';
     }
 
     /**
@@ -254,6 +317,8 @@ class LineMessagingWebhookController extends Controller
             }
             throw $e;
         }
+
+        $this->sendLinkPromptIfNeeded($event, $lineUserId);
     }
 
     /**
