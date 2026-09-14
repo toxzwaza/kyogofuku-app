@@ -396,11 +396,11 @@
 
               <div
                 v-if="groupedByVenue && Object.keys(groupedByVenue).length > 0"
-                class="flex flex-col xl:flex-row gap-6 xl:gap-8 items-start"
+                class="flex flex-col xl:flex-row-reverse gap-6 xl:gap-8 items-start"
               >
-                <!-- 左：絞り込み結果の会場・日付・時間へのジャンプ一覧 -->
+                <!-- 右：絞り込み結果の会場・日付・時間へのジャンプ一覧 -->
                 <aside
-                  class="w-full xl:w-64 shrink-0 xl:sticky xl:top-6 z-10 rounded-lg border border-gray-200 bg-gray-50/90 backdrop-blur-sm shadow-sm overflow-hidden"
+                  class="w-full xl:w-64 shrink-0 z-10 rounded-lg border border-gray-200 bg-gray-50/90 backdrop-blur-sm shadow-sm overflow-hidden"
                   aria-label="日付表示の目次"
                 >
                   <div
@@ -414,7 +414,7 @@
                     </p>
                   </div>
                   <nav
-                    class="max-h-[min(50vh,20rem)] xl:max-h-[min(70vh,calc(100vh-8rem))] overflow-y-auto p-3 text-sm"
+                    class="p-3 text-sm"
                   >
                     <ul class="space-y-3">
                       <li
