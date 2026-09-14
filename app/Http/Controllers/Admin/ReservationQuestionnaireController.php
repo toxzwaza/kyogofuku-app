@@ -3,44 +3,34 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
+use App\Models\EventReservation;
 use App\Services\QuestionnaireService;
 use App\Support\PhotoOwner;
 use Illuminate\Http\Request;
 
 /**
- * 振袖アンケート用紙（顧客紐付け側のエンドポイント）
+ * 予約詳細「写真・アンケート」タブの振袖アンケート操作。
  *
- * 登録・編集のUIは予約詳細の「写真・アンケート」タブに移動したが、
- * 顧客詳細からの閲覧・印刷、および互換性のため編集系エンドポイントも維持する。
- * 実処理は QuestionnaireService（予約側と共通）に委譲する。
+ * 予約が顧客に紐付いている場合は顧客のアンケートを直接操作し、
+ * 未紐付けなら予約自身に紐づけて保存する（PhotoOwner::forReservation が解決）。
  */
-class CustomerQuestionnaireController extends Controller
+class ReservationQuestionnaireController extends Controller
 {
     public function __construct(
         private QuestionnaireService $questionnaires,
     ) {
     }
 
-    /**
-     * アンケート用紙の印刷ページ（A4・2ページ）
-     *
-     * - mode=form（既定）: 記入用の用紙。?blank=1 で顧客情報プリフィルなし
-     * - mode=scan: 取り込み済みスキャンを印刷（写真合成済みがあれば優先）
-     */
-    public function print(Request $request, Customer $customer)
+    public function print(Request $request, EventReservation $reservation)
     {
         return view('admin.questionnaire.print', $this->questionnaires->printData(
-            PhotoOwner::forCustomer($customer),
+            PhotoOwner::forReservation($reservation),
             (string) $request->query('mode'),
             $request->boolean('blank'),
         ));
     }
 
-    /**
-     * スキャン画像を登録（ページ単位・差し替え可）
-     */
-    public function storeScan(Request $request, Customer $customer)
+    public function storeScan(Request $request, EventReservation $reservation)
     {
         $validated = $request->validate([
             'page' => 'required|integer|in:1,2',
@@ -50,19 +40,16 @@ class CustomerQuestionnaireController extends Controller
         $page = (int) $validated['page'];
 
         try {
-            $this->questionnaires->storeScan(PhotoOwner::forCustomer($customer), $request->file('photo'), $page);
+            $this->questionnaires->storeScan(PhotoOwner::forReservation($reservation), $request->file('photo'), $page);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('admin.customers.show', $customer)
+        return redirect()->route('admin.reservations.show', $reservation)
             ->with('success', "アンケート{$page}ページ目を取り込みました。");
     }
 
-    /**
-     * 写真添付欄の配置情報と合成画像を保存
-     */
-    public function updatePlacements(Request $request, Customer $customer)
+    public function updatePlacements(Request $request, EventReservation $reservation)
     {
         $validated = $request->validate([
             'page' => 'nullable|integer|in:1,2',
@@ -85,7 +72,7 @@ class CustomerQuestionnaireController extends Controller
 
         try {
             $composedUrl = $this->questionnaires->updatePlacements(
-                PhotoOwner::forCustomer($customer),
+                PhotoOwner::forReservation($reservation),
                 $validated['placements'] ?? [],
                 $request->file('composed_image'),
                 $page,
@@ -100,20 +87,17 @@ class CustomerQuestionnaireController extends Controller
         ]);
     }
 
-    /**
-     * スキャン画像を削除（ページ単位）
-     */
-    public function destroyScan(Customer $customer, int $page)
+    public function destroyScan(EventReservation $reservation, int $page)
     {
         abort_unless(in_array($page, [1, 2], true), 404);
 
         try {
-            $this->questionnaires->destroyScan(PhotoOwner::forCustomer($customer), $page);
+            $this->questionnaires->destroyScan(PhotoOwner::forReservation($reservation), $page);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('admin.customers.show', $customer)
+        return redirect()->route('admin.reservations.show', $reservation)
             ->with('success', "アンケート{$page}ページ目のスキャンを削除しました。");
     }
 }

@@ -6,21 +6,34 @@ import { ClipboardList, Printer, Camera, Image as ImageIcon, Trash2 } from 'luci
 import QuestionnaireScanModal from './QuestionnaireScanModal.vue';
 import QuestionnairePlacerModal from './QuestionnairePlacerModal.vue';
 
+/**
+ * 振袖アンケートの取込・写真配置ブロック（顧客・予約どちらの詳細でも使える汎用版）。
+ *
+ * routeBase でエンドポイントを切り替える:
+ *   顧客: 'admin.customers.questionnaire' + ownerId=顧客ID
+ *   予約: 'admin.reservations.questionnaire' + ownerId=予約ID
+ */
 const props = defineProps({
-    customer: { type: Object, required: true },
+    /** ルート名のプレフィックス（.print / .scans.store / .placements.update / .scans.destroy が続く） */
+    routeBase: { type: String, required: true },
+    /** ルートパラメータ（顧客ID or 予約ID） */
+    ownerId: { type: [Number, String], required: true },
+    /** 写真配置パレットに出す写真一覧 */
+    photos: { type: Array, default: () => [] },
     questionnaire: { type: Object, default: null },
 });
 
 const showScanModal = ref(false);
 const scanInitialPage = ref(1);
 const showPlacerModal = ref(false);
+const placerPage = ref(2);
 const previewUrl = ref(null);
 
 const hasAnyScan = computed(() => !!(props.questionnaire?.page1_url || props.questionnaire?.page2_url));
 
 function printUrl(params = {}) {
     const query = new URLSearchParams(params).toString();
-    return route('admin.customers.questionnaire.print', props.customer.id) + (query ? `?${query}` : '');
+    return route(`${props.routeBase}.print`, props.ownerId) + (query ? `?${query}` : '');
 }
 
 function openPrint(params = {}) {
@@ -32,18 +45,21 @@ function openScan(page) {
     showScanModal.value = true;
 }
 
-// タイルに表示する画像URL（2ページ目は写真合成済みを優先）
+function openPlacer(page) {
+    placerPage.value = page;
+    showPlacerModal.value = true;
+}
+
+// タイルに表示する画像URL（写真合成済みを優先）
 function pageDisplayUrl(page) {
-    if (page === 2 && props.questionnaire?.composed_page2_url) {
-        return props.questionnaire.composed_page2_url;
-    }
-    return props.questionnaire?.[`page${page}_url`];
+    const composed = props.questionnaire?.[`composed_page${page}_url`];
+    return composed || props.questionnaire?.[`page${page}_url`];
 }
 
 function deleteScan(page) {
     if (!confirm(`アンケート${page}ページ目のスキャンを削除しますか？`)) return;
     router.delete(
-        route('admin.customers.questionnaire.scans.destroy', [props.customer.id, page]),
+        route(`${props.routeBase}.scans.destroy`, [props.ownerId, page]),
         { preserveScroll: true }
     );
 }
@@ -84,7 +100,7 @@ function deleteScan(page) {
                     <UiBadge v-else variant="neutral">未取込</UiBadge>
                 </div>
                 <template v-if="questionnaire?.[`page${page}_url`]">
-                    <!-- 2ページ目は写真合成済みならその画像を表示する -->
+                    <!-- 写真合成済みならその画像を表示する -->
                     <img
                         :src="pageDisplayUrl(page)"
                         class="w-full h-36 object-contain bg-brand-surface-2 rounded cursor-pointer"
@@ -99,10 +115,9 @@ function deleteScan(page) {
                             <Trash2 :size="13" /> 削除
                         </UiButton>
                         <UiButton
-                            v-if="page === 2"
                             variant="primary"
                             size="sm"
-                            @click="showPlacerModal = true"
+                            @click="openPlacer(page)"
                         >
                             <ImageIcon :size="13" /> 写真を配置する
                         </UiButton>
@@ -131,15 +146,17 @@ function deleteScan(page) {
 
         <QuestionnaireScanModal
             :show="showScanModal"
-            :customer="customer"
+            :store-url="route(`${routeBase}.scans.store`, ownerId)"
             :initial-page="scanInitialPage"
             @close="showScanModal = false"
         />
         <QuestionnairePlacerModal
-            v-if="questionnaire?.page2_url"
+            v-if="questionnaire?.[`page${placerPage}_url`]"
             :show="showPlacerModal"
-            :customer="customer"
+            :photos="photos"
             :questionnaire="questionnaire"
+            :page="placerPage"
+            :save-url="route(`${routeBase}.placements.update`, ownerId)"
             @close="showPlacerModal = false"
         />
     </UiCard>

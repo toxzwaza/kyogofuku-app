@@ -9,8 +9,13 @@ import { Image as ImageIcon, Trash2, X as XIcon, Save, Type as TypeIcon, RotateC
 
 const props = defineProps({
     show: { type: Boolean, default: false },
-    customer: { type: Object, required: true },
-    questionnaire: { type: Object, required: true }, // page2_url, placements
+    /** 配置パレットに出す写真一覧（顧客写真 or 予約写真） */
+    photos: { type: Array, default: () => [] },
+    questionnaire: { type: Object, required: true }, // page1_url/page2_url, placements/page1_placements
+    /** 対象ページ（1 or 2） */
+    page: { type: Number, default: 2 },
+    /** 保存先URL（顧客: admin.customers.questionnaire.placements.update / 予約: admin.reservations...） */
+    saveUrl: { type: String, required: true },
 });
 
 const emit = defineEmits(['close']);
@@ -57,14 +62,20 @@ async function fetchAsObjectUrl(url) {
     return objectUrl;
 }
 
-// 配置候補: 顧客写真のうち画像のみ（PDF・アンケートスキャン自体は除外）
+// 配置候補: 写真のうち画像のみ（PDF・アンケートスキャン自体は除外）
 const palettePhotos = computed(() => {
-    return (props.customer.photos || []).filter((p) => {
+    return (props.photos || []).filter((p) => {
         if (!p.url || (p.file_path || '').toLowerCase().endsWith('.pdf')) return false;
         if ([props.questionnaire.page1_photo_id, props.questionnaire.page2_photo_id].includes(p.id)) return false;
         return true;
     });
 });
+
+// 対象ページの背景スキャンURLと保存済み配置
+const pageScanUrl = computed(() => props.questionnaire[`page${props.page}_url`]);
+const savedPlacements = computed(() => (
+    props.page === 1 ? props.questionnaire.page1_placements : props.questionnaire.placements
+) || []);
 
 watch(() => props.show, async (show) => {
     if (show) {
@@ -91,21 +102,21 @@ async function initCanvas() {
     fabricCanvas.on('selection:cleared', () => (hasSelection.value = false));
 
     try {
-        // 背景 = 2ページ目スキャン
-        const bg = await FabricImage.fromURL(await fetchAsObjectUrl(props.questionnaire.page2_url));
+        // 背景 = 対象ページのスキャン
+        const bg = await FabricImage.fromURL(await fetchAsObjectUrl(pageScanUrl.value));
         bg.scaleX = CANVAS_WIDTH / bg.width;
         bg.scaleY = CANVAS_HEIGHT / bg.height;
         fabricCanvas.backgroundImage = bg;
 
         // 保存済み配置の復元（写真・テキスト）
         // 既存データは数値が文字列で保存されている場合があるため必ず数値化して扱う
-        for (const raw of (props.questionnaire.placements || [])) {
+        for (const raw of savedPlacements.value) {
             const placement = normalizePlacement(raw);
             if ((placement.type ?? 'photo') === 'text') {
                 addTextToCanvas(placement);
                 continue;
             }
-            const photo = (props.customer.photos || []).find((p) => p.id === placement.customer_photo_id);
+            const photo = (props.photos || []).find((p) => p.id === placement.customer_photo_id);
             if (!photo?.url) continue;
             await addPhotoToCanvas(photo, placement);
         }
@@ -252,6 +263,7 @@ async function save() {
 
         const fd = new FormData();
         fd.append('_method', 'PUT');
+        fd.append('page', String(props.page));
         const placements = collectPlacements()
             .filter((p) => p.type !== 'text' || p.text.trim() !== '');
         placements.forEach((p, i) => {
@@ -261,14 +273,12 @@ async function save() {
                 }
             }
         });
-        fd.append('composed_image', blob, 'composed_page2.jpg');
+        fd.append('composed_image', blob, `composed_page${props.page}.jpg`);
 
-        await axios.post(
-            route('admin.customers.questionnaire.placements.update', props.customer.id),
-            fd
-        );
+        await axios.post(props.saveUrl, fd);
 
-        router.reload({ only: ['questionnaire'], preserveScroll: true });
+        // 顧客詳細は questionnaire、予約詳細は photo_section を部分リロード（存在しないキーは無視される）
+        router.reload({ only: ['questionnaire', 'photo_section'], preserveScroll: true });
         emit('close');
     } catch (e) {
         errorMessage.value = e?.response?.data?.message
@@ -297,7 +307,7 @@ onBeforeUnmount(disposeCanvas);
             <div class="flex items-center justify-between mb-3">
                 <h3 class="font-semibold text-brand-text flex items-center gap-2">
                     <ImageIcon :size="18" class="text-brand-primary" />
-                    写真添付欄に写真を配置
+                    {{ page }}ページ目に写真を配置
                 </h3>
                 <button class="text-brand-text-muted hover:text-brand-text" @click="emit('close')">
                     <XIcon :size="20" />

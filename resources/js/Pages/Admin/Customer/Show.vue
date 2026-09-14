@@ -743,8 +743,11 @@
                         </div>
                 </UiCard>
 
-                <!-- 振袖アンケート -->
-                <QuestionnaireBlock :customer="customer" :questionnaire="questionnaire" />
+                <!-- 振袖アンケート（閲覧専用。登録・編集は予約詳細の「写真・アンケート」タブ） -->
+                <QuestionnaireViewBlock
+                    :questionnaire="questionnaire"
+                    :print-scan-url="route('admin.customers.questionnaire.print', customer.id) + '?mode=scan'"
+                />
 
                 <!-- 顧客写真 -->
                 <UiCard variant="default" padding="lg">
@@ -2612,7 +2615,7 @@ import axios from 'axios';
 import { Canvas, FabricImage, PencilBrush } from 'fabric';
 import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue';
 import CustomerLineSection from '@/Components/Admin/CustomerLineSection.vue';
-import QuestionnaireBlock from '@/Components/Questionnaire/QuestionnaireBlock.vue';
+import QuestionnaireViewBlock from '@/Components/Questionnaire/QuestionnaireViewBlock.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 

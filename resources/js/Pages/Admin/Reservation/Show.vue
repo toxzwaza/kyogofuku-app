@@ -542,6 +542,40 @@
         </div>
       </template>
 
+      <!-- 写真・アンケートタブ -->
+      <template #photos>
+        <div class="space-y-4 max-w-4xl">
+          <UiAlert
+            v-if="photo_section?.target_kind === 'customer'"
+            variant="info"
+            title="顧客に紐付け済みの予約です"
+          >
+            写真・振袖アンケートは顧客「{{ photo_section.target_customer?.name }}」のデータを直接表示・編集しています。顧客詳細と常に同じ内容になります。
+          </UiAlert>
+          <UiAlert
+            v-else
+            variant="info"
+            title="顧客未紐付けの予約です"
+          >
+            写真・振袖アンケートはこの予約に保存されます。後日顧客に紐付けると自動で顧客に引き継がれます。
+          </UiAlert>
+
+          <PhotoManageSection
+            route-base="admin.reservations.photos"
+            :owner-id="reservation.id"
+            :photos="photo_section?.photos || []"
+            :photo-types="photo_section?.photo_types || []"
+          />
+
+          <QuestionnaireBlock
+            route-base="admin.reservations.questionnaire"
+            :owner-id="reservation.id"
+            :photos="photo_section?.photos || []"
+            :questionnaire="photo_section?.questionnaire"
+          />
+        </div>
+      </template>
+
       <!-- 連絡・履歴タブ -->
       <template #comm>
         <div class="max-w-4xl space-y-4">
@@ -1058,6 +1092,8 @@ import {
 } from "lucide-vue-next";
 import ActionButton from "@/Components/ActionButton.vue";
 import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
+import PhotoManageSection from "@/Components/CustomerPhotos/PhotoManageSection.vue";
+import QuestionnaireBlock from "@/Components/Questionnaire/QuestionnaireBlock.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
@@ -1072,6 +1108,7 @@ const activeTab = ref("overview");
 const tabs = [
     { id: "overview", label: "概要" },
     { id: "manage",   label: "対応・管理" },
+    { id: "photos",   label: "写真・アンケート" },
     { id: "comm",     label: "連絡・履歴" },
 ];
 
@@ -1206,6 +1243,10 @@ const props = defineProps({
       can_sync: false,
       cannot_sync_reason: null,
     }),
+  },
+  photo_section: {
+    type: Object,
+    default: null,
   },
 });
 

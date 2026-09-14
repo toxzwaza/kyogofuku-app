@@ -182,10 +182,11 @@
 
 @if ($mode === 'scan')
 
-<!-- ============ スキャン印刷モード ============ -->
-@if ($page1ScanUrl)
+<!-- ============ スキャン印刷モード（写真合成済みがあれば優先） ============ -->
+@php $composedPage1Url = $composedPage1Url ?? null; @endphp
+@if ($composedPage1Url || $page1ScanUrl)
 <div class="page scan-page">
-    <img src="{{ $page1ScanUrl }}" alt="アンケート1ページ目">
+    <img src="{{ $composedPage1Url ?? $page1ScanUrl }}" alt="アンケート1ページ目">
 </div>
 @endif
 @if ($composedPage2Url || $page2ScanUrl)
@@ -193,7 +194,7 @@
     <img src="{{ $composedPage2Url ?? $page2ScanUrl }}" alt="アンケート2ページ目">
 </div>
 @endif
-@if (! $page1ScanUrl && ! $composedPage2Url && ! $page2ScanUrl)
+@if (! $composedPage1Url && ! $page1ScanUrl && ! $composedPage2Url && ! $page2ScanUrl)
 <div class="page" style="display:flex; align-items:center; justify-content:center;">
     <p>取り込み済みのスキャンがありません。</p>
 </div>

@@ -46,15 +46,16 @@ class CustomerPhotoStorageService
     /**
      * アップロードファイルを WebP に変換して S3（s3_private）に保存
      *
-     * @return string|null 保存した WebP のパス（customers/{id}/{unique}.webp）、失敗時は null
+     * @param  string  $ownerDir  保存先ディレクトリ（customers=顧客紐付け / reservations=予約紐付け）
+     * @return string|null 保存した WebP のパス（{ownerDir}/{id}/{unique}.webp）、失敗時は null
      */
-    public function convertUploadToWebpAndPutS3Private($uploadedFile, int $customerId, $manager)
+    public function convertUploadToWebpAndPutS3Private($uploadedFile, int $ownerId, $manager, string $ownerDir = 'customers')
     {
         if (! $manager) {
             return null;
         }
         try {
-            $webpPath = 'customers/'.$customerId.'/'.Str::random(40).'.webp';
+            $webpPath = $ownerDir.'/'.$ownerId.'/'.Str::random(40).'.webp';
             $image = $manager->read($uploadedFile->getRealPath());
             $tmpPath = tempnam(sys_get_temp_dir(), 'webp');
             $image->toWebp(80)->save($tmpPath);
@@ -64,7 +65,7 @@ class CustomerPhotoStorageService
 
             return $webpPath;
         } catch (\Exception $e) {
-            Log::error('WebP変換エラー (S3 customers/'.$customerId.'): '.$e->getMessage());
+            Log::error('WebP変換エラー (S3 '.$ownerDir.'/'.$ownerId.'): '.$e->getMessage());
 
             return null;
         }
@@ -74,17 +75,18 @@ class CustomerPhotoStorageService
      * アップロードファイルを変換せずそのまま S3（s3_private）に保存
      * （PDF など画像変換に適さないファイル用）
      *
-     * @return string|null 保存したパス（customers/{id}/{unique}.{ext}）、失敗時は null
+     * @param  string  $ownerDir  保存先ディレクトリ（customers / reservations）
+     * @return string|null 保存したパス（{ownerDir}/{id}/{unique}.{ext}）、失敗時は null
      */
-    public function putUploadToS3Private($uploadedFile, int $customerId, string $ext): ?string
+    public function putUploadToS3Private($uploadedFile, int $ownerId, string $ext, string $ownerDir = 'customers'): ?string
     {
         try {
-            $path = 'customers/'.$customerId.'/'.Str::random(40).'.'.$ext;
+            $path = $ownerDir.'/'.$ownerId.'/'.Str::random(40).'.'.$ext;
             Storage::disk('s3_private')->put($path, file_get_contents($uploadedFile->getRealPath()));
 
             return $path;
         } catch (\Exception $e) {
-            Log::error('ファイル保存エラー (S3 customers/'.$customerId.'): '.$e->getMessage());
+            Log::error('ファイル保存エラー (S3 '.$ownerDir.'/'.$ownerId.'): '.$e->getMessage());
 
             return null;
         }
@@ -94,17 +96,18 @@ class CustomerPhotoStorageService
      * バイナリコンテンツを S3（s3_private）に保存
      * （canvas 合成画像など UploadedFile を経由しないデータ用）
      *
+     * @param  string  $ownerDir  保存先ディレクトリ（customers / reservations）
      * @return string|null 保存したパス、失敗時は null
      */
-    public function putContentToS3Private(string $content, int $customerId, string $ext): ?string
+    public function putContentToS3Private(string $content, int $ownerId, string $ext, string $ownerDir = 'customers'): ?string
     {
         try {
-            $path = 'customers/'.$customerId.'/'.Str::random(40).'.'.$ext;
+            $path = $ownerDir.'/'.$ownerId.'/'.Str::random(40).'.'.$ext;
             Storage::disk('s3_private')->put($path, $content);
 
             return $path;
         } catch (\Exception $e) {
-            Log::error('ファイル保存エラー (S3 customers/'.$customerId.'): '.$e->getMessage());
+            Log::error('ファイル保存エラー (S3 '.$ownerDir.'/'.$ownerId.'): '.$e->getMessage());
 
             return null;
         }

@@ -607,7 +607,44 @@ class ReservationController extends Controller
             'assigneeDatalistOptions' => $this->assigneeDatalistOptionsForEvent($event),
             'line_section' => $lineSection,
             'googleCalendarSyncInfo' => $this->buildGoogleCalendarSyncInfo($reservation, $eventShops),
+            'photo_section' => $this->buildPhotoSection($reservation),
         ]);
+    }
+
+    /**
+     * 「写真・アンケート」タブ用のデータを組み立てる。
+     * 予約が顧客に紐付いていれば顧客の写真・アンケートを、未紐付けなら予約自身のものを返す。
+     */
+    private function buildPhotoSection(EventReservation $reservation): array
+    {
+        $owner = \App\Support\PhotoOwner::forReservation($reservation);
+
+        $photos = $owner->photosQuery()
+            ->with('type')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function (\App\Models\CustomerPhoto $photo) {
+                $item = $photo->toArray();
+                if (($photo->storage_disk ?? 'public') === 's3') {
+                    $path = str_replace('\\', '/', $photo->file_path);
+                    $item['url'] = Storage::disk('s3_private')->temporaryUrl($path, now()->addMinutes(60));
+                } else {
+                    $item['url'] = '/storage/'.$photo->file_path;
+                }
+
+                return $item;
+            })->values()->all();
+
+        return [
+            'target_kind' => $owner->isCustomer() ? 'customer' : 'reservation',
+            'target_customer' => $owner->isCustomer() ? [
+                'id' => $owner->customer->id,
+                'name' => $owner->customer->name,
+            ] : null,
+            'photos' => $photos,
+            'questionnaire' => app(\App\Services\QuestionnaireService::class)->questionnairePayload($owner),
+            'photo_types' => \App\Models\PhotoType::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'code']),
+        ];
     }
 
     /**
@@ -1188,12 +1225,20 @@ class ReservationController extends Controller
         $customer = Customer::findOrFail($validated['customer_id']);
         $reservation->update(['customer_id' => $customer->id]);
 
+        // 予約に紐づく写真・振袖アンケートを顧客へ引き継ぐ
+        $assets = app(\App\Services\ReservationAssetMigrator::class)->migrate($reservation, $customer);
+
         $migrated = app(ReservationLineContactMigrator::class)->migrateReservationContactsToCustomer($reservation, $customer);
         if (! $migrated['ok']) {
             return redirect()->back()->with('error', $migrated['message'] ?? 'LINE の引き継ぎに失敗しました。');
         }
 
-        return redirect()->back()->with('success', '顧客を紐づけました。');
+        $message = '顧客を紐づけました。';
+        if ($assets['questionnaire'] === 'kept_customer') {
+            $message .= ' 顧客側に既存の振袖アンケートがあるため、予約側のアンケートは引き継がれていません。';
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 
     /**
