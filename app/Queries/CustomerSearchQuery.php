@@ -124,6 +124,7 @@ class CustomerSearchQuery
             $query->whereDoesntHave('contracts');
         } elseif (
             $request->filled('contract_date_from') || $request->filled('contract_date_to')
+            || $request->filled('contract_amount_min') || $request->filled('contract_amount_max')
             || $request->filled('shop_id') || $request->filled('plan_id')
             || $request->filled('kimono_type') || $request->has('warranty_flag')
             || $request->filled('user_id') || $request->filled('preparation_venue')
@@ -139,6 +140,13 @@ class CustomerSearchQuery
                 }
                 if ($request->filled('contract_date_to')) {
                     $q->where('contract_date', '<=', $request->contract_date_to);
+                }
+                // 成約金額（total_amount）。下限のみ=下限以上、上限のみ=上限以下、両方同値=一致
+                if ($request->filled('contract_amount_min')) {
+                    $q->where('total_amount', '>=', $request->contract_amount_min);
+                }
+                if ($request->filled('contract_amount_max')) {
+                    $q->where('total_amount', '<=', $request->contract_amount_max);
                 }
                 if ($request->filled('plan_id')) {
                     $q->where('plan_id', $request->plan_id);
@@ -241,7 +249,8 @@ class CustomerSearchQuery
             'created_at_from', 'created_at_to',
             'seijin_preparation_venue', 'seijin_preparation_time', 'other_store_preparation',
             'other_store_salon_name', 'kimono_ship_date',
-            'contract_date_from', 'contract_date_to', 'shop_id', 'plan_id',
+            'contract_date_from', 'contract_date_to',
+            'contract_amount_min', 'contract_amount_max', 'shop_id', 'plan_id',
             'kimono_type', 'warranty_flag', 'user_id', 'preparation_venue', 'preparation_date',
             'contract_status',
             'constraint_presence', 'constraint_template_id', 'constraint_signed_at_from',

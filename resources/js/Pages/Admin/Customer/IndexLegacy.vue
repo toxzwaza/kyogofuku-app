@@ -266,6 +266,26 @@
                                             />
                                         </div>
                                         <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">成約金額（円）※両方同じ値で一致検索</label>
+                                            <div class="flex items-center gap-1">
+                                                <input
+                                                    v-model="searchForm.contract_amount_min"
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder="下限"
+                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                />
+                                                <span class="shrink-0 text-xs text-gray-700">〜</span>
+                                                <input
+                                                    v-model="searchForm.contract_amount_max"
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder="上限"
+                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
                                             <label class="block text-xs font-medium text-gray-700 mb-1">店舗</label>
                                             <select
                                                 v-model="searchForm.shop_id"
@@ -1114,6 +1134,8 @@ const searchForm = reactive({
     created_at_to: props.filters?.created_at_to || '',
     contract_date_from: props.filters?.contract_date_from || '',
     contract_date_to: props.filters?.contract_date_to || '',
+    contract_amount_min: props.filters?.contract_amount_min || '',
+    contract_amount_max: props.filters?.contract_amount_max || '',
     shop_id: props.filters?.shop_id || null,
     plan_id: props.filters?.plan_id || null,
     kimono_type: props.filters?.kimono_type || null,
@@ -1255,6 +1277,8 @@ const resetSearch = () => {
     searchForm.created_at_to = '';
     searchForm.contract_date_from = '';
     searchForm.contract_date_to = '';
+    searchForm.contract_amount_min = '';
+    searchForm.contract_amount_max = '';
     searchForm.shop_id = null;
     searchForm.plan_id = null;
     searchForm.kimono_type = null;
