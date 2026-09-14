@@ -268,6 +268,15 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::patch('/reservations/{reservation}/line/contacts/{contact}/label', [ReservationLineMessageController::class, 'updateContactLabel'])->name('reservations.line.contact-label');
     Route::delete('/reservations/{reservation}/line/contacts/{contact}', [ReservationLineMessageController::class, 'destroyContact'])->name('reservations.line.contact-destroy');
     Route::patch('/reservations/{reservation}/line/responsible-shop', [ReservationLineMessageController::class, 'updateResponsibleShop'])->name('reservations.line.responsible-shop');
+
+    // 予約詳細「写真・アンケート」タブ（紐付け済み予約は顧客データを直接操作する）
+    Route::post('/reservations/{reservation}/photos', [\App\Http\Controllers\Admin\ReservationPhotoController::class, 'store'])->name('reservations.photos.store');
+    Route::post('/reservations/{reservation}/photos/from-media', [\App\Http\Controllers\Admin\ReservationPhotoController::class, 'storeFromMedia'])->name('reservations.photos.from-media');
+    Route::delete('/reservations/{reservation}/photos/{photo}', [\App\Http\Controllers\Admin\ReservationPhotoController::class, 'destroy'])->name('reservations.photos.destroy');
+    Route::get('/reservations/{reservation}/questionnaire/print', [\App\Http\Controllers\Admin\ReservationQuestionnaireController::class, 'print'])->name('reservations.questionnaire.print');
+    Route::post('/reservations/{reservation}/questionnaire/scans', [\App\Http\Controllers\Admin\ReservationQuestionnaireController::class, 'storeScan'])->name('reservations.questionnaire.scans.store');
+    Route::put('/reservations/{reservation}/questionnaire/placements', [\App\Http\Controllers\Admin\ReservationQuestionnaireController::class, 'updatePlacements'])->name('reservations.questionnaire.placements.update');
+    Route::delete('/reservations/{reservation}/questionnaire/scans/{page}', [\App\Http\Controllers\Admin\ReservationQuestionnaireController::class, 'destroyScan'])->name('reservations.questionnaire.scans.destroy');
     Route::get('/reservations/{reservation}/edit', [AdminReservationController::class, 'edit'])->name('reservations.edit');
     Route::put('/reservations/{reservation}', [AdminReservationController::class, 'update'])->name('reservations.update');
     Route::delete('/reservations/{reservation}', [AdminReservationController::class, 'destroy'])->name('reservations.destroy');

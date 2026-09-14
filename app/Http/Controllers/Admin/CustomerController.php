@@ -31,11 +31,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Concerns\ResolvesTabletMediaTags;
 use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
 {
+    use ResolvesTabletMediaTags;
     use ResolvesUiView;
 
     /**
@@ -217,6 +219,8 @@ class CustomerController extends Controller
             $eventReservation = EventReservation::find($eventReservationId);
             if ($eventReservation) {
                 $eventReservation->update(['customer_id' => $customer->id]);
+                // 予約に紐づく写真・振袖アンケートを顧客へ引き継ぐ
+                app(\App\Services\ReservationAssetMigrator::class)->migrate($eventReservation, $customer);
                 $migrated = app(ReservationLineContactMigrator::class)->migrateReservationContactsToCustomer($eventReservation, $customer);
                 if (! $migrated['ok']) {
                     return redirect()->route('admin.customers.show', $customer)
@@ -380,26 +384,9 @@ class CustomerController extends Controller
         // 被紹介者として「誰から紹介されたか」（詳細情報タブ・お友達紹介ブロック用）
         $referredBy = $this->resolveReferredBy($customer);
 
-        // 振袖アンケート（スキャン・写真添付欄）
-        $questionnaireModel = $customer->questionnaire()->first();
-        $questionnaire = null;
-        if ($questionnaireModel) {
-            $s3Url = function (?string $path) {
-                return $path
-                    ? Storage::disk('s3_private')->temporaryUrl(str_replace('\\', '/', $path), now()->addMinutes(60))
-                    : null;
-            };
-            $page1 = $questionnaireModel->page1Photo;
-            $page2 = $questionnaireModel->page2Photo;
-            $questionnaire = [
-                'page1_photo_id' => $questionnaireModel->page1_photo_id,
-                'page2_photo_id' => $questionnaireModel->page2_photo_id,
-                'page1_url' => $s3Url($page1?->file_path),
-                'page2_url' => $s3Url($page2?->file_path),
-                'placements' => $questionnaireModel->placements,
-                'composed_page2_url' => $s3Url($questionnaireModel->composed_page2_path),
-            ];
-        }
+        // 振袖アンケート（閲覧用。1・2ページ目とも合成済みURL込み）
+        $questionnaire = app(\App\Services\QuestionnaireService::class)
+            ->questionnairePayload(\App\Support\PhotoOwner::forCustomer($customer));
 
         return Inertia::render($this->viewFor('Admin/Customer/Show'), [
             'customer' => $customerForInertia,
@@ -1478,45 +1465,6 @@ class CustomerController extends Controller
             ->with('success', '顧客情報を削除しました。');
     }
 
-    /** メディアライブラリ連携で使う固定の親タグ名 */
-    private const TABLET_MEDIA_TAG = 'タブレット画像';
-
-    /**
-     * ログインユーザーのメイン所属店舗から、タブレット画像の配下タグのプレフィックスを決める。
-     * 福井店 → HIRATA- ／ それ以外 → KOUICHI-
-     */
-    private function tabletTagPrefixForUser(Request $request): string
-    {
-        $mainShop = $request->user()?->shops()
-            ->where('shops.is_active', true)
-            ->orderByDesc('shop_user.main')
-            ->orderBy('shops.id')
-            ->first();
-
-        return $mainShop?->name === '福井店' ? 'HIRATA-' : 'KOUICHI-';
-    }
-
-    /**
-     * タブレット画像の配下タグのうち、ログインユーザーの店舗プレフィックスに一致するもの。
-     *
-     * @return \Illuminate\Support\Collection<int, MediaTag>
-     */
-    private function tabletDeviceTagsForUser(Request $request)
-    {
-        $parent = MediaTag::query()
-            ->whereNull('parent_id')
-            ->where('name', self::TABLET_MEDIA_TAG)
-            ->first();
-        if (! $parent) {
-            return collect();
-        }
-
-        return $parent->children()
-            ->where('name', 'like', $this->tabletTagPrefixForUser($request).'%')
-            ->orderBy('name')
-            ->get(['id', 'name', 'parent_id']);
-    }
-
     /**
      * 顧客写真「メディアライブラリ」モーダル用の画像一覧。
      * タグ=タブレット画像（固定）配下の、自店舗プレフィックス（HIRATA-/KOUICHI-）タグ付き画像のみ返す。
@@ -1546,7 +1494,7 @@ class CustomerController extends Controller
             ]);
 
         return response()->json([
-            'parentTag' => self::TABLET_MEDIA_TAG,
+            'parentTag' => static::$tabletMediaTag,
             'prefix' => $this->tabletTagPrefixForUser($request),
             'deviceTags' => $deviceTags->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
             'mediaFiles' => $mediaFiles,

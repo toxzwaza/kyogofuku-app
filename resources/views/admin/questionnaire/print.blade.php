@@ -72,13 +72,35 @@
     font-size: 15pt;
     font-weight: 700;
     color: #c94f6d;
-    padding: 5px 4px;
-    margin-bottom: 5mm;
+    padding: 4px 4px;
+    margin-bottom: 3mm;
     letter-spacing: .5px;
   }
   .title-band .furisode { font-size: 18pt; }
 
   .sec { margin-bottom: 4mm; }
+
+  /* 1ページ目は写真添付欄を設けるため全体を圧縮する */
+  .page1 { font-size: 10pt; }
+  .page1 th, .page1 td { padding: 2.5px 5px; }
+  .page1 .sec { margin-bottom: 2.5mm; }
+
+  /* 中段: 左=設問スタック / 右=写真添付欄 */
+  .p1-mid { display: flex; gap: 4mm; margin-bottom: 2.5mm; }
+  .p1-mid > .p1-left { flex: 1; min-width: 0; }
+  .p1-mid > .p1-right { flex: 1; min-width: 0; display: flex; }
+  .p1-photo {
+    flex: 1;
+    border: 1.5px solid #333;
+    border-radius: 4px;
+    padding: 2mm 2.5mm;
+  }
+  .p1-photo .caption {
+    font-weight: 700;
+    font-size: 10pt;
+    letter-spacing: 1px;
+    color: #555;
+  }
   .sec-title {
     display: inline-block;
     background: #c94f6d;
@@ -182,10 +204,11 @@
 
 @if ($mode === 'scan')
 
-<!-- ============ スキャン印刷モード ============ -->
-@if ($page1ScanUrl)
+<!-- ============ スキャン印刷モード（写真合成済みがあれば優先） ============ -->
+@php $composedPage1Url = $composedPage1Url ?? null; @endphp
+@if ($composedPage1Url || $page1ScanUrl)
 <div class="page scan-page">
-    <img src="{{ $page1ScanUrl }}" alt="アンケート1ページ目">
+    <img src="{{ $composedPage1Url ?? $page1ScanUrl }}" alt="アンケート1ページ目">
 </div>
 @endif
 @if ($composedPage2Url || $page2ScanUrl)
@@ -193,7 +216,7 @@
     <img src="{{ $composedPage2Url ?? $page2ScanUrl }}" alt="アンケート2ページ目">
 </div>
 @endif
-@if (! $page1ScanUrl && ! $composedPage2Url && ! $page2ScanUrl)
+@if (! $composedPage1Url && ! $page1ScanUrl && ! $composedPage2Url && ! $page2ScanUrl)
 <div class="page" style="display:flex; align-items:center; justify-content:center;">
     <p>取り込み済みのスキャンがありません。</p>
 </div>
@@ -202,14 +225,12 @@
 @else
 
 <!-- ============ 1ページ目：お客様記入欄 ============ -->
-<div class="page">
+<div class="page page1">
 
   <img class="aruco tl" src="{{ asset('images/aruco/aruco_0.svg') }}" alt="">
   <img class="aruco tr" src="{{ asset('images/aruco/aruco_1.svg') }}" alt="">
   <img class="aruco br" src="{{ asset('images/aruco/aruco_2.svg') }}" alt="">
   <img class="aruco bl" src="{{ asset('images/aruco/aruco_3.svg') }}" alt="">
-
-  <div class="title-band">あなたにピッタリの<span class="furisode">振袖</span>をお探し致します！あなたの事を教えてください</div>
 
   <!-- 基本情報 -->
   <div class="sec">
@@ -228,7 +249,7 @@
       </tr>
       <tr>
         <td class="label">お名前</td>
-        <td style="height:11mm">{{ $v($customer->name, '') }}<span class="sama" style="float:right; margin-top:6mm">さま</span></td>
+        <td style="height:9mm">{{ $v($customer->name, '') }}<span class="sama" style="float:right; margin-top:4mm">さま</span></td>
         <td class="label">お母様の<br>お名前</td>
         <td>{{ $v($customer->guardian_name, '') }}<span class="sama" style="float:right; margin-top:4mm">さま</span></td>
       </tr>
@@ -254,73 +275,85 @@
     </table>
   </div>
 
-  <!-- ご職業 -->
-  <div class="sec">
-    <table>
-      <tr>
-        <td class="choice-line">
-          大学生 ・ 短大生 ・ 専門学校生 ・ 高校生（学校名：{{ $v($customer->school_name, '　　　　　　　　　　　　') }}）<br>
-          アルバイト ・ お勤め ・ その他（　　　　　　　　　　　　　）
-        </td>
-      </tr>
-    </table>
-  </div>
+  <!-- 中段: 左=ご職業・きっかけ・ご姉妹・学生向け設問 / 右=写真添付欄 -->
+  <div class="p1-mid">
+    <div class="p1-left">
 
-  <!-- きっかけ／ご姉妹 -->
-  <div class="sec two-col">
-    <div>
-      <table>
-        <tr>
-          <td class="label" rowspan="6" style="width:26%">当店を<br>知った<br>きっかけは？</td>
-          <td>ＤＭはがき ・ ホームページ</td>
-        </tr>
-        <tr><td>電話 ・ チラシ ・ 通りがかり</td></tr>
-        <tr><td>インスタグラム ・ タウン情報誌</td></tr>
-        <tr><td>美容室ご紹介（　　　　　　　　）</td></tr>
-        <tr><td>お友達ご紹介（　　　　　　　　）</td></tr>
-        <tr><td>その他（　　　　　　　　　　　）</td></tr>
-      </table>
-    </div>
-    <div>
-      <table>
-        <tr>
-          <td class="label" rowspan="6" style="width:26%">ご姉妹は<br>いらっしゃ<br>いますか？</td>
-          <td class="kana">フリガナ</td>
-        </tr>
-        <tr><td style="height:8mm"><span class="sama" style="float:right; margin-top:3mm">さま</span></td></tr>
-        <tr><td>生年月日　　　　年　　月　　日生まれ</td></tr>
-        <tr><td class="kana">フリガナ</td></tr>
-        <tr><td style="height:8mm"><span class="sama" style="float:right; margin-top:3mm">さま</span></td></tr>
-        <tr><td>生年月日　　　　年　　月　　日生まれ</td></tr>
-      </table>
-    </div>
-  </div>
+      <!-- ご職業 -->
+      <div class="sec">
+        <table>
+          <tr>
+            <td class="choice-line">
+              大学生 ・ 短大生 ・ 専門学校生<br>
+              高校生（学校名：{{ $v($customer->school_name, '　　　　　　　　') }}）<br>
+              アルバイト ・ お勤め ・ その他（　　　　　）
+            </td>
+          </tr>
+        </table>
+      </div>
 
-  <!-- 学生向け -->
-  <div class="sec two-col">
-    <div>
-      <div class="sec-title">★大学・短大・専門学生の方へ★</div>
-      <table>
-        <tr>
-          <td class="label" style="width:40%">卒業予定年</td>
-          <td>　　　　　年3月</td>
-        </tr>
-        <tr>
-          <td class="label">卒業式に袴を<br>着たいですか？</td>
-          <td class="center">はい　／　いいえ</td>
-        </tr>
-      </table>
+      <!-- きっかけ -->
+      <div class="sec">
+        <table>
+          <tr>
+            <td class="label" rowspan="6" style="width:26%">当店を<br>知った<br>きっかけは？</td>
+            <td>ＤＭはがき ・ ホームページ</td>
+          </tr>
+          <tr><td>電話 ・ チラシ ・ 通りがかり</td></tr>
+          <tr><td>インスタグラム ・ タウン情報誌</td></tr>
+          <tr><td>美容室ご紹介（　　　　　　　　）</td></tr>
+          <tr><td>お友達ご紹介（　　　　　　　　）</td></tr>
+          <tr><td>その他（　　　　　　　　　　　）</td></tr>
+        </table>
+      </div>
+
+      <!-- ご姉妹 -->
+      <div class="sec">
+        <table>
+          <tr>
+            <td class="label" rowspan="6" style="width:26%">ご姉妹は<br>いらっしゃ<br>いますか？</td>
+            <td class="kana">フリガナ</td>
+          </tr>
+          <tr><td style="height:7mm"><span class="sama" style="float:right; margin-top:2.5mm">さま</span></td></tr>
+          <tr><td>生年月日　　　　年　　月　　日生まれ</td></tr>
+          <tr><td class="kana">フリガナ</td></tr>
+          <tr><td style="height:7mm"><span class="sama" style="float:right; margin-top:2.5mm">さま</span></td></tr>
+          <tr><td>生年月日　　　　年　　月　　日生まれ</td></tr>
+        </table>
+      </div>
+
+      <!-- 高校生向け -->
+      <div class="sec">
+        <div class="sec-title">★高校生の方へ★</div>
+        <table>
+          <tr>
+            <td class="label" style="width:40%">今後の進路予定を<br>お聞かせください</td>
+            <td class="center">大学 ・ 短大<br>専門学校 ・ お勤め</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 大学・短大・専門学生向け -->
+      <div class="sec">
+        <div class="sec-title">★大学・短大・専門学生の方へ★</div>
+        <table>
+          <tr>
+            <td class="label" style="width:40%">卒業予定年</td>
+            <td>　　　　　年3月</td>
+          </tr>
+          <tr>
+            <td class="label">卒業式に袴を<br>着たいですか？</td>
+            <td class="center">はい　／　いいえ</td>
+          </tr>
+        </table>
+      </div>
+
     </div>
-    <div>
-      <div class="sec-title">★高校生の方へ★</div>
-      <table>
-        <tr>
-          <td class="label">今後の進路予定をお聞かせください</td>
-        </tr>
-        <tr>
-          <td class="center" style="height:9mm">大学 ・ 短大 ・ 専門学校 ・ お勤め</td>
-        </tr>
-      </table>
+    <div class="p1-right">
+      <!-- 写真添付欄（管理画面の「写真を配置する」で写真を合成できる） -->
+      <div class="p1-photo">
+        <span class="caption">※写真添付欄</span>
+      </div>
     </div>
   </div>
 
@@ -337,7 +370,7 @@
       </tr>
       <tr>
         <td class="label">好きな<br>タレント・モデル<br>youtuber など</td>
-        <td style="height:16mm">&nbsp;</td>
+        <td style="height:11mm">&nbsp;</td>
       </tr>
     </table>
   </div>
@@ -348,7 +381,7 @@
       <table>
         <tr>
           <td class="label" style="width:45%">お客様担当名</td>
-          <td style="height:10mm">{{ $v($customer->staff_name, '') }}&nbsp;</td>
+          <td style="height:8mm">{{ $v($customer->staff_name, '') }}&nbsp;</td>
         </tr>
       </table>
     </div>

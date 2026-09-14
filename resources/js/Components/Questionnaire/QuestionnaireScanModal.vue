@@ -9,7 +9,8 @@ import { loadOpenCv } from './useOpenCv';
 
 const props = defineProps({
     show: { type: Boolean, default: false },
-    customer: { type: Object, required: true },
+    /** スキャン登録先URL（顧客: admin.customers.questionnaire.scans.store / 予約: admin.reservations.questionnaire.scans.store） */
+    storeUrl: { type: String, required: true },
     initialPage: { type: Number, default: 1 },
 });
 
@@ -871,7 +872,7 @@ function upload() {
             fd.append('page', String(page.value));
             fd.append('photo', blob, `questionnaire_page${page.value}.jpg`);
             router.post(
-                route('admin.customers.questionnaire.scans.store', props.customer.id),
+                props.storeUrl,
                 fd,
                 {
                     forceFormData: true,

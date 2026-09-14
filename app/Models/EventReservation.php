@@ -80,6 +80,22 @@ class EventReservation extends Model
     }
 
     /**
+     * 予約紐付けの写真（顧客未紐付けの間のみ。顧客紐付け時に顧客側へ移行される）
+     */
+    public function photos()
+    {
+        return $this->hasMany(CustomerPhoto::class, 'event_reservation_id');
+    }
+
+    /**
+     * 予約紐付けの振袖アンケート（顧客未紐付けの間のみ）
+     */
+    public function questionnaire()
+    {
+        return $this->hasOne(CustomerQuestionnaire::class, 'event_reservation_id');
+    }
+
+    /**
      * イベントとのリレーション
      */
     /**
