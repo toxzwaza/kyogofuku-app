@@ -27,7 +27,11 @@ const CANVAS_HEIGHT = Math.round(CANVAS_WIDTH * 297 / 210);
 const EXPORT_MULTIPLIER = 1240 / CANVAS_WIDTH;
 
 // 写真添付欄のガイド領域（用紙比率。print.blade.php のレイアウトから算出）
-const GUIDE_AREA = { left: 0.057, top: 0.18, right: 0.943, bottom: 0.85 };
+// 1ページ目=中央右の写真添付欄 / 2ページ目=中央の写真添付欄
+const GUIDE_AREAS = {
+    1: { left: 0.52, top: 0.28, right: 0.93, bottom: 0.61 },
+    2: { left: 0.057, top: 0.18, right: 0.943, bottom: 0.85 },
+};
 
 // 選択枠・ハンドルのスタイル（背景のスキャン上でも見やすい赤）
 const SELECTION_STYLE = {
@@ -73,6 +77,7 @@ const palettePhotos = computed(() => {
 
 // 対象ページの背景スキャンURLと保存済み配置
 const pageScanUrl = computed(() => props.questionnaire[`page${props.page}_url`]);
+const guideArea = computed(() => GUIDE_AREAS[props.page] || GUIDE_AREAS[2]);
 const savedPlacements = computed(() => (
     props.page === 1 ? props.questionnaire.page1_placements : props.questionnaire.placements
 ) || []);
@@ -151,8 +156,8 @@ async function addPhotoToCanvas(photo, placement = null) {
         const targetWidth = CANVAS_WIDTH * 0.3;
         img.scale(targetWidth / img.width);
         img.set({
-            left: GUIDE_AREA.left * CANVAS_WIDTH + 12 + (fabricCanvas.getObjects().length * 16) % 80,
-            top: GUIDE_AREA.top * CANVAS_HEIGHT + 12 + (fabricCanvas.getObjects().length * 16) % 80,
+            left: guideArea.value.left * CANVAS_WIDTH + 12 + (fabricCanvas.getObjects().length * 16) % 80,
+            top: guideArea.value.top * CANVAS_HEIGHT + 12 + (fabricCanvas.getObjects().length * 16) % 80,
         });
     }
     img.set(SELECTION_STYLE);
@@ -168,8 +173,8 @@ async function addPhotoToCanvas(photo, placement = null) {
  */
 function addTextToCanvas(placement = null) {
     const text = new Textbox(placement?.text ?? 'テキストを入力', {
-        left: placement ? placement.left * CANVAS_WIDTH : GUIDE_AREA.left * CANVAS_WIDTH + 20,
-        top: placement ? placement.top * CANVAS_HEIGHT : GUIDE_AREA.top * CANVAS_HEIGHT + 20,
+        left: placement ? placement.left * CANVAS_WIDTH : guideArea.value.left * CANVAS_WIDTH + 20,
+        top: placement ? placement.top * CANVAS_HEIGHT : guideArea.value.top * CANVAS_HEIGHT + 20,
         angle: placement?.angle ?? 0,
         fontSize: (placement?.font_size ?? 24 / CANVAS_WIDTH) * CANVAS_WIDTH,
         width: (placement?.width ?? 200 / CANVAS_WIDTH) * CANVAS_WIDTH,
