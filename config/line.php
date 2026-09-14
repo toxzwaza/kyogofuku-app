@@ -56,6 +56,17 @@ return [
     'link_welcome_text' => env('LINE_LINK_WELCOME_TEXT', "LINE連携が完了しました。\n\nこのトークからご質問・ご連絡をお送りいただけます。担当スタッフが確認いたします。"),
 
     /**
+     * 未連携ユーザーからメッセージを受信したとき、LINE連携を促す自動返信の設定。
+     * text 未設定時は welcome LIFF の URL を埋め込んだ既定文（LineMessagingWebhookController 参照）を送る。
+     * cooldown_hours 以内に一度送っていれば再送しない（連投スパム防止）。
+     */
+    'link_prompt' => [
+        'enabled' => env('LINE_LINK_PROMPT_ENABLED', true),
+        'cooldown_hours' => (int) env('LINE_LINK_PROMPT_COOLDOWN_HOURS', 24),
+        'text' => env('LINE_LINK_PROMPT_TEXT'),
+    ],
+
+    /**
      * 公式アカウントの友だち追加 URL（サンクスメール・LIFF 内ボタン用）
      */
     'line_official_add_friend_url' => env('LINE_OFFICIAL_ADD_FRIEND_URL', 'https://lin.ee/R7RUNlX'),
