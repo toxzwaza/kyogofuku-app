@@ -24,6 +24,7 @@ class LineUnknownInboxController extends Controller
 
         $query = LineUnknownInboundMessage::query()
             ->with('shop:id,name')
+            ->withoutFollowEvents()
             ->orderByDesc('id');
 
         if ($unassignedOnly) {
@@ -75,6 +76,7 @@ class LineUnknownInboxController extends Controller
         ]);
 
         $messagesQuery = LineUnknownInboundMessage::query()
+            ->withoutFollowEvents()
             ->where('line_user_id', $validated['line_user_id']);
 
         if (! empty($validated['shop_id'])) {
@@ -156,6 +158,12 @@ class LineUnknownInboxController extends Controller
             );
 
             foreach ($unknowns as $u) {
+                // follow / unfollow イベントの追跡記録は顧客メッセージに取り込まず削除のみ
+                if (in_array($u->text, LineUnknownInboundMessage::FOLLOW_EVENT_TEXTS, true)) {
+                    $u->delete();
+
+                    continue;
+                }
                 try {
                     CustomerLineMessage::query()->create([
                         'customer_line_contact_id' => $contact->id,
