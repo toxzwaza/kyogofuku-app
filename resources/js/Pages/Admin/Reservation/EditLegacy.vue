@@ -55,7 +55,7 @@
                                 </div>
 
                                 <!-- 振袖・袴（タイムスロット型）予約 -->
-                                <template v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'">
+                                <template v-if="event.form_type === 'reservation' || isHakama">
                                     <!-- ご来店会場（会場を先に選択） -->
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">ご来店会場 <span class="text-red-500">*</span></label>
@@ -163,11 +163,11 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">フリガナ <span v-if="isHakama" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.furigana"
                                             type="text"
-                                            :required="event.form_type === 'reservation_hakama'"
+                                            :required="isHakama"
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         />
                                         <div v-if="form.errors.furigana" class="mt-1 text-sm text-red-600">{{ form.errors.furigana }}</div>
@@ -199,7 +199,7 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">郵便番号 <span v-if="event.form_type === 'reservation_hakama'" class="text-gray-400 text-xs font-normal">（任意）</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">郵便番号 <span v-if="isHakama" class="text-gray-400 text-xs font-normal">（任意）</span></label>
                                         <input
                                             v-model="form.postal_code"
                                             type="text"
@@ -210,18 +210,18 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">住所 <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">住所 <span v-if="isHakama" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.address"
                                             type="text"
-                                            :required="event.form_type === 'reservation_hakama'"
+                                            :required="isHakama"
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         />
                                         <div v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</div>
                                     </div>
 
-                                    <div v-if="event.form_type === 'reservation_hakama'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">好一での振袖利用 <span class="text-red-500">*</span></label>
+                                    <div v-if="isHakama">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ furisodeLabel }} <span class="text-red-500">*</span></label>
                                         <div class="flex space-x-4">
                                             <label class="flex items-center">
                                                 <input v-model="form.koichi_furisode_used" type="radio" :value="false" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
@@ -260,17 +260,17 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">学校名 <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">学校名 <span v-if="isHakama" class="text-red-500">*</span></label>
                                         <input
                                             v-model="form.school_name"
                                             type="text"
-                                            :required="event.form_type === 'reservation_hakama'"
+                                            :required="isHakama"
                                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         />
                                         <div v-if="form.errors.school_name" class="mt-1 text-sm text-red-600">{{ form.errors.school_name }}</div>
                                     </div>
 
-                                    <div v-if="event.form_type === 'reservation_hakama'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div v-if="isHakama" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div class="sm:col-span-2">
                                             <label class="block text-sm font-medium text-gray-700 mb-1">卒業式の日（予定） <span class="text-red-500">*</span></label>
                                             <input
@@ -327,7 +327,7 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ event.form_type === 'reservation_hakama' ? 'お車で来店' : '駐車場利用' }} <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ isHakama ? 'お車で来店' : '駐車場利用' }} <span v-if="isHakama" class="text-red-500">*</span></label>
                                         <div class="flex space-x-4">
                                             <label class="flex items-center">
                                                 <input
@@ -352,7 +352,7 @@
                                     </div>
 
                                     <div v-if="form.parking_usage === 'あり'">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ event.form_type === 'reservation_hakama' ? '台数' : '駐車台数' }} <span v-if="event.form_type === 'reservation_hakama'" class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ isHakama ? '台数' : '駐車台数' }} <span v-if="isHakama" class="text-red-500">*</span></label>
                                         <input
                                             v-model.number="form.parking_car_count"
                                             type="number"
@@ -382,7 +382,7 @@
                                         <div v-if="form.errors.considering_plans" class="mt-1 text-sm text-red-600">{{ form.errors.considering_plans }}</div>
                                     </div>
 
-                                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'">
+                                    <div v-if="event.form_type === 'reservation' || isHakama">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">ご紹介者様お名前</label>
                                         <input
                                             v-model="form.referred_by_name"
@@ -519,6 +519,7 @@ import { ref, computed, watch } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayoutLegacy.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { formatDateJaWithWeekday, formatDateInputValueJa } from '@/utils/dateFormat';
+import { isHakamaForm, furisodeUsageLabel } from '@/utils/formTypes';
 
 const props = defineProps({
     reservation: Object,
@@ -526,6 +527,9 @@ const props = defineProps({
     venues: Array,
     timeslots: Array,
 });
+
+const isHakama = computed(() => isHakamaForm(props.event.form_type));
+const furisodeLabel = computed(() => furisodeUsageLabel(props.event.form_type));
 
 // 選択された予約枠
 const selectedTimeslot = ref(null);
@@ -783,7 +787,7 @@ const form = useForm({
 
 // 検討中のプランの選択肢（フォーム種別で切替）
 const availablePlans = computed(() => {
-    if (props.event.form_type === 'reservation_hakama') {
+    if (isHakamaForm(props.event.form_type)) {
         return ['上下フルセットプラン', '袴のみレンタルプラン'];
     }
     return [

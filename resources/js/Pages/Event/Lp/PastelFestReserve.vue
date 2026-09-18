@@ -95,6 +95,7 @@
 
 <script setup>
 import '@lp_design/style.css';
+import { isHakamaForm, isTimeslotReservationForm } from '@/utils/formTypes';
 import '@lp_design/reserve.css';
 import './pastel-reserve-inertia.css';
 import { ref, computed, defineAsyncComponent } from 'vue';
@@ -122,10 +123,7 @@ const rootRef = ref(null);
 
 const themeStyle = computed(() => props.lpThemeCssVars || {});
 
-const embedPastelReserveUi = computed(() => {
-    const t = props.event?.form_type;
-    return t === 'reservation' || t === 'reservation_hakama';
-});
+const embedPastelReserveUi = computed(() => isTimeslotReservationForm(props.event?.form_type));
 
 const selectedTimeslot = ref(null);
 const currentStep = ref(props.showSuccess ? 'success' : 'form');
@@ -170,7 +168,7 @@ const formComponent = computed(() => {
     if (formType === 'reservation') {
         return defineAsyncComponent(() => import('../Forms/ReservationForm.vue'));
     }
-    if (formType === 'reservation_hakama') {
+    if (isHakamaForm(formType)) {
         return defineAsyncComponent(() => import('../Forms/HakamaReservationForm.vue'));
     }
     if (formType === 'document') {
@@ -184,7 +182,7 @@ const formComponent = computed(() => {
 
 const confirmComponent = computed(() => {
     const formType = props.event?.form_type;
-    if (formType === 'reservation' || formType === 'reservation_hakama') {
+    if (formType === 'reservation' || isHakamaForm(formType)) {
         return defineAsyncComponent(() => import('../Forms/ConfirmReservation.vue'));
     }
     if (formType === 'document') {
@@ -198,7 +196,7 @@ const confirmComponent = computed(() => {
 
 const successComponent = computed(() => {
     const formType = props.event?.form_type;
-    if (formType === 'reservation' || formType === 'reservation_hakama') {
+    if (formType === 'reservation' || isHakamaForm(formType)) {
         return defineAsyncComponent(() => import('../Forms/SuccessReservation.vue'));
     }
     if (formType === 'document') {

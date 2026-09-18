@@ -782,7 +782,7 @@ class ReservationController extends Controller
 
         // 振袖・袴（タイムスロット型）予約フォーム
         if ($event->usesTimeslotReservation()) {
-            $rules['postal_code'] = $event->form_type === 'reservation_hakama'
+            $rules['postal_code'] = $event->isHakamaReservation()
                 ? 'nullable|string|max:10'
                 : 'nullable|string|max:10';
             $rules['reservation_datetime'] = 'nullable|string';
@@ -790,7 +790,7 @@ class ReservationController extends Controller
             $rules['visit_reasons'] = 'nullable|array';
             $rules['visit_reasons.*'] = 'string|max:255';
             $rules['visit_reason_other'] = 'nullable|string|max:255';
-            $rules['parking_usage'] = $event->form_type === 'reservation_hakama'
+            $rules['parking_usage'] = $event->isHakamaReservation()
                 ? 'required|in:なし,あり'
                 : 'nullable|string|max:255';
             $rules['parking_car_count'] = 'nullable|integer';
@@ -806,7 +806,7 @@ class ReservationController extends Controller
             $rules['staff_name'] = 'nullable|string|max:255';
         }
 
-        if ($event->form_type === 'reservation_hakama') {
+        if ($event->isHakamaReservation()) {
             $rules['furigana'] = 'required|string|max:255';
             $rules['address'] = 'required|string|max:255';
             $rules['koichi_furisode_used'] = 'required|boolean';
@@ -818,7 +818,7 @@ class ReservationController extends Controller
         }
 
         // 共通項目
-        if ($event->form_type !== 'reservation_hakama') {
+        if (! $event->isHakamaReservation()) {
             $rules['furigana'] = 'nullable|string|max:255';
             $rules['birth_date'] = 'nullable|date';
             $rules['address'] = 'nullable|string|max:255';
@@ -843,7 +843,7 @@ class ReservationController extends Controller
             $validated['visit_reasons'] = $this->processVisitReasons($validated['visit_reasons'], $request->visit_reason_other);
         }
 
-        if ($event->form_type === 'reservation_hakama') {
+        if ($event->isHakamaReservation()) {
             $validated['graduation_ceremony_year'] = null;
             $validated['graduation_ceremony_month'] = null;
         }

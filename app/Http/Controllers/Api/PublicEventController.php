@@ -17,7 +17,7 @@ class PublicEventController extends Controller
     private const DEFAULT_LIMIT = 10;
 
     /** 外部HP連携で対象とするフォーム種別（振袖予約・袴予約のみ） */
-    private const ALLOWED_FORM_TYPES = ['reservation', 'reservation_hakama'];
+    private const ALLOWED_FORM_TYPES = ['reservation', 'reservation_hakama', 'reservation_hakama_fukui'];
 
     /**
      * Pick Up 用：公開中イベント一覧

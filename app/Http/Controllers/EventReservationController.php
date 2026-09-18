@@ -44,7 +44,7 @@ class EventReservationController extends Controller
 
         // 振袖・袴（タイムスロット型）予約フォーム
         if ($event->usesTimeslotReservation()) {
-            $rules['postal_code'] = $event->form_type === 'reservation_hakama'
+            $rules['postal_code'] = $event->isHakamaReservation()
                 ? 'nullable|string|max:10'
                 : 'required|string|max:10';
             $rules['reservation_datetime'] = 'nullable|string';
@@ -53,7 +53,7 @@ class EventReservationController extends Controller
             $rules['visit_reasons'] = 'nullable|array';
             $rules['visit_reasons.*'] = 'string|max:255';
             $rules['visit_reason_other'] = 'nullable|string|max:255';
-            $rules['parking_usage'] = $event->form_type === 'reservation_hakama'
+            $rules['parking_usage'] = $event->isHakamaReservation()
                 ? 'required|in:なし,あり'
                 : 'nullable|string|max:255';
             $rules['parking_car_count'] = 'nullable|integer';
@@ -72,7 +72,7 @@ class EventReservationController extends Controller
         }
 
         // 袴予約（岡山）のみ
-        if ($event->form_type === 'reservation_hakama') {
+        if ($event->isHakamaReservation()) {
             $rules['furigana'] = 'required|string|max:255';
             $rules['address'] = 'required|string|max:255';
             $rules['koichi_furisode_used'] = 'required|boolean';
@@ -96,7 +96,7 @@ class EventReservationController extends Controller
         }
 
         // 共通項目
-        if ($event->form_type !== 'reservation_hakama') {
+        if (! $event->isHakamaReservation()) {
             $rules['furigana'] = 'nullable|string|max:255';
             $rules['birth_date'] = 'nullable|date';
             $rules['address'] = 'nullable|string|max:255';
@@ -205,7 +205,7 @@ class EventReservationController extends Controller
         // 紹介者の最新の確定成約の担当スタッフ名をセットする（後から変更可能）
         $lineReferralId = null;
         $adminAssignee = null;
-        if (in_array($event->form_type, ['reservation', 'reservation_hakama'], true) && $request->filled('line_referral_id')) {
+        if (($event->form_type === 'reservation' || $event->isHakamaReservation()) && $request->filled('line_referral_id')) {
             $lineReferral = Referral::query()
                 ->whereIn('status', [
                     Referral::STATUS_LINKED,
@@ -242,19 +242,19 @@ class EventReservationController extends Controller
             'address' => $request->address,
             'birth_date' => $request->birth_date,
             'seijin_year' => $event->form_type === 'reservation' ? $request->seijin_year : null,
-            'referred_by_name' => in_array($event->form_type, ['reservation', 'reservation_hakama'], true) ? $request->referred_by_name : null,
+            'referred_by_name' => ($event->form_type === 'reservation' || $event->isHakamaReservation()) ? $request->referred_by_name : null,
             'furigana' => $request->furigana,
             'school_name' => $request->school_name,
             'staff_name' => $event->form_type === 'reservation' ? $request->staff_name : null,
-            'koichi_furisode_used' => $event->form_type === 'reservation_hakama' ? $request->boolean('koichi_furisode_used') : null,
+            'koichi_furisode_used' => $event->isHakamaReservation() ? $request->boolean('koichi_furisode_used') : null,
             'graduation_ceremony_year' => null,
             'graduation_ceremony_month' => null,
-            'graduation_ceremony_date' => $event->form_type === 'reservation_hakama' ? $request->graduation_ceremony_date : null,
-            'visitor_count' => $event->form_type === 'reservation_hakama' ? $request->visitor_count : null,
-            'companion_types' => $event->form_type === 'reservation_hakama' && (int) $request->input('visitor_count', 0) >= 2
+            'graduation_ceremony_date' => $event->isHakamaReservation() ? $request->graduation_ceremony_date : null,
+            'visitor_count' => $event->isHakamaReservation() ? $request->visitor_count : null,
+            'companion_types' => $event->isHakamaReservation() && (int) $request->input('visitor_count', 0) >= 2
                 ? $request->input('companion_types')
                 : null,
-            'companion_hakama_usage' => $event->form_type === 'reservation_hakama'
+            'companion_hakama_usage' => $event->isHakamaReservation()
                 && is_array($request->input('companion_types'))
                 && in_array('友人', $request->input('companion_types'), true)
                 ? $request->boolean('companion_hakama_usage')
@@ -510,6 +510,7 @@ class EventReservationController extends Controller
         $formTypeNames = [
             'reservation' => '振袖予約フォーム',
             'reservation_hakama' => '袴予約（岡山）フォーム',
+            'reservation_hakama_fukui' => '袴予約（福井）フォーム',
             'document' => '資料請求フォーム',
             'contact' => 'お問い合わせフォーム',
         ];
@@ -602,7 +603,7 @@ class EventReservationController extends Controller
                 $plans = implode('、', $reservation->considering_plans);
                 $message .= "検討プラン: {$plans}\n";
             }
-        } elseif ($event->form_type === 'reservation_hakama') {
+        } elseif ($event->isHakamaReservation()) {
             $message .= "\n━━━━━━━━━━━━━━━━\n";
             $message .= "📅 袴予約情報\n";
             $message .= "━━━━━━━━━━━━━━━━\n";
@@ -643,7 +644,7 @@ class EventReservationController extends Controller
 
             if ($reservation->koichi_furisode_used !== null) {
                 $k = $reservation->koichi_furisode_used ? 'あり' : 'なし';
-                $message .= "好一での振袖利用: {$k}\n";
+                $message .= "{$event->furisodeUsageLabel()}: {$k}\n";
             }
 
             if ($reservation->visit_reasons && count($reservation->visit_reasons) > 0) {

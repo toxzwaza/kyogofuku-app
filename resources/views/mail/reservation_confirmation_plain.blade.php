@@ -47,7 +47,7 @@ LINE連携ページ:
 @if($reservation->address)
 住所: {{ $reservation->address }}
 @endif
-@if($reservation->event->form_type === 'reservation_hakama')
+@if($reservation->event->isHakamaReservation())
 @if($reservation->school_name)
 学校名: {{ $reservation->school_name }}
 @endif
@@ -66,7 +66,7 @@ LINE連携ページ:
 @endif
 @endif
 @if($reservation->koichi_furisode_used !== null)
-好一での振袖利用: {{ $reservation->koichi_furisode_used ? 'あり' : 'なし' }}
+{{ $reservation->event->furisodeUsageLabel() }}: {{ $reservation->koichi_furisode_used ? 'あり' : 'なし' }}
 @endif
 @endif
 @if($reservation->visit_reasons && count($reservation->visit_reasons) > 0)

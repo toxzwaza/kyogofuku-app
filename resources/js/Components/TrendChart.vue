@@ -73,6 +73,15 @@ const chartData = computed(() => {
                 fill: props.type === 'line',
             },
             {
+                label: '袴予約（福井）',
+                data: props.data.map(item => item.reservation_hakama_fukui ?? 0),
+                backgroundColor: 'rgba(20, 184, 166, 0.6)',
+                borderColor: 'rgba(20, 184, 166, 1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: props.type === 'line',
+            },
+            {
                 label: '資料請求',
                 data: props.data.map(item => item.document),
                 backgroundColor: 'rgba(34, 197, 94, 0.6)',

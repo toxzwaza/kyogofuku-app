@@ -31,6 +31,7 @@
                                     <option value="">すべて</option>
                                     <option value="reservation">振袖予約</option>
                                     <option value="reservation_hakama">袴予約（岡山）</option>
+                                    <option value="reservation_hakama_fukui">袴予約（福井）</option>
                                     <option value="document">資料請求</option>
                                     <option value="contact">問い合わせ</option>
                                 </select>
@@ -96,7 +97,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <span class="px-2 py-1 text-xs rounded-full" :class="{
                                                 'bg-blue-100 text-blue-800': event.form_type === 'reservation',
-                                                'bg-cyan-100 text-cyan-900': event.form_type === 'reservation_hakama',
+                                                'bg-cyan-100 text-cyan-900': event.form_type === 'reservation_hakama' || event.form_type === 'reservation_hakama_fukui',
                                                 'bg-green-100 text-green-800': event.form_type === 'document',
                                                 'bg-purple-100 text-purple-800': event.form_type === 'contact',
                                             }">
@@ -205,6 +206,7 @@ const getFormTypeLabel = (formType) => {
     const labels = {
         reservation: '振袖予約',
         reservation_hakama: '袴予約（岡山）',
+        reservation_hakama_fukui: '袴予約（福井）',
         document: '資料請求',
         contact: '問い合わせ',
     };

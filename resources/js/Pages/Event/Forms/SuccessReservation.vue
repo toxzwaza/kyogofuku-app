@@ -53,7 +53,7 @@
                     <dd>{{ formData?.phone ?? '—' }}</dd>
                 </div>
 
-                <template v-if="event?.form_type === 'reservation_hakama'">
+                <template v-if="isHakamaForm(event?.form_type)">
                     <div v-if="formData?.furigana" class="rv-confirm-row">
                         <dt>フリガナ</dt>
                         <dd>{{ formData.furigana }}</dd>
@@ -92,7 +92,7 @@
                         <dd>{{ formData.considering_plans.join('、') }}</dd>
                     </div>
                     <div class="rv-confirm-row">
-                        <dt>好一での振袖利用</dt>
+                        <dt>{{ furisodeUsageLabel(event?.form_type) }}</dt>
                         <dd>
                             {{
                                 formData?.koichi_furisode_used === true
@@ -135,6 +135,7 @@
 <script setup>
 import { computed } from 'vue';
 import { formatDateJa } from '@/utils/dateFormat';
+import { isHakamaForm, furisodeUsageLabel } from '@/utils/formTypes';
 import '@lp_design/reserve.css';
 import './success-reservation.css';
 
