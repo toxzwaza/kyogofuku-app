@@ -432,6 +432,7 @@ import Slideshow from '@/Components/Slideshow.vue';
 import '../../../lp_design/reserve.css';
 import './event-show-pastel.css';
 import './Lp/pastel-reserve-inertia.css';
+import { isHakamaForm, isTimeslotReservationForm as isTimeslotReservationFormType } from '@/utils/formTypes';
 
 const props = defineProps({
     event: Object,
@@ -465,11 +466,8 @@ const props = defineProps({
     },
 });
 
-/** 振袖予約・袴予約（岡山）＝タイムスロット型の公開フォーム */
-const isTimeslotReservationForm = computed(() => {
-    const t = props.event?.form_type;
-    return t === 'reservation' || t === 'reservation_hakama';
-});
+/** 振袖予約・袴予約（岡山・福井）＝タイムスロット型の公開フォーム */
+const isTimeslotReservationForm = computed(() => isTimeslotReservationFormType(props.event?.form_type));
 
 const embedPastelReserveUi = computed(() => isTimeslotReservationForm.value);
 
@@ -608,7 +606,7 @@ const formComponent = computed(() => {
     const formType = props.event.form_type;
     if (formType === 'reservation') {
         return defineAsyncComponent(() => import('./Forms/ReservationForm.vue'));
-    } else if (formType === 'reservation_hakama') {
+    } else if (isHakamaForm(formType)) {
         return defineAsyncComponent(() => import('./Forms/HakamaReservationForm.vue'));
     } else if (formType === 'document') {
         return defineAsyncComponent(() => import('./Forms/DocumentForm.vue'));
@@ -620,7 +618,7 @@ const formComponent = computed(() => {
 
 const confirmComponent = computed(() => {
     const formType = props.event.form_type;
-    if (formType === 'reservation' || formType === 'reservation_hakama') {
+    if (formType === 'reservation' || isHakamaForm(formType)) {
         return defineAsyncComponent(() => import('./Forms/ConfirmReservation.vue'));
     } else if (formType === 'document') {
         return defineAsyncComponent(() => import('./Forms/ConfirmDocument.vue'));
@@ -632,7 +630,7 @@ const confirmComponent = computed(() => {
 
 const successComponent = computed(() => {
     const formType = props.event.form_type;
-    if (formType === 'reservation' || formType === 'reservation_hakama') {
+    if (formType === 'reservation' || isHakamaForm(formType)) {
         return defineAsyncComponent(() => import('./Forms/SuccessReservation.vue'));
     } else if (formType === 'document') {
         return defineAsyncComponent(() => import('./Forms/SuccessDocument.vue'));

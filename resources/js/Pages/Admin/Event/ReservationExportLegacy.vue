@@ -353,7 +353,8 @@ const props = defineProps({
 
 const FORM_TYPE_LABELS = {
     reservation: '振袖予約',
-    reservation_hakama: '袴予約',
+    reservation_hakama: '袴予約（岡山）',
+    reservation_hakama_fukui: '袴予約（福井）',
     document: '資料請求',
     contact: '問い合わせ',
 };

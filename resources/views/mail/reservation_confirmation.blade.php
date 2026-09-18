@@ -423,7 +423,7 @@
                             <div class="info-value">{{ $reservation->address }}</div>
                         </div>
                         @endif
-                        @if($reservation->event->form_type === 'reservation_hakama')
+                        @if($reservation->event->isHakamaReservation())
                         @if($reservation->school_name)
                         <div class="info-row">
                             <div class="info-label">学校名</div>
@@ -461,7 +461,7 @@
                         @endif
                         @if($reservation->koichi_furisode_used !== null)
                         <div class="info-row">
-                            <div class="info-label">好一での振袖利用</div>
+                            <div class="info-label">{{ $reservation->event->furisodeUsageLabel() }}</div>
                             <div class="info-value">{{ $reservation->koichi_furisode_used ? 'あり' : 'なし' }}</div>
                         </div>
                         @endif

@@ -207,7 +207,10 @@ class Event extends Model
     }
 
     /** @var list<string> */
-    public const TIMESLOT_RESERVATION_FORM_TYPES = ['reservation', 'reservation_hakama'];
+    public const TIMESLOT_RESERVATION_FORM_TYPES = ['reservation', 'reservation_hakama', 'reservation_hakama_fukui'];
+
+    /** @var list<string> 袴予約系のフォーム種別（岡山・福井。フォーム内容は共通、ラベルのみ異なる） */
+    public const HAKAMA_FORM_TYPES = ['reservation_hakama', 'reservation_hakama_fukui'];
 
     /** @var list<string> */
     public const FURISODE_CONSIDERING_PLAN_OPTIONS = [
@@ -226,6 +229,24 @@ class Event extends Model
     public function usesTimeslotReservation(): bool
     {
         return in_array($this->form_type, self::TIMESLOT_RESERVATION_FORM_TYPES, true);
+    }
+
+    /**
+     * 袴予約系フォーム（岡山・福井）か
+     */
+    public function isHakamaReservation(): bool
+    {
+        return in_array($this->form_type, self::HAKAMA_FORM_TYPES, true);
+    }
+
+    /**
+     * 袴フォームの「振袖利用」設問ラベル（岡山=好一／福井=平田）
+     */
+    public function furisodeUsageLabel(): string
+    {
+        return $this->form_type === 'reservation_hakama_fukui'
+            ? '平田での振袖利用'
+            : '好一での振袖利用';
     }
 
     /**
@@ -281,7 +302,7 @@ class Event extends Model
      */
     public function consideringPlanOptions(): array
     {
-        return $this->form_type === 'reservation_hakama'
+        return $this->isHakamaReservation()
             ? self::HAKAMA_CONSIDERING_PLAN_OPTIONS
             : self::FURISODE_CONSIDERING_PLAN_OPTIONS;
     }

@@ -81,8 +81,8 @@ class ToolDefinitions
                     'title' => ['type' => 'string', 'description' => 'イベントタイトル'],
                     'form_type' => [
                         'type' => 'string',
-                        'enum' => ['reservation', 'reservation_hakama', 'document', 'contact'],
-                        'description' => 'フォーム種別。reservation=振袖予約, reservation_hakama=袴予約, document=資料請求, contact=お問い合わせ',
+                        'enum' => ['reservation', 'reservation_hakama', 'reservation_hakama_fukui', 'document', 'contact'],
+                        'description' => 'フォーム種別。reservation=振袖予約, reservation_hakama=袴予約（岡山）, reservation_hakama_fukui=袴予約（福井）, document=資料請求, contact=お問い合わせ',
                     ],
                     'start_at' => ['type' => 'string', 'description' => '開始日（YYYY-MM-DD形式）'],
                     'end_at' => ['type' => 'string', 'description' => '受付終了日（YYYY-MM-DD形式）。省略時は無期限。'],

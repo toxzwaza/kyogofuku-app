@@ -327,7 +327,7 @@
             </div>
 
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">好一での振袖利用 <span class="text-red-500 ml-1">*</span></label>
+                <label class="block text-sm font-semibold text-gray-700 mb-3">{{ furisodeLabel }} <span class="text-red-500 ml-1">*</span></label>
                 <div class="flex space-x-6">
                     <label class="flex items-center cursor-pointer group">
                         <input
@@ -656,6 +656,7 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import axios from 'axios';
+import { furisodeUsageLabel } from '@/utils/formTypes';
 import { formatDateJaWithWeekday } from '@/utils/dateFormat';
 
 const props = defineProps({
@@ -675,6 +676,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['submitted', 'timeslot-selected', 'confirm']);
+
+const furisodeLabel = computed(() => furisodeUsageLabel(props.event?.form_type));
 
 const internalSelectedTimeslot = ref(props.selectedTimeslot || null);
 const customerInfoSection = ref(null);
@@ -1002,7 +1005,7 @@ const submit = () => {
         return;
     }
     if (form.koichi_furisode_used !== true && form.koichi_furisode_used !== false) {
-        alert('「好一での振袖利用」を選択してください。');
+        alert(`「${furisodeLabel.value}」を選択してください。`);
         return;
     }
     if (form.parking_usage === 'あり' && (!form.parking_car_count || form.parking_car_count < 1)) {

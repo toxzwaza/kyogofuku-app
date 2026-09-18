@@ -2333,7 +2333,7 @@ const props = defineProps({
 
 const usesTimeslotReservation = computed(() => {
   const t = props.event?.form_type;
-  return t === "reservation" || t === "reservation_hakama";
+  return t === "reservation" || t === "reservation_hakama" || t === "reservation_hakama_fukui";
 });
 
 // タイムスロット型予約の場合は日付表示をデフォルト、それ以外はカード表示をデフォルト
@@ -3066,6 +3066,7 @@ const getFormTypeLabel = (formType) => {
   const labels = {
     reservation: "振袖予約",
     reservation_hakama: "袴予約（岡山）",
+    reservation_hakama_fukui: "袴予約（福井）",
     document: "資料請求",
     contact: "問い合わせ",
   };
@@ -3076,6 +3077,7 @@ const getFormTypeBadgeClass = (formType) => {
   const classes = {
     reservation: "bg-blue-100 text-blue-800",
     reservation_hakama: "bg-cyan-100 text-cyan-900",
+    reservation_hakama_fukui: "bg-cyan-100 text-cyan-900",
     document: "bg-green-100 text-green-800",
     contact: "bg-purple-100 text-purple-800",
   };

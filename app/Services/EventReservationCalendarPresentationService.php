@@ -11,7 +11,7 @@ class EventReservationCalendarPresentationService
     {
         $reservation->loadMissing(['customer.ceremonyArea', 'event']);
 
-        if ($reservation->event?->form_type === 'reservation_hakama') {
+        if ($reservation->event?->isHakamaReservation()) {
             return implode('/', [
                 (string) ($reservation->name ?? ''),
                 $this->formatGraduationCeremonyLabel($reservation),
@@ -34,7 +34,7 @@ class EventReservationCalendarPresentationService
     {
         $reservation->loadMissing(['customer.ceremonyArea', 'venue', 'event']);
 
-        if ($reservation->event?->form_type === 'reservation_hakama') {
+        if ($reservation->event?->isHakamaReservation()) {
             $lines = [
                 '卒業式: ' . $this->formatGraduationCeremonyLabel($reservation),
                 '来店人数: ' . ($reservation->visitor_count !== null ? $reservation->visitor_count . '名' : '未設定'),

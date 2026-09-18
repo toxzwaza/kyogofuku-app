@@ -23,9 +23,10 @@ class ReservationConfirmationMailPreviewController extends Controller
     public function __invoke(Request $request)
     {
         $formType = $request->query('form_type', 'reservation');
-        if (! in_array($formType, ['reservation', 'reservation_hakama', 'document', 'contact'], true)) {
+        if (! in_array($formType, ['reservation', 'reservation_hakama', 'reservation_hakama_fukui', 'document', 'contact'], true)) {
             $formType = 'reservation';
         }
+        $isHakama = in_array($formType, Event::HAKAMA_FORM_TYPES, true);
 
         $requestMethod = $request->query('request_method');
         if ($formType === 'document' && $request->query('catalog')) {
@@ -47,17 +48,17 @@ class ReservationConfirmationMailPreviewController extends Controller
             'email' => $request->query('email', 'guest@example.com'),
             'phone' => $request->query('phone', '090-1234-5678'),
             'reservation_datetime' => $request->query('datetime', now()->addDays(14)->format('Y-m-d 14:00:00')),
-            'postal_code' => $formType === 'reservation_hakama' ? null : '7000821',
-            'furigana' => $formType === 'reservation_hakama' ? 'ヤマダ ハナコ' : null,
-            'address' => $formType === 'reservation_hakama' ? '岡山県岡山市北区表町1-1' : null,
-            'school_name' => $formType === 'reservation_hakama' ? 'サンプル高等学校' : null,
-            'graduation_ceremony_date' => $formType === 'reservation_hakama' ? now()->addMonths(2)->format('Y-m-d') : null,
-            'visitor_count' => $formType === 'reservation_hakama' ? 3 : null,
-            'koichi_furisode_used' => $formType === 'reservation_hakama' ? false : null,
-            'visit_reasons' => $formType === 'reservation_hakama' ? ['紹介', 'SNS・WEB広告'] : null,
-            'considering_plans' => $formType === 'reservation_hakama' ? ['上下フルセットプラン'] : null,
-            'parking_usage' => $formType === 'reservation_hakama' ? 'あり' : null,
-            'parking_car_count' => $formType === 'reservation_hakama' ? 1 : null,
+            'postal_code' => $isHakama ? null : '7000821',
+            'furigana' => $isHakama ? 'ヤマダ ハナコ' : null,
+            'address' => $isHakama ? '岡山県岡山市北区表町1-1' : null,
+            'school_name' => $isHakama ? 'サンプル高等学校' : null,
+            'graduation_ceremony_date' => $isHakama ? now()->addMonths(2)->format('Y-m-d') : null,
+            'visitor_count' => $isHakama ? 3 : null,
+            'koichi_furisode_used' => $isHakama ? false : null,
+            'visit_reasons' => $isHakama ? ['紹介', 'SNS・WEB広告'] : null,
+            'considering_plans' => $isHakama ? ['上下フルセットプラン'] : null,
+            'parking_usage' => $isHakama ? 'あり' : null,
+            'parking_car_count' => $isHakama ? 1 : null,
             'inquiry_message' => $request->boolean('no_inquiry')
                 ? null
                 : $request->query('inquiry', "試着のご相談をしたく予約しました。\nよろしくお願いいたします。"),

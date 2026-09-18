@@ -114,13 +114,14 @@ class PublicEventControllerTest extends TestCase
     {
         $this->createEvent(['slug' => 'fr',  'form_type' => 'reservation',         'end_at' => now()->addDays(3)], [$this->okayama->id]);
         $this->createEvent(['slug' => 'hk',  'form_type' => 'reservation_hakama',  'end_at' => now()->addDays(4)], [$this->okayama->id]);
+        $this->createEvent(['slug' => 'hkf', 'form_type' => 'reservation_hakama_fukui', 'end_at' => now()->addDays(5)], [$this->okayama->id]);
         $this->createEvent(['slug' => 'doc', 'form_type' => 'document',            'end_at' => now()->addDays(2)], [$this->okayama->id]);
         $this->createEvent(['slug' => 'ct',  'form_type' => 'contact',             'end_at' => now()->addDays(1)], [$this->okayama->id]);
 
         $res = $this->getJson('/api/public/events?shop=' . urlencode('岡山店'));
 
         $slugs = collect($res->json('data'))->pluck('slug')->all();
-        $this->assertEqualsCanonicalizing(['fr', 'hk'], $slugs);
+        $this->assertEqualsCanonicalizing(['fr', 'hk', 'hkf'], $slugs);
     }
 
     public function test_footer_banner_includes_only_reservation_form_types(): void

@@ -137,7 +137,7 @@
                       </label>
                       <p class="text-lg font-semibold text-gray-900">{{ reservation.name }}</p>
                     </div>
-                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama' || event.form_type === 'document'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama' || event.form_type === 'reservation_hakama_fukui' || event.form_type === 'document'" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -346,7 +346,7 @@
                 </template>
 
                 <!-- 袴予約（岡山） -->
-                <template v-if="event.form_type === 'reservation_hakama'">
+                <template v-if="event.form_type === 'reservation_hakama' || event.form_type === 'reservation_hakama_fukui'">
                   <div class="mb-6">
                     <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
                       <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -386,7 +386,7 @@
                         <p class="text-base font-medium text-gray-900">{{ reservation.school_name || "—" }}</p>
                       </div>
                       <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">好一での振袖利用</label>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">{{ furisodeUsageLabel(event.form_type) }}</label>
                         <p class="text-base font-medium text-gray-900">{{ reservation.koichi_furisode_used === true ? "あり" : reservation.koichi_furisode_used === false ? "なし" : "—" }}</p>
                       </div>
                       <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -1989,6 +1989,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayoutLegacy.vue";
 import ActionButton from "@/Components/ActionButtonLegacy.vue";
 import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
+import { furisodeUsageLabel } from "@/utils/formTypes";
 import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
 import { formatDateTimeJa, formatDateJa } from "@/utils/dateFormat";

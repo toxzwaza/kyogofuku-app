@@ -121,7 +121,7 @@
               </UiDetailSection>
             </template>
 
-            <template v-if="event.form_type === 'reservation_hakama'">
+            <template v-if="event.form_type === 'reservation_hakama' || event.form_type === 'reservation_hakama_fukui'">
               <UiDetailSection title="予約情報" :icon="Calendar" :cols="2">
                 <UiDetailField label="予約日時" :value="reservation.reservation_datetime || '—'" :icon="Calendar" highlight />
                 <UiDetailField label="ご来店会場" :value="reservation.venue ? reservation.venue.name : '—'" :icon="MapPin" />
@@ -131,7 +131,7 @@
                 <UiDetailField label="郵便番号" :value="formatPostalCode(reservation.postal_code)" :icon="MapPin" />
                 <UiDetailField label="住所" :value="reservation.address || '—'" :icon="Home" :span="2" />
                 <UiDetailField label="学校名" :value="reservation.school_name || '—'" :icon="School" />
-                <UiDetailField label="好一での振袖利用" :value="reservation.koichi_furisode_used === true ? 'あり' : reservation.koichi_furisode_used === false ? 'なし' : '—'" :icon="Sparkles" />
+                <UiDetailField :label="furisodeUsageLabel(event.form_type)" :value="reservation.koichi_furisode_used === true ? 'あり' : reservation.koichi_furisode_used === false ? 'なし' : '—'" :icon="Sparkles" />
                 <UiDetailField label="卒業式" :value="formatGraduationCeremonyDisplay(reservation)" :icon="GraduationCap" />
                 <UiDetailField label="来店人数" :value="reservation.visitor_count != null ? reservation.visitor_count + '名' : '—'" :icon="Users" />
                 <UiDetailField label="お連れ様" :value="reservation.companion_types && reservation.companion_types.length > 0 ? reservation.companion_types.join('、') : '—'" :icon="Users" />
@@ -1095,6 +1095,7 @@ import CustomerLineSection from "@/Components/Admin/CustomerLineSection.vue";
 import PhotoManageSection from "@/Components/CustomerPhotos/PhotoManageSection.vue";
 import QuestionnaireBlock from "@/Components/Questionnaire/QuestionnaireBlock.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
+import { furisodeUsageLabel } from "@/utils/formTypes";
 import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
 import { formatDateTimeJa, formatDateJa } from "@/utils/dateFormat";

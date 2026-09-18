@@ -1940,7 +1940,7 @@
             <h3 class="text-lg font-semibold text-gray-800 mb-4">
               フォームタイプ別の予約数
             </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                             <div class="bg-blue-50 p-4 rounded-lg">
                                 <p class="text-sm text-gray-600">振袖予約フォーム</p>
                 <p class="text-2xl font-bold text-blue-600">
@@ -1951,6 +1951,12 @@
                                 <p class="text-sm text-gray-600">袴予約（岡山）フォーム</p>
                 <p class="text-2xl font-bold text-sky-600">
                   {{ formTypeStats?.reservation_hakama || 0 }}
+                </p>
+                            </div>
+                            <div class="bg-teal-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600">袴予約（福井）フォーム</p>
+                <p class="text-2xl font-bold text-teal-600">
+                  {{ formTypeStats?.reservation_hakama_fukui || 0 }}
                 </p>
                             </div>
                             <div class="bg-green-50 p-4 rounded-lg">
@@ -2418,6 +2424,31 @@
                                     <div class="space-y-1">
                                         <div
                                             v-for="item in props.formTypeDetails.reservation_hakama.by_venue"
+                                            :key="item.venue_name"
+                                            class="text-sm text-gray-600"
+                                        >
+                                            {{ item.venue_name }}: {{ item.count }}件
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 袴予約（福井）フォーム -->
+                            <div>
+                                <h4 class="font-medium text-gray-700 mb-3">袴予約（福井）フォーム</h4>
+                <p class="text-2xl font-bold text-teal-600 mb-3">
+                  {{ props.formTypeDetails?.reservation_hakama_fukui?.total || 0 }}
+                </p>
+                <div
+                  v-if="
+                    props.formTypeDetails?.reservation_hakama_fukui?.by_venue &&
+                    props.formTypeDetails.reservation_hakama_fukui.by_venue.length > 0
+                  "
+                >
+                                    <p class="text-sm font-medium text-gray-600 mb-2">会場別:</p>
+                                    <div class="space-y-1">
+                                        <div
+                                            v-for="item in props.formTypeDetails.reservation_hakama_fukui.by_venue"
                                             :key="item.venue_name"
                                             class="text-sm text-gray-600"
                                         >

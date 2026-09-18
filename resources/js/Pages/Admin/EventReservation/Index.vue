@@ -24,6 +24,7 @@
                             { value: '',                   label: 'すべて' },
                             { value: 'reservation',        label: '振袖予約' },
                             { value: 'reservation_hakama', label: '袴予約（岡山）' },
+                            { value: 'reservation_hakama_fukui', label: '袴予約（福井）' },
                             { value: 'document',           label: '資料請求' },
                             { value: 'contact',            label: '問い合わせ' },
                         ]"
@@ -249,6 +250,7 @@ const goToReservation = (id) => {
 const getFormTypeLabel = (t) => ({
     reservation: '振袖予約',
     reservation_hakama: '袴予約（岡山）',
+    reservation_hakama_fukui: '袴予約（福井）',
     document: '資料請求',
     contact: '問い合わせ',
 }[t] || t || '—');
@@ -256,6 +258,7 @@ const getFormTypeLabel = (t) => ({
 const formTypeVariant = (t) => ({
     reservation: 'primary',
     reservation_hakama: 'accent',
+    reservation_hakama_fukui: 'accent',
     document: 'success',
     contact: 'warning',
 }[t] || 'neutral');

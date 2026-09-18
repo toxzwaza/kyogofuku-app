@@ -224,7 +224,7 @@
                     </div>
 
                     <!-- 学校名（袴のみ） -->
-                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
+                    <div v-if="isHakama" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,15 +236,15 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.school_name || '-' }}</p>
                     </div>
 
-                    <!-- 好一での振袖利用（袴のみ） -->
-                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
+                    <!-- 振袖利用（袴のみ・岡山=好一/福井=平田） -->
+                    <div v-if="isHakama" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">好一での振袖利用</label>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ furisodeLabel }}</label>
                         </div>
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">
                             {{ formData.koichi_furisode_used === true ? 'あり' : formData.koichi_furisode_used === false ? 'なし' : '-' }}
@@ -252,7 +252,7 @@
                     </div>
 
                     <!-- 卒業式（袴のみ） -->
-                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
+                    <div v-if="isHakama" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -267,7 +267,7 @@
                     </div>
 
                     <!-- 来店人数（袴のみ） -->
-                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
+                    <div v-if="isHakama" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,7 +280,7 @@
                     </div>
 
                     <!-- お連れ様（袴のみ・来店人数2名以上） -->
-                    <div v-if="event.form_type === 'reservation_hakama' && Number(formData.visitor_count) >= 2" class="group">
+                    <div v-if="isHakama && Number(formData.visitor_count) >= 2" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,7 +301,7 @@
                     </div>
 
                     <!-- お連れ様の袴着用（友人が含まれる場合） -->
-                    <div v-if="event.form_type === 'reservation_hakama' && formData.companion_types && formData.companion_types.includes('友人')" class="group">
+                    <div v-if="isHakama && formData.companion_types && formData.companion_types.includes('友人')" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,7 +350,7 @@
                     </div>
 
                     <!-- お車で来店（袴のみ） -->
-                    <div v-if="event.form_type === 'reservation_hakama'" class="group">
+                    <div v-if="isHakama" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -362,7 +362,7 @@
                         <p class="text-gray-900 font-medium text-sm sm:text-base pl-9 sm:pl-10 break-words">{{ formData.parking_usage || '-' }}</p>
                     </div>
 
-                    <div v-if="event.form_type === 'reservation_hakama' && formData.parking_usage === 'あり'" class="group">
+                    <div v-if="isHakama && formData.parking_usage === 'あり'" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -396,7 +396,7 @@
                     </div>
 
                     <!-- ご紹介者様お名前（振袖・袴） -->
-                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'" class="group">
+                    <div v-if="event.form_type === 'reservation' || isHakama" class="group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -409,7 +409,7 @@
                     </div>
 
                     <!-- お問い合わせ内容（振袖・袴） -->
-                    <div v-if="event.form_type === 'reservation' || event.form_type === 'reservation_hakama'" class="md:col-span-2 group">
+                    <div v-if="event.form_type === 'reservation' || isHakama" class="md:col-span-2 group">
                         <div class="flex items-center space-x-2 mb-2">
                             <div class="w-7 h-7 sm:w-8 sm:h-8 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,6 +469,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { formatDateJa } from '@/utils/dateFormat';
+import { isHakamaForm, furisodeUsageLabel } from '@/utils/formTypes';
 
 const props = defineProps({
     event: Object,
@@ -487,6 +488,9 @@ const props = defineProps({
 const emit = defineEmits(['back']);
 
 const processing = ref(false);
+
+const isHakama = computed(() => isHakamaForm(props.event.form_type));
+const furisodeLabel = computed(() => furisodeUsageLabel(props.event.form_type));
 
 const selectedVenueName = computed(() => {
     const fd = props.formData;
