@@ -573,19 +573,11 @@
                             <div class="flex items-center space-x-2">
                               <button
                                 v-if="timeslot.remaining_capacity > 0"
-                                @click="openTextReservationModal(timeslot)"
-                                class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg shadow-sm hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200"
-                                title="テキストから予約登録"
-                              >
-                                テキストから予約登録
-                              </button>
-                              <button
-                                v-if="timeslot.remaining_capacity > 0"
                                 @click="openCustomerReservationModal(timeslot)"
                                 class="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-sm hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
-                                title="顧客情報から予約登録"
+                                title="顧客から登録"
                               >
-                                顧客情報から予約登録
+                                顧客から登録
                               </button>
                               <Link
                                 v-if="timeslot.remaining_capacity > 0"
@@ -898,6 +890,19 @@
                                       >フリガナ:</span
                                     >
                                     {{ reservation.furigana }}
+                                  </div>
+                                  <div
+                                    v-if="reservation.utm_source"
+                                    class="flex items-center"
+                                  >
+                                    <span class="text-gray-500 mr-2"
+                                      >流入経路:</span
+                                    >
+                                    <span
+                                      class="inline-block px-2 py-0.5 text-xs bg-sky-100 text-sky-800 rounded-full"
+                                    >
+                                      {{ reservation.utm_source }}
+                                    </span>
                                   </div>
                                   <div
                                     v-if="
@@ -1947,69 +1952,6 @@
       </div>
     </div>
 
-    <!-- テキストから予約登録モーダル -->
-    <div
-      v-if="showTextReservationModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style="background-color: rgba(0, 0, 0, 0.5)"
-      @click.self="closeTextReservationModal"
-    >
-      <div
-        class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-      >
-        <div
-          class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10"
-        >
-          <h2 class="text-2xl font-bold">テキストから予約登録</h2>
-          <button
-            @click="closeTextReservationModal"
-            class="text-gray-500 hover:text-gray-700"
-          >
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div class="p-6">
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              テキストを貼り付けてください
-            </label>
-            <textarea
-              v-model="textReservationInput"
-              rows="15"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono text-sm"
-              placeholder="【 イベント名 】 FURISODE EXPO in 岡山&#10;&#10;【 ご来店会場 】 岡山プラザホテル&#10;&#10;【 ご予約希望日時 】 2026/1/25(日) 12:30&#10;&#10;【 過去当店にご来店 】 ない&#10;&#10;【 お嬢様名 】 村本莉愛&#10;&#10;【 お嬢様名(ふりがな) 】 むらもりあ&#10;&#10;【 住所 】 岡山県倉敷市水島青葉町2-1-14&#10;&#10;【 Email 】 haruria.2255@docomo.ne.jp&#10;&#10;【 電話番号 】 09052670049&#10;&#10;【 生年月日 】 2007年 5月 5日&#10;&#10;【 ご検討中のプラン 】 振袖レンタルプラン&#10;&#10;【 お問い合わせ内容 】&#10;&#10;【 ご紹介者様お名前 】"
-            ></textarea>
-          </div>
-          <div class="flex justify-end space-x-3">
-            <button
-              @click="closeTextReservationModal"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              キャンセル
-            </button>
-            <button
-              @click="proceedToReservationFromText"
-              class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
-            >
-              予約登録へ進む
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 顧客情報から予約登録モーダル -->
     <div
       v-if="showCustomerReservationModal"
@@ -2023,7 +1965,7 @@
         <div
           class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10"
         >
-          <h2 class="text-2xl font-bold">顧客情報から予約登録</h2>
+          <h2 class="text-2xl font-bold">顧客から登録</h2>
           <button
             @click="closeCustomerReservationModal"
             class="text-gray-500 hover:text-gray-700"
@@ -2380,11 +2322,6 @@ const displayTimeslotStats = computed(() => localTimeslotStats.value);
 // アコーディオンの開閉状態
 const isSortOpen = ref(false);
 const isFilterOpen = ref(false);
-
-// テキストから予約登録モーダルの状態
-const showTextReservationModal = ref(false);
-const textReservationInput = ref("");
-const selectedTimeslotForTextReservation = ref(null);
 
 // 顧客情報から予約登録モーダルの状態
 const showCustomerReservationModal = ref(false);
@@ -3294,20 +3231,6 @@ const adjustCapacity = async (timeslotId, amount) => {
   }
 };
 
-// テキストから予約登録モーダルを開く
-const openTextReservationModal = (timeslot) => {
-  selectedTimeslotForTextReservation.value = timeslot;
-  textReservationInput.value = "";
-  showTextReservationModal.value = true;
-};
-
-// テキストから予約登録モーダルを閉じる
-const closeTextReservationModal = () => {
-  showTextReservationModal.value = false;
-  textReservationInput.value = "";
-  selectedTimeslotForTextReservation.value = null;
-};
-
 // 顧客情報から予約登録モーダルを開く
 const openCustomerReservationModal = (timeslot) => {
   selectedTimeslotForCustomerReservation.value = timeslot;
@@ -3389,175 +3312,6 @@ const confirmCustomerAndReserve = () => {
       },
     }
   );
-};
-
-// テキストから情報を抽出する関数
-const parseTextReservation = (text) => {
-  const data = {};
-
-  // 【 過去当店にご来店 】 ない/あり
-  const hasVisitedMatch = text.match(/【\s*過去当店にご来店\s*】\s*([^\n\r]+)/);
-  if (hasVisitedMatch) {
-    const value = hasVisitedMatch[1].trim();
-    data.has_visited_before = value === "あり" || value === "ある";
-  }
-
-  // 【 お嬢様名 】 村本莉愛
-  const nameMatch = text.match(/【\s*お嬢様名\s*】\s*([^\n\r]+)/);
-  if (nameMatch) {
-    data.name = nameMatch[1].trim();
-  }
-
-  // 【 お嬢様名(ふりがな) 】 むらもりあ
-  const furiganaMatch = text.match(
-    /【\s*お嬢様名\s*\(ふりがな\)\s*】\s*([^\n\r]+)/
-  );
-  if (furiganaMatch) {
-    data.furigana = furiganaMatch[1].trim();
-  }
-
-  // 【 住所 】 岡山県倉敷市水島青葉町2-1-14
-  const addressMatch = text.match(/【\s*住所\s*】\s*([^\n\r]+)/);
-  if (addressMatch) {
-    data.address = addressMatch[1].trim();
-  }
-
-  // 【 Email 】 haruria.2255@docomo.ne.jp
-  const emailMatch = text.match(/【\s*Email\s*】\s*([^\n\r]+)/);
-  if (emailMatch) {
-    data.email = emailMatch[1].trim();
-  }
-
-  // 【 電話番号 】 09052670049
-  const phoneMatch = text.match(/【\s*電話番号\s*】\s*([^\n\r]+)/);
-  if (phoneMatch) {
-    data.phone = phoneMatch[1].trim();
-  }
-
-  // 【 生年月日 】 2007年 5月 5日
-  const birthDateMatch = text.match(
-    /【\s*生年月日\s*】\s*(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/
-  );
-  if (birthDateMatch) {
-    const year = birthDateMatch[1];
-    const month = String(birthDateMatch[2]).padStart(2, "0");
-    const day = String(birthDateMatch[3]).padStart(2, "0");
-    data.birth_date = `${year}-${month}-${day}`;
-    
-    console.log('[デバッグ] 生年月日抽出:', {
-      year,
-      month,
-      day,
-      birth_date: data.birth_date
-    });
-    
-    // 生年月日から成人式予定年を自動計算
-    try {
-      const birthYear = parseInt(year, 10);
-      const seijinYear = birthYear + 20;
-      const currentYear = new Date().getFullYear();
-      
-      console.log('[デバッグ] 成人式予定年計算:', {
-        birthYear,
-        seijinYear,
-        currentYear,
-        minYear: currentYear,
-        maxYear: currentYear + 10,
-        isInRange: seijinYear >= currentYear && seijinYear <= currentYear + 10
-      });
-      
-      // 現在年から10年後の範囲内であれば設定
-      if (seijinYear >= currentYear && seijinYear <= currentYear + 10) {
-        data.seijin_year = seijinYear;
-        console.log('[デバッグ] 成人式予定年を設定:', seijinYear);
-      } else {
-        console.warn('[デバッグ] 成人式予定年が範囲外のため設定されませんでした:', seijinYear);
-      }
-    } catch (error) {
-      console.error('[デバッグ] 成人式予定年の計算エラー:', error);
-    }
-  } else {
-    console.log('[デバッグ] 生年月日のマッチがありません');
-  }
-
-  // 【 ご検討中のプラン 】 振袖レンタルプラン
-  const planMatch = text.match(/【\s*ご検討中のプラン\s*】\s*([^\n\r]+)/);
-  if (planMatch) {
-    const planText = planMatch[1].trim();
-    // プラン名を配列に変換（カンマ区切りの可能性を考慮）
-    const plans = planText
-      .split(/[,、]/)
-      .map((p) => p.trim())
-      .filter((p) => p);
-    data.considering_plans = plans;
-  }
-
-  // 【 お問い合わせ内容 】
-  const inquiryMatch = text.match(
-    /【\s*お問い合わせ内容\s*】\s*([\s\S]*?)(?=\n\s*【|$)/
-  );
-  if (inquiryMatch) {
-    data.inquiry_message = inquiryMatch[1].trim();
-  }
-
-  // 【 ご紹介者様お名前 】
-  const referredByMatch = text.match(/【\s*ご紹介者様お名前\s*】\s*([^\n\r]+)/);
-  if (referredByMatch) {
-    data.referred_by_name = referredByMatch[1].trim();
-  }
-
-  return data;
-};
-
-// テキストから予約登録画面に遷移
-const proceedToReservationFromText = () => {
-  if (!selectedTimeslotForTextReservation.value) {
-    alert("予約枠が選択されていません。");
-    return;
-  }
-
-  if (!textReservationInput.value.trim()) {
-    alert("テキストを入力してください。");
-    return;
-  }
-
-  // テキストから情報を抽出
-  const extractedData = parseTextReservation(textReservationInput.value);
-  
-  console.log('[デバッグ] 抽出されたデータ:', extractedData);
-  console.log('[デバッグ] seijin_yearの値:', extractedData.seijin_year);
-  console.log('[デバッグ] seijin_yearの型:', typeof extractedData.seijin_year);
-
-  // 予約登録URLを生成
-  const baseUrl = route("event.show", props.event.slug);
-  const params = new URLSearchParams({
-    from_admin: "1",
-    timeslot_id: selectedTimeslotForTextReservation.value.id,
-  });
-
-  // 抽出したデータをURLパラメータに追加
-  Object.keys(extractedData).forEach((key) => {
-    const value = extractedData[key];
-    console.log(`[デバッグ] パラメータ追加処理: ${key} =`, value, `(型: ${typeof value})`);
-    if (value !== null && value !== undefined && value !== "") {
-      if (Array.isArray(value)) {
-        // 配列の場合はカンマ区切りで追加
-        params.append(key, value.join(","));
-        console.log(`[デバッグ] 配列として追加: ${key} = ${value.join(",")}`);
-      } else {
-        params.append(key, value);
-        console.log(`[デバッグ] 値を追加: ${key} = ${value}`);
-      }
-    } else {
-      console.log(`[デバッグ] 値が空のためスキップ: ${key}`);
-    }
-  });
-  
-  console.log('[デバッグ] 最終的なURLパラメータ:', params.toString());
-
-  // モーダルを閉じて遷移
-  closeTextReservationModal();
-  window.location.href = `${baseUrl}?${params.toString()}`;
 };
 
 // 印刷モーダルを開く

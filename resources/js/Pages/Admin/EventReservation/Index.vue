@@ -101,15 +101,16 @@
                             <th class="px-4 py-2.5 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">電話番号</th>
                             <th class="px-4 py-2.5 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">予約日時</th>
                             <th class="px-4 py-2.5 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">会場</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">流入経路</th>
                             <th class="px-4 py-2.5 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">ステータス</th>
                         </tr>
                     </thead>
                     <tbody class="bg-brand-surface divide-y divide-brand-border">
                         <tr v-if="resLoading">
-                            <td colspan="10" class="px-4 py-10 text-center text-sm text-brand-text-muted">読み込み中…</td>
+                            <td colspan="11" class="px-4 py-10 text-center text-sm text-brand-text-muted">読み込み中…</td>
                         </tr>
                         <tr v-else-if="!resRows.length">
-                            <td colspan="10" class="px-4 py-10 text-center text-sm text-brand-text-muted">該当する予約者がいません。</td>
+                            <td colspan="11" class="px-4 py-10 text-center text-sm text-brand-text-muted">該当する予約者がいません。</td>
                         </tr>
                         <template v-else>
                             <tr
@@ -138,6 +139,7 @@
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-brand-text tabular-nums">{{ r.phone || '—' }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-brand-text">{{ r.reservation_datetime || '—' }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-brand-text">{{ r.venue_name || '—' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-brand-text">{{ r.utm_source || '—' }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm">
                                     <span v-if="r.cancel_flg" class="text-red-600 font-medium">キャンセル</span>
                                     <span v-else class="text-brand-text">{{ r.status || '—' }}</span>
