@@ -272,6 +272,7 @@ class ReservationController extends Controller
                             'parking_car_count' => $reservation->parking_car_count,
                             'considering_plans' => $reservation->considering_plans,
                             'referred_by_name' => $reservation->referred_by_name,
+                            'utm_source' => $reservation->utm_source,
                             'inquiry_message' => $reservation->inquiry_message,
                             'status' => $reservation->status,
                             'status_updated_by' => $reservation->statusUpdatedBy ? [

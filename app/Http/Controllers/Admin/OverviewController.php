@@ -163,6 +163,18 @@ class OverviewController extends Controller
             }
         }
 
+        // 流入経路（utm_source）別の予約者数（直近30日・キャンセル除く）
+        $utmDist = EventReservation::where('created_at', '>=', $since)
+            ->where('cancel_flg', false)
+            ->whereIn('event_id', $shopEventIds)
+            ->selectRaw("COALESCE(NULLIF(utm_source, ''), '（直接・不明）') as source, COUNT(*) as cnt")
+            ->groupBy('source')
+            ->orderByDesc('cnt')
+            ->get()
+            ->map(fn ($r) => ['source' => (string) $r->source, 'count' => (int) $r->cnt])
+            ->values()
+            ->all();
+
         // ── 入力もれチェック（所属店舗の顧客が対象） ──
         // カードのリンク先が顧客一覧のため、レコード件数ではなく「該当顧客数」で数える
         // （カードの数字と一覧の「全N件」を一致させる）。
@@ -289,6 +301,7 @@ class OverviewController extends Controller
             ],
             'daily_trend'   => $daily,        // 過去14日＋今日＋先14日
             'status_dist'   => $statusDist,   // 直近30日のステータス分布
+            'utm_dist'      => $utmDist,      // 直近30日の流入経路別予約者数（キャンセル除く）
             'heatmap'       => [
                 'cells'    => $heatmap,       // [dow][hr] = cnt （dow: 0=月〜6=日）
                 'max'      => $maxHeat,

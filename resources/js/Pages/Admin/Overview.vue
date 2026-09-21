@@ -8,6 +8,7 @@ import {
 import DailyTrendChart from '@/Components/Admin/DailyTrendChart.vue';
 import StatusDistChart from '@/Components/Admin/StatusDistChart.vue';
 import ReservationHeatmap from '@/Components/Admin/ReservationHeatmap.vue';
+import UtmSourceChart from '@/Components/Admin/UtmSourceChart.vue';
 import {
     CalendarDays, Users, TrendingUp, TrendingDown, AlertCircle,
     ArrowRight, Store, Clock, BarChart3, PieChart, Grid3x3,
@@ -24,6 +25,7 @@ const props = defineProps({
     week_range: { type: Object, default: () => ({}) },
     daily_trend: { type: Array, default: () => [] },
     status_dist: { type: Array, default: () => [] },
+    utm_dist: { type: Array, default: () => [] },
     heatmap: { type: Object, default: () => ({ cells: {}, max: 0 }) },
     line_inbound: { type: Object, default: () => ({ groups: [], unread_total: 0, total: 0 }) },
 });
@@ -262,6 +264,24 @@ const maxShopCnt = computed(() =>
                     </div>
                 </template>
                 <StatusDistChart v-if="status_dist.length" :data="status_dist" />
+                <div v-else class="h-32 flex items-center justify-center text-brand-text-muted text-sm">
+                    データがありません
+                </div>
+            </UiCard>
+        </section>
+
+        <!-- 流入経路別の予約者数 -->
+        <section class="mb-6">
+            <UiCard variant="default">
+                <template #header>
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-serif text-base">流入経路別の予約者数</h2>
+                        <span class="text-[10px] text-brand-text-muted flex items-center gap-1">
+                            <BarChart3 :size="12" />直近30日・キャンセル除く
+                        </span>
+                    </div>
+                </template>
+                <UtmSourceChart v-if="utm_dist.length" :data="utm_dist" />
                 <div v-else class="h-32 flex items-center justify-center text-brand-text-muted text-sm">
                     データがありません
                 </div>

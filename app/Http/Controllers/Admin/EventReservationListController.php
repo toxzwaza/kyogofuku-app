@@ -110,6 +110,7 @@ class EventReservationListController extends Controller
                 'phone' => $r->phone ?: ($r->form_data['phone'] ?? ''),
                 'reservation_datetime' => $r->reservation_datetime,
                 'venue_name' => $r->venue?->name,
+                'utm_source' => $r->utm_source,
                 'status' => $r->status,
                 'cancel_flg' => (bool) $r->cancel_flg,
                 'created_at' => optional($r->created_at)->toIso8601String(),
