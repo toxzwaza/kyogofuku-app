@@ -742,15 +742,12 @@
                             前撮り情報がありません
                         </div>
                 </UiCard>
+                        </div>
+                    </template>
 
-                <!-- 振袖アンケート（顧客詳細からも取込・写真配置・削除が可能） -->
-                <QuestionnaireBlock
-                    route-base="admin.customers.questionnaire"
-                    :owner-id="customer.id"
-                    :photos="customer.photos || []"
-                    :questionnaire="questionnaire"
-                />
-
+                    <!-- 写真・アンケートタブ: 顧客写真・振袖アンケート -->
+                    <template #photos>
+                        <div class="space-y-4 max-w-4xl">
                 <!-- 顧客写真 -->
                 <UiCard variant="default" padding="lg">
                     <template #header>
@@ -1020,6 +1017,14 @@
                             写真がありません
                         </div>
                 </UiCard>
+
+                <!-- 振袖アンケート（顧客詳細からも取込・写真配置・削除が可能） -->
+                <QuestionnaireBlock
+                    route-base="admin.customers.questionnaire"
+                    :owner-id="customer.id"
+                    :photos="customer.photos || []"
+                    :questionnaire="questionnaire"
+                />
                         </div>
                     </template>
 
@@ -2606,6 +2611,7 @@ const activeTab = ref('overview');
 const tabs = [
     { id: 'overview', label: '概要' },
     { id: 'info',     label: '詳細情報' },
+    { id: 'photos',   label: '写真・アンケート' },
     { id: 'comm',     label: '連絡・メモ' },
     { id: 'referral', label: 'ポイント・ギフト' },
 ];
