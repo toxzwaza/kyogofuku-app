@@ -27,6 +27,22 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">店舗グループ</label>
+                                    <select
+                                        v-model="form.group_key"
+                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
+                                    >
+                                        <option value="">未設定（通常運用から除外）</option>
+                                        <option value="okayama">岡山グループ（岡山・城東・浜）</option>
+                                        <option value="fukui">福井グループ（福井）</option>
+                                    </select>
+                                    <p class="mt-1 text-xs text-brand-text-muted">
+                                        同じグループの店舗どうしのみ顧客・イベント等が相互に表示されます。未設定の店舗は一般ユーザーの検索対象外になります。
+                                    </p>
+                                    <div v-if="form.errors.group_key" class="mt-1 text-sm text-red-600">{{ form.errors.group_key }}</div>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-brand-text mb-1">住所</label>
                                     <input
                                         v-model="form.address"
@@ -171,6 +187,7 @@ const removeImageFlag = ref(false);
 
 const form = useForm({
     name: props.shop.name,
+    group_key: props.shop.group_key || '',
     address: props.shop.address || '',
     phone: props.shop.phone || '',
     image: null,

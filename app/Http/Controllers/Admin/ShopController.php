@@ -43,6 +43,7 @@ class ShopController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'group_key' => 'nullable|in:okayama,fukui',
             'address' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
@@ -82,6 +83,7 @@ class ShopController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'group_key' => 'nullable|in:okayama,fukui',
             'address' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
