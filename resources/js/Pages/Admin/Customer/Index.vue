@@ -7,6 +7,11 @@
             description="登録顧客の検索・一括操作・追加ができます。"
         >
             <template #actions>
+                <!-- モバイル/タブレット：検索条件モーダルを開く（PCでは非表示・左右レイアウトを使用） -->
+                <UiButton variant="secondary" class="lg:hidden" @click="mobileSearchOpen = true">
+                    <template #leading><Search :size="14" /></template>
+                    検索
+                </UiButton>
                 <UiButton variant="primary" @click="showAddCustomerModal = true">
                     <template #leading><Plus :size="14" /></template>
                     顧客追加
@@ -17,10 +22,35 @@
         <div>
             <div class="mx-auto">
                 <div class="flex flex-col lg:flex-row-reverse gap-6 lg:items-start">
-                    <!-- 左：検索条件 -->
+                    <!-- モバイル/タブレット：半透明の黒背景。上部に検索結果がうっすら見え、条件変更で結果が切り替わるのが分かる -->
+                    <div
+                        v-if="mobileSearchOpen"
+                        class="fixed inset-0 z-40 bg-sumi-950/50 lg:hidden"
+                        @click="mobileSearchOpen = false"
+                        aria-hidden="true"
+                    />
+                    <!-- 検索条件：PCは左右のサイドバー、モバイル/タブレットは下からのシート（上に結果が透ける） -->
                     <aside
-                        class="w-full lg:w-[22rem] shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto"
+                        :class="[
+                            'shrink-0 w-full',
+                            mobileSearchOpen
+                                ? 'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-brand-surface shadow-2xl p-4'
+                                : 'hidden',
+                            'lg:block lg:sticky lg:left-auto lg:top-4 lg:translate-x-0 lg:translate-y-0 lg:z-auto lg:w-[22rem] lg:max-w-none lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:rounded-none lg:bg-transparent lg:shadow-none lg:p-0',
+                        ]"
                     >
+                        <!-- モバイル用ヘッダー（閉じる） -->
+                        <div class="flex items-center justify-between mb-3 lg:hidden">
+                            <h2 class="text-base font-semibold text-brand-text">検索条件</h2>
+                            <button
+                                type="button"
+                                class="p-2 -mr-2 rounded hover:bg-brand-surface-2 text-brand-text-muted"
+                                aria-label="閉じる"
+                                @click="mobileSearchOpen = false"
+                            >
+                                <X :size="22" />
+                            </button>
+                        </div>
                         <div class="bg-brand-surface rounded-xl border border-brand-border shadow-sm">
                             <div class="px-4 py-3 border-b border-brand-border bg-brand-surface-2 rounded-t-xl">
                                 <h3 class="text-base font-semibold text-brand-text">検索条件</h3>
@@ -1000,10 +1030,12 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { UiPageHeader, UiButton } from '@/Components/UI';
-import { Plus, Search, Filter, RotateCcw, Eye } from 'lucide-vue-next';
+import { Plus, Search, Filter, RotateCcw, Eye, X } from 'lucide-vue-next';
 import ActionButton from '@/Components/ActionButton.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { buildCustomerFilterChips, countChipsByTab } from '@/composables/useCustomerFilterChips.js';
+import { useDebounceFn } from '@/composables/useDebounceFn.js';
+import { useScrollLock } from '@/composables/useScrollLock.js';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
 
@@ -1033,6 +1065,10 @@ const filterTabs = [
     { key: 'photo', label: '前撮り情報' },
 ];
 const activeFilterTab = ref('basic');
+
+// モバイル/タブレット：検索条件を中央モーダルで開く。PCは常に左右表示。
+const mobileSearchOpen = ref(false);
+useScrollLock(mobileSearchOpen); // モーダル表示中は背後の一覧をスクロールさせない
 const seijinVenueOptionsFromDb = ref([]);
 const seijinFilterSalonNames = ref([]);
 const seijinFilterOptionsLoaded = ref(false);
@@ -1326,7 +1362,13 @@ const searchCustomers = () => {
         preserveState: true,
         preserveScroll: true,
     });
+    // モバイルはシートを開いたまま：半透明背景ごしに結果が切り替わるのを見せる。
+    // 閉じるのは✕ボタン／背景タップで行う。
 };
+
+// ライブ検索：検索ボタンを押さなくても、条件の変更で自動的に結果を更新（デバウンス）
+const debouncedSearch = useDebounceFn(searchCustomers, 450);
+watch(searchForm, debouncedSearch, { deep: true });
 
 // 検索リセット
 const resetSearch = () => {

@@ -23,9 +23,11 @@ const variantClasses = {
     link:    'bg-transparent text-brand-primary hover:underline px-0 py-0 h-auto focus-visible:ring-brand-primary',
 };
 
+// モバイルは min-h-[44px] でタップ領域を確保（Apple/Google推奨44px）。
+// md以上では min-h を解除し、従来の高さ（h-7/h-9）に戻してデスクトップの見た目を維持する。
 const sizeClasses = {
-    sm: 'text-xs px-2.5 py-1.5 h-7 gap-1.5',
-    md: 'text-sm px-3.5 py-2 h-9 gap-2',
+    sm: 'text-xs px-2.5 py-1.5 h-7 min-h-[44px] md:min-h-0 gap-1.5',
+    md: 'text-sm px-3.5 py-2 h-9 min-h-[44px] md:min-h-0 gap-2',
     lg: 'text-base px-5 py-2.5 h-11 gap-2',
 };
 

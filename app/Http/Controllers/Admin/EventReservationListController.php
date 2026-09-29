@@ -52,6 +52,9 @@ class EventReservationListController extends Controller
         $formType = $request->input('form_type') ?: null;
         $publicStatus = $request->input('public_status', 'active');
 
+        // 店舗グループ制限：管理者以外は自グループ店舗に強制（'all' や他グループ指定でも越えない）
+        $visibleShopIds = ($user && ! $user->isAttendanceManager()) ? $user->visibleShopIds() : null;
+
         $eventIds = array_values(array_filter(array_map(
             fn ($v) => is_numeric($v) ? (int) $v : null,
             (array) $request->input('event_ids', [])
@@ -59,7 +62,7 @@ class EventReservationListController extends Controller
 
         // イベント候補（複数選択用）。担当店舗・フォーム種別・公開状態で絞る。
         $eventOptionsQuery = Event::query();
-        $this->applyShop($eventOptionsQuery, $shopId);
+        $this->applyShop($eventOptionsQuery, $shopId, $visibleShopIds);
         if ($formType) {
             $eventOptionsQuery->where('form_type', $formType);
         }
@@ -81,8 +84,8 @@ class EventReservationListController extends Controller
                 'event.shops:id,name',
                 'venue:id,name',
             ])
-            ->whereHas('event', function ($q) use ($shopId, $formType, $publicStatus) {
-                $this->applyShop($q, $shopId);
+            ->whereHas('event', function ($q) use ($shopId, $formType, $publicStatus, $visibleShopIds) {
+                $this->applyShop($q, $shopId, $visibleShopIds);
                 if ($formType) {
                     $q->where('form_type', $formType);
                 }
@@ -135,10 +138,21 @@ class EventReservationListController extends Controller
     }
 
     /**
-     * イベントの担当店舗（多対多）で絞り込む。$shopId が null なら絞らない（全店舗）。
+     * イベントの担当店舗（多対多）で絞り込む。
+     *
+     * $visibleShopIds が指定されている（＝非管理者）場合は、必ず自グループの店舗に限定する。
+     * 指定店舗($shopId)が自グループ内ならその店舗、そうでなければ自グループ全体で絞る。
+     * $visibleShopIds が null（＝管理者）の場合は従来どおり $shopId のみで絞る（null なら全店舗）。
      */
-    private function applyShop($query, ?int $shopId): void
+    private function applyShop($query, ?int $shopId, ?array $visibleShopIds = null): void
     {
+        if ($visibleShopIds !== null) {
+            $ids = ($shopId && in_array($shopId, $visibleShopIds, true)) ? [$shopId] : $visibleShopIds;
+            $query->whereHas('shops', fn ($q) => $q->whereIn('shops.id', $ids));
+
+            return;
+        }
+
         if ($shopId) {
             $query->whereHas('shops', fn ($q) => $q->where('shops.id', $shopId));
         }

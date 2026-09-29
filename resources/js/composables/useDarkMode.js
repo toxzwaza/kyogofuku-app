@@ -1,34 +1,27 @@
 import { ref, onMounted } from 'vue';
 
+// ダークモードは廃止し、ライト固定とする。
+// 過去に保存されたダーク設定が残っていても、マウント時に必ずライトへ戻す。
 const STORAGE_KEY = 'kyogofuku-theme';
 const isDark = ref(false);
 
-const apply = () => {
-    if (typeof document === 'undefined') return;
-    document.documentElement.classList.toggle('dark', isDark.value);
-};
-
-const init = () => {
-    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
-    if (saved === 'dark' || saved === 'light') {
-        isDark.value = saved === 'dark';
-    } else if (typeof window !== 'undefined' && window.matchMedia) {
-        isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
+const forceLight = () => {
+    if (typeof document !== 'undefined') {
+        document.documentElement.classList.remove('dark');
     }
-    apply();
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
 };
 
+// API互換のため関数は残すが、トグルは無効（常にライト）。
 const toggle = () => {
-    isDark.value = !isDark.value;
-    try {
-        localStorage.setItem(STORAGE_KEY, isDark.value ? 'dark' : 'light');
-    } catch (e) { /* ignore */ }
-    apply();
+    isDark.value = false;
+    forceLight();
 };
 
 export function useDarkMode() {
     onMounted(() => {
-        init();
+        isDark.value = false;
+        forceLight();
     });
     return { isDark, toggle };
 }

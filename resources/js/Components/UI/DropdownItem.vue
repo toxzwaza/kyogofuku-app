@@ -11,7 +11,8 @@ const props = defineProps({
 });
 
 const baseCls = computed(() => [
-    'w-full text-left flex items-center gap-2 px-3 py-2 text-sm transition-colors',
+    // モバイルは min-h-[44px] でタップ領域を確保、md以上は従来の高さ
+    'w-full text-left flex items-center gap-2 px-3 py-2 min-h-[44px] md:min-h-0 text-sm transition-colors',
     props.danger ? 'text-brand-danger' : 'text-brand-text',
 ]);
 

@@ -7,6 +7,7 @@ import LineInboxWidget from '@/Components/Admin/LineInboxWidget.vue';
 import UiToastContainer from '@/Components/UI/ToastContainer.vue';
 import UiBreadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { useDarkMode } from '@/composables/useDarkMode.js';
+import { useFontScale } from '@/composables/useFontScale.js';
 import { useCommandPalette } from '@/composables/useCommandPalette.js';
 
 defineProps({
@@ -29,8 +30,10 @@ const toggleCollapsed = () => {
     try { localStorage.setItem(STORAGE_KEY, collapsed.value ? '1' : '0'); } catch {}
 };
 
-// Initialize dark mode on layout mount
+// Initialize dark mode (light fixed) on layout mount
 useDarkMode();
+// 文字サイズ設定を全画面に適用
+useFontScale();
 
 // Command palette (Cmd+K)
 const { show: openPalette } = useCommandPalette();
@@ -38,7 +41,7 @@ const { show: openPalette } = useCommandPalette();
 
 <template>
     <div class="min-h-screen flex bg-brand-bg text-brand-text">
-        <!-- Desktop sidebar -->
+        <!-- Desktop sidebar（lg 以上で常時表示。タブレット/スマホはハンバーガーのドロワー） -->
         <div class="hidden lg:block flex-shrink-0 sticky top-0 h-screen">
             <AdminSidebar :collapsed="collapsed" @toggle-collapsed="toggleCollapsed" />
         </div>
@@ -68,7 +71,7 @@ const { show: openPalette } = useCommandPalette();
                 leave-to-class="-translate-x-full"
             >
                 <div v-if="mobileOpen" class="lg:hidden fixed inset-y-0 left-0 z-50">
-                    <AdminSidebar :collapsed="false" @toggle-collapsed="mobileOpen = false" />
+                    <AdminSidebar :collapsed="false" drawer @toggle-collapsed="mobileOpen = false" />
                 </div>
             </transition>
         </Teleport>

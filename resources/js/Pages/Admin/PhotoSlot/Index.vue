@@ -7,11 +7,22 @@
         <h2 class="font-semibold text-xl text-brand-text leading-tight">
           前撮り管理
         </h2>
-        <ActionButton
-          variant="create"
-          label="新規追加"
-          :href="route('admin.photo-slots.create')"
-        />
+        <div class="flex items-center gap-2">
+          <!-- モバイル/タブレット：検索条件モーダルを開く -->
+          <button
+            type="button"
+            class="lg:hidden inline-flex items-center gap-1 px-3 py-2 rounded-soft border border-brand-border text-sm text-brand-text bg-brand-surface hover:bg-brand-surface-2"
+            @click="mobileSearchOpen = true"
+          >
+            <Search :size="15" />
+            検索
+          </button>
+          <ActionButton
+            variant="create"
+            label="新規追加"
+            :href="route('admin.photo-slots.create')"
+          />
+        </div>
       </div>
     </template>
 
@@ -35,17 +46,42 @@
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <!-- 絞り込みフォーム -->
-        <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg mb-6">
+        <!-- モバイル：半透明の黒背景。中央モーダルの外に検索結果がうっすら見える -->
+        <div
+          v-if="mobileSearchOpen"
+          class="fixed inset-0 z-40 bg-sumi-950/50 lg:hidden"
+          @click="mobileSearchOpen = false"
+          aria-hidden="true"
+        />
+
+        <!-- 絞り込みフォーム：PCは上部に常時表示、モバイル/タブレットは中央モーダル -->
+        <div
+          :class="[
+            mobileSearchOpen
+              ? 'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-lg max-h-[85vh] overflow-y-auto bg-brand-surface rounded-2xl shadow-2xl'
+              : 'hidden',
+            'mb-6 lg:block lg:static lg:left-auto lg:top-auto lg:translate-x-0 lg:translate-y-0 lg:z-auto lg:w-auto lg:max-w-none lg:max-h-none lg:overflow-hidden lg:bg-brand-surface lg:rounded-lg lg:shadow-sm',
+          ]"
+        >
           <div class="p-6">
             <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-semibold text-brand-text">検索条件</h3>
-              <button
-                @click="resetFilters"
-                class="text-sm text-brand-text-muted hover:text-brand-text"
-              >
-                リセット
-              </button>
+              <div class="flex items-center gap-3">
+                <button
+                  @click="resetFilters"
+                  class="text-sm text-brand-text-muted hover:text-brand-text"
+                >
+                  リセット
+                </button>
+                <button
+                  type="button"
+                  class="lg:hidden p-1 -mr-1 rounded hover:bg-brand-surface-2 text-brand-text-muted"
+                  aria-label="閉じる"
+                  @click="mobileSearchOpen = false"
+                >
+                  <X :size="20" />
+                </button>
+              </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
@@ -1062,7 +1098,13 @@ import ActionButton from "@/Components/ActionButton.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { computed, ref, onMounted } from "vue";
 import axios from "axios";
+import { Search, X } from "lucide-vue-next";
 import { formatDateJa, formatDateJaWithWeekday } from "@/utils/dateFormat";
+import { useScrollLock } from "@/composables/useScrollLock.js";
+
+// モバイル/タブレット：検索条件を中央モーダルで開く（PCは上部に常時表示）
+const mobileSearchOpen = ref(false);
+useScrollLock(mobileSearchOpen); // モーダル表示中は背後の一覧をスクロールさせない
 
 const props = defineProps({
   photoSlots: Array,

@@ -70,11 +70,15 @@ class EventController extends Controller
         }
         // 'all'の場合はフィルタリングしない
 
-        // 表示順: 受付終了日が古い順→同順なら受付開始日が新しい順。常時受け付け（end_at null）は末尾
+        // 一覧表示用の集計：予約者数（キャンセル除く）と予約枠の合計（有効な枠）
+        $query->withCount(['reservations as reservations_count' => fn ($q) => $q->where('cancel_flg', false)])
+            ->withSum(['timeslots as capacity_total' => fn ($q) => $q->where('is_active', true)], 'capacity');
+
+        // 表示順: 直近のものから降順（受付開始が新しい順）。常時受け付け（start_at null）は末尾。
         $events = $query
-            ->orderByRaw('CASE WHEN end_at IS NULL THEN 1 ELSE 0 END') // 常時受け付けを下に
-            ->orderBy('end_at', 'asc')
-            ->orderBy('start_at', 'desc')
+            ->orderByRaw('start_at IS NULL') // start_at が null（常時受付）を末尾へ
+            ->orderByDesc('start_at')
+            ->orderByDesc('created_at')
             ->paginate(20)
             ->withQueryString();
 

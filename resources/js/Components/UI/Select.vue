@@ -17,9 +17,10 @@ const normalizedOptions = computed(() =>
     props.options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }))
 );
 
+// モバイルは16px（text-base）でiOSのフォーカス時自動ズームを防止し、md以上で本来のサイズに戻す
 const sizeClasses = {
-    sm: 'text-xs h-8 pl-2.5 pr-7',
-    md: 'text-sm h-9 pl-3 pr-8',
+    sm: 'text-base md:text-xs h-8 pl-2.5 pr-7',
+    md: 'text-base md:text-sm h-9 pl-3 pr-8',
     lg: 'text-base h-11 pl-4 pr-10',
 };
 

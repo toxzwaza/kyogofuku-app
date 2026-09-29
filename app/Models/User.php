@@ -75,6 +75,48 @@ class User extends Authenticatable
         return $this->belongsToMany(Shop::class, 'shop_user')->withPivot('main');
     }
 
+    /** visibleShopIds() のリクエスト内メモ（Shopグローバルスコープが多数回呼ぶため） */
+    protected $visibleShopIdsCache = null;
+
+    /**
+     * このユーザーが閲覧できる店舗ID一覧（店舗グループ分割）。
+     *
+     *  - 管理者（勤怠管理者・システム管理者）：全店舗（全グループ横断）
+     *  - それ以外：自分の所属店舗と同じグループに属する店舗のみ
+     *
+     * Shop のグローバルスコープから呼ばれるため、内部の Shop クエリでは
+     * withoutGlobalScope して無限再帰を避ける。
+     */
+    public function visibleShopIds(): array
+    {
+        if ($this->visibleShopIdsCache !== null) {
+            return $this->visibleShopIdsCache;
+        }
+
+        // 管理者は全店舗を閲覧可
+        if ($this->isAttendanceManager()) {
+            return $this->visibleShopIdsCache = Shop::withoutGlobalScope('visibleGroup')
+                ->pluck('id')->map(fn ($id) => (int) $id)->toArray();
+        }
+
+        $myShopIds = $this->shops()->withoutGlobalScope('visibleGroup')->pluck('shops.id');
+
+        $myGroups = Shop::withoutGlobalScope('visibleGroup')
+            ->whereIn('id', $myShopIds)
+            ->pluck('group_key')
+            ->filter()
+            ->unique();
+
+        if ($myGroups->isEmpty()) {
+            // グループ未設定（テスト店のみ所属等）は自店のみにフォールバック
+            return $this->visibleShopIdsCache = $myShopIds->map(fn ($id) => (int) $id)->toArray();
+        }
+
+        return $this->visibleShopIdsCache = Shop::withoutGlobalScope('visibleGroup')
+            ->whereIn('group_key', $myGroups)
+            ->pluck('id')->map(fn ($id) => (int) $id)->toArray();
+    }
+
     /**
      * 予約メモとのリレーション
      */

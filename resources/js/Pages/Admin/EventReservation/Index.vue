@@ -5,9 +5,46 @@
         <UiPageHeader
             title="イベント予約者一覧"
             description="担当店舗・イベントで予約者を絞り込んで確認できます。"
+        >
+            <template #actions>
+                <!-- モバイル/タブレット：検索条件モーダルを開く（PCでは非表示・上部バーを使用） -->
+                <UiButton variant="secondary" class="lg:hidden" @click="mobileSearchOpen = true">
+                    <template #leading><Search :size="14" /></template>
+                    検索
+                </UiButton>
+            </template>
+        </UiPageHeader>
+
+        <!-- モバイル：半透明の黒背景。中央のモーダルの外に検索結果がうっすら見える -->
+        <div
+            v-if="mobileSearchOpen"
+            class="fixed inset-0 z-40 bg-sumi-950/50 lg:hidden"
+            @click="mobileSearchOpen = false"
+            aria-hidden="true"
         />
 
-        <UiCard variant="default" padding="md" class="mb-3">
+        <UiCard
+            variant="default"
+            padding="md"
+            :class="[
+                mobileSearchOpen
+                    ? 'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl'
+                    : 'hidden',
+                'mb-3 lg:block lg:static lg:left-auto lg:top-auto lg:translate-x-0 lg:translate-y-0 lg:z-auto lg:w-auto lg:max-w-none lg:max-h-none lg:overflow-visible lg:shadow-sm',
+            ]"
+        >
+            <!-- モバイル用ヘッダー（閉じる） -->
+            <div class="flex items-center justify-between mb-3 lg:hidden">
+                <h2 class="text-base font-semibold text-brand-text">検索条件</h2>
+                <button
+                    type="button"
+                    class="p-2 -mr-2 rounded hover:bg-brand-surface-2 text-brand-text-muted"
+                    aria-label="閉じる"
+                    @click="mobileSearchOpen = false"
+                >
+                    <X :size="22" />
+                </button>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <UiFormField label="担当店舗">
                     <UiSelect
@@ -165,7 +202,8 @@ import axios from 'axios';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { UiPageHeader, UiButton, UiBadge, UiCard, UiFormField, UiSelect } from '@/Components/UI';
-import { RotateCcw } from 'lucide-vue-next';
+import { RotateCcw, Search, X } from 'lucide-vue-next';
+import { useScrollLock } from '@/composables/useScrollLock.js';
 
 const props = defineProps({
     shops: { type: Array, default: () => [] },
@@ -177,6 +215,10 @@ const resForm = reactive({
     public_status: 'active',
     event_ids: [],
 });
+// モバイル/タブレット：検索条件を中央モーダルで開く。PCは上部の検索バーを常時表示。
+const mobileSearchOpen = ref(false);
+useScrollLock(mobileSearchOpen); // モーダル表示中は背後の一覧をスクロールさせない
+
 const eventOptions = ref([]);
 const resRows = ref([]);
 const resMeta = ref({ total: 0, current_page: 1, last_page: 1 });

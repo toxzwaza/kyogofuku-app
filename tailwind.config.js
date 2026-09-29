@@ -18,6 +18,11 @@ module.exports = {
                 serif: ['"Zen Old Mincho"', '"Yu Mincho"', '"YuMincho"', ...defaultTheme.fontFamily.serif],
             },
 
+            // 視認性底上げ：最小の text-xs を 12px→13px に引き上げ（年配者対応）
+            fontSize: {
+                xs: ['0.8125rem', { lineHeight: '1.1rem' }],
+            },
+
             // ------------------------------
             // 和＋モダン カラーシステム
             //   - 7系統の色スケール（sumi, ai, enji, unohana, uguisu, natane, akane）は固定値

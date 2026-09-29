@@ -6,6 +6,8 @@ import { PanelLeftClose, PanelLeft } from 'lucide-vue-next';
 
 const props = defineProps({
     collapsed: { type: Boolean, default: false },
+    // ドロワー表示（ハンバーガーで開くモバイル/タブレット）。幅広・大きめタップにする。
+    drawer: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['toggle-collapsed']);
@@ -39,7 +41,7 @@ const safeRoute = (name, params) => {
         :class="[
             'h-full flex flex-col bg-sumi-900 dark:bg-sumi-950 text-sumi-100 transition-all duration-200',
             'border-r border-sumi-800 dark:border-sumi-900',
-            collapsed ? 'w-16' : 'w-60',
+            drawer ? 'w-[85vw] max-w-[20rem]' : (collapsed ? 'w-16' : 'w-60'),
         ]"
     >
         <!-- Brand -->
@@ -60,18 +62,26 @@ const safeRoute = (name, params) => {
         </div>
 
         <!-- Nav -->
-        <nav class="flex-1 overflow-y-auto py-3 space-y-5">
+        <nav :class="['flex-1 overflow-y-auto py-3', drawer ? 'space-y-4' : 'space-y-5']">
             <div v-for="g in filteredGroups" :key="g.group">
-                <div v-if="!collapsed" class="px-4 mb-1 text-[10px] uppercase tracking-widest text-sumi-400 font-semibold">
+                <div
+                    v-if="!collapsed"
+                    :class="[
+                        'px-4 mb-1 uppercase tracking-widest text-sumi-400 font-semibold',
+                        drawer ? 'text-xs' : 'text-[10px]',
+                    ]"
+                >
                     {{ g.group }}
                 </div>
-                <ul class="space-y-0.5">
+                <ul :class="drawer ? 'space-y-1.5' : 'space-y-0.5'">
                     <li v-for="item in g.items" :key="item.route">
                         <Link
                             :href="safeRoute(item.route, item.routeParams)"
                             :class="[
-                                'relative flex items-center gap-2.5 rounded mx-2 text-sm transition-colors group',
-                                collapsed ? 'justify-center px-2 py-2' : 'px-2.5 py-2',
+                                'relative flex items-center rounded transition-colors group',
+                                drawer
+                                    ? 'gap-3.5 mx-2 px-4 py-3.5 min-h-[56px] text-[15px]'
+                                    : ['gap-2.5 mx-2 text-sm min-h-[44px] md:min-h-0', collapsed ? 'justify-center px-2 py-2' : 'px-2.5 py-2'],
                                 isItemActive(item)
                                     ? 'bg-sumi-800 text-white'
                                     : 'text-sumi-200 hover:bg-sumi-800/70 hover:text-white',
@@ -83,7 +93,7 @@ const safeRoute = (name, params) => {
                                 class="absolute -left-2 top-1 bottom-1 w-0.5 rounded-r-full bg-unohana-300"
                                 aria-hidden="true"
                             />
-                            <component :is="item.icon" :size="16" class="flex-shrink-0" :class="isItemActive(item) ? 'text-unohana-200' : ''" />
+                            <component :is="item.icon" :size="drawer ? 22 : 16" class="flex-shrink-0" :class="isItemActive(item) ? 'text-unohana-200' : ''" />
                             <span v-if="!collapsed" class="truncate">{{ item.label }}</span>
                         </Link>
                     </li>

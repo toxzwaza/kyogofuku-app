@@ -2,11 +2,10 @@
 import { computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
-    Search, Sun, Moon, Bell, HelpCircle, ChevronDown, LogOut, User as UserIcon, Menu, Sparkles,
+    Search, ChevronDown, LogOut, User as UserIcon, Menu, ALargeSmall, Check,
 } from 'lucide-vue-next';
 import { UiDropdown, UiDropdownItem } from '@/Components/UI';
-import UiVersionSwitcher from '@/Components/UI/UiVersionSwitcher.vue';
-import { useDarkMode } from '@/composables/useDarkMode.js';
+import { useFontScale } from '@/composables/useFontScale.js';
 
 defineProps({
     mobileMenuOpen: { type: Boolean, default: false },
@@ -16,7 +15,8 @@ defineEmits(['toggle-mobile-menu', 'open-command-palette']);
 const page = usePage();
 const user = computed(() => page.props.auth?.user || {});
 
-const { isDark, toggle: toggleDark } = useDarkMode();
+// 文字サイズ切替（標準／大きめ／特大）
+const { scale, setScale, levels: fontLevels } = useFontScale();
 
 const safeRoute = (name) => {
     try { return route(name); } catch { return '#'; }
@@ -42,7 +42,7 @@ const logout = () => {
         <!-- Search -->
         <button
             type="button"
-            class="flex items-center gap-2 flex-1 max-w-md px-3 h-9 rounded-soft bg-brand-surface-2 border border-brand-border hover:bg-brand-border/60 text-brand-text-muted text-sm transition-colors"
+            class="flex items-center gap-2 flex-1 max-w-3xl px-3 h-9 rounded-soft bg-brand-surface-2 border border-brand-border hover:bg-brand-border/60 text-brand-text-muted text-sm transition-colors"
             @click="$emit('open-command-palette')"
         >
             <Search :size="15" class="flex-shrink-0" />
@@ -54,33 +54,26 @@ const logout = () => {
 
         <!-- Actions -->
         <div class="flex items-center gap-1">
-            <UiVersionSwitcher variant="compact" class="mr-1" />
-            <button
-                type="button"
-                class="p-2 rounded hover:bg-brand-surface-2 text-brand-text-muted hover:text-brand-text transition-colors"
-                @click="toggleDark"
-                :aria-label="isDark ? 'ライトモードにする' : 'ダークモードにする'"
-                :title="isDark ? 'ライトモードにする' : 'ダークモードにする'"
-            >
-                <component :is="isDark ? Sun : Moon" :size="16" />
-            </button>
-
+            <!-- 文字サイズ切替（アクセシビリティ） -->
             <UiDropdown align="right">
                 <template #trigger>
                     <button
                         type="button"
-                        class="p-2 rounded hover:bg-brand-surface-2 text-brand-text-muted hover:text-brand-text transition-colors"
-                        aria-label="ヘルプ"
-                        title="ヘルプ"
+                        class="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-brand-surface-2 text-brand-text-muted hover:text-brand-text transition-colors"
+                        aria-label="文字サイズ"
+                        title="文字サイズ"
                     >
-                        <HelpCircle :size="16" />
+                        <ALargeSmall :size="18" />
+                        <span class="hidden sm:inline text-sm">文字サイズ</span>
                     </button>
                 </template>
-                <UiDropdownItem :href="safeRoute('admin.help')">
-                    <HelpCircle :size="14" /><span>ヘルプ</span>
-                </UiDropdownItem>
-                <UiDropdownItem :href="safeRoute('admin.ui-kit')">
-                    <Sparkles :size="14" /><span>UIキット</span>
+                <UiDropdownItem
+                    v-for="lv in fontLevels"
+                    :key="lv.key"
+                    @click="setScale(lv.key)"
+                >
+                    <Check :size="14" :class="scale === lv.key ? 'opacity-100' : 'opacity-0'" />
+                    <span>{{ lv.label }}</span>
                 </UiDropdownItem>
             </UiDropdown>
 

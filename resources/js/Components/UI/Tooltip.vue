@@ -35,7 +35,8 @@ const arrCls = computed(() => [
 </script>
 
 <template>
-    <span class="group relative inline-flex">
+    <!-- tabindex=0 でタップ/キーボードでもフォーカスでき、hover非対応端末でも説明を表示できる -->
+    <span class="group relative inline-flex focus:outline-none" tabindex="0" role="note" :aria-label="text">
         <slot />
         <span :class="tipCls">{{ text }}</span>
         <span :class="arrCls" />

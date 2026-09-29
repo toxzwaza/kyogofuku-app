@@ -88,6 +88,22 @@ class CustomerSearchQuery
                 (array) $request->input('customer_shop_id')
             ), fn ($v) => $v !== null));
         }
+
+        // 店舗グループによる強制制限（管理者以外）。
+        // 「すべて」や他グループの店舗IDを指定しても、自グループの店舗に必ず限定する。
+        $user = $request->user();
+        if ($user && ! $user->isAttendanceManager()) {
+            $visible = $user->visibleShopIds();
+            if (empty($customerShopIds)) {
+                $customerShopIds = $visible;                                   // 「すべて」→自グループ全店に限定
+            } else {
+                $customerShopIds = array_values(array_intersect($customerShopIds, $visible));
+                if (empty($customerShopIds)) {
+                    $customerShopIds = $visible;                               // 全て他グループなら自グループへ
+                }
+            }
+        }
+
         if (! empty($customerShopIds)) {
             $query->whereIn('shop_id', $customerShopIds);
         }

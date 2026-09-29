@@ -26,7 +26,7 @@ const onChange = (idx) => {
                 <button
                     type="button"
                     :class="[
-                        'px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px focus-visible:outline-none',
+                        'px-4 py-2 min-h-[44px] md:min-h-0 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px focus-visible:outline-none',
                         selected
                             ? 'border-brand-primary text-brand-primary'
                             : 'border-transparent text-brand-text-muted hover:text-brand-text hover:border-brand-border-strong',

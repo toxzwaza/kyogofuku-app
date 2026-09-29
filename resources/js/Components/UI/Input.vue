@@ -15,9 +15,10 @@ defineEmits(['update:modelValue']);
 
 const slots = useSlots();
 
+// モバイルは16px（text-base）でiOSのフォーカス時自動ズームを防止し、md以上で本来のサイズに戻す
 const sizeClasses = {
-    sm: 'text-xs h-8',
-    md: 'text-sm h-9',
+    sm: 'text-base md:text-xs h-8',
+    md: 'text-base md:text-sm h-9',
     lg: 'text-base h-11',
 };
 

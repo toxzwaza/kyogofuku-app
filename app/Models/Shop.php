@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,6 +12,7 @@ class Shop extends Model
 
     protected $fillable = [
         'name',
+        'group_key',
         'address',
         'phone',
         'image',
@@ -20,6 +22,31 @@ class Shop extends Model
         'device_password',
         'device_password_updated_at',
     ];
+
+    /**
+     * 店舗グループによる可視範囲の制限（グローバルスコープ）。
+     *
+     * ログイン中の一般ユーザー／店舗管理者には「自分の所属グループの店舗」だけを見せる。
+     * これにより店舗選択ドロップダウンや店舗連動クエリが自動的にグループ内へ限定され、
+     * 他グループ（例：福井から岡山）の顧客・イベント等がヒットしなくなる。
+     *
+     * 除外条件：
+     *  - 未ログイン（公開ページ・ログイン画面）→ 制限しない
+     *  - 勤怠管理者・システム管理者 → 全グループ横断で閲覧可（制限しない）
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('visibleGroup', function (Builder $builder) {
+            $user = auth()->user();
+            if (! $user || ! method_exists($user, 'visibleShopIds')) {
+                return;
+            }
+            if (method_exists($user, 'isAttendanceManager') && $user->isAttendanceManager()) {
+                return; // 管理者は全グループ横断
+            }
+            $builder->whereIn('shops.id', $user->visibleShopIds());
+        });
+    }
 
     protected $casts = [
         'is_active' => 'boolean',

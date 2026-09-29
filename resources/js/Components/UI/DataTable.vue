@@ -216,7 +216,7 @@ const alignClass = (col) => {
                         :href="link.url"
                         v-html="link.label"
                         :class="[
-                            'px-2.5 py-1 rounded border transition-colors text-xs',
+                            'inline-flex items-center justify-center px-2.5 py-1 min-h-[40px] min-w-[40px] md:min-h-0 md:min-w-0 rounded border transition-colors text-xs',
                             link.active
                                 ? 'bg-brand-primary text-brand-on-primary border-brand-primary'
                                 : 'bg-brand-surface border-brand-border text-brand-text hover:bg-brand-surface-2',
@@ -226,7 +226,7 @@ const alignClass = (col) => {
                     <span
                         v-else
                         v-html="link.label"
-                        class="px-2.5 py-1 rounded border border-brand-border text-xs text-brand-text-subtle"
+                        class="inline-flex items-center justify-center px-2.5 py-1 min-h-[40px] min-w-[40px] md:min-h-0 md:min-w-0 rounded border border-brand-border text-xs text-brand-text-subtle"
                     />
                 </template>
             </nav>
