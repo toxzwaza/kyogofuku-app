@@ -132,6 +132,17 @@
                                 </svg>
                                 <span>この端末は登録済みです（端末ID: <span class="font-mono font-semibold">{{ deviceCode }}</span>）</span>
                             </div>
+                            <div class="mt-2 flex justify-end">
+                                <button
+                                    type="button"
+                                    :disabled="deviceUnregistering"
+                                    class="text-xs text-red-600 hover:text-red-700 hover:underline disabled:opacity-50"
+                                    @click="unregisterDevice"
+                                >
+                                    {{ deviceUnregistering ? '解除中…' : 'この端末の登録を解除する' }}
+                                </button>
+                            </div>
+                            <InputError class="mt-2" :message="deviceError" />
                         </div>
                         <InputError v-if="deviceGateEnabled" class="mt-2" :message="form.errors.device_token" />
 
@@ -257,6 +268,33 @@ const deviceCode = ref('');
 const deviceRegistered = ref(false);
 const devicePassword = ref('');
 const deviceError = ref('');
+const deviceUnregistering = ref(false);
+
+// この端末の登録を解除（ログイン画面から）。解除後は再度パスワード入力で登録できる。
+async function unregisterDevice() {
+    if (!confirm('この端末の登録を解除しますか？\n解除すると、次回ログイン時に端末登録パスワードの入力が必要になります。')) {
+        return;
+    }
+    deviceUnregistering.value = true;
+    deviceError.value = '';
+    try {
+        await axios.post(route('device.unregister'), { device_token: deviceToken.value });
+    } catch {
+        // サーバー側で失敗してもローカルは掃除して未登録状態に戻す
+    } finally {
+        try {
+            localStorage.removeItem(DEVICE_TOKEN_KEY);
+            localStorage.removeItem(DEVICE_CODE_KEY);
+        } catch {
+            // 無視
+        }
+        deviceRegistered.value = false;
+        deviceToken.value = '';
+        deviceCode.value = '';
+        form.device_token = '';
+        deviceUnregistering.value = false;
+    }
+}
 
 async function checkDeviceStatus() {
     if (!deviceGateEnabled.value) return;

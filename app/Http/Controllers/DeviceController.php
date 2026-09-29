@@ -96,6 +96,24 @@ class DeviceController extends Controller
         ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * 端末登録解除（ログイン画面・guest から）。
+     * localStorage の端末トークンで自分自身の端末を revoke する。
+     */
+    public function unregister(Request $request): JsonResponse
+    {
+        $token = (string) ($request->input('device_token') ?? '');
+        $device = DeviceRegistration::findActiveByToken($token);
+
+        if ($device) {
+            $device->update(['revoked_at' => now()]);
+            $this->log('device_unregistered', null, $device->shop_id, $request, 'ログイン画面から端末解除: '.$device->device_code);
+        }
+
+        // 端末が見つからなくても（既に解除済み等）成功扱いにし、クライアント側で localStorage を掃除する
+        return response()->json(['success' => true], 200, [], JSON_UNESCAPED_UNICODE);
+    }
+
     private function log(string $action, ?int $userId, ?int $shopId, Request $request, string $description): void
     {
         try {

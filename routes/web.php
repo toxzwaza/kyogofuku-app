@@ -85,6 +85,7 @@ Route::get('/', function () {
 // 端末登録API（ログイン画面・guest からアクセス。localStorageの端末トークン用）
 Route::get('/device/status', [DeviceController::class, 'status'])->middleware('throttle:60,1')->name('device.status');
 Route::post('/device/register', [DeviceController::class, 'register'])->middleware('throttle:20,1')->name('device.register');
+Route::post('/device/unregister', [DeviceController::class, 'unregister'])->middleware('throttle:20,1')->name('device.unregister');
 
 Route::get('/s3-test', [S3TestController::class, 'index'])->name('s3-test.index');
 Route::post('/s3-test', [S3TestController::class, 'store'])->name('s3-test.store');

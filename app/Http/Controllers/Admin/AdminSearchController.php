@@ -28,8 +28,16 @@ class AdminSearchController extends Controller
 
         $like = '%' . $q . '%';
 
+        // 店舗グループによる可視範囲。管理者以外は自グループの店舗のみを検索対象にする。
+        $user = $request->user();
+        $visibleShopIds = ($user && ! $user->isAttendanceManager()) ? $user->visibleShopIds() : null;
+
         $reservations = EventReservation::with(['event:id,title', 'venue:id,name'])
             ->where('cancel_flg', false)
+            ->when($visibleShopIds !== null, fn ($qq) => $qq->whereHas(
+                'event.shops',
+                fn ($s) => $s->whereIn('shops.id', $visibleShopIds)
+            ))
             ->where(function ($w) use ($like, $q) {
                 $w->where('name', 'like', $like)
                     ->orWhere('furigana', 'like', $like)
@@ -43,7 +51,9 @@ class AdminSearchController extends Controller
             ->take(8)
             ->get(['id', 'event_id', 'venue_id', 'name', 'furigana', 'phone', 'reservation_datetime', 'status']);
 
-        $customers = Customer::where(function ($w) use ($like, $q) {
+        $customers = Customer::query()
+            ->when($visibleShopIds !== null, fn ($qq) => $qq->whereIn('shop_id', $visibleShopIds))
+            ->where(function ($w) use ($like, $q) {
                 $w->where('name', 'like', $like)
                     ->orWhere('kana', 'like', $like)
                     ->orWhere('phone_number', 'like', $like)
