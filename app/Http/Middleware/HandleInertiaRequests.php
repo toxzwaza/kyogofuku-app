@@ -37,6 +37,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? array_merge($user->toArray(), [
                     'canManageAttendance' => $user->canManageAttendance(),
                     'isAttendanceManager' => $user->isAttendanceManager(),
+                    'isSystemAdmin'       => $user->isSystemAdmin(),
+                    'canManageUsers'      => $user->canManageUsers(),
+                    'isManager'           => $user->isManager(),
                 ]) : null,
             ],
             'ziggy' => function () use ($request) {

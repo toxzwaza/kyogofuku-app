@@ -16,10 +16,21 @@ class UserController extends Controller
     use ResolvesUiView;
 
     /**
+     * スタッフ・権限の管理はシステム管理者のみに限定する。
+     * 各アクションの冒頭で呼び出してガードする。
+     */
+    private function ensureCanManageUsers(): void
+    {
+        abort_unless(auth()->user()?->canManageUsers(), 403, 'スタッフ・権限の管理はシステム管理者のみ行えます。');
+    }
+
+    /**
      * スタッフ一覧を表示
      */
     public function index(Request $request)
     {
+        $this->ensureCanManageUsers();
+
         $currentUser = $request->user();
         $currentUserShops = $currentUser->shops()->withPivot('main')->get();
         
@@ -72,6 +83,8 @@ class UserController extends Controller
      */
     public function create()
     {
+        $this->ensureCanManageUsers();
+
         $shops = Shop::where('is_active', true)->get();
         $workAttributes = WorkAttribute::query()->orderBy('sort_order')->orderBy('id')->get(['id', 'name']);
 
@@ -86,12 +99,15 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $this->ensureCanManageUsers();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|string|email|max:255|unique:users',
             'login_id' => 'nullable|string|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'theme_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'attendance_role' => 'nullable|in:shop_manager,attendance_manager,system_admin',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
@@ -106,6 +122,7 @@ class UserController extends Controller
             'login_id' => $validated['login_id'] ?? null,
             'password' => Hash::make($validated['password']),
             'theme_color' => $validated['theme_color'] ?? null,
+            'attendance_role' => $validated['attendance_role'] ?? null,
             'work_attribute_id' => $validated['work_attribute_id'] ?? null,
             'break_mode' => $validated['break_mode'],
             'scheduled_break_minutes' => $validated['break_mode'] === User::BREAK_MODE_FIXED
@@ -134,6 +151,8 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
+        $this->ensureCanManageUsers();
+
         $user->load(['shops' => function($query) {
             $query->withPivot('main');
         }]);
@@ -157,13 +176,15 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $this->ensureCanManageUsers();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
             'login_id' => 'nullable|string|max:255|unique:users,login_id,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'theme_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'attendance_role' => 'nullable|in:shop_manager,attendance_manager',
+            'attendance_role' => 'nullable|in:shop_manager,attendance_manager,system_admin',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
@@ -216,6 +237,8 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        $this->ensureCanManageUsers();
+
         $user->delete();
 
         return redirect()->route('admin.users.index')

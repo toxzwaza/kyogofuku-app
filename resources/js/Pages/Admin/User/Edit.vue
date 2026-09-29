@@ -95,16 +95,21 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-1">勤怠権限</label>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">権限</label>
                                     <select
                                         v-model="form.attendance_role"
                                         class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     >
                                         <option value="">一般</option>
-                                        <option value="shop_manager">管理者（所属店舗のみ）</option>
+                                        <option value="shop_manager">店舗管理者（所属店舗のみ）</option>
                                         <option value="attendance_manager">勤怠管理者（全店舗）</option>
+                                        <option value="system_admin">システム管理者（全機能）</option>
                                     </select>
-                                    <p class="mt-1 text-sm text-brand-text-muted">勤怠の閲覧・承認権限を設定します</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">
+                                        システム全体の権限を設定します（上位ほど広い権限）。<br>
+                                        システム管理者＞勤怠管理者＞店舗管理者＞一般。
+                                        システム管理者はスタッフ・権限の管理も行えます。
+                                    </p>
                                     <div v-if="form.errors.attendance_role" class="mt-1 text-sm text-red-600">{{ form.errors.attendance_role }}</div>
                                 </div>
 

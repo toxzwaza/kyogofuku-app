@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CareSuggestion;
 use App\Models\Customer;
-use App\Models\CustomerLineMessage;
 use App\Models\EventReservation;
 use App\Models\PhotoType;
-use App\Models\StaffSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Concerns\ResolvesUiView;
@@ -25,12 +24,7 @@ class OverviewController extends Controller
 
     public function index(Request $request)
     {
-        $today       = Carbon::today();
-        $todayEnd    = $today->copy()->endOfDay();
-        $weekStart   = $today->copy()->startOfWeek(Carbon::MONDAY);
-        $weekEnd     = $today->copy()->endOfWeek(Carbon::SUNDAY);
-        $lastWeekStart = $weekStart->copy()->subWeek();
-        $lastWeekEnd   = $weekEnd->copy()->subWeek();
+        $today = Carbon::today();
 
         // ログインユーザーの所属店舗（全集計をこの店舗のデータに絞る）
         $currentUser = $request->user();
@@ -46,122 +40,15 @@ class OverviewController extends Controller
             ->distinct()
             ->pluck('event_id');
 
-        // 本日の予約件数（キャンセル除く）
-        $todayCount = EventReservation::whereBetween('reservation_datetime', [$today, $todayEnd])
-            ->where('cancel_flg', false)
-            ->whereIn('event_id', $shopEventIds)
-            ->count();
-
-        // 今週の予約件数
-        $thisWeekCount = EventReservation::whereBetween('reservation_datetime', [$weekStart, $weekEnd])
-            ->where('cancel_flg', false)
-            ->whereIn('event_id', $shopEventIds)
-            ->count();
-        $lastWeekCount = EventReservation::whereBetween('reservation_datetime', [$lastWeekStart, $lastWeekEnd])
-            ->where('cancel_flg', false)
-            ->whereIn('event_id', $shopEventIds)
-            ->count();
-        $weekDelta = $lastWeekCount > 0
-            ? round((($thisWeekCount - $lastWeekCount) / $lastWeekCount) * 100, 1)
-            : null;
-
-        // キャンセル率（直近30日）
+        // 流入経路の集計等で使う直近30日の起点
         $since = $today->copy()->subDays(30);
-        $totalRecent = EventReservation::where('created_at', '>=', $since)
-            ->whereIn('event_id', $shopEventIds)
-            ->count();
-        $cancelled   = EventReservation::where('created_at', '>=', $since)
-            ->where('cancel_flg', true)
-            ->whereIn('event_id', $shopEventIds)
-            ->count();
-        $cancelRate  = $totalRecent > 0 ? round($cancelled / $totalRecent * 100, 1) : 0.0;
 
-        // 要対応件数（ステータス = 確認中・返信待ち・未対応）
-        $pendingCount = EventReservation::whereIn('status', ['確認中', '返信待ち', '未対応'])
-            ->where('cancel_flg', false)
-            ->whereIn('event_id', $shopEventIds)
-            ->count();
-
-        // 直近の予約 8件
-        $recent = EventReservation::with(['event:id,title', 'venue:id,name'])
-            ->where('cancel_flg', false)
-            ->whereIn('event_id', $shopEventIds)
-            ->orderByDesc('created_at')
+        // 直近の予約 8件（LINE連携有無・流入導線を含む。ウィジェットと共通のマッパーを使用）
+        $recent = OverviewWidgetController::recentReservationsQuery($shopEventIds)
             ->take(8)
-            ->get(['id', 'event_id', 'venue_id', 'name', 'furigana', 'reservation_datetime', 'status', 'created_at']);
-
-        // 店舗別・今週の予約数（トップ4）
-        $byShop = \DB::table('event_reservations as r')
-            ->join('events as e', 'r.event_id', '=', 'e.id')
-            ->join('event_shop as es', 'e.id', '=', 'es.event_id')
-            ->join('shops as s', 'es.shop_id', '=', 's.id')
-            ->whereBetween('r.reservation_datetime', [$weekStart, $weekEnd])
-            ->where('r.cancel_flg', false)
-            ->where('s.is_active', true)
-            ->whereIn('es.shop_id', $userShopIds)
-            ->groupBy('s.id', 's.name')
-            ->orderByDesc(\DB::raw('COUNT(r.id)'))
-            ->limit(6)
-            ->get(['s.id', 's.name', \DB::raw('COUNT(r.id) as cnt')]);
-
-        // 日別トレンド（過去14日 → 向こう14日）
-        $trendStart = $today->copy()->subDays(13);
-        $trendEnd   = $today->copy()->addDays(14);
-        $dailyRaw   = \DB::table('event_reservations')
-            ->selectRaw('DATE(reservation_datetime) as d, COUNT(*) as cnt')
-            ->whereBetween('reservation_datetime', [$trendStart, $trendEnd->copy()->endOfDay()])
-            ->where('cancel_flg', false)
-            ->whereIn('event_id', $shopEventIds)
-            ->groupBy('d')
-            ->pluck('cnt', 'd');
-
-        $daily = [];
-        $cursor = $trendStart->copy();
-        while ($cursor <= $trendEnd) {
-            $k = $cursor->format('Y-m-d');
-            $daily[] = [
-                'date'  => $k,
-                'count' => (int) ($dailyRaw[$k] ?? 0),
-                'is_past'   => $cursor->lt($today),
-                'is_today'  => $cursor->isSameDay($today),
-            ];
-            $cursor->addDay();
-        }
-
-        // ヒートマップ（過去4週間の 曜日×時間帯）
-        $heatStart = $today->copy()->subDays(28);
-        $heatRows  = \DB::table('event_reservations')
-            ->selectRaw('WEEKDAY(reservation_datetime) as dow, HOUR(reservation_datetime) as hr, COUNT(*) as cnt')
-            ->whereBetween('reservation_datetime', [$heatStart, $today->copy()->endOfDay()])
-            ->where('cancel_flg', false)
-            ->whereIn('event_id', $shopEventIds)
-            ->groupBy('dow', 'hr')
-            ->get();
-        // MySQL WEEKDAY: 0=月, 6=日
-        $heatmap = [];
-        $maxHeat = 0;
-        foreach ($heatRows as $r) {
-            $heatmap[(int) $r->dow][(int) $r->hr] = (int) $r->cnt;
-            if ((int) $r->cnt > $maxHeat) $maxHeat = (int) $r->cnt;
-        }
-
-        // ステータス別分布
-        $statusDistRaw = EventReservation::where('created_at', '>=', $since)
-            ->whereIn('event_id', $shopEventIds)
-            ->selectRaw('status, COUNT(*) as cnt')
-            ->groupBy('status')
-            ->pluck('cnt', 'status');
-        $statusOrder = ['未対応', '確認中', '返信待ち', '対応完了済み', 'キャンセル'];
-        $statusDist = [];
-        foreach ($statusOrder as $st) {
-            $statusDist[] = ['status' => $st, 'count' => (int) ($statusDistRaw[$st] ?? 0)];
-        }
-        // 規定外ステータスも末尾に
-        foreach ($statusDistRaw as $st => $cnt) {
-            if (!in_array($st, $statusOrder, true)) {
-                $statusDist[] = ['status' => (string) $st, 'count' => (int) $cnt];
-            }
-        }
+            ->get(['id', 'event_id', 'venue_id', 'name', 'furigana', 'reservation_datetime', 'status', 'created_at', 'utm_source'])
+            ->map(fn ($r) => OverviewWidgetController::mapReservation($r))
+            ->values();
 
         // 流入経路（utm_source）別の予約者数（直近30日・キャンセル除く）
         $utmDist = EventReservation::where('created_at', '>=', $since)
@@ -195,121 +82,69 @@ class OverviewController extends Controller
             'missing_constraint'      => $customerBase()->whereDoesntHave('constraints')->count(),
         ];
 
-        // ── LINE 受信（ログインユーザーの担当店舗・お客様単位でグループ化） ──
-        // 休業日などに届き未対応のまま残るメッセージを Overview で漏れなく拾うためのブロック。
-        // 未読は全件（古い見落としを防ぐ）、既読は直近分のみ取得し、画面側のトグルで
-        // 「未読のみ / 既読も表示」を切り替えられるようにする。
-        $lineInbound = ['groups' => [], 'unread_total' => 0, 'total' => 0];
-        if (! empty($userShopIds)) {
-            $contactInShop = fn ($q) => $q->whereIn('shop_id', $userShopIds);
-            $withContact = [
-                'contact' => fn ($q) => $q->select('id', 'customer_id', 'event_reservation_id', 'label', 'shop_id'),
-                'contact.customer' => fn ($q) => $q->select('id', 'name'),
-                'contact.eventReservation' => fn ($q) => $q->select('id', 'name'),
-            ];
+        // ※ LINE受信は全管理画面に常駐するウィジェット（OverviewWidgetController@lineInbox）へ移設。
 
-            // 未読は全件（上限300・古い未読も漏らさない）、既読は直近のみ（上限200）
-            $unreadMessages = CustomerLineMessage::query()
-                ->with($withContact)
-                ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
-                ->whereNull('admin_read_at')
-                ->whereHas('contact', $contactInShop)
-                ->orderByDesc('id')
-                ->limit(300)
-                ->get();
-
-            $readMessages = CustomerLineMessage::query()
-                ->with($withContact)
-                ->where('direction', CustomerLineMessage::DIRECTION_INBOUND)
-                ->whereNotNull('admin_read_at')
-                ->whereHas('contact', $contactInShop)
-                ->orderByDesc('id')
-                ->limit(200)
-                ->get();
-
-            // マージして id 降順（最新が先頭）に整列
-            $allMessages = $unreadMessages->concat($readMessages)->sortByDesc('id')->values();
-
-            $groups = [];
-            foreach ($allMessages as $m) {
-                $contact = $m->contact;
-                if (! $contact) {
-                    continue;
-                }
-                $key = $contact->id;
-                if (! isset($groups[$key])) {
-                    $isReservation = $contact->customer_id === null && $contact->event_reservation_id !== null;
-                    $displayName = $isReservation
-                        ? ($contact->eventReservation?->name ?? '予約者')
-                        : ($contact->customer?->name ?? '顧客');
-                    $groups[$key] = [
-                        'contact_id'     => $contact->id,
-                        'name'           => $displayName,
-                        'label'          => $contact->label ?? 'お客様',
-                        'link_kind'      => $isReservation ? 'reservation' : 'customer',
-                        'customer_id'    => $contact->customer_id,
-                        'reservation_id' => $contact->event_reservation_id,
-                        'unread_count'   => 0,
-                        'total_count'    => 0,
-                        'messages'       => [],
-                    ];
-                }
-                $isImage = $m->message_type !== null && $m->message_type !== 'text';
-                $isUnread = $m->admin_read_at === null;
-                $groups[$key]['messages'][] = [
-                    'id'         => $m->id,
-                    'text'       => (string) ($m->text ?? ''),
-                    'is_image'   => $isImage,
-                    'is_unread'  => $isUnread,
-                    'created_at' => $m->created_at?->toIso8601String(),
-                ];
-                $groups[$key]['total_count']++;
-                if ($isUnread) {
-                    $groups[$key]['unread_count']++;
-                }
+        // 今日のケアリスト（A9：バッチ care:generate が生成した care_suggestions を読むだけ）
+        // care_type ごとに獲得（acquisition＝成約前リード）と維持（retention＝成約後の
+        // キャンセル防止フォロー）を分離して渡す。混在させて上位N件で切ると、緊急度の高い
+        // 獲得ケアに維持ケアが埋もれて表示されないため。
+        $careShopFilter = function ($q) use ($userShopIds) {
+            if (! empty($userShopIds)) {
+                $q->where(function ($w) use ($userShopIds) {
+                    $w->whereIn('shop_id', $userShopIds)->orWhereNull('shop_id');
+                });
             }
+        };
 
-            // 展開時は時系列（古い順）で読めるように並べ替え
-            foreach ($groups as &$g) {
-                $g['messages'] = array_reverse($g['messages']);
-            }
-            unset($g);
+        $mapCare = fn (CareSuggestion $c) => [
+            'id'             => $c->id,
+            'name'           => $c->subject_name,
+            'score'          => $c->care_score,
+            'band'           => $c->priority_band,
+            'status'         => $c->reservation_status,
+            'days'           => $c->days_since_contact,
+            'prospect'       => $c->prospect_label,
+            'seijin_year'    => $c->seijin_year,
+            'next_action'    => $c->next_action,
+            'action_type'    => $c->next_action_type,
+            'summary'        => $c->status_summary,
+            'reservation_id' => $c->event_reservation_id,
+            'customer_id'    => $c->customer_id,
+            'assignee'       => $c->assignee,
+        ];
 
-            $lineInbound = [
-                'groups'       => array_values($groups), // 最新受信のお客様が先頭
-                'unread_total' => $unreadMessages->count(),
-                'total'        => $allMessages->count(),
-            ];
-        }
+        $careListFor = fn (string $careType) => CareSuggestion::query()
+            ->where($careShopFilter)
+            ->where('care_type', $careType)
+            ->orderByRaw("FIELD(priority_band, '緊急', '高', '中', '低')")
+            ->orderByDesc('care_score')
+            ->limit(20)
+            ->get()
+            ->map($mapCare);
+
+        $careSummaryFor = fn (string $careType) => CareSuggestion::query()
+            ->where($careShopFilter)
+            ->where('care_type', $careType)
+            ->selectRaw("priority_band, count(*) c")
+            ->groupBy('priority_band')
+            ->pluck('c', 'priority_band');
+
+        $careList = $careListFor('acquisition');
+        $careSummary = $careSummaryFor('acquisition');
+        $careListRetention = $careListFor('retention');
+        $careSummaryRetention = $careSummaryFor('retention');
+        $careGeneratedAt = CareSuggestion::max('generated_at');
 
         return Inertia::render($this->viewFor('Admin/Overview'), [
-            'stats' => [
-                'today_count'     => $todayCount,
-                'week_count'      => $thisWeekCount,
-                'week_delta'      => $weekDelta,     // 前週比 (%) or null
-                'cancel_rate'     => $cancelRate,
-                'pending_count'   => $pendingCount,
-            ],
             'input_alerts'  => $inputAlerts,
+            'care_list'     => $careList,
+            'care_summary'  => $careSummary,
+            'care_list_retention'    => $careListRetention,
+            'care_summary_retention' => $careSummaryRetention,
+            'care_generated_at' => $careGeneratedAt,
             'user_shop_ids' => array_values($userShopIds),
             'recent_reservations' => $recent,
-            'line_inbound'        => $lineInbound,
-            'shop_ranking'        => $byShop,
-            'week_range'          => [
-                'start' => $weekStart->format('Y-m-d'),
-                'end'   => $weekEnd->format('Y-m-d'),
-            ],
-            'daily_trend'   => $daily,        // 過去14日＋今日＋先14日
-            'status_dist'   => $statusDist,   // 直近30日のステータス分布
             'utm_dist'      => $utmDist,      // 直近30日の流入経路別予約者数（キャンセル除く）
-            'heatmap'       => [
-                'cells'    => $heatmap,       // [dow][hr] = cnt （dow: 0=月〜6=日）
-                'max'      => $maxHeat,
-                'period'   => [
-                    'start' => $heatStart->format('Y-m-d'),
-                    'end'   => $today->format('Y-m-d'),
-                ],
-            ],
         ]);
     }
 }

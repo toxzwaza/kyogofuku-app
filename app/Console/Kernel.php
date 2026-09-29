@@ -40,6 +40,9 @@ class Kernel extends ConsoleKernel
         // LINE紹介機能：成約1ヶ月後の確定＋ポイント付与／期限切れ紹介の失効
         $schedule->command('referral:mature')->dailyAt('03:00');
         $schedule->command('referral:expire')->dailyAt('03:15');
+
+        // 今日のケアリスト（A9）：営業時間中に毎時再生成
+        $schedule->command('care:generate')->hourlyAt(5)->between('7:00', '20:00');
     }
 
     /**

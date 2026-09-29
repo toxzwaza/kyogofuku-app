@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import AdminSidebar from '@/Components/Admin/AdminSidebar.vue';
 import AdminTopbar from '@/Components/Admin/AdminTopbar.vue';
 import CommandPalette from '@/Components/Admin/CommandPalette.vue';
+import LineInboxWidget from '@/Components/Admin/LineInboxWidget.vue';
 import UiToastContainer from '@/Components/UI/ToastContainer.vue';
 import UiBreadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { useDarkMode } from '@/composables/useDarkMode.js';
@@ -91,5 +92,6 @@ const { show: openPalette } = useCommandPalette();
 
         <UiToastContainer />
         <CommandPalette />
+        <LineInboxWidget />
     </div>
 </template>

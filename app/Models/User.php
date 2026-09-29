@@ -124,7 +124,27 @@ class User extends Authenticatable
     }
 
     /**
-     * 管理者（所属店舗の勤怠確認・承認）かどうか
+     * 管理者（一般より上位の権限を持つ）かどうか。
+     * 店舗管理者・勤怠管理者・システム管理者のいずれか＝権限あり、null＝一般。
+     * 一般ユーザーに公開しないメニュー・機能のガードに使う。
+     */
+    public function isManager(): bool
+    {
+        return $this->attendance_role !== null && $this->attendance_role !== '';
+    }
+
+    /**
+     * システム管理者（全機能の最上位権限）かどうか。
+     * 権限の階層：システム管理者 ＞ 勤怠管理者 ＞ 店舗管理者 ＞ 一般。
+     * 上位権限は下位権限をすべて包含する。
+     */
+    public function isSystemAdmin(): bool
+    {
+        return $this->attendance_role === 'system_admin';
+    }
+
+    /**
+     * 店舗管理者（所属店舗の勤怠確認・承認）かどうか
      */
     public function isShopManager(): bool
     {
@@ -132,11 +152,12 @@ class User extends Authenticatable
     }
 
     /**
-     * 勤怠管理者（全店舗の勤怠確認・承認）かどうか
+     * 勤怠管理者（全店舗の勤怠確認・承認）かどうか。
+     * システム管理者は上位権限として勤怠管理者を包含する。
      */
     public function isAttendanceManager(): bool
     {
-        return $this->attendance_role === 'attendance_manager';
+        return in_array($this->attendance_role, ['attendance_manager', 'system_admin'], true);
     }
 
     /**
@@ -145,5 +166,13 @@ class User extends Authenticatable
     public function canManageAttendance(): bool
     {
         return $this->isShopManager() || $this->isAttendanceManager();
+    }
+
+    /**
+     * スタッフ・権限の管理権限があるか（システム管理者のみ）
+     */
+    public function canManageUsers(): bool
+    {
+        return $this->isSystemAdmin();
     }
 }

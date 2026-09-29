@@ -150,6 +150,10 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // モダン管理ダッシュボード（オーバービュー）
     Route::get('/', [\App\Http\Controllers\Admin\OverviewController::class, 'index'])->name('overview');
 
+    // オーバービュー系ウィジェット（JSON）：LINE受信は全管理画面に常駐、直近予約は過去へ遡り
+    Route::get('/line-inbox', [\App\Http\Controllers\Admin\OverviewWidgetController::class, 'lineInbox'])->name('line-inbox');
+    Route::get('/recent-reservations', [\App\Http\Controllers\Admin\OverviewWidgetController::class, 'recentReservations'])->name('recent-reservations');
+
     // 端末管理（勤怠管理者のみ・コントローラ内で権限チェック）
     Route::get('/device-registrations', [AdminDeviceRegistrationController::class, 'index'])->name('device-registrations.index');
     Route::delete('/device-registrations/{device}', [AdminDeviceRegistrationController::class, 'revoke'])->name('device-registrations.revoke');
