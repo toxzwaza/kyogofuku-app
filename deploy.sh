@@ -11,7 +11,7 @@ RUN sed -ri "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" \
     /etc/apache2/sites-available/000-default.conf \
     /etc/apache2/apache2.conf
 
-RUN a2enmod rewrite
+RUN a2enmod rewrite headers
 
 # PHP 拡張（現行維持）
 RUN apt-get update && apt-get install -y \
