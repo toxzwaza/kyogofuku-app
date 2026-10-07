@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="google-site-verification" content="N-GUynu2OYPqnKfgjqwAvpl5fveY1eepKUFSqsfoLok" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
     <meta name="theme-color" content="#1f2937">
     <link rel="manifest" href="/build/manifest.webmanifest">
