@@ -4,3 +4,5 @@ Disallow: /admin
 Disallow: /line
 Disallow: /api
 Disallow: /webhook
+
+Sitemap: https://kyogofuku-event.com/sitemap.xml

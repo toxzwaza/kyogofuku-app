@@ -47,6 +47,7 @@ use App\Http\Controllers\BladeLpController;
 use App\Http\Controllers\BladeReservationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\EventReservationController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\LineLiffController;
@@ -128,6 +129,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Public Routes
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/event/{slug}', [EventController::class, 'show'])->name('event.show');
 Route::get('/event/{slug}/reserve', [EventController::class, 'reserve'])->name('event.reserve.page');
 Route::post('/event/{event}/reserve', [EventReservationController::class, 'store'])->name('event.reserve');
