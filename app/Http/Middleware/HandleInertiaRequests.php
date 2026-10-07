@@ -43,7 +43,9 @@ class HandleInertiaRequests extends Middleware
                 ]) : null,
             ],
             'ziggy' => function () use ($request) {
-                return array_merge((new Ziggy)->toArray(), [
+                // 未ログイン時はguestグループのみ共有（config/ziggy.php）。ログイン済みは従来どおり全ルート
+                $group = $request->user() ? null : 'guest';
+                return array_merge((new Ziggy($group))->toArray(), [
                     'location' => $request->url(),
                 ]);
             },
