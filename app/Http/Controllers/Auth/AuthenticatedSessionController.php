@@ -69,7 +69,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request): \Symfony\Component\HttpFoundation\Response
     {
         try {
             $request->authenticate();
@@ -197,13 +197,15 @@ class AuthenticatedSessionController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+        // ログイン直後はフルページ遷移にする（Inertia SPA遷移だと未ログイン用の
+        // 絞り込み済みZiggyルートのまま管理画面を描画してしまうため）
+        return Inertia::location(redirect()->intended(RouteServiceProvider::HOME)->getTargetUrl());
     }
 
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         // ログアウト前にユーザー情報を取得
         $user = Auth::user();
@@ -241,6 +243,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        // ログアウト後はフルページ遷移（ログイン中の全ルートZiggyをメモリから破棄）
+        return Inertia::location('/login');
     }
 }
