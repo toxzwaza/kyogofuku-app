@@ -7,7 +7,10 @@
     <meta name="theme-color" content="#1f2937">
     <link rel="manifest" href="/build/manifest.webmanifest">
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <title inertia>{{ config('app.name') !== 'Laravel' ? config('app.name') : '京呉服平田・好一 イベント予約' }}</title>
+    @if (request()->is('login') || request()->is('admin*'))
+    <meta name="robots" content="noindex, nofollow">
+    @endif
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
