@@ -13,6 +13,7 @@ class EventInertiaViewFactory
     public function __construct(
         protected EventPublicPageService $pageService,
         protected LpThemeResolver $themeResolver,
+        protected EventSeoMetaBuilder $seoBuilder,
     ) {}
 
     /**
@@ -21,15 +22,16 @@ class EventInertiaViewFactory
     public function showResponse(Event $event, array $extraProps = []): Response
     {
         $payload = array_merge($this->pageService->buildShowPayload($event), $extraProps);
+        $lpSeo = $this->seoBuilder->build($event);
         $slug = $event->activeLpDesignSlug();
         if ($slug) {
             $payload['lpThemeCssVars'] = $this->themeResolver->resolveCssVarsForEvent($event);
             $component = config("lp_designs.templates.{$slug}.inertia_show");
 
-            return Inertia::render($component, $payload);
+            return Inertia::render($component, $payload)->withViewData(['lpSeo' => $lpSeo]);
         }
 
-        return Inertia::render('Event/Show', $payload);
+        return Inertia::render('Event/Show', $payload)->withViewData(['lpSeo' => $lpSeo]);
     }
 
     /**

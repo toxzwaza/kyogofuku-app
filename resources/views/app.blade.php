@@ -8,10 +8,31 @@
     <meta name="theme-color" content="#1f2937">
     <link rel="manifest" href="/build/manifest.webmanifest">
 
-    <title inertia>{{ config('app.name') !== 'Laravel' ? config('app.name') : '京呉服平田・好一 イベント予約' }}</title>
+    <title inertia>{{ isset($lpSeo) ? $lpSeo['title'] : (config('app.name') !== 'Laravel' ? config('app.name') : '京呉服平田・好一 イベント予約') }}</title>
     @if (request()->is('login') || request()->is('admin*'))
     <meta name="robots" content="noindex, nofollow">
     @endif
+
+    @isset($lpSeo)
+    <!-- イベントLP SEO（サーバー出力層） -->
+    <meta name="description" content="{{ $lpSeo['description'] }}">
+    <link rel="canonical" href="{{ $lpSeo['canonical'] }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ $lpSeo['siteName'] }}">
+    <meta property="og:title" content="{{ $lpSeo['title'] }}">
+    <meta property="og:description" content="{{ $lpSeo['description'] }}">
+    <meta property="og:url" content="{{ $lpSeo['canonical'] }}">
+    @if($lpSeo['ogImage'])
+    <meta property="og:image" content="{{ $lpSeo['ogImage'] }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ $lpSeo['ogImage'] }}">
+    @else
+    <meta name="twitter:card" content="summary">
+    @endif
+    <meta name="twitter:title" content="{{ $lpSeo['title'] }}">
+    <meta name="twitter:description" content="{{ $lpSeo['description'] }}">
+    <script type="application/ld+json">{!! json_encode($lpSeo['jsonLd'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
+    @endisset
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -24,25 +45,11 @@
 
     @php
         $gtmId = $page['props']['gtmId'] ?? null;
-        $hasGtmId = $gtmId !== null && $gtmId !== '';
-        $gtmIdJson = json_encode($gtmId, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-        $hasGtmIdJson = json_encode($hasGtmId);
-        $pagePropsJson = json_encode($page['props'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
     @endphp
-
-    <!-- GTM ID 取得状況のデバッグ -->
-    <script>
-        console.log('[GTM Debug] GTM ID取得状況:', {
-            gtmId: {!! $gtmIdJson !!},
-            hasGtmId: {!! $hasGtmIdJson !!},
-            pageProps: {!! $pagePropsJson !!}
-        });
-    </script>
 
     @if($gtmId)
     <!-- Google Tag Manager -->
     <script>
-        console.log('[GTM Debug] GTMタグを読み込みます:', '{{ $gtmId }}');
         (function(w, d, s, l, i) {
             w[l] = w[l] || [];
             w[l].push({
@@ -59,10 +66,6 @@
         })(window, document, 'script', 'dataLayer', '{{ $gtmId }}');
     </script>
     <!-- End Google Tag Manager -->
-    @else
-    <script>
-        console.log('[GTM Debug] GTM IDが設定されていないため、GTMタグは読み込みません');
-    </script>
     @endif
 </head>
 
@@ -75,6 +78,23 @@
     @endif
 
     @inertia
+
+    @isset($lpSeo)
+    <!-- イベント概要（クローラー・JS非実行環境向けの可視テキスト層） -->
+    <section style="max-width: 672px; margin: 0 auto; padding: 28px 20px 110px; color: #555; font-size: 13px; line-height: 1.9; background: #fff;">
+        <h1 style="font-size: 15px; font-weight: 700; color: #333; margin-bottom: 8px;">{{ $lpSeo['summary']['title'] }}</h1>
+        @if($lpSeo['summary']['period'])
+        <p>開催期間: {{ $lpSeo['summary']['period'] }}</p>
+        @endif
+        @foreach($lpSeo['summary']['venues'] as $venue)
+        <p>{{ $venue->name }}@if($venue->address)（{{ $venue->address }}）@endif</p>
+        @endforeach
+        @if($lpSeo['summary']['description'])
+        <p style="margin-top: 8px;">{{ $lpSeo['summary']['description'] }}</p>
+        @endif
+        <p style="margin-top: 8px; color: #999;">主催: 京呉服 好一（岡山の振袖専門店）｜ご来店のご予約はページ内の「WEB来店予約」から承ります。</p>
+    </section>
+    @endisset
 </body>
 
 </html>
