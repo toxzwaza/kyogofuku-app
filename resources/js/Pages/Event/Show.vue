@@ -10,7 +10,8 @@
 
     <div
         class="min-h-screen relative event-show-pastel-root"
-        :style="{ backgroundColor: event.background_color || 'rgb(233, 226, 220)' }"
+        :class="{ 'lp-has-theme': !!event.theme_color }"
+        :style="{ backgroundColor: lpBackground(event.background_color, '#fbf6ee'), ...themeVars }"
     >
         <!-- 背景画像（LP設定で有効かつアップロード済みの場合のみ表示） -->
         <div
@@ -23,9 +24,64 @@
         <div class="lp-sparkle" aria-hidden="true">
             <span v-for="n in 24" :key="n" class="lp-sparkle__dot"></span>
         </div>
+
+        <!-- 固定ヘッダー（左ロゴ・右ハンバーガー） -->
+        <header v-show="!showReservationForm" class="lp-header">
+            <a href="#" class="lp-header__logo" aria-label="京呉服好一">
+                <img src="/storage/logo/logo_b.png" alt="京呉服 好一" />
+            </a>
+            <button
+                type="button"
+                class="lp-header__burger"
+                :class="{ 'is-open': menuOpen }"
+                :aria-expanded="menuOpen ? 'true' : 'false'"
+                aria-label="メニュー"
+                @click="menuOpen = !menuOpen"
+            >
+                <span></span><span></span><span></span>
+            </button>
+        </header>
+
+        <!-- フルスクリーンメニュー -->
+        <Transition name="lp-menu">
+            <nav v-if="menuOpen" class="lp-menu">
+                <div class="lp-menu__list">
+                    <a class="lp-menu__item" href="https://example.com/catalog" target="_blank" rel="noopener" @click="menuOpen = false">
+                        <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></span>
+                        カタログ請求
+                        <span class="lp-menu__arrow">›</span>
+                    </a>
+                    <button type="button" class="lp-menu__item" @click="openReservationFromMenu">
+                        <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span>
+                        WEB来店予約
+                        <span class="lp-menu__arrow">›</span>
+                    </button>
+                    <a class="lp-menu__item" href="https://www.instagram.com/" target="_blank" rel="noopener" @click="menuOpen = false">
+                        <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg></span>
+                        Instagram
+                        <span class="lp-menu__arrow">›</span>
+                    </a>
+                    <a class="lp-menu__item" href="https://x.com/" target="_blank" rel="noopener" @click="menuOpen = false">
+                        <span class="lp-menu__icon"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+                        X（旧Twitter）
+                        <span class="lp-menu__arrow">›</span>
+                    </a>
+                    <a class="lp-menu__item" href="tel:0862421529" @click="menuOpen = false">
+                        <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></span>
+                        TELお問い合わせ
+                        <span class="lp-menu__arrow">›</span>
+                    </a>
+                    <a class="lp-menu__item" href="https://line.me/" target="_blank" rel="noopener" @click="menuOpen = false">
+                        <span class="lp-menu__icon"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 5.737 2 10.345c0 4.13 3.58 7.59 8.414 8.244.328.07.774.216.887.496.102.253.067.65.033.906l-.144.86c-.044.253-.202.99.867.54 1.07-.45 5.77-3.4 7.872-5.82C21.49 13.95 22 12.22 22 10.344 22 5.737 17.523 2 12 2z"/></svg></span>
+                        LINE友達登録
+                        <span class="lp-menu__arrow">›</span>
+                    </a>
+                </div>
+            </nav>
+        </Transition>
         
         <!-- ローディング画面 -->
-        <div v-if="isLoading" class="fixed inset-0 z-50 flex items-center justify-center" :style="{ backgroundColor: event.background_color || 'rgb(233, 226, 220)' }">
+        <div v-if="isLoading" class="fixed inset-0 z-50 flex items-center justify-center" :style="{ backgroundColor: lpBackground(event.background_color, '#fbf6ee') }">
             <div class="text-center">
                 <!-- ローディングスピナー -->
                 <div class="relative w-20 h-20 mx-auto mb-6">
@@ -48,53 +104,57 @@
             <div 
                 v-if="!isLoading" 
                 class="relative z-10"
+                style="padding-top: 56px"
             >
         <!-- イベント画像とスライドショー（縦並び） -->
         <div v-if="!showSuccess" class="w-full md:flex md:justify-center">
             <div
                 class="w-full md:max-w-2xl event-content-column"
-                :style="{ backgroundColor: event.content_background_color || '#ffffff' }"
+                :style="{ backgroundColor: lpBackground(event.content_background_color, 'transparent') }"
             >
-                <template v-for="(item, index) in displayItems" :key="`${item.type}-${item.id || index}`">
-                    <!-- 画像 -->
-                    <div
-                        v-if="item.type === 'image'"
-                        :style="(item.data.margin_top_px != null || item.data.margin_bottom_px != null) ? { marginTop: item.data.margin_top_px != null ? `${item.data.margin_top_px}px` : undefined, marginBottom: item.data.margin_bottom_px != null ? `${item.data.margin_bottom_px}px` : undefined } : undefined"
-                    >
-                        <!-- WebPパスが存在する場合（新規アップロード画像）のみ<picture>要素を使用 -->
-                        <picture v-if="item.data.webp_path">
-                            <source 
-                                :srcset="item.data.webp_path" 
-                                type="image/webp"
-                            />
+                <template v-for="(group, gIndex) in groupedItems" :key="`group-${gIndex}`">
+                    <!-- 連続する画像は1枚の「カード」としてまとめて表示（統一感のための額装） -->
+                    <div v-if="group.type === 'imageGroup'" class="lp-media-card">
+                        <div
+                            v-for="(item, index) in group.items"
+                            :key="`image-${item.id || index}`"
+                            :style="(item.data.margin_top_px != null || item.data.margin_bottom_px != null) ? { marginTop: item.data.margin_top_px != null ? `${item.data.margin_top_px}px` : undefined, marginBottom: item.data.margin_bottom_px != null ? `${item.data.margin_bottom_px}px` : undefined } : undefined"
+                        >
+                            <!-- WebPパスが存在する場合（新規アップロード画像）のみ<picture>要素を使用 -->
+                            <picture v-if="item.data.webp_path">
+                                <source 
+                                    :srcset="item.data.webp_path" 
+                                    type="image/webp"
+                                />
+                                <img
+                                    :src="item.data.path"
+                                    :alt="item.data.alt || event.title"
+                                    class="w-full object-cover md:mx-auto"
+                                    loading="lazy"
+                                />
+                            </picture>
+                            <!-- WebPパスが存在しない場合（既存画像）は通常の<img>要素 -->
                             <img
+                                v-else
                                 :src="item.data.path"
                                 :alt="item.data.alt || event.title"
                                 class="w-full object-cover md:mx-auto"
                                 loading="lazy"
                             />
-                        </picture>
-                        <!-- WebPパスが存在しない場合（既存画像）は通常の<img>要素 -->
-                        <img
-                            v-else
-                            :src="item.data.path"
-                            :alt="item.data.alt || event.title"
-                            class="w-full object-cover md:mx-auto"
-                            loading="lazy"
-                        />
+                        </div>
                     </div>
                     <!-- スライドショー -->
-                    <div v-else-if="item.type === 'slideshow'" class="w-full">
+                    <div v-else-if="group.type === 'slideshow'" class="lp-media-card lp-media-card--slideshow">
                         <Slideshow 
-                            :images="item.data.images" 
-                            :type="item.data.type"
-                            :autoplay="item.data.autoplay_enabled"
-                            :interval="item.data.autoplay_interval"
-                            :fullscreen="item.data.fullscreen"
+                            :images="group.data.images" 
+                            :type="group.data.type"
+                            :autoplay="group.data.autoplay_enabled"
+                            :interval="group.data.autoplay_interval"
+                            :fullscreen="group.data.fullscreen"
                         />
                     </div>
                     <!-- CTAボタン（予約フォームを開く） -->
-                    <div v-else-if="item.type === 'cta_button'" class="cta-button-wrap py-8 px-4">
+                    <div v-else-if="group.type === 'cta_button'" class="cta-button-wrap py-8 px-4">
                         <div class="cta-inline-container">
                             <button
                                 type="button"
@@ -119,98 +179,55 @@
         </div>
 
         <!-- 開催会場（予約フォームの場合のみ） -->
-        <div v-if="isTimeslotReservationForm && venues && venues.length > 0 && !showSuccess" :class="['max-w-4xl mx-auto px-4 py-8', !isEnded && !showSuccess ? 'pb-32' : '']">
-            <div class="mb-6">
-                <h2 class="event-show-section-heading">開催会場</h2>
-                <div class="space-y-6">
-                    <div v-for="venue in venues" :key="venue.id" class="event-show-venue-card">
-                        <!-- 画像とテキストのグリッドレイアウト -->
-                        <div class="md:flex">
-                            <!-- テキスト情報（左側または上側） -->
-                            <div class="flex-1 p-6">
-                                <h3 class="font-bold text-xl text-gray-900 mb-3">{{ venue.name }}</h3>
-                                
-                                <div v-if="venue.description" class="text-sm text-gray-700 mb-4 leading-relaxed" v-html="venue.description"></div>
-                                
-                                <div class="space-y-3">
-                                    <!-- 住所 -->
-                                    <div v-if="venue.address" class="flex items-start space-x-3">
-                                        <div class="flex-shrink-0 mt-0.5">
-                                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                        </div>
-                                        <p class="text-sm text-gray-700 flex-1">{{ venue.address }}</p>
-                                    </div>
-                                    
-                                    <!-- 電話番号 -->
-                                    <div v-if="venue.phone" class="flex items-center space-x-3">
-                                        <div class="flex-shrink-0">
-                                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                            </svg>
-                                        </div>
-                                        <a :href="`tel:${venue.phone}`" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                                            {{ venue.phone }}
-                                        </a>
-                                    </div>
+        <div v-if="isTimeslotReservationForm && venues && venues.length > 0 && !showSuccess" :class="['max-w-4xl mx-auto px-5 py-10', !isEnded && !showSuccess ? 'pb-32' : '']">
+            <h2 class="lp-venue-heading">開催会場</h2>
+            <div class="lp-venue-list">
+                <section v-for="venue in venues" :key="venue.id" class="lp-venue">
+                    <img
+                        v-if="venue.image_url"
+                        :src="venue.image_url"
+                        :alt="venue.name"
+                        class="lp-venue__photo"
+                        loading="lazy"
+                    />
+                    <h3 class="lp-venue__name">{{ venue.name }}</h3>
+                    <div v-if="venue.description" class="lp-venue__desc" v-html="venue.description"></div>
 
-                                    <!-- 開催日時（当日以降のみ表示） -->
-                                    <div v-if="formatVenueDates(venue.dates).length > 0" class="mt-4 pt-4 border-t border-rose-100">
-                                        <div class="flex items-start gap-3 rounded-lg bg-rose-50/80 px-4 py-3">
-                                            <div class="flex-shrink-0 mt-0.5">
-                                                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-xs font-bold text-rose-600 uppercase tracking-wider mb-2">開催日</p>
-                                                <div class="space-y-2">
-                                                    <div
-                                                        v-for="(block, blockIdx) in formatVenueDates(venue.dates)"
-                                                        :key="blockIdx"
-                                                        class="flex flex-wrap items-baseline gap-x-1.5"
-                                                    >
-                                                        <span class="text-2xl font-bold tabular-nums text-rose-700 tracking-tight">{{ block.monthLabel }}</span>
-                                                        <span class="text-rose-400 font-medium select-none text-lg">/</span>
-                                                        <span class="text-base font-semibold tabular-nums text-gray-800">{{ block.dayParts.join(', ') }}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 画像（右側または下側） -->
-                            <div v-if="venue.image_url" class="md:w-1/2 lg:w-2/5 flex-shrink-0">
-                                <img
-                                    :src="venue.image_url"
-                                    :alt="venue.name"
-                                    class="w-full h-full object-cover"
-                                />
-                            </div>
-                        </div>
-                        <!-- Googleマップ（住所とAPIキーがある場合のみ） -->
-                        <div v-if="venue.address && googleMapsEmbedApiKey" class="border-t border-gray-100">
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 pt-4 pb-2">地図</p>
-                            <div class="w-full aspect-video max-h-64 px-6 pb-4">
-                                <iframe
-                                    :src="getVenueMapEmbedUrl(venue.address)"
-                                    width="100%"
-                                    height="100%"
-                                    style="border:0"
-                                    referrerpolicy="no-referrer-when-downgrade"
-                                    allowfullscreen
-                                    loading="lazy"
-                                    class="rounded-lg"
-                                    title="会場の地図"
-                                />
-                            </div>
-                        </div>
+                    <!-- 開催日チップ -->
+                    <div v-if="formatVenueDates(venue.dates).length > 0" class="lp-venue__dates">
+                        <span
+                            v-for="(block, blockIdx) in formatVenueDates(venue.dates)"
+                            :key="blockIdx"
+                            class="lp-venue__date-chip"
+                        >
+                            <span class="lp-venue__date-month">{{ block.monthLabel }}/</span>{{ block.dayParts.join('・') }}
+                        </span>
                     </div>
-                </div>
+
+                    <ul class="lp-venue__meta">
+                        <li v-if="venue.address">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <span>{{ venue.address }}</span>
+                        </li>
+                        <li v-if="venue.phone">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                            <a :href="`tel:${venue.phone}`">{{ venue.phone }}</a>
+                        </li>
+                    </ul>
+
+                    <div v-if="venue.address && googleMapsEmbedApiKey" class="lp-venue__map">
+                        <iframe
+                            :src="getVenueMapEmbedUrl(venue.address)"
+                            width="100%"
+                            height="100%"
+                            style="border:0"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            allowfullscreen
+                            loading="lazy"
+                            title="会場の地図"
+                        />
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -300,28 +317,23 @@
                 ? { backgroundImage: `url(${event.cta_background_url})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }
                 : undefined"
         >
-            <div class="max-w-4xl md:max-w-xl mx-auto flex gap-4">
+            <div class="max-w-4xl md:max-w-xl mx-auto flex gap-3">
+                <!-- ichinoya風フラットCTA（画像ボタンは廃止しテキストボタン化） -->
                 <button
                     v-if="event.cta_web_button_enabled"
                     @click="showReservationForm = true"
-                    class="flex-1 hover:opacity-80 transition-opacity"
+                    class="lp-fixed-cta lp-fixed-cta--web flex-1"
                 >
-                    <img
-                        :src="event.cta_web_button_url || '/storage/button/web.png'"
-                        alt="WEB予約"
-                        class="w-full h-auto"
-                    />
+                    <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    WEB来店予約
                 </button>
                 <a
                     v-if="event.cta_phone_button_enabled"
                     :href="`tel:${shops && shops.length > 0 ? shops[0].phone : ''}`"
-                    class="flex-1 hover:opacity-80 transition-opacity"
+                    class="lp-fixed-cta lp-fixed-cta--tel flex-1"
                 >
-                    <img
-                        :src="event.cta_phone_button_url || '/storage/button/tell.png'"
-                        alt="電話予約"
-                        class="w-full h-auto"
-                    />
+                    <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                    電話で予約
                 </a>
             </div>
         </div>
@@ -426,7 +438,7 @@
 </template>
 
 <script setup>
-import { ref, computed, defineAsyncComponent, nextTick } from 'vue';
+import { ref, computed, defineAsyncComponent, nextTick, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Slideshow from '@/Components/Slideshow.vue';
 import '../../../lp_design/reserve.css';
@@ -479,7 +491,7 @@ const isLoading = ref(false);
 
 const successPayload = computed(() => confirmFormData.value ?? props.successFormData ?? null);
 
-const line12Done = computed(() => currentStep.value !== 'form');
+const line12Done = computed(() => currentStep.value !== 'form' || !!selectedTimeslot.value);
 const line23Done = computed(() => currentStep.value === 'confirm' || currentStep.value === 'success');
 
 const step1Class = computed(() => {
@@ -490,7 +502,10 @@ const step1Class = computed(() => {
 
 const step2Class = computed(() => {
     const base = 'rv-step';
-    if (currentStep.value === 'form') return `${base} pastel-secondary-active`;
+    // 段階表示: 日時を選んでお客様情報が開いたらアクティブ化
+    if (currentStep.value === 'form') {
+        return selectedTimeslot.value ? `${base} pastel-secondary-active` : base;
+    }
     return `${base} done`;
 });
 
@@ -746,6 +761,68 @@ const displayItems = computed(() => {
     });
 
     return items;
+});
+
+// 連続する画像を1グループにまとめる（カード化しても分割画像が泣き別れしないように）
+// 背景色: 未設定・白（旧デフォルト保存値）は統一生成りトーンへフォールバック
+const lpBackground = (color, fallback) => {
+    if (!color) return fallback;
+    const c = String(color).trim().toLowerCase();
+    if (c === '#ffffff' || c === '#fff' || c === 'white' || c === 'rgb(255, 255, 255)') return fallback;
+    return color;
+};
+
+// テーマカラー（管理画面で1色設定→CTA・ナビ・予約フォームに波及）
+const themeVars = computed(() => {
+    const c = props.event?.theme_color;
+    if (!c) return {};
+    return {
+        '--lp-theme': c,
+        '--lp-theme-dark': `color-mix(in srgb, ${c} 72%, #000)`,
+        '--lp-theme-light': `color-mix(in srgb, ${c} 55%, #fff)`,
+        // 予約フォーム（rv-*）が参照する既存変数も上書き
+        '--pink': c,
+        '--pink-soft': `color-mix(in srgb, ${c} 55%, #fff)`,
+        '--pink-pale': `color-mix(in srgb, ${c} 16%, #fff)`,
+        '--pink-mist': `color-mix(in srgb, ${c} 8%, #fff)`,
+        '--blush': `color-mix(in srgb, ${c} 4%, #fff)`,
+        '--shadow-soft': `0 4px 28px color-mix(in srgb, ${c} 12%, transparent)`,
+        '--shadow-dreamy': `0 8px 40px color-mix(in srgb, ${c} 14%, transparent)`,
+    };
+});
+
+// ヘッダーメニュー開閉
+const menuOpen = ref(false);
+
+// 予約フォーム表示中はメニューを閉じ、背面スクロールをロック
+watch(() => showReservationForm.value, (open) => {
+    if (open) menuOpen.value = false;
+    document.body.style.overflow = open ? 'hidden' : '';
+});
+const openReservationFromMenu = () => {
+    menuOpen.value = false;
+    showReservationForm.value = true;
+};
+
+const groupedItems = computed(() => {
+    const groups = [];
+    for (const item of displayItems.value) {
+        if (item.type === 'image') {
+            const last = groups[groups.length - 1];
+            const hasTopGap = item.data?.margin_top_px > 0;
+            const prevHasBottomGap = last?.type === 'imageGroup'
+                && last.items[last.items.length - 1]?.data?.margin_bottom_px > 0;
+            // 余白設定(>0)はセクション区切りの意図なのでカードも分割する
+            if (last && last.type === 'imageGroup' && !hasTopGap && !prevHasBottomGap) {
+                last.items.push(item);
+            } else {
+                groups.push({ type: 'imageGroup', items: [item] });
+            }
+        } else {
+            groups.push(item);
+        }
+    }
+    return groups;
 });
 
 </script>

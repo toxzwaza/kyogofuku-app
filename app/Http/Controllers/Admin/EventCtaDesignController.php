@@ -44,6 +44,7 @@ class EventCtaDesignController extends Controller
             'media_cta_web_button_id' => 'nullable|integer|exists:media_files,id',
             'media_cta_phone_button_id' => 'nullable|integer|exists:media_files,id',
             'cta_color_type' => 'nullable|string|in:red,pink,rose,orange,amber,purple,violet,indigo,blue,sky,cyan,teal,green,emerald',
+            'theme_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'cta_web_button_enabled' => 'nullable|boolean',
             'cta_phone_button_enabled' => 'nullable|boolean',
         ]);
@@ -103,6 +104,11 @@ class EventCtaDesignController extends Controller
                     $updates['cta_storage_disk'] = 's3';
                 }
             }
+        }
+
+        // テーマカラー（CTA・ナビ・予約フォーム共有）。空文字で解除
+        if ($request->has('theme_color')) {
+            $updates['theme_color'] = $request->input('theme_color') ?: null;
         }
 
         if ($request->has('cta_color_type')) {

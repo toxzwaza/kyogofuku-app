@@ -36,6 +36,7 @@ class Event extends Model
         'background_image_path',
         'background_image_storage_disk',
         'cta_color_type',
+        'theme_color',
         'lp_design_slug',
         'lp_theme_tokens',
         'form_schema',

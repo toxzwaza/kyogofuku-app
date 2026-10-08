@@ -184,29 +184,38 @@
                                 </div>
                             </div>
 
-                            <!-- CTAボタンの色（画像間のインラインボタン） -->
+                            <!-- テーマカラー（CTA・ナビ・予約フォーム共有） -->
                             <div class="border-b border-brand-border pb-8">
-                                <label class="block text-sm font-medium text-brand-text mb-2">CTAボタンの色</label>
-                                <p class="text-xs text-brand-text-muted mb-3">公開ページの画像間にある「予約する」ボタンの色です。アニメーションは共通で、色のみ変更できます。</p>
-                                <select
-                                    v-model="form.cta_color_type"
-                                    class="rounded-md border-brand-border shadow-sm max-w-xs"
-                                >
-                                    <option value="red">赤系（既定）</option>
-                                    <option value="pink">ピンク系</option>
-                                    <option value="rose">ローズ系</option>
-                                    <option value="orange">オレンジ系</option>
-                                    <option value="amber">アンバー系</option>
-                                    <option value="purple">パープル系</option>
-                                    <option value="violet">バイオレット系</option>
-                                    <option value="indigo">インディゴ系</option>
-                                    <option value="blue">青系</option>
-                                    <option value="sky">スカイ系</option>
-                                    <option value="cyan">シアン系</option>
-                                    <option value="teal">ティール系</option>
-                                    <option value="green">緑系</option>
-                                    <option value="emerald">エメラルド系</option>
-                                </select>
+                                <label class="block text-sm font-medium text-brand-text mb-2">テーマカラー</label>
+                                <p class="text-xs text-brand-text-muted mb-3">1色設定すると、固定CTAボタン・ヘッダー/メニュー・画像間の予約ボタン・予約フォームのアクセント色がLP全体で統一されます（旧「CTAボタンの色」設定はこちらに統合されました）。未設定の場合は従来の配色のまま表示されます。</p>
+                                <div class="flex items-center gap-3 flex-wrap">
+                                    <input
+                                        type="color"
+                                        :value="form.theme_color || '#c96f4a'"
+                                        class="h-10 w-16 rounded border border-brand-border cursor-pointer"
+                                        @input="form.theme_color = $event.target.value"
+                                    />
+                                    <input
+                                        v-model="form.theme_color"
+                                        type="text"
+                                        placeholder="#C96F4A"
+                                        maxlength="7"
+                                        class="rounded-md border-brand-border shadow-sm w-32 font-mono text-sm"
+                                    />
+                                    <button type="button" class="text-sm text-brand-text-muted underline" @click="form.theme_color = ''">解除（既定色）</button>
+                                </div>
+                                <div class="flex items-center gap-2 mt-3">
+                                    <span class="text-xs text-brand-text-muted mr-1">プリセット:</span>
+                                    <button
+                                        v-for="preset in themePresets"
+                                        :key="preset.color"
+                                        type="button"
+                                        class="h-8 w-8 rounded-full border-2 transition-transform hover:scale-110"
+                                        :style="{ backgroundColor: preset.color, borderColor: form.theme_color === preset.color ? '#111' : '#fff' }"
+                                        :title="preset.name"
+                                        @click="form.theme_color = preset.color"
+                                    ></button>
+                                </div>
                             </div>
 
                             <div class="flex justify-end items-center gap-4 pt-6 border-t border-brand-border mt-8">
@@ -276,9 +285,18 @@ const form = useForm({
     media_cta_web_button_id: null,
     media_cta_phone_button_id: null,
     cta_color_type: props.event.cta_color_type || 'red',
+    theme_color: props.event.theme_color || '',
     cta_web_button_enabled: props.event.cta_web_button_enabled ?? true,
     cta_phone_button_enabled: props.event.cta_phone_button_enabled ?? true,
 });
+
+// テーマカラーのプリセット（4デザイン案）
+const themePresets = [
+    { name: '和モダン（臙脂）', color: '#8e2f3c' },
+    { name: '青春ポップ（コーラル）', color: '#ff5d7e' },
+    { name: 'パステル清楚（ローズ）', color: '#d98ba6' },
+    { name: '秋オータム（テラコッタ）', color: '#c96f4a' },
+];
 
 function openPicker(target) {
     pickerTarget.value = target;

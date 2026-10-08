@@ -4,15 +4,34 @@
         :class="{ 'slideshow-fullscreen': fullscreen }"
         :style="{ '--slide-interval': interval + 'ms' }"
     >
+        <!-- マーキー（横流しフィルムストリップ・ichinoya風）1スライドショー=1レーン -->
+        <div v-if="isMarquee && images && images.length > 0" class="lp-marquee">
+            <div class="lp-marquee__lane">
+                <div
+                    class="lp-marquee__strip"
+                    :class="{ 'lp-marquee__strip--reverse': type === 'marquee_reverse' }"
+                    :style="{ animationDuration: `${images.length * 6}s` }"
+                >
+                    <img
+                        v-for="(image, i) in [...images, ...images]"
+                        :key="`m-${i}`"
+                        :src="image.path"
+                        :alt="image.alt || 'スライドショー画像'"
+                        loading="lazy"
+                    />
+                </div>
+            </div>
+        </div>
+
         <swiper
-            v-if="images && images.length > 0"
+            v-else-if="images && images.length > 0"
             ref="swiperRef"
             :modules="modules"
             :slides-per-view="1"
             :space-between="0"
             :effect="type"
             :autoplay="autoplayConfig"
-            :pagination="{ clickable: true }"
+            :pagination="{ clickable: true, dynamicBullets: true }"
             :navigation="false"
             :loop="images.length > 1"
             :speed="animationDuration"
@@ -42,9 +61,19 @@
             </swiper-slide>
         </swiper>
 
+        <!-- オートプレイ進行バー（スライド切替ごとにリスタート） -->
+        <div
+            v-if="!isMarquee && autoplay && images && images.length > 1"
+            :key="`progress-${currentSlideIndex}`"
+            class="slideshow-progress"
+            aria-hidden="true"
+        >
+            <div class="slideshow-progress__bar"></div>
+        </div>
+
         <!-- 拡大アイコン（リキッドスタイル） -->
         <button
-            v-if="images && images.length > 0"
+            v-if="!isMarquee && images && images.length > 0"
             type="button"
             class="slideshow-expand-btn"
             @click="openModal"
@@ -122,7 +151,7 @@ const props = defineProps({
     },
     type: {
         type: String,
-        default: 'fade', // 'fade', 'slide', 'cube', 'coverflow'
+        default: 'fade', // 'fade', 'slide', 'cube', 'coverflow', 'marquee'
     },
     autoplay: {
         type: Boolean,
@@ -166,6 +195,8 @@ const animationDuration = computed(() => {
 
 const swiperRef = ref(null);
 const currentSlideIndex = ref(0);
+
+const isMarquee = computed(() => props.type === 'marquee' || props.type === 'marquee_reverse');
 const isAnimating = ref(false);
 const showModal = ref(false);
 
@@ -421,18 +452,18 @@ onUnmounted(() => {
 }
 
 .slideshow-swiper :deep(.swiper-pagination-bullet) {
-    width: 12px;
-    height: 12px;
-    background: white;
-    opacity: 0.5;
+    width: 10px;
+    height: 10px;
+    background: #ffffff;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--lp-theme, #c96f4a) 50%, transparent);
+    opacity: 0.65;
     transition: all 0.3s ease;
 }
 
 .slideshow-swiper :deep(.swiper-pagination-bullet-active) {
     opacity: 1;
-    background: white;
-    width: 30px;
-    border-radius: 6px;
+    background: linear-gradient(135deg, var(--lp-theme, #c96f4a), var(--lp-theme-light, #d9a441));
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
 }
 
 /* モバイル対応 */
@@ -520,5 +551,61 @@ onUnmounted(() => {
 }
 .slideshow-modal-close-btn:active {
     transform: scale(0.96);
+}
+
+/* ===== 2026-10 統一デザイン: 進行バー＋金ドット ===== */
+.slideshow-progress {
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: 7px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+    overflow: hidden;
+    z-index: 12;
+    pointer-events: none;
+}
+.slideshow-progress__bar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--lp-theme, #c96f4a), var(--lp-theme-light, #d9a441));
+    transform-origin: left center;
+    animation: slideshow-progress-fill var(--slide-interval, 5000ms) linear forwards;
+}
+@keyframes slideshow-progress-fill {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+/* ===== マーキースライダー（ichinoya風・横流しフィルムストリップ） ===== */
+.lp-marquee {
+    padding: 16px 0;
+    overflow: hidden;
+}
+.lp-marquee__lane { overflow: hidden; }
+.lp-marquee__lane + .lp-marquee__lane { margin-top: 10px; }
+.lp-marquee__strip {
+    display: flex;
+    width: max-content;
+    animation: lp-marquee-scroll 60s linear infinite;
+    will-change: transform;
+}
+.lp-marquee__strip--reverse { animation-direction: reverse; }
+.lp-marquee__strip img {
+    height: 210px;
+    width: auto;
+    border-radius: 10px;
+    margin: 0 5px;
+    object-fit: cover;
+    display: block;
+    box-shadow: 0 4px 12px -4px rgba(46, 46, 79, 0.18);
+}
+@keyframes lp-marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+@media (min-width: 768px) {
+    .lp-marquee__strip img { height: 260px; }
 }
 </style>

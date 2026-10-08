@@ -230,9 +230,12 @@
             </div>
         </div>
 
+        <!-- 段階表示: LPモーダルでは日時選択後にお客様情報を開く（v-showで入力値は保持） -->
         <div
+            v-show="!embedPastelReserve || internalSelectedTimeslot"
             ref="customerInfoSection"
             :class="[
+                'rv-reveal',
                 embedPastelReserve
                     ? 'pastel-customer-flat space-y-4 sm:space-y-6'
                     : 'bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 border border-gray-200 shadow-sm space-y-4 sm:space-y-6',

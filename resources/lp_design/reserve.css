@@ -98,10 +98,10 @@
   transition: all .4s ease;
 }
 .rv-step.active .rv-step-num {
-  background: linear-gradient(135deg, var(--pink), #d4608a);
+  background: linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink, #e8729a) 78%, #000));
   color: var(--white);
   border-color: var(--pink);
-  box-shadow: 0 3px 14px rgba(232,114,154,.3);
+  box-shadow: 0 3px 14px color-mix(in srgb, var(--pink, #e8729a) 30%, transparent);
 }
 .rv-step.done .rv-step-num {
   background: var(--pink-pale);
@@ -198,7 +198,7 @@
 .rv-venue-card input:checked + .rv-venue-inner {
   border-color: var(--pink);
   background: var(--pink-mist);
-  box-shadow: 0 4px 20px rgba(232,114,154,.15);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--pink, #e8729a) 15%, transparent);
 }
 .rv-venue-card:hover .rv-venue-inner {
   border-color: var(--pink-soft);
@@ -254,7 +254,7 @@
   border-color: var(--pink);
   background: var(--pink);
   color: var(--white);
-  box-shadow: 0 3px 14px rgba(232,114,154,.25);
+  box-shadow: 0 3px 14px color-mix(in srgb, var(--pink, #e8729a) 25%, transparent);
 }
 
 /* ---- 時間ボタン ---- */
@@ -284,7 +284,7 @@
   border-color: var(--pink);
   background: var(--pink);
   color: var(--white);
-  box-shadow: 0 3px 14px rgba(232,114,154,.25);
+  box-shadow: 0 3px 14px color-mix(in srgb, var(--pink, #e8729a) 25%, transparent);
 }
 
 /* ---- フォーム要素 ---- */
@@ -320,7 +320,7 @@
 }
 .rv-input:focus, .rv-select:focus, .rv-textarea:focus {
   border-color: var(--pink);
-  box-shadow: 0 0 0 3px rgba(232,114,154,.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink, #e8729a) 12%, transparent);
 }
 .rv-input-error {
   border-color: #e74c3c !important;
@@ -384,14 +384,14 @@
   cursor: not-allowed;
 }
 .rv-btn-next {
-  background: linear-gradient(135deg, var(--pink), #d4608a);
+  background: linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink, #e8729a) 78%, #000));
   color: var(--white);
-  box-shadow: 0 4px 18px rgba(232,114,154,.25);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--pink, #e8729a) 25%, transparent);
   margin-left: auto;
 }
 .rv-btn-next:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(232,114,154,.35);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--pink, #e8729a) 35%, transparent);
 }
 .rv-btn-back {
   background: var(--white);
@@ -402,14 +402,14 @@
   background: var(--pink-mist);
 }
 .rv-btn-submit {
-  background: linear-gradient(135deg, var(--pink), #d4608a);
+  background: linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink, #e8729a) 78%, #000));
   color: var(--white);
-  box-shadow: 0 4px 18px rgba(232,114,154,.25);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--pink, #e8729a) 25%, transparent);
   flex: 1;
 }
 .rv-btn-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(232,114,154,.35);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--pink, #e8729a) 35%, transparent);
 }
 
 /* ---- 確認画面 ---- */

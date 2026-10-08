@@ -3,10 +3,10 @@
  */
 
 .lp-pastel-root.lp-reserve-page .pastel-secondary-active .rv-step-num {
-    background: linear-gradient(135deg, var(--pink), #d4608a);
+    background: linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink, #e8729a) 78%, #000));
     color: var(--white);
     border-color: var(--pink);
-    box-shadow: 0 3px 14px rgba(232, 114, 154, 0.3);
+    box-shadow: 0 3px 14px color-mix(in srgb, var(--pink, #e8729a) 30%, transparent);
 }
 
 .lp-pastel-root.lp-reserve-page .pastel-secondary-active .rv-step-label {
@@ -73,7 +73,7 @@
 .lp-pastel-root.lp-reserve-page .pastel-reserve-embed select:focus,
 .lp-pastel-root.lp-reserve-page .pastel-reserve-embed textarea:focus {
     border-color: var(--pink) !important;
-    box-shadow: 0 0 0 3px rgba(232, 114, 154, 0.12) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink, #e8729a) 14%, transparent) !important;
 }
 
 .lp-pastel-root.lp-reserve-page .pastel-reserve-embed label.block.text-sm {
@@ -101,7 +101,7 @@
     border-color: var(--pink) !important;
     background: var(--pink) !important;
     color: var(--white) !important;
-    box-shadow: 0 3px 14px rgba(232, 114, 154, 0.25) !important;
+    box-shadow: 0 3px 14px color-mix(in srgb, var(--pink, #e8729a) 25%, transparent) !important;
 }
 
 .lp-pastel-root.lp-reserve-page .pastel-reserve-embed button[type='submit'] {
@@ -113,15 +113,15 @@
     font-weight: 700 !important;
     font-family: inherit !important;
     letter-spacing: 0.1em !important;
-    background: linear-gradient(135deg, var(--pink), #d4608a) !important;
+    background: linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink, #e8729a) 78%, #000)) !important;
     color: var(--white) !important;
-    box-shadow: 0 4px 18px rgba(232, 114, 154, 0.25) !important;
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--pink, #e8729a) 25%, transparent) !important;
     transform: none !important;
 }
 
 .lp-pastel-root.lp-reserve-page .pastel-reserve-embed button[type='submit']:hover:not(:disabled) {
     transform: translateY(-2px) !important;
-    box-shadow: 0 8px 28px rgba(232, 114, 154, 0.35) !important;
+    box-shadow: 0 8px 28px color-mix(in srgb, var(--pink, #e8729a) 35%, transparent) !important;
 }
 
 .lp-pastel-root.lp-reserve-page .pastel-reserve-embed .border-b.border-gray-200 {
@@ -188,4 +188,159 @@
 
 .lp-pastel-root.lp-reserve-page .pastel-confirm-embed .pastel-confirm-body .group .inline-flex {
     max-width: 100%;
+}
+
+
+/* =============================================
+   2026-10 フォームUX改善レイヤー（見やすさ・使いやすさ）
+   ============================================= */
+
+/* 入力欄: タップしやすい高さ・iOSズーム防止の16px・ゆったり余白 */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='text'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='email'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='tel'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='number'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed input[type='date'],
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed select {
+    min-height: 48px !important;
+    font-size: 16px !important;
+    padding: 10px 14px !important;
+    background: #fff !important;
+}
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed textarea {
+    font-size: 16px !important;
+    padding: 12px 14px !important;
+}
+
+/* ラベル: ひと回り大きく・入力欄との間隔を確保 */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed label.block.text-sm {
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+/* 選択ボタン（会場・時間枠など）: 44px以上のタップ領域・選択中を明確に */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .grid button[type='button'].p-4 {
+    min-height: 52px;
+    font-size: 15px !important;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .grid button[type='button'].border-pink-500 {
+    font-weight: 700 !important;
+}
+
+/* ステップインジケーター: 現在地をより大きく・ラベル可読性UP */
+.lp-pastel-root.lp-reserve-page .rv-step-num {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 15px !important;
+}
+.lp-pastel-root.lp-reserve-page .rv-step-label {
+    font-size: 12px !important;
+    letter-spacing: 0.04em;
+}
+.lp-pastel-root.lp-reserve-page .pastel-secondary-active .rv-step-num {
+    transform: scale(1.12);
+}
+
+/* 送信ボタン: 大きく・押せることが一目で分かる */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed button[type='submit'] {
+    min-height: 54px;
+    font-size: 16px !important;
+    padding: 15px 28px !important;
+}
+
+/* セクション見出しの直下に息継ぎ */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed h3.text-lg {
+    margin-top: 8px;
+}
+
+/* 注意・警告ブロック（会場を選択してください等）を読みやすく */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .bg-yellow-50,
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed [class*='bg-amber'] {
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+/* フォーカスの可視性（キーボード操作） */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed button:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--pink, #e8729a) 45%, transparent);
+    outline-offset: 2px;
+}
+
+
+/* =============================================
+   Tailwindピンク固定クラスのテーマ変数化（モーダル内）
+   ============================================= */
+.event-show-reserve-modal [class*='text-pink-'],
+.event-show-reserve-modal [class*='text-rose-'] {
+    color: var(--pink, #e8729a) !important;
+}
+.event-show-reserve-modal [class*='border-pink-500'] {
+    border-color: var(--pink, #e8729a) !important;
+}
+.event-show-reserve-modal [class*='border-pink-300'] {
+    border-color: var(--pink-soft, #f2a0b8) !important;
+}
+.event-show-reserve-modal [class*='border-pink-100'],
+.event-show-reserve-modal [class*='border-rose-100'] {
+    border-color: var(--pink-pale, #fce4ec) !important;
+}
+.event-show-reserve-modal [class*='bg-pink-50'],
+.event-show-reserve-modal [class*='bg-rose-50'] {
+    background-color: var(--pink-mist, #fff0f3) !important;
+}
+.event-show-reserve-modal [class*='from-pink-50'],
+.event-show-reserve-modal [class*='from-rose-50'],
+.event-show-reserve-modal [class*='to-rose-50'] {
+    --tw-gradient-from: var(--pink-mist, #fff0f3) !important;
+    --tw-gradient-to: var(--blush, #fff7f9) !important;
+}
+.event-show-reserve-modal [class*='ring-pink'] {
+    --tw-ring-color: color-mix(in srgb, var(--pink, #e8729a) 30%, transparent) !important;
+}
+.event-show-reserve-modal input[type='checkbox'],
+.event-show-reserve-modal input[type='radio'] {
+    accent-color: var(--pink, #e8729a);
+}
+
+/* お客様情報ブロックの出現（段階表示） */
+.event-show-reserve-modal .rv-reveal {
+    animation: rv-reveal-in 0.4s ease-out;
+}
+@keyframes rv-reveal-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* =============================================
+   時間枠の視認性改善（バッジ・受付終了）
+   ============================================= */
+
+/* 「残りわずか」バッジ: テーマ色ベタ×白文字で高コントラスト */
+.event-show-reserve-modal [class*='from-rose-400'] {
+    background: var(--pink, #e8729a) !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    padding: 3px 10px !important;
+}
+
+/* 受付終了枠: 斜線パターン＋時刻の打ち消し線で一目で「埋まっている」と分かる */
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .grid button[type='button'].p-4:disabled {
+    background: repeating-linear-gradient(45deg, #f4f4f4 0 8px, #eaeaea 8px 16px) !important;
+    border-color: #d8d8d8 !important;
+    opacity: 1 !important;
+}
+.lp-pastel-root.lp-reserve-page .pastel-reserve-embed .grid button[type='button'].p-4:disabled .font-bold {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: #b0b0b0;
+    color: #9aa0a6 !important;
+}
+/* 「受付終了」バッジ: 濃グレーベタ×白文字 */
+.event-show-reserve-modal .grid button[type='button']:disabled [class*='from-gray-400'] {
+    background: #5f6670 !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    padding: 3px 10px !important;
 }

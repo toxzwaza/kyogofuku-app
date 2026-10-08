@@ -60,8 +60,10 @@
                                         <option value="slide">スライド</option>
                                         <option value="cube">キューブ</option>
                                         <option value="coverflow">カバーフロー</option>
+                                        <option value="marquee">マーキー（横流し・左へ）</option>
+                                        <option value="marquee_reverse">マーキー（横流し・右へ）</option>
                                     </select>
-                                    <p class="mt-1 text-sm text-brand-text-muted">スライドショーの切り替えエフェクトを選択</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">スライドショーの切り替えエフェクトを選択。上下2段のマーキーにする場合は「左へ」「右へ」の2本を作成し、間に通常画像を配置してください</p>
                                 </div>
 
                                 <div>
@@ -688,11 +690,14 @@ const updateName = () => {
 };
 
 const updateSettings = () => {
-    settingsForm.put(route('admin.slideshows.update', props.slideshow.id), {
-        onSuccess: () => {
-            nameForm.name = settingsForm.name;
-        },
-    });
+    // ファイル添付時もmultipartで送れるようPOST+_methodスプーフィング
+    settingsForm
+        .transform((data) => ({ ...data, _method: 'put' }))
+        .post(route('admin.slideshows.update', props.slideshow.id), {
+            onSuccess: () => {
+                nameForm.name = settingsForm.name;
+            },
+        });
 };
 
 const submitImage = () => {
