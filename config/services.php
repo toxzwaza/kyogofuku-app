@@ -62,4 +62,8 @@ return [
     // 勤怠マスタ（勤務属性・会社カレンダー）取込APIの認証トークン
     'attendance_master_import_secret' => env('ATTENDANCE_MASTER_IMPORT_SECRET'),
 
+
+    // 社内GTM（全イベントLP共通・代理店GTM=events.gtm_idとは別に常時配信）
+    'company_gtm_id' => env('COMPANY_GTM_ID', 'GTM-WHQZSR67'),
+
 ];

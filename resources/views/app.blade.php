@@ -47,11 +47,33 @@
     @inertiaHead
 
     @php
-        $gtmId = $page['props']['gtmId'] ?? null;
+        $gtmId = $page['props']['gtmId'] ?? null; // 代理店GTM（イベント別設定）
+        $companyGtmId = (request()->is('login') || request()->is('admin*')) ? null : config('services.company_gtm_id');
     @endphp
 
+    @if($companyGtmId)
+    <!-- Google Tag Manager（社内共通） -->
+    <script>
+        (function(w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start': new Date().getTime(),
+                event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s),
+                dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', '{{ $companyGtmId }}');
+    </script>
+    <!-- End Google Tag Manager（社内共通） -->
+    @endif
+
     @if($gtmId)
-    <!-- Google Tag Manager -->
+    <!-- Google Tag Manager（代理店・イベント別） -->
     <script>
         (function(w, d, s, l, i) {
             w[l] = w[l] || [];
@@ -73,6 +95,10 @@
 </head>
 
 <body class="font-sans antialiased">
+    @if($companyGtmId)
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ $companyGtmId }}"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    @endif
     @if($gtmId)
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ $gtmId }}"
