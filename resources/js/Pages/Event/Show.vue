@@ -130,7 +130,8 @@
                                     :src="item.data.path"
                                     :alt="item.data.alt || event.title"
                                     class="w-full object-cover md:mx-auto"
-                                    loading="lazy"
+                                    :loading="gIndex === 0 && index === 0 ? 'eager' : 'lazy'"
+                                    :fetchpriority="gIndex === 0 && index === 0 ? 'high' : undefined"
                                 />
                             </picture>
                             <!-- WebPパスが存在しない場合（既存画像）は通常の<img>要素 -->
@@ -139,7 +140,8 @@
                                 :src="item.data.path"
                                 :alt="item.data.alt || event.title"
                                 class="w-full object-cover md:mx-auto"
-                                loading="lazy"
+                                :loading="gIndex === 0 && index === 0 ? 'eager' : 'lazy'"
+                                :fetchpriority="gIndex === 0 && index === 0 ? 'high' : undefined"
                             />
                         </div>
                     </div>

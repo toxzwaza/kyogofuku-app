@@ -15,6 +15,9 @@
 
     @isset($lpSeo)
     <!-- イベントLP SEO（サーバー出力層） -->
+    @if(!empty($lpSeo['preloadImage']))
+    <link rel="preload" as="image" href="{{ $lpSeo['preloadImage'] }}" fetchpriority="high">
+    @endif
     <meta name="description" content="{{ $lpSeo['description'] }}">
     <link rel="canonical" href="{{ $lpSeo['canonical'] }}">
     <meta property="og:type" content="website">

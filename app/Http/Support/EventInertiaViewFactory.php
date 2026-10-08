@@ -23,6 +23,9 @@ class EventInertiaViewFactory
     {
         $payload = array_merge($this->pageService->buildShowPayload($event), $extraProps);
         $lpSeo = $this->seoBuilder->build($event);
+        // LCP対策: FV画像（1枚目）をpreload
+        $firstImage = $payload['images'][0] ?? null;
+        $lpSeo['preloadImage'] = $firstImage['webp_path'] ?? $firstImage['path'] ?? null;
         $slug = $event->activeLpDesignSlug();
         if ($slug) {
             $payload['lpThemeCssVars'] = $this->themeResolver->resolveCssVarsForEvent($event);
