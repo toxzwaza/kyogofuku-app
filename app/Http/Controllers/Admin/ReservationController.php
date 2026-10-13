@@ -50,15 +50,14 @@ class ReservationController extends Controller
             })->values();
         }
 
-        // 表示する開始日・終了日（予約フォームの場合のみ）。開始日デフォルトは本日、終了日は未指定で上限なし
-        $today = Carbon::today();
+        // 表示する開始日・終了日（予約フォームの場合のみ）。いずれも未指定時は絞り込みなし（当日デフォルトは廃止）
         $startDate = $request->filled('start_date')
             ? Carbon::parse($request->start_date)->startOfDay()
-            : $today;
+            : null;
         $endDate = $request->filled('end_date')
             ? Carbon::parse($request->end_date)->endOfDay()
             : null;
-        $startDateStr = $startDate->format('Y-m-d');
+        $startDateStr = $startDate ? $startDate->format('Y-m-d') : null;
         $endDateStr = $endDate ? $endDate->format('Y-m-d') : null;
 
         // 予約クエリを作成
@@ -70,9 +69,11 @@ class ReservationController extends Controller
         ])
             ->where('event_id', $event->id);
 
-        // 予約フォームの場合、開始日〜終了日の範囲で枠に紐づく予約のみ表示
+        // 予約フォームの場合、開始日〜終了日の範囲で枠に紐づく予約のみ表示（未指定の端は制限しない）
         if ($event->usesTimeslotReservation()) {
-            $reservationsQuery->whereDate('reservation_datetime', '>=', $startDateStr);
+            if ($startDateStr !== null) {
+                $reservationsQuery->whereDate('reservation_datetime', '>=', $startDateStr);
+            }
             if ($endDateStr !== null) {
                 $reservationsQuery->whereDate('reservation_datetime', '<=', $endDateStr);
             }
@@ -158,8 +159,10 @@ class ReservationController extends Controller
         if ($event->usesTimeslotReservation()) {
             $timeslotsQuery = $event->timeslots()->with('venue')->where('is_active', true);
 
-            // 開始日〜終了日の範囲の枠のみ
-            $timeslotsQuery->whereDate('start_at', '>=', $startDateStr);
+            // 開始日〜終了日の範囲の枠のみ（未指定の端は制限しない）
+            if ($startDateStr !== null) {
+                $timeslotsQuery->whereDate('start_at', '>=', $startDateStr);
+            }
             if ($endDateStr !== null) {
                 $timeslotsQuery->whereDate('start_at', '<=', $endDateStr);
             }
@@ -186,8 +189,10 @@ class ReservationController extends Controller
         if ($event->usesTimeslotReservation()) {
             $timeslotsQuery = $event->timeslots()->with('venue')->where('is_active', true);
 
-            // 開始日〜終了日の範囲の枠のみ
-            $timeslotsQuery->whereDate('start_at', '>=', $startDateStr);
+            // 開始日〜終了日の範囲の枠のみ（未指定の端は制限しない）
+            if ($startDateStr !== null) {
+                $timeslotsQuery->whereDate('start_at', '>=', $startDateStr);
+            }
             if ($endDateStr !== null) {
                 $timeslotsQuery->whereDate('start_at', '<=', $endDateStr);
             }

@@ -2409,14 +2409,8 @@ if (initialDatetime) {
 const filterReservationDate = ref(initialDate);
 const filterReservationTime = ref(initialTime);
 
-// 表示する開始日・終了日（開始日デフォルトは本日、終了日は未指定で上限なし）
-const getTodayString = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
-const filterStartDate = ref(
-  props.filters?.start_date ?? getTodayString()
-);
+// 表示する開始日・終了日（いずれも未指定時は絞り込みなし。開始日の当日デフォルトは廃止）
+const filterStartDate = ref(props.filters?.start_date ?? "");
 const filterEndDate = ref(props.filters?.end_date ?? "");
 
 // 並べ替え用のstate（デフォルトは新しい順）
@@ -2425,9 +2419,8 @@ const sortTimeOrder = ref("asc");
 
 // 予約詳細へのURL（絞り込み状態をクエリで渡す）
 const getReservationShowUrl = (reservationId) => {
-  const params = {
-    start_date: filterStartDate.value,
-  };
+  const params = {};
+  if (filterStartDate.value) params.start_date = filterStartDate.value;
   if (filterEndDate.value) params.end_date = filterEndDate.value;
   if (filterVenueId.value) params.venue_id = filterVenueId.value;
   if (filterReservationDate.value && filterReservationTime.value) {
@@ -2816,9 +2809,10 @@ const onDateChange = () => {
 
 // フィルターを適用
 const applyFilters = () => {
-  const params = {
-    start_date: filterStartDate.value,
-  };
+  const params = {};
+  if (filterStartDate.value) {
+    params.start_date = filterStartDate.value;
+  }
   if (filterEndDate.value) {
     params.end_date = filterEndDate.value;
   }
@@ -2844,11 +2838,11 @@ const resetFilters = () => {
   filterVenueId.value = "";
   filterReservationDate.value = "";
   filterReservationTime.value = "";
-  filterStartDate.value = getTodayString();
+  filterStartDate.value = "";
   filterEndDate.value = "";
   router.get(
     route("admin.events.reservations.index", props.event.id),
-    { start_date: getTodayString() },
+    {},
     {
       preserveState: true,
       preserveScroll: true,
