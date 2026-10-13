@@ -78,36 +78,62 @@ class CustomerSearchQuery
 
         // 顧客の担当店舗で絞り込み（複数選択可）。未指定（初回アクセス）時はデフォルト店舗。
         // 'all' を含む場合は全店舗（絞り込みなし）。
+        // 'none' を含む場合は担当店舗未設定(shop_id IS NULL=本システム導入前の登録顧客)も対象に含める。
+        $rawShopFilter = (array) $request->input('customer_shop_id');
+        $includeNoShop = in_array('none', $rawShopFilter, true);
         if (! $request->has('customer_shop_id')) {
             $customerShopIds = $defaultCustomerShopId !== null ? [$defaultCustomerShopId] : [];
-        } elseif (in_array('all', (array) $request->input('customer_shop_id'), true)) {
+            $includeNoShop = false;
+        } elseif (in_array('all', $rawShopFilter, true)) {
             $customerShopIds = [];
+            $includeNoShop = false;
         } else {
             $customerShopIds = array_values(array_filter(array_map(
                 fn ($v) => is_numeric($v) ? (int) $v : null,
-                (array) $request->input('customer_shop_id')
+                $rawShopFilter
             ), fn ($v) => $v !== null));
         }
 
         // 店舗グループによる強制制限（管理者以外）。
         // 「すべて」や他グループの店舗IDを指定しても、自グループの店舗に必ず限定する。
+        // ※「店舗なし」(NULL=導入前登録顧客) はどのグループにも属さないが、全スタッフに表示する方針のため制限対象外。
         $user = $request->user();
         if ($user && ! $user->isAttendanceManager()) {
             $visible = $user->visibleShopIds();
             if (empty($customerShopIds)) {
-                $customerShopIds = $visible;                                   // 「すべて」→自グループ全店に限定
+                // 「すべて」→自グループ全店に限定（ただし店舗なしのみ選択時は NULL 絞り込みだけを行う）
+                if (! $includeNoShop) {
+                    $customerShopIds = $visible;
+                }
             } else {
                 $customerShopIds = array_values(array_intersect($customerShopIds, $visible));
-                if (empty($customerShopIds)) {
+                if (empty($customerShopIds) && ! $includeNoShop) {
                     $customerShopIds = $visible;                               // 全て他グループなら自グループへ
                 }
             }
         }
 
-        if (! empty($customerShopIds)) {
+        // shop_id 絞り込みの適用。'none' 指定時は NULL を OR で含める。
+        if ($includeNoShop) {
+            $query->where(function ($q) use ($customerShopIds) {
+                if (! empty($customerShopIds)) {
+                    $q->whereIn('shop_id', $customerShopIds);
+                }
+                $q->orWhereNull('shop_id');
+            });
+        } elseif (! empty($customerShopIds)) {
             $query->whereIn('shop_id', $customerShopIds);
         }
-        $customerShopFilterValue = empty($customerShopIds) ? 'all' : $customerShopIds;
+
+        // UIの選択状態反映値。全店舗=「all」、それ以外は選択ID配列（店舗なし指定時は 'none' を付加）
+        if (empty($customerShopIds) && ! $includeNoShop) {
+            $customerShopFilterValue = 'all';
+        } else {
+            $customerShopFilterValue = $customerShopIds;
+            if ($includeNoShop) {
+                $customerShopFilterValue[] = 'none';
+            }
+        }
 
         // 成人式情報（顧客マスタ）
         if ($request->filled('seijin_preparation_venue')) {
