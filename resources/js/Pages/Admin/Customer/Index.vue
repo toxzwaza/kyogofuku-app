@@ -199,6 +199,15 @@
                                                     />
                                                     <span>全て</span>
                                                 </label>
+                                                <label class="flex items-center gap-2 text-sm text-brand-text cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        :checked="isShopSelected('none')"
+                                                        @change="toggleShopFilter('none')"
+                                                        class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
+                                                    />
+                                                    <span>店舗なし</span>
+                                                </label>
                                                 <label
                                                     v-for="shop in shops"
                                                     :key="shop.id"
@@ -1163,9 +1172,10 @@ const searchForm = reactive({
         if (v === undefined || v === null || v === '' || v === 'all') return ['all'];
         if (Array.isArray(v)) {
             if (v.length === 0 || v.includes('all')) return ['all'];
-            return v.map(Number);
+            // 'none'（店舗なし）は文字列のまま保持し、店舗IDは数値化する
+            return v.map((x) => (x === 'none' ? 'none' : Number(x)));
         }
-        return [Number(v)];
+        return v === 'none' ? ['none'] : [Number(v)];
     })(),
     seijin_preparation_venue: props.filters?.seijin_preparation_venue || '',
     seijin_preparation_time: props.filters?.seijin_preparation_time || '',
