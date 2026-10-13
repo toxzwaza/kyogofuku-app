@@ -72,6 +72,15 @@
                     <input v-model="form.phone_number" type="text" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" placeholder="電話番号で検索" />
                 </div>
                 <div>
+                    <label class="block text-xs font-medium text-brand-text mb-1">年齢（歳）※生年月日から算出</label>
+                    <div class="flex items-center gap-1">
+                        <input v-model="form.age_min" type="number" min="0" max="150" placeholder="下限" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
+                        <span class="shrink-0 text-xs text-brand-text">〜</span>
+                        <input v-model="form.age_max" type="number" min="0" max="150" placeholder="上限" class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm" />
+                    </div>
+                    <p class="mt-1 text-[11px] text-brand-text-muted leading-snug">生年月日が未登録の顧客は年齢で絞り込むと表示されません。</p>
+                </div>
+                <div>
                     <label class="block text-xs font-medium text-brand-text mb-1">担当店舗（複数選択可）</label>
                     <div class="rounded-md border border-brand-border bg-brand-surface max-h-40 overflow-y-auto p-2 space-y-1">
                         <label class="flex items-center gap-2 text-sm text-brand-text cursor-pointer">

@@ -405,6 +405,8 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         Route::get('/{broadcast}/recipients', [$controller, 'selectRecipients'])->name('recipients');
         Route::get('/{broadcast}/search/customers', [$controller, 'searchCustomers'])->name('search.customers');
         Route::get('/{broadcast}/search/reservations', [$controller, 'searchReservations'])->name('search.reservations');
+        Route::get('/{broadcast}/select-all/customers', [$controller, 'selectAllCustomers'])->name('select-all.customers');
+        Route::get('/{broadcast}/select-all/reservations', [$controller, 'selectAllReservations'])->name('select-all.reservations');
         Route::post('/{broadcast}/send', [$controller, 'send'])->name('send');
     });
 

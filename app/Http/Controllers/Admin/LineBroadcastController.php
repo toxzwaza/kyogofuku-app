@@ -360,38 +360,7 @@ class LineBroadcastController extends Controller
      */
     public function searchReservations(Request $request, LineBroadcast $broadcast)
     {
-        $eventIds = array_values(array_filter(array_map(
-            fn ($v) => is_numeric($v) ? (int) $v : null,
-            (array) $request->input('event_ids', [])
-        ), fn ($v) => $v !== null));
-
-        $keyword = trim((string) $request->input('q', ''));
-        $customerFilter = (string) $request->input('customer_linked', 'all'); // all / none / linked
-
-        $query = EventReservation::query()
-            ->with(['event:id,title'])
-            ->orderByDesc('id');
-
-        if (! empty($eventIds)) {
-            $query->whereIn('event_id', $eventIds);
-        }
-
-        if ($keyword !== '') {
-            $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword).'%';
-            $query->where(function ($q) use ($like) {
-                $q->where('name', 'like', $like)
-                    ->orWhere('furigana', 'like', $like)
-                    ->orWhere('phone', 'like', $like);
-            });
-        }
-
-        if ($customerFilter === 'none') {
-            $query->whereNull('customer_id');
-        } elseif ($customerFilter === 'linked') {
-            $query->whereNotNull('customer_id');
-        }
-
-        $paginator = $query->paginate(20)->withQueryString();
+        $paginator = $this->reservationSearchQuery($request)->paginate(20)->withQueryString();
 
         $reservationIds = $paginator->getCollection()->pluck('id');
 
@@ -476,8 +445,157 @@ class LineBroadcastController extends Controller
     }
 
     // ---------------------------------------------------------------
+    // 送信先選択: 検索結果の全件選択
+    // ---------------------------------------------------------------
+
+    /** 検索結果の全件選択で一度に選べる人数の上限（誤送信防止・UI負荷対策） */
+    private const SELECT_ALL_LIMIT = 1000;
+
+    /**
+     * 送信先選択: 顧客検索結果の全件を選択（JSON）
+     *
+     * 現在の検索条件に合致する「送信可能な」顧客を全ページ分まとめて返す。
+     * 上限を超える場合は entries を返さず exceeded=true とし、フロントで抑止する。
+     */
+    public function selectAllCustomers(Request $request, LineBroadcast $broadcast)
+    {
+        ['query' => $query] = CustomerSearchQuery::build($request, CustomerSearchQuery::defaultShopIdFor($request->user()));
+
+        $names = $query->pluck('name', 'id'); // [customerId => name]
+
+        $contactsByCustomer = CustomerLineContact::query()
+            ->whereIn('customer_id', $names->keys())
+            ->get(['id', 'customer_id', 'line_user_id'])
+            ->groupBy('customer_id');
+
+        $sentUserIds = $this->sentUserIds($broadcast, $contactsByCustomer->flatten(1)->pluck('line_user_id'));
+
+        $entries = $this->buildSelectAllEntries($names, $contactsByCustomer, $sentUserIds, 'c');
+
+        return $this->selectAllResponse($entries);
+    }
+
+    /**
+     * 送信先選択: イベント予約者検索結果の全件を選択（JSON）
+     */
+    public function selectAllReservations(Request $request, LineBroadcast $broadcast)
+    {
+        $reservations = $this->reservationSearchQuery($request)->get(['id', 'name', 'form_data']);
+
+        $names = $reservations->mapWithKeys(fn (EventReservation $r) => [
+            $r->id => ($r->name ?: ($r->form_data['name'] ?? '')),
+        ]);
+
+        $contactsByReservation = CustomerLineContact::query()
+            ->whereIn('event_reservation_id', $names->keys())
+            ->get(['id', 'event_reservation_id', 'line_user_id'])
+            ->groupBy('event_reservation_id');
+
+        $sentUserIds = $this->sentUserIds($broadcast, $contactsByReservation->flatten(1)->pluck('line_user_id'));
+
+        $entries = $this->buildSelectAllEntries($names, $contactsByReservation, $sentUserIds, 'r');
+
+        return $this->selectAllResponse($entries);
+    }
+
+    // ---------------------------------------------------------------
     // private
     // ---------------------------------------------------------------
+
+    /**
+     * イベント予約者検索のクエリを構築する（一覧検索・全件選択で共有）。
+     */
+    private function reservationSearchQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $eventIds = array_values(array_filter(array_map(
+            fn ($v) => is_numeric($v) ? (int) $v : null,
+            (array) $request->input('event_ids', [])
+        ), fn ($v) => $v !== null));
+
+        $keyword = trim((string) $request->input('q', ''));
+        $customerFilter = (string) $request->input('customer_linked', 'all'); // all / none / linked
+
+        $query = EventReservation::query()
+            ->with(['event:id,title'])
+            ->orderByDesc('id');
+
+        if (! empty($eventIds)) {
+            $query->whereIn('event_id', $eventIds);
+        }
+
+        if ($keyword !== '') {
+            $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword).'%';
+            $query->where(function ($q) use ($like) {
+                $q->where('name', 'like', $like)
+                    ->orWhere('furigana', 'like', $like)
+                    ->orWhere('phone', 'like', $like);
+            });
+        }
+
+        if ($customerFilter === 'none') {
+            $query->whereNull('customer_id');
+        } elseif ($customerFilter === 'linked') {
+            $query->whereNotNull('customer_id');
+        }
+
+        // 生年月日から算出した満年齢での範囲絞り込み（顧客検索と同ロジック）
+        CustomerSearchQuery::applyAgeRange($query, $request->input('age_min'), $request->input('age_max'));
+
+        return $query;
+    }
+
+    /**
+     * 全件選択レスポンス用に、送信可能な対象のみを {key,label,contactIds} 形式へ整形する。
+     *
+     * @param  \Illuminate\Support\Collection  $names                  [id => 表示名]
+     * @param  \Illuminate\Support\Collection  $contactsByTarget       [id => CustomerLineContact[]]
+     * @param  \Illuminate\Support\Collection  $sentUserIds            送信済み line_user_id 一覧
+     * @param  string                          $kind                   'c'（顧客）/ 'r'（予約者）
+     * @return array<int, array{key:string,label:string,contactIds:array<int,int>}>
+     */
+    private function buildSelectAllEntries($names, $contactsByTarget, $sentUserIds, string $kind): array
+    {
+        $entries = [];
+        foreach ($names as $id => $name) {
+            $sendableIds = ($contactsByTarget[$id] ?? collect())
+                ->reject(fn ($c) => $sentUserIds->contains($c->line_user_id))
+                ->pluck('id')
+                ->values();
+            if ($sendableIds->isEmpty()) {
+                continue;
+            }
+            $entries[] = [
+                'key' => $kind.'-'.$id,
+                'label' => $name ?: '（名前未設定）',
+                'contactIds' => $sendableIds->all(),
+            ];
+        }
+
+        return $entries;
+    }
+
+    /**
+     * 全件選択レスポンスを返す。上限超過時は entries を返さず exceeded=true とする。
+     */
+    private function selectAllResponse(array $entries): \Illuminate\Http\JsonResponse
+    {
+        $total = count($entries);
+        if ($total > self::SELECT_ALL_LIMIT) {
+            return response()->json([
+                'exceeded' => true,
+                'total' => $total,
+                'limit' => self::SELECT_ALL_LIMIT,
+                'entries' => [],
+            ]);
+        }
+
+        return response()->json([
+            'exceeded' => false,
+            'total' => $total,
+            'limit' => self::SELECT_ALL_LIMIT,
+            'entries' => $entries,
+        ]);
+    }
 
     private function validateBroadcast(Request $request): array
     {

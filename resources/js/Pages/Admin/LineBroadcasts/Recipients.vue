@@ -69,16 +69,24 @@
             <!-- 左：検索結果 -->
             <div class="flex-1 min-w-0 w-full">
                 <UiCard variant="default" padding="none">
-                    <div class="px-4 py-3 border-b border-brand-border flex flex-wrap items-center justify-between gap-2 bg-brand-surface-2/60">
-                        <div class="flex items-center gap-3">
-                            <h3 class="text-base font-semibold text-brand-text">検索結果</h3>
-                            <p class="text-sm text-brand-text-muted">
-                                全 <span class="font-medium text-brand-text tabular-nums">{{ customerResult.total }}</span> 件
-                            </p>
+                    <div class="px-4 py-3 border-b border-brand-border bg-brand-surface-2/60 space-y-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-3">
+                                <h3 class="text-base font-semibold text-brand-text">検索結果</h3>
+                                <p class="text-sm text-brand-text-muted">
+                                    全 <span class="font-medium text-brand-text tabular-nums">{{ customerResult.total }}</span> 件
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <UiButton size="sm" variant="subtle" type="button" :disabled="!customerSendableRows.length" @click="selectAllCustomersOnPage">
+                                    このページを全て選択
+                                </UiButton>
+                                <UiButton size="sm" variant="primary" type="button" :loading="selectingAllCustomers" :disabled="!customerResult.total" @click="selectAllCustomersInResults">
+                                    検索結果すべてを選択（全{{ customerResult.total }}件）
+                                </UiButton>
+                            </div>
                         </div>
-                        <UiButton size="sm" variant="subtle" type="button" :disabled="!customerSendableRows.length" @click="selectAllCustomersOnPage">
-                            このページの送信可能な顧客を全て選択
-                        </UiButton>
+                        <p v-if="customerSelectAllNotice" class="text-xs text-brand-danger">{{ customerSelectAllNotice }}</p>
                     </div>
                     <!-- 適用中の絞り込み条件（顧客一覧と同表示） -->
                     <div
@@ -168,6 +176,13 @@
                             size="sm"
                         />
                     </UiFormField>
+                    <UiFormField label="年齢（歳）" hint="生年月日から算出。未登録者は表示されません">
+                        <div class="flex items-center gap-1">
+                            <UiInput v-model="reservationFilter.age_min" type="number" placeholder="下限" size="sm" class="flex-1 min-w-0" />
+                            <span class="shrink-0 text-xs text-brand-text">〜</span>
+                            <UiInput v-model="reservationFilter.age_max" type="number" placeholder="上限" size="sm" class="flex-1 min-w-0" />
+                        </div>
+                    </UiFormField>
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs font-medium text-brand-text">
@@ -254,16 +269,24 @@
             <!-- 左：検索結果 -->
             <div class="flex-1 min-w-0 w-full">
             <UiCard variant="default" padding="none">
-                <div class="px-4 py-3 border-b border-brand-border flex flex-wrap items-center justify-between gap-2 bg-brand-surface-2/60">
-                    <div class="flex items-center gap-3">
-                        <h3 class="text-base font-semibold text-brand-text">検索結果</h3>
-                        <p class="text-sm text-brand-text-muted">
-                            全 <span class="font-medium text-brand-text tabular-nums">{{ reservationResult.total }}</span> 件
-                        </p>
+                <div class="px-4 py-3 border-b border-brand-border bg-brand-surface-2/60 space-y-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-base font-semibold text-brand-text">検索結果</h3>
+                            <p class="text-sm text-brand-text-muted">
+                                全 <span class="font-medium text-brand-text tabular-nums">{{ reservationResult.total }}</span> 件
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <UiButton size="sm" variant="subtle" type="button" :disabled="!reservationSendableRows.length" @click="selectAllReservationsOnPage">
+                                このページを全て選択
+                            </UiButton>
+                            <UiButton size="sm" variant="primary" type="button" :loading="selectingAllReservations" :disabled="!reservationResult.total" @click="selectAllReservationsInResults">
+                                検索結果すべてを選択（全{{ reservationResult.total }}件）
+                            </UiButton>
+                        </div>
                     </div>
-                    <UiButton size="sm" variant="subtle" type="button" :disabled="!reservationSendableRows.length" @click="selectAllReservationsOnPage">
-                        このページの送信可能な予約者を全て選択
-                    </UiButton>
+                    <p v-if="reservationSelectAllNotice" class="text-xs text-brand-danger">{{ reservationSelectAllNotice }}</p>
                 </div>
 
                 <div v-if="reservationLoading" class="p-8 text-center text-sm text-brand-text-muted">検索中…</div>
@@ -514,6 +537,7 @@ function rowClasses(row, kind) {
 // ---------------------------------------------------------------
 const defaultCustomerFilter = () => ({
     name: '', kana: '', ceremony_prefecture: null, ceremony_area_id: [], phone_number: '',
+    age_min: '', age_max: '',
     customer_shop_id: ['all'],
     created_at_from: '', created_at_to: '', full_body_photo_presence: null,
     seijin_preparation_venue: '', seijin_preparation_time: '', other_store_preparation: null,
@@ -591,10 +615,49 @@ function selectAllCustomersOnPage() {
     });
 }
 
+// サーバーから返った全件分の送信可能エントリを選択トレイへ反映する（重複はスキップ）
+function applySelectAllEntries(entries) {
+    entries.forEach((entry) => {
+        if (!selection.has(entry.key)) {
+            selection.set(entry.key, {
+                key: entry.key,
+                label: entry.label,
+                contactIds: [...entry.contactIds],
+            });
+        }
+    });
+}
+
+const selectingAllCustomers = ref(false);
+const customerSelectAllNotice = ref('');
+
+async function selectAllCustomersInResults() {
+    selectingAllCustomers.value = true;
+    customerSelectAllNotice.value = '';
+    try {
+        const params = customerSearchParams(1);
+        const { data } = await axios.get(route('admin.line-broadcasts.select-all.customers', props.broadcast.id), { params });
+        if (data.exceeded) {
+            customerSelectAllNotice.value = `該当 ${data.total} 件が全選択の上限（${data.limit} 件）を超えています。検索条件で絞り込んでから全選択してください。`;
+            return;
+        }
+        if (!data.entries.length) {
+            customerSelectAllNotice.value = '送信可能な（LINE連携済み・未送信の）顧客がありません。';
+            return;
+        }
+        applySelectAllEntries(data.entries);
+    } catch (e) {
+        console.error('顧客の全件選択に失敗しました', e);
+        customerSelectAllNotice.value = '全件選択に失敗しました。時間をおいて再度お試しください。';
+    } finally {
+        selectingAllCustomers.value = false;
+    }
+}
+
 // ---------------------------------------------------------------
 // イベント予約者検索
 // ---------------------------------------------------------------
-const defaultReservationFilter = () => ({ q: '', customer_linked: 'all', event_ids: [] });
+const defaultReservationFilter = () => ({ q: '', customer_linked: 'all', event_ids: [], age_min: '', age_max: '' });
 const reservationFilter = reactive(defaultReservationFilter());
 
 // ---- イベント選択テーブル ----
@@ -643,16 +706,22 @@ const filteredEvents = computed(() => (props.events || []).filter((ev) => {
 const reservationResult = reactive({ data: [], current_page: 1, last_page: 1, total: 0 });
 const reservationLoading = ref(false);
 
+function reservationSearchParams(page) {
+    return {
+        page,
+        q: reservationFilter.q || undefined,
+        customer_linked: reservationFilter.customer_linked,
+        event_ids: reservationFilter.event_ids.length ? reservationFilter.event_ids : undefined,
+        age_min: reservationFilter.age_min !== '' ? reservationFilter.age_min : undefined,
+        age_max: reservationFilter.age_max !== '' ? reservationFilter.age_max : undefined,
+    };
+}
+
 async function searchReservations(page = 1) {
     reservationLoading.value = true;
     try {
         const { data } = await axios.get(route('admin.line-broadcasts.search.reservations', props.broadcast.id), {
-            params: {
-                page,
-                q: reservationFilter.q || undefined,
-                customer_linked: reservationFilter.customer_linked,
-                event_ids: reservationFilter.event_ids.length ? reservationFilter.event_ids : undefined,
-            },
+            params: reservationSearchParams(page),
         });
         reservationResult.data = data.reservations.data;
         reservationResult.current_page = data.reservations.current_page;
@@ -679,6 +748,32 @@ function selectAllReservationsOnPage() {
         const key = selectionKey(row, 'r');
         if (!selection.has(key)) toggleRow(row, 'r');
     });
+}
+
+const selectingAllReservations = ref(false);
+const reservationSelectAllNotice = ref('');
+
+async function selectAllReservationsInResults() {
+    selectingAllReservations.value = true;
+    reservationSelectAllNotice.value = '';
+    try {
+        const params = reservationSearchParams(1);
+        const { data } = await axios.get(route('admin.line-broadcasts.select-all.reservations', props.broadcast.id), { params });
+        if (data.exceeded) {
+            reservationSelectAllNotice.value = `該当 ${data.total} 件が全選択の上限（${data.limit} 件）を超えています。検索条件で絞り込んでから全選択してください。`;
+            return;
+        }
+        if (!data.entries.length) {
+            reservationSelectAllNotice.value = '送信可能な（LINE連携済み・未送信の）予約者がありません。';
+            return;
+        }
+        applySelectAllEntries(data.entries);
+    } catch (e) {
+        console.error('予約者の全件選択に失敗しました', e);
+        reservationSelectAllNotice.value = '全件選択に失敗しました。時間をおいて再度お試しください。';
+    } finally {
+        selectingAllReservations.value = false;
+    }
 }
 
 // ---------------------------------------------------------------

@@ -39,6 +39,8 @@ export function buildCustomerFilterChips(filters, lists = {}) {
     text('name', '顧客名');
     text('kana', 'ふりがな');
     text('phone_number', '電話番号');
+    text('age_min', '年齢(下限)');
+    text('age_max', '年齢(上限)');
     const shopIds = toArray(f.customer_shop_id).filter((x) => x !== 'all');
     if (shopIds.length) {
         push({ key: 'customer_shop_id', label: '担当店舗', value: shopIds.map((id) => findName(shops, id)).join('、') });
