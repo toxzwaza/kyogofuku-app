@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentImage;
 use App\Models\Event;
 use App\Models\EventImage;
+use App\Models\EventReservation;
 use App\Models\Shop;
 use App\Models\UtmSource;
 use App\Models\Venue;
@@ -318,12 +319,32 @@ class EventController extends Controller
         $allDocuments = Document::orderBy('created_at', 'desc')->get();
         $utmSources = UtmSource::where('is_active', true)->orderBy('sort_order')->get();
 
+        // このイベントの流入経路（utm_source）別の予約者数（全期間・キャンセル除く）
+        // オーバービューと同じ集計ロジック（EventReservation::utmSourceDistribution）を使用
+        $utmDist = EventReservation::utmSourceDistribution($event->reservations());
+
+        // 流入経路ごとの予約者（ツールチップ用）。上の集計と同じ条件（キャンセル除く・空は「（直接・不明）」）で、
+        // 既にロード済みの $event->reservations から作るので追加クエリは発生しない。受付日時の新しい順。
+        $utmMembers = $event->reservations
+            ->where('cancel_flg', false)
+            ->sortByDesc('created_at')
+            ->groupBy(fn ($r) => $r->utmSourceLabel())
+            ->map(fn ($rows) => $rows->map(fn ($r) => [
+                'id' => $r->id,
+                'name' => $r->name ?: ($r->form_data['name'] ?? ''),
+                'furigana' => $r->furigana ?: ($r->form_data['furigana'] ?? ''),
+                'reservation_datetime' => $r->reservation_datetime,
+            ])->values()->all())
+            ->all();
+
         return Inertia::render($this->viewFor('Admin/Event/Show'), [
             'event' => $event,
             'allVenues' => $allVenues,
             'allShops' => $allShops,
             'allDocuments' => $allDocuments,
             'utmSources' => $utmSources,
+            'utm_dist' => $utmDist,
+            'utm_members' => $utmMembers,
         ]);
     }
 
