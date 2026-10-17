@@ -51,16 +51,11 @@ class OverviewController extends Controller
             ->values();
 
         // 流入経路（utm_source）別の予約者数（直近30日・キャンセル除く）
-        $utmDist = EventReservation::where('created_at', '>=', $since)
-            ->where('cancel_flg', false)
-            ->whereIn('event_id', $shopEventIds)
-            ->selectRaw("COALESCE(NULLIF(utm_source, ''), '（直接・不明）') as source, COUNT(*) as cnt")
-            ->groupBy('source')
-            ->orderByDesc('cnt')
-            ->get()
-            ->map(fn ($r) => ['source' => (string) $r->source, 'count' => (int) $r->cnt])
-            ->values()
-            ->all();
+        // 集計本体はイベント詳細と共通の EventReservation::utmSourceDistribution()
+        $utmDist = EventReservation::utmSourceDistribution(
+            EventReservation::where('created_at', '>=', $since)
+                ->whereIn('event_id', $shopEventIds)
+        );
 
         // ── 入力もれチェック（所属店舗の顧客が対象） ──
         // カードのリンク先が顧客一覧のため、レコード件数ではなく「該当顧客数」で数える

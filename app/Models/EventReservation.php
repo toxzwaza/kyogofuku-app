@@ -9,6 +9,9 @@ class EventReservation extends Model
 {
     use HasFactory;
 
+    /** 流入経路（utm_source）が空の予約をまとめる表示ラベル */
+    public const UTM_SOURCE_UNKNOWN_LABEL = '（直接・不明）';
+
     protected $fillable = [
         'event_id',
         'document_id',
@@ -141,6 +144,39 @@ class EventReservation extends Model
     public function schedule()
     {
         return $this->hasOne(StaffSchedule::class, 'event_reservation_id');
+    }
+
+    /**
+     * 流入経路（utm_source）別の予約者数を集計する。
+     *
+     * オーバービュー（直近30日・所属店舗）とイベント詳細（イベント単位）で共通利用する。
+     * 期間・イベント等の絞り込みは呼び出し側が $query に適用し、ここでは
+     * 「キャンセル除く」「空の utm_source は『（直接・不明）』にまとめる」「件数の多い順」を統一する。
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Eloquent\Relations\Relation  $query
+     * @return array<int, array{source: string, count: int}>
+     */
+    public static function utmSourceDistribution($query): array
+    {
+        return $query
+            ->where('cancel_flg', false)
+            ->selectRaw("COALESCE(NULLIF(utm_source, ''), ?) as source, COUNT(*) as cnt", [self::UTM_SOURCE_UNKNOWN_LABEL])
+            ->groupBy('source')
+            ->orderByDesc('cnt')
+            ->get()
+            ->map(fn ($r) => ['source' => (string) $r->source, 'count' => (int) $r->cnt])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * この予約の流入経路ラベル（utmSourceDistribution の source と同じ値になる）
+     */
+    public function utmSourceLabel(): string
+    {
+        return ($this->utm_source !== null && $this->utm_source !== '')
+            ? (string) $this->utm_source
+            : self::UTM_SOURCE_UNKNOWN_LABEL;
     }
 
     /**

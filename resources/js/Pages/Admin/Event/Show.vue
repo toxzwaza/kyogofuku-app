@@ -1015,11 +1015,86 @@
                                 </dl>
                             </div>
 
+                            <!-- 流入経路別の予約者数（このイベントのみ・全期間・キャンセル除く） -->
+                            <div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold">流入経路別の予約者数</h3>
+                                    <span class="text-xs text-brand-text-muted flex items-center gap-1">
+                                        <BarChart3 :size="12" />このイベントのみ・キャンセル除く
+                                    </span>
+                                </div>
+                                <div v-if="utm_dist.length" class="overflow-x-auto rounded-lg border border-brand-border">
+                                    <table class="min-w-full divide-y divide-brand-border">
+                                        <thead class="bg-brand-surface-2">
+                                            <tr>
+                                                <th class="px-4 py-2.5 text-left text-xs font-medium text-brand-text-muted uppercase tracking-wider">流入経路</th>
+                                                <th class="px-4 py-2.5 text-right text-xs font-medium text-brand-text-muted uppercase tracking-wider">予約者数</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-brand-surface divide-y divide-brand-border">
+                                            <tr
+                                                v-for="row in utm_dist"
+                                                :key="row.source"
+                                                class="hover:bg-brand-surface-2 cursor-help focus:outline-none focus-visible:bg-brand-surface-2"
+                                                tabindex="0"
+                                                @mouseenter="showUtmTooltip(row.source, $event)"
+                                                @mouseleave="scheduleHideUtmTooltip"
+                                                @focus="showUtmTooltip(row.source, $event)"
+                                                @blur="scheduleHideUtmTooltip"
+                                            >
+                                                <td class="px-4 py-2.5 text-sm text-brand-text">{{ row.source }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-brand-text text-right tabular-nums">{{ row.count }}</td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot class="bg-brand-surface-2 border-t border-brand-border">
+                                            <tr>
+                                                <td class="px-4 py-2.5 text-sm font-semibold text-brand-text">合計</td>
+                                                <td class="px-4 py-2.5 text-sm font-semibold text-brand-text text-right tabular-nums">{{ utmTotal }}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                <div v-else class="h-32 flex items-center justify-center text-brand-text-muted text-sm">
+                                    データがありません
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- 流入経路別の予約者数：行ホバー時の予約者一覧ツールチップ（1つを使い回し、画面内に収まる位置へ固定表示） -->
+        <Teleport to="body">
+            <div
+                v-if="utmTooltip.source !== null"
+                role="tooltip"
+                class="fixed z-50 w-80 rounded-md border border-brand-border bg-brand-surface shadow-lg text-xs text-brand-text"
+                :style="{ left: utmTooltip.left + 'px', top: utmTooltip.top + 'px' }"
+                @mouseenter="cancelHideUtmTooltip"
+                @mouseleave="scheduleHideUtmTooltip"
+            >
+                <div class="px-3 py-2 border-b border-brand-border bg-brand-surface-2 rounded-t-md flex items-center justify-between">
+                    <span class="font-semibold">{{ utmTooltip.source }}</span>
+                    <span class="text-brand-text-muted tabular-nums">{{ utmTooltipMembers.length }}件</span>
+                </div>
+                <ul v-if="utmTooltipMembers.length" class="max-h-64 overflow-y-auto divide-y divide-brand-border">
+                    <li
+                        v-for="m in utmTooltipMembers"
+                        :key="m.id"
+                        class="px-3 py-1.5 flex items-start justify-between gap-3"
+                    >
+                        <span class="min-w-0">
+                            <span class="block text-sm text-brand-text truncate">{{ m.name || '—' }}</span>
+                            <span v-if="m.furigana" class="block text-[11px] text-brand-text-muted truncate">{{ m.furigana }}</span>
+                        </span>
+                        <span class="shrink-0 text-brand-text-muted whitespace-nowrap tabular-nums">{{ m.reservation_datetime || '—' }}</span>
+                    </li>
+                </ul>
+                <div v-else class="px-3 py-3 text-brand-text-muted">該当する予約者がいません</div>
+            </div>
+        </Teleport>
 
         <!-- URL発行モーダル -->
         <transition name="modal">
@@ -1131,11 +1206,12 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ActionButton from '@/Components/ActionButton.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
 import MediaPicker from '@/Components/MediaPicker.vue';
+import { BarChart3 } from 'lucide-vue-next';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
@@ -1146,7 +1222,44 @@ const props = defineProps({
     allShops: Array,
     allDocuments: Array,
     utmSources: Array,
+    utm_dist: { type: Array, default: () => [] },
+    utm_members: { type: Object, default: () => ({}) },
 });
+
+// 流入経路別の予約者数の合計（表の合計行用）
+const utmTotal = computed(() => props.utm_dist.reduce((sum, row) => sum + Number(row.count || 0), 0));
+
+// 流入経路の行ホバーで出す予約者一覧ツールチップ。
+// 行の直下（下に収まらなければ直上）に固定表示し、横方向は画面内に収める。
+// 一覧は最大高さ（max-h-64）で縦スクロールし、ツールチップ上にマウスが乗っている間は閉じない。
+const UTM_TOOLTIP_WIDTH = 320;   // w-80
+const UTM_TOOLTIP_MAX_HEIGHT = 300; // ヘッダー + max-h-64 の目安
+const utmTooltip = reactive({ source: null, left: 0, top: 0 });
+let utmTooltipHideTimer = null;
+const utmTooltipMembers = computed(() => (utmTooltip.source === null ? [] : (props.utm_members[utmTooltip.source] || [])));
+const cancelHideUtmTooltip = () => {
+    if (utmTooltipHideTimer) {
+        clearTimeout(utmTooltipHideTimer);
+        utmTooltipHideTimer = null;
+    }
+};
+const showUtmTooltip = (source, e) => {
+    cancelHideUtmTooltip();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const margin = 8;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow >= UTM_TOOLTIP_MAX_HEIGHT || rect.top < UTM_TOOLTIP_MAX_HEIGHT
+        ? rect.bottom
+        : Math.max(margin, rect.top - UTM_TOOLTIP_MAX_HEIGHT);
+    const left = Math.min(Math.max(margin, rect.left + 16), window.innerWidth - UTM_TOOLTIP_WIDTH - margin);
+    utmTooltip.source = source;
+    utmTooltip.left = left;
+    utmTooltip.top = top;
+};
+const scheduleHideUtmTooltip = () => {
+    cancelHideUtmTooltip();
+    utmTooltipHideTimer = setTimeout(() => { utmTooltip.source = null; }, 150);
+};
 
 const isEditing = ref(false);
 const showAddVenueForm = ref(false);
