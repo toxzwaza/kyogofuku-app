@@ -1,5 +1,5 @@
 <template>
-    <Head :title="`${event.title}｜京呉服 好一`">
+    <Head :title="`${event.title}｜${brand.name}`">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link
@@ -27,8 +27,8 @@
 
         <!-- 固定ヘッダー（左ロゴ・右ハンバーガー） -->
         <header v-show="!showReservationForm" class="lp-header">
-            <a href="#" class="lp-header__logo" aria-label="京呉服好一">
-                <img src="/storage/logo/logo_b.png" alt="京呉服 好一" />
+            <a href="#" class="lp-header__logo" :aria-label="brand.name">
+                <img :src="brand.logo" :alt="brand.name" />
             </a>
             <button
                 type="button"
@@ -46,7 +46,7 @@
         <Transition name="lp-menu">
             <nav v-if="menuOpen" class="lp-menu">
                 <div class="lp-menu__list">
-                    <a class="lp-menu__item" href="https://example.com/catalog" target="_blank" rel="noopener" @click="menuOpen = false">
+                    <a class="lp-menu__item" :href="brand.catalogUrl" target="_blank" rel="noopener" @click="menuOpen = false">
                         <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></span>
                         カタログ請求
                         <span class="lp-menu__arrow">›</span>
@@ -56,22 +56,17 @@
                         WEB来店予約
                         <span class="lp-menu__arrow">›</span>
                     </button>
-                    <a class="lp-menu__item" href="https://www.instagram.com/" target="_blank" rel="noopener" @click="menuOpen = false">
+                    <a class="lp-menu__item" :href="brand.instagramUrl" target="_blank" rel="noopener" @click="menuOpen = false">
                         <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg></span>
                         Instagram
                         <span class="lp-menu__arrow">›</span>
                     </a>
-                    <a class="lp-menu__item" href="https://x.com/" target="_blank" rel="noopener" @click="menuOpen = false">
-                        <span class="lp-menu__icon"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
-                        X（旧Twitter）
-                        <span class="lp-menu__arrow">›</span>
-                    </a>
-                    <a class="lp-menu__item" href="tel:0862421529" @click="menuOpen = false">
+                    <a class="lp-menu__item" :href="`tel:${brand.tel}`" @click="menuOpen = false">
                         <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></span>
                         TELお問い合わせ
                         <span class="lp-menu__arrow">›</span>
                     </a>
-                    <a class="lp-menu__item" href="https://line.me/" target="_blank" rel="noopener" @click="menuOpen = false">
+                    <a class="lp-menu__item" href="https://lin.ee/R7RUNlX" target="_blank" rel="noopener" @click="menuOpen = false">
                         <span class="lp-menu__icon"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 5.737 2 10.345c0 4.13 3.58 7.59 8.414 8.244.328.07.774.216.887.496.102.253.067.65.033.906l-.144.86c-.044.253-.202.99.867.54 1.07-.45 5.77-3.4 7.872-5.82C21.49 13.95 22 12.22 22 10.344 22 5.737 17.523 2 12 2z"/></svg></span>
                         LINE友達登録
                         <span class="lp-menu__arrow">›</span>
@@ -795,6 +790,27 @@ const themeVars = computed(() => {
 
 // ヘッダーメニュー開閉
 const menuOpen = ref(false);
+
+// ヘッダー・メニューのブランド出し分け
+// 対象店舗に福井店を含むイベントは京呉服平田（福井）、それ以外は京呉服好一（岡山）
+const BRANDS = {
+    kouichi: {
+        name: '京呉服 好一',
+        logo: '/storage/logo/logo_b.png',
+        tel: '0862421529',
+        catalogUrl: 'https://kyogofuku-kouichi.com/request/',
+        instagramUrl: 'https://www.instagram.com/kouichi_furisode/',
+    },
+    hirata: {
+        name: '京呉服 平田',
+        logo: '/storage/logo/logo_hirata_b.png',
+        tel: '0776341529',
+        catalogUrl: 'https://fukui.kyogofuku-hirata.jp/request/',
+        instagramUrl: 'https://www.instagram.com/kyogofuku_hirata/',
+    },
+};
+const isFukuiEvent = computed(() => (props.shops || []).some((shop) => (shop?.name || '').includes('福井')));
+const brand = computed(() => (isFukuiEvent.value ? BRANDS.hirata : BRANDS.kouichi));
 
 // 予約フォーム表示中はメニューを閉じ、背面スクロールをロック
 watch(() => showReservationForm.value, (open) => {
