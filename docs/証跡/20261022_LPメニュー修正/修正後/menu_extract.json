@@ -1,0 +1,113 @@
+[
+  {
+    "label": "kouichi_contact",
+    "url": "http://127.0.0.1:8000/event/contact_kyogofuku_kouichi",
+    "title": "京呉服好一株式会社 問い合わせフォーム｜京呉服 好一",
+    "logo": {
+      "src": "/storage/logo/logo_b.png",
+      "alt": "京呉服 好一",
+      "naturalWidth": 476
+    },
+    "menu": [
+      {
+        "tag": "A",
+        "text": "カタログ請求 ›",
+        "href": "https://kyogofuku-kouichi.com/request/"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "WEB来店予約 ›",
+        "href": null
+      },
+      {
+        "tag": "A",
+        "text": "Instagram ›",
+        "href": "https://www.instagram.com/kouichi_furisode/"
+      },
+      {
+        "tag": "A",
+        "text": "TELお問い合わせ ›",
+        "href": "tel:0862421529"
+      },
+      {
+        "tag": "A",
+        "text": "LINE友達登録 ›",
+        "href": "https://lin.ee/R7RUNlX"
+      }
+    ]
+  },
+  {
+    "label": "hirata_contact",
+    "url": "http://127.0.0.1:8000/event/contact_kyogofuku_hirata",
+    "title": "京呉服平田株式会社 問い合わせフォーム｜京呉服 平田",
+    "logo": {
+      "src": "/storage/logo/logo_hirata_b.png",
+      "alt": "京呉服 平田",
+      "naturalWidth": 464
+    },
+    "menu": [
+      {
+        "tag": "A",
+        "text": "カタログ請求 ›",
+        "href": "https://fukui.kyogofuku-hirata.jp/request/"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "WEB来店予約 ›",
+        "href": null
+      },
+      {
+        "tag": "A",
+        "text": "Instagram ›",
+        "href": "https://www.instagram.com/kyogofuku_hirata/"
+      },
+      {
+        "tag": "A",
+        "text": "TELお問い合わせ ›",
+        "href": "tel:0776341529"
+      },
+      {
+        "tag": "A",
+        "text": "LINE友達登録 ›",
+        "href": "https://lin.ee/R7RUNlX"
+      }
+    ]
+  },
+  {
+    "label": "hirata_reserve",
+    "url": "http://127.0.0.1:8000/event/reservation_store_hirata",
+    "title": "【振袖FAIR - 福井店】 京呉服平田 店舗予約｜京呉服 平田",
+    "logo": {
+      "src": "/storage/logo/logo_hirata_b.png",
+      "alt": "京呉服 平田",
+      "naturalWidth": 464
+    },
+    "menu": [
+      {
+        "tag": "A",
+        "text": "カタログ請求 ›",
+        "href": "https://fukui.kyogofuku-hirata.jp/request/"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "WEB来店予約 ›",
+        "href": null
+      },
+      {
+        "tag": "A",
+        "text": "Instagram ›",
+        "href": "https://www.instagram.com/kyogofuku_hirata/"
+      },
+      {
+        "tag": "A",
+        "text": "TELお問い合わせ ›",
+        "href": "tel:0776341529"
+      },
+      {
+        "tag": "A",
+        "text": "LINE友達登録 ›",
+        "href": "https://lin.ee/R7RUNlX"
+      }
+    ]
+  }
+]
