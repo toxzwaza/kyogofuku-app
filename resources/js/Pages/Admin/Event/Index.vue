@@ -198,7 +198,7 @@ const search = () => {
     router.get(route('admin.events.index'), {
         form_type: searchForm.form_type || undefined,
         shop_id:   searchForm.shop_id || undefined,
-        public_status: searchForm.public_status !== 'all' ? searchForm.public_status : undefined,
+        public_status: searchForm.public_status || undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 

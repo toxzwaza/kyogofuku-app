@@ -7,6 +7,8 @@ use App\Models\Event;
 use App\Models\EventTimeslot;
 use App\Models\TimeslotTemplate;
 use App\Models\Venue;
+use App\Services\TimeslotOverlapService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
@@ -15,38 +17,189 @@ class TimeslotController extends Controller
 {
     use ResolvesUiView;
 
+    public function __construct(private TimeslotOverlapService $overlap)
+    {
+    }
+
     /**
      * 予約枠一覧を表示
      */
-    public function index(Event $event)
+    public function index(Request $request, Event $event)
     {
-        $timeslots = EventTimeslot::where('event_id', $event->id)
-            ->with('venue')
-            ->orderBy('start_at', 'asc')
-            ->get()
-            ->map(function ($timeslot) use ($event) {
-                // 予約を取得（会場IDと時間が一致するもののみ。キャンセル済みは除外）
-                $reservationQuery = $event->reservations()
-                    ->where('cancel_flg', false)
-                    ->where('reservation_datetime', $timeslot->start_at->format('Y-m-d H:i:s'));
-                
-                // 予約枠に会場IDが設定されている場合、同じ会場の予約のみ取得
-                if ($timeslot->venue_id) {
-                    $reservationQuery->where('venue_id', $timeslot->venue_id);
-                } else {
-                    // 予約枠に会場IDが設定されていない場合、venue_idがnullの予約のみ取得
-                    $reservationQuery->whereNull('venue_id');
-                }
-                
-                $reservationCount = $reservationQuery->count();
-                $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
-                return $timeslot;
-            });
+        $view = $this->viewFor('Admin/Timeslot/Index');
+        // 新画面は既定で今日以降のみ（旧画面は切替UIが無いので従来どおり全件）
+        $includePast = $request->boolean('past') || str_ends_with($view, 'Legacy');
+        $today = now()->startOfDay();
 
-        return Inertia::render($this->viewFor('Admin/Timeslot/Index'), [
+        $query = EventTimeslot::where('event_id', $event->id)
+            ->with('venue:id,name')
+            ->orderBy('start_at', 'asc');
+        if (! $includePast) {
+            $query->where('start_at', '>=', $today);
+        }
+
+        $slots = $query->get();
+        $timeslots = $this->slotRows($event, $slots);
+
+        $event->load('venues:id,name');
+
+        return Inertia::render($view, [
             'event' => $event,
             'timeslots' => $timeslots,
+            'venues' => $event->venues->map->only('id', 'name')->values(),
+            'includePast' => $includePast,
+            'pastCount' => $includePast ? 0 : EventTimeslot::where('event_id', $event->id)->where('start_at', '<', $today)->count(),
+            'overlaps' => str_ends_with($view, 'Legacy') ? [] : $this->overlapsFor($event, $slots),
         ]);
+    }
+
+    /**
+     * 一覧で選んだ枠をまとめて受付停止／再開・定員増減する（JSON）
+     */
+    public function bulkUpdate(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1|max:500',
+            'ids.*' => 'integer',
+            'action' => 'required|in:deactivate,activate,capacity',
+            'amount' => 'required_if:action,capacity|integer|between:-999,999|not_in:0',
+        ], [
+            'amount.not_in' => '増減する数を指定してください。',
+        ]);
+
+        $result = DB::transaction(function () use ($event, $validated) {
+            // 実行時点の値で判定し直す（画面を開いた後に予約が入っていても定員が予約数を下回らないように）
+            $slots = EventTimeslot::where('event_id', $event->id)
+                ->whereIn('id', $validated['ids'])
+                ->lockForUpdate()
+                ->get();
+            $reservedCounts = $this->reservedCounts($event);
+
+            $updated = [];
+            $skipped = [];
+            foreach ($slots as $slot) {
+                $reserved = $reservedCounts[$this->slotKey($slot)] ?? 0;
+                if ($validated['action'] === 'capacity') {
+                    $newCapacity = $slot->capacity + (int) $validated['amount'];
+                    if ($newCapacity < max(1, $reserved)) {
+                        $skipped[] = ['id' => $slot->id, 'label' => $slot->start_at->format('n/j H:i'), 'reason' => $reserved > 0 ? "予約数（{$reserved}件）を下回るため変更しません" : '定員は1以上です'];
+                        continue;
+                    }
+                    $slot->capacity = $newCapacity;
+                } else {
+                    $slot->is_active = $validated['action'] === 'activate';
+                }
+                if ($slot->isDirty()) {
+                    $slot->save();
+                    $updated[] = $slot->id;
+                }
+            }
+
+            return [$updated, $skipped];
+        });
+        [$updated, $skipped] = $result;
+
+        $label = ['deactivate' => '受付を停止', 'activate' => '受付を再開', 'capacity' => '定員を変更'][$validated['action']];
+        $message = count($updated)."件の枠の{$label}しました。".($skipped ? '（'.count($skipped).'件は変更なし）' : '');
+
+        $slots = EventTimeslot::where('event_id', $event->id)->whereIn('id', $validated['ids'])->with('venue:id,name')->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'timeslots' => $this->slotRows($event, $slots),
+            'skipped' => $skipped,
+        ]);
+    }
+
+    /**
+     * 有効な予約数: "会場|予約日時" => 件数（枠ごとにCOUNTしないよう1回で集計）
+     */
+    private function reservedCounts(Event $event)
+    {
+        return $event->reservations()
+            ->where('cancel_flg', false)
+            ->whereNotNull('reservation_datetime')
+            ->selectRaw('venue_id, reservation_datetime, COUNT(*) as cnt')
+            ->groupBy('venue_id', 'reservation_datetime')
+            ->get()
+            ->mapWithKeys(fn ($r) => [($r->venue_id ?? '').'|'.$r->reservation_datetime => (int) $r->cnt]);
+    }
+
+    private function slotKey(EventTimeslot $t): string
+    {
+        return ($t->venue_id ?? '').'|'.$t->start_at->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * 一覧用の枠データ。モデルの remaining_capacity アクセサは枠ごとにCOUNTを投げるため、配列にして返す
+     */
+    private function slotRows(Event $event, $slots)
+    {
+        $reservedCounts = $this->reservedCounts($event);
+
+        return $slots->map(function (EventTimeslot $t) use ($reservedCounts) {
+            $reserved = $reservedCounts[$this->slotKey($t)] ?? 0;
+
+            return [
+                'id' => $t->id,
+                'event_id' => $t->event_id,
+                'venue_id' => $t->venue_id,
+                'venue' => $t->venue ? ['id' => $t->venue->id, 'name' => $t->venue->name] : null,
+                'start_at' => $t->start_at->toJSON(),
+                // 日付・時刻の表示と予約一覧の絞り込みに使う（店舗の時刻のまま）
+                'start_local' => $t->start_at->format('Y-m-d H:i:s'),
+                'capacity' => $t->capacity,
+                'is_active' => $t->is_active,
+                'reserved_count' => $reserved,
+                'remaining_capacity' => max(0, $t->capacity - $reserved),
+            ];
+        })->values();
+    }
+
+    /**
+     * 表示する枠の日付で、同じ店舗の別イベントと重なる会場: date => [会場ID or "none" => 重なり一覧]
+     */
+    private function overlapsFor(Event $event, $slots): array
+    {
+        if ($slots->isEmpty()) {
+            return [];
+        }
+        $event->loadMissing('venues:id');
+        $eventVenueIds = $event->venues->pluck('id')->all();
+        $others = $this->overlap->otherEventSlots(
+            $event,
+            $slots->min('start_at')->format('Y-m-d'),
+            $slots->max('start_at')->format('Y-m-d'),
+        );
+
+        $result = [];
+        foreach ($slots->groupBy(fn ($t) => $t->start_at->format('Y-m-d')) as $date => $daySlots) {
+            if (empty($others[$date])) {
+                continue;
+            }
+            foreach ($daySlots->pluck('venue_id')->unique() as $venueId) {
+                $conflicts = $this->overlap->conflictsFor($others[$date], $venueId, $eventVenueIds);
+                if ($conflicts) {
+                    $result[$date][$venueId ?? 'none'] = $conflicts;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * 一覧の表示条件（会場・状態・日付など）だけを取り出す。編集画面から一覧へ戻るときに引き継ぐ
+     */
+    private function indexQuery(?string $query): array
+    {
+        parse_str((string) $query, $params);
+
+        return collect($params)
+            ->only(['past', 'v', 's', 'd', 'view'])
+            ->filter(fn ($v) => is_string($v) && $v !== '' && preg_match('/^[\w,\-]{1,200}$/', $v))
+            ->all();
     }
 
     /**
@@ -232,7 +385,7 @@ class TimeslotController extends Controller
     /**
      * 予約枠編集フォームを表示
      */
-    public function edit(EventTimeslot $timeslot)
+    public function edit(Request $request, EventTimeslot $timeslot)
     {
         $timeslot->load('event', 'venue');
         $timeslot->event->load('venues');
@@ -254,9 +407,13 @@ class TimeslotController extends Controller
         $reservationCount = $reservationQuery->count();
         $timeslot->remaining_capacity = max(0, $timeslot->capacity - $reservationCount);
 
+        $returnQuery = $this->indexQuery($request->query('return'));
+
         return Inertia::render($this->viewFor('Admin/Timeslot/Edit'), [
             'timeslot' => $timeslot,
             'venues' => $venues,
+            'returnQuery' => http_build_query($returnQuery),
+            'backUrl' => route('admin.events.timeslots.index', ['event' => $timeslot->event_id] + $returnQuery),
         ]);
     }
 
@@ -311,7 +468,7 @@ class TimeslotController extends Controller
 
         $timeslot->update($validated);
 
-        return redirect()->route('admin.events.timeslots.index', $timeslot->event_id)
+        return redirect()->route('admin.events.timeslots.index', ['event' => $timeslot->event_id] + $this->indexQuery($request->input('return_query')))
             ->with('success', '予約枠を更新しました。');
     }
 

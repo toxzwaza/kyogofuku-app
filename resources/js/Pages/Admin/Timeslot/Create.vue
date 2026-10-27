@@ -559,9 +559,7 @@ const addFromTemplate = () => {
         });
     });
 
-    // テンプレート選択をリセット
-    selectedTemplateId.value = null;
-    templateDate.value = '';
+    // テンプレートと日付は保持する（日付だけ変えて続けて追加できるように）
 };
 
 // 一括登録

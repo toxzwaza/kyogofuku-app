@@ -8,6 +8,7 @@ use App\Models\DocumentImage;
 use App\Models\Event;
 use App\Models\EventImage;
 use App\Models\EventReservation;
+use App\Models\GtmTag;
 use App\Models\Shop;
 use App\Models\UtmSource;
 use App\Models\Venue;
@@ -85,6 +86,15 @@ class EventController extends Controller
 
         $shops = Shop::where('is_active', true)->get();
 
+        // 詳細画面の「イベント一覧に戻る」で同じ絞り込み・ページに戻れるよう保存する
+        // （公開状態は「すべて」も明示して保存。省略すると既定の「公開中」に戻ってしまうため）
+        session(['admin.events.index_query' => array_filter([
+            'form_type' => $request->form_type,
+            'shop_id' => $request->shop_id,
+            'public_status' => $publicStatus,
+            'page' => $request->integer('page') > 1 ? $request->integer('page') : null,
+        ], fn ($v) => filled($v))]);
+
         return Inertia::render($this->viewFor('Admin/Event/Index'), [
             'events' => $events,
             'shops' => $shops,
@@ -125,7 +135,7 @@ class EventController extends Controller
                 'start_at' => $source->start_at?->format('Y-m-d'),
                 'end_at' => $source->end_at?->format('Y-m-d'),
                 'is_public' => $source->is_public,
-                'gtm_id' => $source->gtm_id ?? '',
+                'gtm_tag_id' => $source->gtm_tag_id,
                 'success_text' => $source->success_text ?? '',
                 'ended_message_text' => $source->ended_message_text ?? '',
                 'slug_aliases' => $source->slug_aliases ?? [],
@@ -156,6 +166,7 @@ class EventController extends Controller
 
         return Inertia::render($this->viewFor('Admin/Event/Create'), [
             'shops' => $shops,
+            'gtmTags' => GtmTag::options(),
             'venues' => $venues,
             'documents' => $documents,
             'copySourceEvent' => $copySourceEvent,
@@ -195,7 +206,7 @@ class EventController extends Controller
             'start_at' => 'nullable|date',
             'end_at' => 'nullable|date|after_or_equal:start_at',
             'is_public' => 'boolean',
-            'gtm_id' => 'nullable|string|max:255',
+            'gtm_tag_id' => 'nullable|exists:gtm_tags,id',
             'success_text' => 'nullable|string|max:255|regex:/^[a-zA-Z0-9_-]+$/',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
@@ -238,6 +249,8 @@ class EventController extends Controller
         } else {
             $validated['slug_aliases'] = null;
         }
+
+        $validated['gtm_id'] = $this->gtmIdFor($validated['gtm_tag_id'] ?? null);
 
         $event = Event::create($validated);
 
@@ -341,11 +354,21 @@ class EventController extends Controller
             'event' => $event,
             'allVenues' => $allVenues,
             'allShops' => $allShops,
+            'gtmTags' => GtmTag::options(),
             'allDocuments' => $allDocuments,
             'utmSources' => $utmSources,
             'utm_dist' => $utmDist,
             'utm_members' => $utmMembers,
+            'backUrl' => route('admin.events.index', session('admin.events.index_query', [])),
         ]);
+    }
+
+    /**
+     * 選択したGTMタグのIDを返す（LP出力用に events.gtm_id へ写す値）
+     */
+    private function gtmIdFor($gtmTagId): ?string
+    {
+        return $gtmTagId ? GtmTag::find($gtmTagId)?->gtm_id : null;
     }
 
     /**
@@ -416,7 +439,7 @@ class EventController extends Controller
             'start_at' => 'nullable|date',
             'end_at' => 'nullable|date|after_or_equal:start_at',
             'is_public' => 'boolean',
-            'gtm_id' => 'nullable|string|max:255',
+            'gtm_tag_id' => 'nullable|exists:gtm_tags,id',
             'success_text' => 'nullable|string|max:255|regex:/^[a-zA-Z0-9_-]+$/',
             'ended_message_text' => 'nullable|string|max:1000',
             'utm_analytics_enabled' => 'boolean',
@@ -451,6 +474,11 @@ class EventController extends Controller
         }
 
         $validated['utm_analytics_enabled'] = $request->has('utm_analytics_enabled') ? $request->utm_analytics_enabled : false;
+
+        // gtm_tag_id を送らない更新（旧画面のまま保存など）ではLPのGTMを変えない
+        if (array_key_exists('gtm_tag_id', $validated)) {
+            $validated['gtm_id'] = $this->gtmIdFor($validated['gtm_tag_id']);
+        }
 
         $event->update($validated);
 

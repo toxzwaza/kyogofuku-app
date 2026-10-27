@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\ReferralController as AdminReferralController;
 use App\Http\Controllers\Admin\GiftCardController as AdminGiftCardController;
 use App\Http\Controllers\Admin\PointOperationController as AdminPointOperationController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\GtmTagController as AdminGtmTagController;
 use App\Http\Controllers\Admin\CustomerCouponController as AdminCustomerCouponController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\EventCtaDesignController as AdminEventCtaDesignController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\ShopController as AdminShopController;
 use App\Http\Controllers\Admin\SlideshowController as AdminSlideshowController;
 use App\Http\Controllers\Admin\TimeslotController as AdminTimeslotController;
+use App\Http\Controllers\Admin\TimeslotBulkController as AdminTimeslotBulkController;
 use App\Http\Controllers\Admin\TimeslotTemplateController as AdminTimeslotTemplateController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VenueController as AdminVenueController;
@@ -313,7 +315,12 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // 予約枠管理
     Route::get('/events/{event}/timeslots', [AdminTimeslotController::class, 'index'])->name('events.timeslots.index');
     Route::get('/events/{event}/timeslots/create', [AdminTimeslotController::class, 'create'])->name('events.timeslots.create');
+    Route::post('/events/{event}/timeslots/bulk-update', [AdminTimeslotController::class, 'bulkUpdate'])->name('events.timeslots.bulk-update');
     Route::post('/events/{event}/timeslots', [AdminTimeslotController::class, 'store'])->name('events.timeslots.store');
+    Route::get('/events/{event}/timeslots/bulk', [AdminTimeslotBulkController::class, 'create'])->name('events.timeslots.bulk');
+    Route::post('/events/{event}/timeslots/bulk/preview', [AdminTimeslotBulkController::class, 'preview'])->name('events.timeslots.bulk.preview');
+    Route::get('/events/{event}/timeslots/bulk/overlaps', [AdminTimeslotBulkController::class, 'overlaps'])->name('events.timeslots.bulk.overlaps');
+    Route::post('/events/{event}/timeslots/bulk', [AdminTimeslotBulkController::class, 'store'])->name('events.timeslots.bulk.store');
     Route::get('/timeslots/{timeslot}/edit', [AdminTimeslotController::class, 'edit'])->name('timeslots.edit');
     Route::put('/timeslots/{timeslot}', [AdminTimeslotController::class, 'update'])->name('timeslots.update');
     Route::post('/timeslots/{timeslot}/adjust-capacity', [AdminTimeslotController::class, 'adjustCapacity'])->name('timeslots.adjust-capacity');
@@ -452,6 +459,12 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::put('/venues/{venue}', [AdminVenueController::class, 'update'])->name('venues.update');
     Route::post('/venues/{venue}/migrate-image-to-s3', [AdminVenueController::class, 'migrateVenueImageToS3'])->name('venues.migrate-image-to-s3');
     Route::delete('/venues/{venue}', [AdminVenueController::class, 'destroy'])->name('venues.destroy');
+
+    // GTMタグ管理（マスタ）
+    Route::get('/gtm-tags', [AdminGtmTagController::class, 'index'])->name('gtm-tags.index');
+    Route::post('/gtm-tags', [AdminGtmTagController::class, 'store'])->name('gtm-tags.store');
+    Route::put('/gtm-tags/{gtmTag}', [AdminGtmTagController::class, 'update'])->name('gtm-tags.update');
+    Route::delete('/gtm-tags/{gtmTag}', [AdminGtmTagController::class, 'destroy'])->name('gtm-tags.destroy');
 
     // 会場管理（イベント単位）
     Route::post('/events/{event}/venues', [AdminVenueController::class, 'storeForEvent'])->name('events.venues.store');

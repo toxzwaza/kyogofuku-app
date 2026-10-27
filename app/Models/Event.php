@@ -22,6 +22,7 @@ class Event extends Model
         'utm_analytics_enabled',
         'utm_analytics_sort_order',
         'gtm_id',
+        'gtm_tag_id',
         'success_text',
         'ended_message_text',
         'cta_background_path',
@@ -163,6 +164,14 @@ class Event extends Model
     public function timeslots()
     {
         return $this->hasMany(EventTimeslot::class);
+    }
+
+    /**
+     * GTMタグ（マスタ）。LP出力は gtm_id に写した値を使う
+     */
+    public function gtmTag()
+    {
+        return $this->belongsTo(GtmTag::class);
     }
 
     /**

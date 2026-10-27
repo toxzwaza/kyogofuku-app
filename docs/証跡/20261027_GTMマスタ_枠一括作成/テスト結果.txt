@@ -1,0 +1,198 @@
+Warning: TTY mode requires /dev/tty to be read/writable.
+
+   PASS  Tests\Feature\Admin\GtmTagTest
+  ✓ manager can create tag with normalized id and shops
+  ✓ invalid or duplicate gtm id is rejected
+  ✓ non manager cannot manage tags
+  ✓ event update copies gtm id from selected tag
+  ✓ changing tag id updates linked events
+  ✓ update without gtm tag id keeps existing gtm id
+  ✓ changing tag id also fills linked events with null gtm id
+  ✓ options include inactive tags with flag
+  ✓ tag in use cannot be deleted
+
+  Tests:  9 passed
+  Time:   11.28s
+
+
+Warning: TTY mode requires /dev/tty to be read/writable.
+
+   PASS  Tests\Feature\Admin\TimeslotBulkTest
+  ✓ preview marks weekdays excluded dates and existing slots
+  ✓ preview detects overlap by venue where other event has slots
+  ✓ store creates only selected cells and skips existing times
+  ✓ store ignores duplicated cells
+  ✓ store never creates past dates
+  ✓ period longer than limit is rejected
+
+  Tests:  6 passed
+  Time:   9.90s
+
+
+Warning: TTY mode requires /dev/tty to be read/writable.
+
+   PASS  Tests\Feature\Admin\CustomerConstraintAttachmentTest
+  ✓ store constraint with attachment redirects to customer show
+
+   PASS  Tests\Feature\Admin\CustomerContractAmountFilterTest
+  ✓ amount range filters customers between min and max
+  ✓ min only filters greater than or equal
+  ✓ max only filters less than or equal
+  ✓ same min and max is exact match
+  ✓ no amount params returns all
+
+   PASS  Tests\Feature\Admin\CustomerFullBodyPhotoFilterTest
+  ✓ filter missing full body photo
+  ✓ filter having full body photo
+
+   PASS  Tests\Feature\Admin\CustomerLineMessageImageSendTest
+  ✓ admin send image uploads to s3 and calls line push
+  ✓ admin send rejects non image file
+  ✓ admin send rejects oversized image
+  ✓ admin send requires text or image
+  ✓ image feature flag off ignores image and requires text
+  ✓ text only send still works after image feature
+  ✓ admin send returns 502 when line push fails
+
+   PASS  Tests\Feature\Admin\CustomerLineMessageThreadTest
+  ✓ contact messages json includes inbound and outbound ordered
+  ✓ mark read marks unread inbound messages as read
+
+   PASS  Tests\Feature\Admin\CustomerMediaLibraryTest
+  ✓ fukui user sees only hirata tags and images
+  ✓ other shop user sees only kouichi tags and images
+  ✓ device tag filter narrows results
+  ✓ store photo from media copies image as customer photo
+  ✓ store photo from media rejects other shop prefix
+
+   PASS  Tests\Feature\Admin\CustomerResponsibleShopTest
+  ✓ patch responsible shop updates customer shop id
+  ✓ patch responsible shop can clear shop
+
+   PASS  Tests\Feature\Admin\EventThumbnailTest
+  ✓ thumbnail url accessor returns null when path missing
+  ✓ thumbnail url accessor returns local storage url
+  ✓ thumbnail url accessor returns external url as is
+  ✓ event update persists thumbnail fields
+  ✓ event update clears thumbnail when null passed
+
+   PASS  Tests\Feature\Admin\GtmTagTest
+  ✓ manager can create tag with normalized id and shops
+  ✓ invalid or duplicate gtm id is rejected
+  ✓ non manager cannot manage tags
+  ✓ event update copies gtm id from selected tag
+  ✓ changing tag id updates linked events
+  ✓ update without gtm tag id keeps existing gtm id
+  ✓ changing tag id also fills linked events with null gtm id
+  ✓ options include inactive tags with flag
+  ✓ tag in use cannot be deleted
+
+   PASS  Tests\Feature\Admin\LineContactUnlinkTest
+  ✓ admin can unlink customer line contact and messages cascade
+  ✓ admin can unlink reservation line contact
+
+   PASS  Tests\Feature\Admin\MediaTagHierarchyTest
+  ✓ filter by ancestor includes descendant tagged media
+  ✓ full path builds breadcrumb
+  ✓ can create root and child tag
+  ✓ duplicate sibling name is rejected
+  ✓ cannot move tag under its own descendant
+  ✓ delete cascades descendants and pivot
+  ✓ bulk tag attaches to all selected
+  ✓ bulk delete removes unused and skips in use
+  ✓ update media syncs tags
+
+   PASS  Tests\Feature\Admin\NoteCrossReferenceTest
+  ✓ customer show includes linked reservation notes
+  ✓ reservation show includes customer notes
+  ✓ reservation show without customer has empty customer notes
+
+   FAIL  Tests\Feature\Admin\OverviewShopScopeTest
+  ⨯ reservation stats are scoped to user shops
+  ⨯ multi shop event reservation is not double counted
+  ✓ input alerts are scoped to user shops
+  ⨯ user without shops sees zero counts
+
+   PASS  Tests\Feature\Admin\ReservationAssigneeTest
+  ✓ update assignee persists and trims empty to null
+
+   PASS  Tests\Feature\Admin\ReservationLineResponsibleShopTest
+  ✓ admin can change responsible shop of reservation line contact
+  ✓ change responsible shop is rejected when customer linked
+  ✓ change responsible shop requires valid shop
+
+   PASS  Tests\Feature\Admin\ReservationShowActivityLogsTest
+  ✓ show includes activity logs for reservation newest first
+
+   PASS  Tests\Feature\Admin\TimeslotBulkTest
+  ✓ preview marks weekdays excluded dates and existing slots
+  ✓ preview detects overlap by venue where other event has slots
+  ✓ store creates only selected cells and skips existing times
+  ✓ store ignores duplicated cells
+  ✓ store never creates past dates
+  ✓ period longer than limit is rejected
+
+  ---
+
+  • Tests\Feature\Admin\OverviewShopScopeTest > reservation stats are scoped to user shops
+  Property [stats.today_count] does not exist.
+  Failed asserting that false is true.
+
+  at tests/Feature/Admin/OverviewShopScopeTest.php:66
+     62▕         $this->actingAs($user)
+     63▕             ->get(route('admin.overview'))
+     64▕             ->assertOk()
+     65▕             ->assertInertia(fn (AssertableInertia $page) => $page
+  ➜  66▕                 ->where('stats.today_count', 1)
+     67▕             );
+     68▕     }
+     69▕ 
+     70▕     public function test_multi_shop_event_reservation_is_not_double_counted(): void
+
+      +2 vendor frames 
+  3   tests/Feature/Admin/OverviewShopScopeTest.php:65
+      Illuminate\Testing\TestResponse::__call("assertInertia")
+
+  • Tests\Feature\Admin\OverviewShopScopeTest > multi shop event reservation is not double counted
+  Property [stats.today_count] does not exist.
+  Failed asserting that false is true.
+
+  at tests/Feature/Admin/OverviewShopScopeTest.php:85
+     81▕         $this->actingAs($user)
+     82▕             ->get(route('admin.overview'))
+     83▕             ->assertOk()
+     84▕             ->assertInertia(fn (AssertableInertia $page) => $page
+  ➜  85▕                 ->where('stats.today_count', 1)
+     86▕             );
+     87▕     }
+     88▕ 
+     89▕     public function test_input_alerts_are_scoped_to_user_shops(): void
+
+      +2 vendor frames 
+  3   tests/Feature/Admin/OverviewShopScopeTest.php:84
+      Illuminate\Testing\TestResponse::__call("assertInertia")
+
+  • Tests\Feature\Admin\OverviewShopScopeTest > user without shops sees zero counts
+  Property [stats.today_count] does not exist.
+  Failed asserting that false is true.
+
+  at tests/Feature/Admin/OverviewShopScopeTest.php:159
+    155▕         $this->actingAs($user)
+    156▕             ->get(route('admin.overview'))
+    157▕             ->assertOk()
+    158▕             ->assertInertia(fn (AssertableInertia $page) => $page
+  ➜ 159▕                 ->where('stats.today_count', 0)
+    160▕                 ->where('input_alerts.missing_contract', 0)
+    161▕                 ->where('input_alerts.missing_constraint', 0)
+    162▕                 ->where('input_alerts.missing_full_body_photo', 0)
+    163▕                 ->where('user_shop_ids', [])
+
+      +2 vendor frames 
+  3   tests/Feature/Admin/OverviewShopScopeTest.php:158
+      Illuminate\Testing\TestResponse::__call("assertInertia")
+
+
+  Tests:  3 failed, 64 passed
+  Time:   13.24s
+
+

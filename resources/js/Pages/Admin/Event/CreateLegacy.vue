@@ -136,17 +136,7 @@
                                     <div v-if="form.errors.end_at" class="mt-1 text-sm text-red-600">{{ form.errors.end_at }}</div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">GTM ID</label>
-                                    <input
-                                        v-model="form.gtm_id"
-                                        type="text"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="例: GTM-5NP4QCSB"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500">Google Tag Manager IDを入力してください（任意）</p>
-                                    <div v-if="form.errors.gtm_id" class="mt-1 text-sm text-red-600">{{ form.errors.gtm_id }}</div>
-                                </div>
+                                <GtmTagSelect v-model="form.gtm_tag_id" :gtm-tags="gtmTags" :shop-ids="form.shop_ids" :error="form.errors.gtm_tag_id" />
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">成功ページURLテキスト</label>
@@ -421,12 +411,14 @@
 
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayoutLegacy.vue';
+import GtmTagSelect from '@/Components/GtmTagSelect.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
     shops: Array,
+    gtmTags: { type: Array, default: () => [] },
     venues: Array,
     documents: Array,
     copySourceEvent: Object,
@@ -453,7 +445,7 @@ const getInitialFormData = () => {
             new_venue_address: '',
             new_venue_phone: '',
             is_public: src.is_public ?? true,
-            gtm_id: src.gtm_id ?? '',
+            gtm_tag_id: src.gtm_tag_id ?? null,
             success_text: src.success_text ?? '',
             copy_from: src.id,
         };
@@ -474,7 +466,7 @@ const getInitialFormData = () => {
         new_venue_address: '',
         new_venue_phone: '',
         is_public: true,
-        gtm_id: '',
+        gtm_tag_id: null,
         success_text: '',
         copy_from: null,
     };

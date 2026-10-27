@@ -5,7 +5,7 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">イベント詳細</h2>
-                <ActionButton variant="back" label="イベント一覧に戻る" :href="route('admin.events.index')" />
+                <ActionButton variant="back" label="イベント一覧に戻る" :href="backUrl || route('admin.events.index')" />
             </div>
         </template>
 
@@ -260,17 +260,7 @@
                                                     <p class="mt-1 text-xs text-gray-500">ONにすると、流入経路分析APIの返却対象イベントになります。</p>
                                                 </div>
 
-                                                <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">GTM ID</label>
-                                                    <input
-                                                        v-model="editForm.gtm_id"
-                                                        type="text"
-                                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                                        placeholder="例: GTM-5NP4QCSB"
-                                                    />
-                                                    <p class="mt-1 text-xs text-gray-500">Google Tag Manager IDを入力してください（任意）</p>
-                                                    <div v-if="editForm.errors.gtm_id" class="mt-1 text-sm text-red-600">{{ editForm.errors.gtm_id }}</div>
-                                                </div>
+                                                <GtmTagSelect v-model="editForm.gtm_tag_id" :gtm-tags="gtmTags" :shop-ids="editForm.shop_ids" :error="editForm.errors.gtm_tag_id" />
 
                                                 <div>
                                                     <label class="block text-sm font-medium text-gray-700 mb-1">成功ページURLテキスト</label>
@@ -1075,14 +1065,17 @@ import { ref, reactive } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayoutLegacy.vue';
 import ActionButton from '@/Components/ActionButtonLegacy.vue';
 import EventNavigation from '@/Components/EventNavigation.vue';
+import GtmTagSelect from '@/Components/GtmTagSelect.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
 
 const props = defineProps({
     event: Object,
+    backUrl: String,
     allVenues: Array,
     allShops: Array,
+    gtmTags: { type: Array, default: () => [] },
     allDocuments: Array,
     utmSources: Array,
 });
@@ -1186,7 +1179,7 @@ const editForm = useForm({
     utm_analytics_enabled: props.event.utm_analytics_enabled ?? false,
     shop_ids: props.event.shops ? props.event.shops.map(shop => shop.id) : [],
     document_ids: props.event.documents ? props.event.documents.map(doc => doc.id) : [],
-    gtm_id: props.event.gtm_id || '',
+    gtm_tag_id: props.event.gtm_tag_id ?? null,
     success_text: props.event.success_text || '',
     ended_message_text: props.event.ended_message_text || '',
 });
@@ -1276,7 +1269,7 @@ const startEdit = () => {
     editForm.utm_analytics_enabled = props.event.utm_analytics_enabled ?? false;
     editForm.shop_ids = props.event.shops ? props.event.shops.map(shop => shop.id) : [];
     editForm.document_ids = props.event.documents ? props.event.documents.map(doc => doc.id) : [];
-    editForm.gtm_id = props.event.gtm_id || '';
+    editForm.gtm_tag_id = props.event.gtm_tag_id ?? null;
     editForm.success_text = props.event.success_text || '';
     editForm.ended_message_text = props.event.ended_message_text || '';
     successTextError.value = '';

@@ -333,6 +333,7 @@
                       class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                     >
                       <option value="">すべて</option>
+                      <option v-if="filterVenueId === 'none'" value="none">会場未設定</option>
                       <option
                         v-for="venue in venues"
                         :key="venue.id"
@@ -1341,6 +1342,7 @@
                             class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                           >
                             <option value="">すべて</option>
+                            <option v-if="filterVenueId === 'none'" value="none">会場未設定</option>
                             <option
                               v-for="venue in venues"
                               :key="venue.id"
@@ -2508,7 +2510,7 @@ const availableTimeslots = computed(() => {
   }
   // 会場が選択されている場合、その会場の時間のみ返す
   return (props.filterTimeslots || []).filter((timeslot) => {
-    return timeslot.venue_id == filterVenueId.value;
+    return filterVenueId.value === "none" ? !timeslot.venue_id : timeslot.venue_id == filterVenueId.value;
   });
 });
 

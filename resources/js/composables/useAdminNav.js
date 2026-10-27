@@ -5,7 +5,7 @@ import {
     Camera, Building2,
     Store, Settings,
     Clock, History, CheckCircle2, Briefcase, DollarSign, Calculator, AlarmClock,
-    FileText, Sparkles, BookOpen, LifeBuoy, MonitorSmartphone, Gift, Megaphone,
+    FileText, Sparkles, BookOpen, LifeBuoy, MonitorSmartphone, Gift, Megaphone, BarChart3,
 } from 'lucide-vue-next';
 
 /**
@@ -50,6 +50,7 @@ export function useAdminNav() {
                 { label: 'イベント予約者一覧', route: 'admin.event-reservations.index',         icon: CalendarCheck, activePatterns: ['admin.event-reservations.*'] },
                 { label: '予約者出力',         route: 'admin.events.reservations-export.index', icon: Download,      activePatterns: ['admin.events.reservations-export.*'], permission: 'isManager' },
                 { label: '開催会場',           route: 'admin.venues.index',                    icon: MapPin,        activePatterns: ['admin.venues.*'], permission: 'isManager' },
+                { label: 'GTMタグ',            route: 'admin.gtm-tags.index',                  icon: BarChart3,     activePatterns: ['admin.gtm-tags.*'], permission: 'isManager' },
                 { label: 'スライドショー',     route: 'admin.slideshows.index',                icon: Film,          activePatterns: ['admin.slideshows.*'], permission: 'isManager' },
                 { label: 'メディアライブラリ', route: 'admin.media.index',                     icon: Images,        activePatterns: ['admin.media.*'], permission: 'isManager' },
             ],

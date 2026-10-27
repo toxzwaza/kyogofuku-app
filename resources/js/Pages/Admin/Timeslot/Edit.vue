@@ -6,7 +6,7 @@
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-brand-text leading-tight">予約枠編集</h2>
                 <Link
-                    :href="route('admin.events.timeslots.index', timeslot.event_id)"
+                    :href="backUrl || route('admin.events.timeslots.index', timeslot.event_id)"
                     class="text-brand-primary hover:text-brand-primary-hover"
                 >
                     ← 予約枠一覧に戻る
@@ -122,7 +122,7 @@
 
                                 <div class="flex justify-end space-x-4 pt-4">
                                     <Link
-                                        :href="route('admin.events.timeslots.index', timeslot.event_id)"
+                                        :href="backUrl || route('admin.events.timeslots.index', timeslot.event_id)"
                                         class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
                                     >
                                         キャンセル
@@ -152,6 +152,9 @@ import { computed } from 'vue';
 const props = defineProps({
     timeslot: Object,
     venues: Array,
+    // 一覧の表示条件（会場・日付など）を付けた戻り先
+    backUrl: { type: String, default: '' },
+    returnQuery: { type: String, default: '' },
 });
 
 const formatDateTimeForInput = (datetime) => {
@@ -170,6 +173,7 @@ const form = useForm({
     start_at: formatDateTimeForInput(props.timeslot.start_at),
     capacity: props.timeslot.capacity,
     is_active: props.timeslot.is_active,
+    return_query: props.returnQuery,
 });
 
 const submit = () => {
