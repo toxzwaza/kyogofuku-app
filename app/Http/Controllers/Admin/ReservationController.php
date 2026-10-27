@@ -79,8 +79,10 @@ class ReservationController extends Controller
             }
         }
 
-        // 会場で絞り込み
-        if ($request->filled('venue_id')) {
+        // 会場で絞り込み（none は会場未設定の予約。予約枠一覧から会場なしの枠を開いたとき）
+        if ($request->input('venue_id') === 'none') {
+            $reservationsQuery->whereNull('venue_id');
+        } elseif ($request->filled('venue_id')) {
             $reservationsQuery->where('venue_id', $request->venue_id);
         }
 
@@ -168,7 +170,9 @@ class ReservationController extends Controller
             }
 
             // 会場が選択されている場合、その会場の時間のみ取得
-            if ($request->filled('venue_id')) {
+            if ($request->input('venue_id') === 'none') {
+                $timeslotsQuery->whereNull('venue_id');
+            } elseif ($request->filled('venue_id')) {
                 $timeslotsQuery->where('venue_id', $request->venue_id);
             }
 
@@ -198,7 +202,9 @@ class ReservationController extends Controller
             }
 
             // 会場で絞り込み
-            if ($request->filled('venue_id')) {
+            if ($request->input('venue_id') === 'none') {
+                $timeslotsQuery->whereNull('venue_id');
+            } elseif ($request->filled('venue_id')) {
                 $timeslotsQuery->where('venue_id', $request->venue_id);
             }
 
