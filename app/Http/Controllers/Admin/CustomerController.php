@@ -135,6 +135,9 @@ class CustomerController extends Controller
                 'customer_shop_id' => $customerShopFilterValue,
             ]),
             'prefillFromReservation' => $prefillFromReservation,
+            // CSV出力モーダルの列候補（key => 表示名）と初期選択
+            'exportColumnOptions' => CustomerExportController::COLUMN_LABELS,
+            'exportDefaultColumns' => CustomerExportController::DEFAULT_COLUMNS,
         ]);
     }
 

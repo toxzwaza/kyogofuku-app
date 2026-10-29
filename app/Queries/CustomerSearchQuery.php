@@ -80,6 +80,16 @@ class CustomerSearchQuery
         // 生年月日未登録(NULL)の顧客は年齢条件指定時に自動的に除外される。
         self::applyAgeRange($query, $request->input('age_min'), $request->input('age_max'));
 
+        // 成人年度での範囲絞り込み（下限/上限は任意・片方のみも可）。成人年度未登録(NULL)の顧客は指定時に除外される。
+        $seijinYearMin = $request->input('coming_of_age_year_min');
+        if (is_numeric($seijinYearMin)) {
+            $query->where('coming_of_age_year', '>=', (int) $seijinYearMin);
+        }
+        $seijinYearMax = $request->input('coming_of_age_year_max');
+        if (is_numeric($seijinYearMax)) {
+            $query->where('coming_of_age_year', '<=', (int) $seijinYearMax);
+        }
+
         // 顧客の担当店舗で絞り込み（複数選択可）。未指定（初回アクセス）時はデフォルト店舗。
         // 'all' を含む場合は全店舗（絞り込みなし）。
         // 'none' を含む場合は担当店舗未設定(shop_id IS NULL=本システム導入前の登録顧客)も対象に含める。
@@ -319,6 +329,7 @@ class CustomerSearchQuery
     {
         return [
             'name', 'kana', 'ceremony_area_id', 'phone_number', 'age_min', 'age_max',
+            'coming_of_age_year_min', 'coming_of_age_year_max',
             'created_at_from', 'created_at_to',
             'seijin_preparation_venue', 'seijin_preparation_time', 'other_store_preparation',
             'other_store_salon_name', 'kimono_ship_date',
