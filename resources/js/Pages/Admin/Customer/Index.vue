@@ -12,6 +12,14 @@
                     <template #leading><Search :size="14" /></template>
                     検索
                 </UiButton>
+                <!-- CSV出力：バッジは現在の絞り込み結果（＝出力対象）の件数 -->
+                <UiButton variant="ghost" @click="openExportModal">
+                    <template #leading><Download :size="14" /></template>
+                    CSV出力
+                    <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-none text-white tabular-nums">
+                        {{ (customers.total ?? 0).toLocaleString() }}
+                    </span>
+                </UiButton>
                 <UiButton variant="primary" @click="showAddCustomerModal = true">
                     <template #leading><Plus :size="14" /></template>
                     顧客追加
@@ -126,6 +134,28 @@
                                                 class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                                                 placeholder="ふりがなで検索"
                                             />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-brand-text mb-1">成人年度</label>
+                                            <div class="flex items-center gap-1">
+                                                <input
+                                                    v-model="searchForm.coming_of_age_year_min"
+                                                    type="number"
+                                                    min="1900"
+                                                    max="2100"
+                                                    placeholder="下限（例：2027）"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
+                                                />
+                                                <span class="shrink-0 text-xs text-brand-text">〜</span>
+                                                <input
+                                                    v-model="searchForm.coming_of_age_year_max"
+                                                    type="number"
+                                                    min="1900"
+                                                    max="2100"
+                                                    placeholder="上限（例：2028）"
+                                                    class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
+                                                />
+                                            </div>
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-brand-text mb-1">成人式エリア</label>
@@ -1032,14 +1062,66 @@
                 </div>
             </div>
         </transition>
+
+        <!-- CSV出力モーダル：出力する列を選択（選択内容は端末に保存） -->
+        <UiDialog v-model:open="showExportModal" title="CSV出力" size="lg">
+            <div class="space-y-4">
+                <p class="text-sm text-brand-text">
+                    現在の絞り込み条件に一致する
+                    <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-none text-white tabular-nums">
+                        {{ (customers.total ?? 0).toLocaleString() }}
+                    </span>
+                    件を出力します。
+                </p>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-xs font-medium text-brand-text-muted">
+                        出力する列（{{ exportColumns.length }} / {{ exportColumnKeys.length }}）
+                    </span>
+                    <div class="flex gap-3">
+                        <button type="button" class="text-xs text-brand-primary hover:underline" @click="selectAllExportColumns">すべて選択</button>
+                        <button type="button" class="text-xs text-brand-primary hover:underline" @click="clearExportColumns">すべて解除</button>
+                        <button type="button" class="text-xs text-brand-primary hover:underline" @click="resetExportColumns">初期設定に戻す</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 max-h-[50vh] overflow-y-auto rounded-md border border-brand-border p-3">
+                    <label
+                        v-for="key in exportColumnKeys"
+                        :key="key"
+                        class="flex items-center gap-2 text-sm text-brand-text cursor-pointer"
+                    >
+                        <input
+                            type="checkbox"
+                            :checked="exportColumns.includes(key)"
+                            class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
+                            @change="toggleExportColumn(key)"
+                        />
+                        {{ exportColumnOptions[key] }}
+                    </label>
+                </div>
+                <p class="text-xs text-brand-text-muted">
+                    「最新成約〜」は成約日が最も新しい成約の内容です。列の選択はこの端末に保存され、次回も引き継がれます。
+                </p>
+            </div>
+            <template #footer>
+                <UiButton variant="ghost" @click="showExportModal = false">キャンセル</UiButton>
+                <UiButton
+                    variant="primary"
+                    :disabled="!exportColumns.length || !(customers.total > 0)"
+                    @click="downloadCsv"
+                >
+                    <template #leading><Download :size="14" /></template>
+                    出力
+                </UiButton>
+            </template>
+        </UiDialog>
     </AdminLayout>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { UiPageHeader, UiButton } from '@/Components/UI';
-import { Plus, Search, Filter, RotateCcw, Eye, X } from 'lucide-vue-next';
+import { UiPageHeader, UiButton, UiDialog } from '@/Components/UI';
+import { Plus, Search, Filter, RotateCcw, Eye, X, Download } from 'lucide-vue-next';
 import ActionButton from '@/Components/ActionButton.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { buildCustomerFilterChips, countChipsByTab } from '@/composables/useCustomerFilterChips.js';
@@ -1060,6 +1142,14 @@ const props = defineProps({
     },
     filters: Object,
     prefillFromReservation: Object,
+    exportColumnOptions: {
+        type: Object,
+        default: () => ({}),
+    },
+    exportDefaultColumns: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // モーダル表示フラグ
@@ -1167,6 +1257,8 @@ const searchForm = reactive({
         return (Array.isArray(v) ? v : [v]).map(Number);
     })(),
     phone_number: props.filters?.phone_number || '',
+    coming_of_age_year_min: props.filters?.coming_of_age_year_min || '',
+    coming_of_age_year_max: props.filters?.coming_of_age_year_max || '',
     customer_shop_id: (() => {
         const v = props.filters?.customer_shop_id;
         if (v === undefined || v === null || v === '' || v === 'all') return ['all'];
@@ -1358,6 +1450,46 @@ watch(
     },
 );
 
+// CSV出力：出力する列の選択は端末のlocalStorageに保存し、次回以降も引き継ぐ
+const EXPORT_COLUMNS_STORAGE_KEY = 'kyogofuku-customer-export-columns';
+const showExportModal = ref(false);
+const exportColumnKeys = computed(() => Object.keys(props.exportColumnOptions || {}));
+const sanitizeExportColumns = (cols) =>
+    Array.isArray(cols) ? exportColumnKeys.value.filter((k) => cols.includes(k)) : [];
+const loadExportColumns = () => {
+    try {
+        const saved = sanitizeExportColumns(JSON.parse(localStorage.getItem(EXPORT_COLUMNS_STORAGE_KEY)));
+        if (saved.length) return saved;
+    } catch (e) { /* ignore */ }
+    return sanitizeExportColumns(props.exportDefaultColumns);
+};
+const exportColumns = ref(loadExportColumns());
+watch(exportColumns, (cols) => {
+    try { localStorage.setItem(EXPORT_COLUMNS_STORAGE_KEY, JSON.stringify(cols)); } catch (e) { /* ignore */ }
+});
+const toggleExportColumn = (key) => {
+    const set = new Set(exportColumns.value);
+    set.has(key) ? set.delete(key) : set.add(key);
+    exportColumns.value = exportColumnKeys.value.filter((k) => set.has(k)); // 表示順で保持
+};
+const selectAllExportColumns = () => { exportColumns.value = [...exportColumnKeys.value]; };
+const clearExportColumns = () => { exportColumns.value = []; };
+const resetExportColumns = () => { exportColumns.value = sanitizeExportColumns(props.exportDefaultColumns); };
+const openExportModal = () => { showExportModal.value = true; };
+// 出力は画面に反映済みの絞り込み条件（props.filters）で行い、バッジの件数と一致させる
+const downloadCsv = () => {
+    if (!exportColumns.value.length) return;
+    const params = {};
+    Object.entries(props.filters || {}).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === '') return;
+        if (Array.isArray(value) && value.length === 0) return;
+        params[key] = value;
+    });
+    params.columns = exportColumns.value;
+    window.location.href = route('admin.customers.export', params);
+    showExportModal.value = false;
+};
+
 // 検索実行
 const searchCustomers = () => {
     // 空の値を除外してクエリパラメータを送信
@@ -1387,6 +1519,8 @@ const resetSearch = () => {
     searchForm.ceremony_prefecture = null;
     searchForm.ceremony_area_id = [];
     searchForm.phone_number = '';
+    searchForm.coming_of_age_year_min = '';
+    searchForm.coming_of_age_year_max = '';
     searchForm.seijin_preparation_venue = '';
     searchForm.seijin_preparation_time = '';
     searchForm.other_store_preparation = null;

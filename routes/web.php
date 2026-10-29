@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AttendancePayrollSimulatorController as AdminAtte
 use App\Http\Controllers\Admin\CompanyCalendarController as AdminCompanyCalendarController;
 use App\Http\Controllers\Admin\ConstraintTemplateController as AdminConstraintTemplateController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
+use App\Http\Controllers\Admin\CustomerExportController;
 use App\Http\Controllers\Admin\CustomerQuestionnaireController as AdminCustomerQuestionnaireController;
 use App\Http\Controllers\Admin\DeviceRegistrationController as AdminDeviceRegistrationController;
 use App\Http\Controllers\DeviceController;
@@ -345,6 +346,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     // 顧客管理
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/search', [AdminCustomerController::class, 'search'])->name('customers.search');
+    Route::get('/customers/export', [CustomerExportController::class, 'csv'])->name('customers.export');
     Route::get('/customers/filters/seijin-options', [AdminCustomerController::class, 'seijinFilterOptions'])->name('customers.filters.seijin-options');
     Route::post('/customers', [AdminCustomerController::class, 'store'])->name('customers.store');
     Route::post('/customers/{customer}/notes', [AdminCustomerController::class, 'storeNote'])->name('customers.notes.store');
