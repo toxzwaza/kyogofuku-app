@@ -183,6 +183,20 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         Route::get('/simple-20260529', 'simple20260529')->name('simple-20260529');
     });
 
+    // 共有ノート（旧称 事案記録。全スタッフ。権限・グループはコントローラ内で判定）
+    Route::prefix('incidents')->name('incidents.')->controller(\App\Http\Controllers\Admin\IncidentController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{incident}', 'show')->name('show')->whereNumber('incident');
+        Route::get('/{incident}/edit', 'edit')->name('edit')->whereNumber('incident');
+        Route::put('/{incident}', 'update')->name('update')->whereNumber('incident');
+        Route::post('/{incident}/comments', 'storeComment')->name('comments.store')->whereNumber('incident');
+        Route::put('/{incident}/comments/{comment}', 'updateComment')->name('comments.update')->whereNumber(['incident', 'comment']);
+        Route::post('/{incident}/decisions', 'storeDecision')->name('decisions.store')->whereNumber('incident');
+        Route::put('/{incident}/status', 'updateStatus')->name('status.update')->whereNumber('incident');
+    });
+
     // イベント一覧
     Route::get('/events', [AdminEventController::class, 'index'])->name('events.index');
     // イベント予約者一覧（専用ページ＋データ取得用 JSON）
