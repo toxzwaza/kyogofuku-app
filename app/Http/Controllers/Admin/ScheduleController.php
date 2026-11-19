@@ -297,25 +297,28 @@ class ScheduleController extends Controller
             $validated['end_at'] = \Carbon\Carbon::parse($validated['start_at'])->setTime(23, 59, 59);
         }
 
+        // 前撮りの予定は、日時をこの画面では変えられない（席の空き・ほかのお客様の枠とずれるため）。前撮りの画面で移す
+        if ($schedule->photo_slot_id) {
+            // 終わりが空で送られたとき（上で 23:59:59 を入れている）は、終わりは比べない
+            $timeChanged = ! \Carbon\Carbon::parse($validated['start_at'])->equalTo($schedule->start_at)
+                || ($request->filled('end_at') && ! \Carbon\Carbon::parse($validated['end_at'])->equalTo($schedule->end_at))
+                || (array_key_exists('all_day', $validated) && (bool) $validated['all_day'] !== (bool) $schedule->all_day);
+            if (! $timeChanged && ! $request->filled('end_at')) {
+                $validated['end_at'] = $schedule->end_at;
+            }
+            if ($timeChanged) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '前撮りの日時は前撮りの画面で変えてください。',
+                    'errors' => ['start_at' => ['前撮りの日時は前撮りの画面で変えてください。']],
+                ], 422);
+            }
+        }
+
         // 担当者（参加者）を先に更新（Observer 発火時に正しいデータでGoogleカレンダー同期するため）
         $schedule->participantUsers()->sync($participantIds);
 
         $schedule->update($validated);
-
-        // photo_slot_idが紐づいている場合、同じ日付・スタジオの全ての前撮り枠の日付も更新
-        if ($schedule->photo_slot_id) {
-            $photoSlot = \App\Models\PhotoSlot::find($schedule->photo_slot_id);
-            if ($photoSlot) {
-                $originalDate = $photoSlot->shoot_date;
-                $originalStudioId = $photoSlot->photo_studio_id;
-                $newDate = \Carbon\Carbon::parse($validated['start_at'])->format('Y-m-d');
-                
-                // 同じ日付・スタジオの全ての前撮り枠を更新
-                \App\Models\PhotoSlot::where('shoot_date', $originalDate)
-                    ->where('photo_studio_id', $originalStudioId)
-                    ->update(['shoot_date' => $newDate]);
-            }
-        }
 
         $schedule->load(['user', 'participantUsers']);
 

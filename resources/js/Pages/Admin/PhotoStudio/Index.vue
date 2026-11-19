@@ -4,7 +4,7 @@
     <AdminLayout :breadcrumb="[{ label: '前撮り' }, { label: 'スタジオ' }]">
         <UiPageHeader
             title="スタジオ一覧"
-            description="前撮り撮影スタジオの管理。住所・備考の編集ができます。"
+            description="前撮りのスタジオと、枠を作るときに使う営業時間・定員の管理。営業時間は各店舗で登録してください。"
         >
             <template #actions>
                 <UiButton variant="primary" :href="route('admin.photo-studios.create')">
@@ -26,11 +26,24 @@
             <template #cell-name="{ value }">
                 <span class="font-medium">{{ value }}</span>
             </template>
-            <template #cell-address="{ value }">
-                <span class="text-brand-text-muted text-xs">{{ value || '—' }}</span>
+            <template #cell-shop_group="{ value }">
+                <span class="text-xs">{{ groupLabels[value] || '未設定' }}</span>
             </template>
-            <template #cell-remarks="{ value }">
-                <span class="text-brand-text-muted text-xs line-clamp-1">{{ value || '—' }}</span>
+            <template #cell-hours="{ row }">
+                <ul v-if="row.summary.length" class="text-xs space-y-0.5">
+                    <li v-for="g in row.summary" :key="g.days">
+                        <span class="font-medium">{{ g.days }}</span>
+                        {{ shortTime(g.start) }}〜{{ shortTime(g.end) }}
+                        <span class="text-brand-text-muted">（{{ g.count }}枠）</span>
+                    </li>
+                </ul>
+                <UiBadge v-else variant="warning">営業時間が未登録</UiBadge>
+            </template>
+            <template #cell-default_capacity="{ value }">
+                <span class="text-xs tabular-nums">{{ value }}人</span>
+            </template>
+            <template #cell-is_active="{ value }">
+                <UiBadge :variant="value ? 'success' : 'neutral'">{{ value ? '有効' : '無効' }}</UiBadge>
             </template>
             <template #cell-actions="{ row }">
                 <div class="flex items-center justify-end gap-1.5">
@@ -60,18 +73,22 @@
 import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
-import { UiPageHeader, UiButton, UiDataTable, UiDialog } from '@/Components/UI';
+import { UiPageHeader, UiButton, UiDataTable, UiDialog, UiBadge } from '@/Components/UI';
+import { shortTime } from '@/utils/photoSlotTime';
 import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
 
 defineProps({
     photoStudios: Object,
+    groupLabels: { type: Object, default: () => ({}) },
 });
 
 const columns = [
     { key: 'id',      label: 'ID',          width: '70px' },
-    { key: 'name',    label: 'スタジオ名',  width: '220px' },
-    { key: 'address', label: '住所',        hideOnMobile: true },
-    { key: 'remarks', label: '備考',        hideOnMobile: true },
+    { key: 'name',    label: 'スタジオ名',  width: '200px' },
+    { key: 'shop_group', label: 'グループ', width: '80px' },
+    { key: 'hours',   label: '営業時間' },
+    { key: 'default_capacity', label: '定員', width: '60px', hideOnMobile: true },
+    { key: 'is_active', label: '状態', width: '70px', hideOnMobile: true },
     { key: 'actions', label: '',            align: 'right', width: '100px', noLink: true },
 ];
 

@@ -5754,7 +5754,7 @@ function handleEventDrop(dropInfo) {
     })
     .catch((error) => {
       console.error("スケジュールの更新に失敗しました:", error);
-      alert("スケジュールの更新に失敗しました。");
+      alert(error.response?.data?.message || "スケジュールの更新に失敗しました。");
       dropInfo.revert();
     });
 }
@@ -5803,7 +5803,7 @@ function handleEventResize(resizeInfo) {
     })
     .catch((error) => {
       console.error("スケジュールの更新に失敗しました:", error);
-      alert("スケジュールの更新に失敗しました。");
+      alert(error.response?.data?.message || "スケジュールの更新に失敗しました。");
       resizeInfo.revert();
     });
 }

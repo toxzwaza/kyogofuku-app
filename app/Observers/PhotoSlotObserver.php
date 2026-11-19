@@ -5,47 +5,37 @@ namespace App\Observers;
 use App\Models\PhotoSlot;
 use App\Models\StaffSchedule;
 use App\Services\GoogleCalendarSyncService;
+use App\Services\PhotoSlot\PhotoSlotBookingService;
+use App\Services\PhotoSlot\PhotoSlotScheduleService;
 use Illuminate\Support\Facades\Log;
 
 class PhotoSlotObserver
 {
-    public function __construct(protected GoogleCalendarSyncService $google) {}
+    public function __construct(
+        protected GoogleCalendarSyncService $google,
+        protected PhotoSlotScheduleService $schedules,
+    ) {}
 
     /**
-     * customer_id（または日時・会場）の変更を検知して
-     * 関連 StaffSchedule のタイトル更新 + Google再同期
+     * お客様・スタジオ・日時・詳細未決定が変わったら、予定（30分）とカレンダーを合わせる。
+     * お客様が空になったら予定を消す（どの画面から外しても同じになるように）。
+     * 予約のサービスの処理中は、サービスが最後にまとめて合わせるので何もしない。
      */
     public function updated(PhotoSlot $slot): void
     {
-        $watch = ['customer_id', 'photo_studio_id', 'shoot_date', 'shoot_time'];
-        if (!$slot->wasChanged($watch)) return;
-
-        $sched = StaffSchedule::where('photo_slot_id', $slot->id)->first();
-        if (!$sched) return;
-
-        $slot->load('customer', 'studio');
-        $studioName = $slot->studio ? trim($slot->studio->name) : '会場未定';
-        $title = $slot->customer
-            ? "[前撮り] {$slot->customer->name}（{$studioName}）"
-            : "[前撮り] 未予約（{$studioName}）";
-
-        $update = ['title' => $title];
-        if ($slot->wasChanged(['shoot_date', 'shoot_time']) && $slot->shoot_date && $slot->shoot_time) {
-            $start = \Carbon\Carbon::parse($slot->shoot_date . ' ' . $slot->shoot_time);
-            $update['start_at'] = $start;
-            $update['end_at'] = $start->copy()->addHour();
+        if (PhotoSlotBookingService::isSuspended()) {
+            return;
         }
-        $sched->update($update);
-
-        if (!$sched->sync_to_google_calendar) return;
+        $watch = ['customer_id', 'photo_studio_id', 'shoot_date', 'shoot_time', 'details_undecided'];
+        if (! $slot->wasChanged($watch)) {
+            return;
+        }
 
         try {
-            $sched->load('participantUsers.shops', 'photoSlot.studio', 'photoSlot.customer');
-            $this->google->syncScheduleToShopCalendarsOnUpdate($sched);
+            $this->schedules->syncFor($slot);
         } catch (\Throwable $e) {
-            Log::error('[PhotoSlotObserver] Google sync failed', [
+            Log::error('[PhotoSlotObserver] 予定の同期に失敗', [
                 'slot_id' => $slot->id,
-                'schedule_id' => $sched->id,
                 'error' => $e->getMessage(),
             ]);
         }

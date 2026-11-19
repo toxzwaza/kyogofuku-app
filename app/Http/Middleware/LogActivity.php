@@ -38,6 +38,11 @@ class LogActivity
             return;
         }
 
+        // 前撮り枠のまとめて作成は、コントローラーで要約を記録する（送る内容が大きく、プレビューは記録不要のため）
+        if ($request->routeIs('admin.photo-slots.bulk.*')) {
+            return;
+        }
+
         // 成功レスポンスのみ記録（エラーは記録しない）
         if ($response->getStatusCode() >= 400) {
             return;

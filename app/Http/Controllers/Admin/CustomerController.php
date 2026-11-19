@@ -24,13 +24,16 @@ use App\Models\Shop;
 use App\Models\User;
 use App\Queries\CustomerSearchQuery;
 use App\Services\CustomerPhotoStorageService;
+use App\Services\PhotoSlot\PhotoSlotBookingService;
 use App\Services\Line\ReservationLineContactMigrator;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Concerns\ResolvesTabletMediaTags;
 use App\Http\Controllers\Concerns\ResolvesUiView;
 use Inertia\Inertia;
@@ -288,7 +291,16 @@ class CustomerController extends Controller
         $shops = Shop::orderBy('name')->get();
         $plans = Plan::orderBy('name')->get();
         $users = User::orderBy('name')->get();
-        $photoStudios = PhotoStudio::orderBy('name')->get();
+        $isLegacyView = $this->viewFor('Admin/Customer/Show') !== 'Admin/Customer/Show';
+        // 新しい画面：自分の店舗グループの有効なスタジオ（＋このお客様がいま入っているスタジオ）。空き状況は選んだときに取りに行く
+        $currentStudioIds = $customer->photoSlots->pluck('photo_studio_id')->filter()->unique()->all();
+        $photoStudios = $isLegacyView
+            ? PhotoStudio::orderBy('name')->get()
+            : PhotoStudio::query()
+                ->visibleToUser(auth()->user())
+                ->where(fn ($q) => $q->where('is_active', true)->orWhereIn('id', $currentStudioIds))
+                ->orderBy('name')
+                ->get(['id', 'name', 'shop_group', 'is_active']);
         $photoTypes = PhotoType::where('is_active', true)->orderBy('sort_order')->get();
 
         // ログインユーザーの所属店舗を取得
@@ -300,11 +312,13 @@ class CustomerController extends Controller
             ->get() : collect();
 
         // 事前に登録された前撮り枠（customer_idがnullのもの）を取得
-        $availablePhotoSlots = PhotoSlot::whereNull('customer_id')
-            ->with(['studio', 'shops', 'plan'])
-            ->orderBy('shoot_date', 'asc')
-            ->orderBy('shoot_time', 'asc')
-            ->get();
+        $availablePhotoSlots = $isLegacyView
+            ? PhotoSlot::whereNull('customer_id')
+                ->with(['studio', 'shops', 'plan'])
+                ->orderBy('shoot_date', 'asc')
+                ->orderBy('shoot_time', 'asc')
+                ->get()
+            : [];
 
         // 顧客タグ一覧を取得（有効なもののみ）
         $customerTags = CustomerTag::where('is_active', true)->orderBy('name')->get();
@@ -903,66 +917,19 @@ class CustomerController extends Controller
     }
 
     /**
-     * 前撮り情報を追加
+     * 前撮り情報を追加（予約は PhotoSlotBookingService にまとめてある）
      */
-    public function storePhotoSlot(Request $request, Customer $customer)
+    public function storePhotoSlot(Request $request, Customer $customer, PhotoSlotBookingService $booking)
     {
         $detailsUndecided = $request->boolean('details_undecided');
-
-        $rules = [
-            'details_undecided' => 'boolean',
-            'assignment_label' => 'nullable|string|max:255',
-            'user_id' => 'nullable|exists:users,id',
-            'plan_id' => 'nullable|exists:plans,id',
-            'remarks' => 'nullable|string',
-        ];
+        $validated = $request->validate($this->photoSlotRules($detailsUndecided));
+        $attrs = $this->photoSlotAttrs($validated);
 
         if ($detailsUndecided) {
-            $rules['shop_id'] = 'required|exists:shops,id';
+            $booking->setUndecided($customer, $attrs);
         } else {
-            $rules['photo_slot_id'] = 'required|exists:photo_slots,id';
-            $rules['shop_id'] = 'nullable|exists:shops,id';
-        }
-
-        $validated = $request->validate($rules);
-
-        if ($detailsUndecided) {
-            // 詳細未決定: 新規PhotoSlotを作成（会場・日時はnull）
-            $photoSlot = PhotoSlot::create([
-                'customer_id' => $customer->id,
-                'details_undecided' => true,
-                'photo_studio_id' => null,
-                'shoot_date' => null,
-                'shoot_time' => null,
-                'assignment_label' => $validated['assignment_label'] ?? null,
-                'user_id' => $validated['user_id'] ?? null,
-                'plan_id' => $validated['plan_id'] ?? null,
-                'remarks' => $validated['remarks'] ?? null,
-            ]);
-            $photoSlot->shops()->sync([$validated['shop_id']]);
-        } else {
-            // 通常: 既存枠に顧客を割り当て
-            $photoSlot = PhotoSlot::findOrFail($validated['photo_slot_id']);
-
-            if ($photoSlot->customer_id !== null) {
-                return back()->withErrors([
-                    'photo_slot_id' => 'この前撮り枠は既に他の顧客に割り当てられています。',
-                ]);
-            }
-
-            $photoSlot->update([
-                'customer_id' => $customer->id,
-                'assignment_label' => $validated['assignment_label'] ?? null,
-                'user_id' => $validated['user_id'] ?? null,
-                'plan_id' => $validated['plan_id'] ?? null,
-                'remarks' => $validated['remarks'] ?? null,
-            ]);
-
-            if (! empty($validated['shop_id'])) {
-                $photoSlot->shops()->sync([$validated['shop_id']]);
-            } else {
-                $photoSlot->shops()->detach();
-            }
+            [$studioId, $date, $time] = $this->resolvePhotoSlotTarget($request, $validated);
+            $booking->assign($customer, $studioId, $date, $time, $attrs);
         }
 
         return redirect()->route('admin.customers.show', $customer)
@@ -970,88 +937,93 @@ class CustomerController extends Controller
     }
 
     /**
-     * 前撮り情報を更新
+     * 前撮り情報を更新（別の時刻へ移す・詳細未決定にする・内容だけ直す）
      */
-    public function updatePhotoSlot(Request $request, Customer $customer, PhotoSlot $photoSlot)
+    public function updatePhotoSlot(Request $request, Customer $customer, PhotoSlot $photoSlot, PhotoSlotBookingService $booking)
     {
         if ($photoSlot->customer_id !== $customer->id) {
             abort(403);
         }
+        // ほかの店舗グループの前撮りは、見られても変えられない（表示はお客様の情報としてそのまま出す）
+        if (! PhotoSlot::query()->visibleToUser($request->user())->whereKey($photoSlot->id)->exists()) {
+            return back()->withErrors(['error' => 'ほかの店舗グループの前撮りは変更できません。']);
+        }
 
         $detailsUndecided = $request->boolean('details_undecided');
+        $validated = $request->validate($this->photoSlotRules($detailsUndecided));
+        $attrs = $this->photoSlotAttrs($validated);
 
+        if ($detailsUndecided) {
+            $booking->makeUndecided($photoSlot, $attrs);
+        } else {
+            [$studioId, $date, $time] = $this->resolvePhotoSlotTarget($request, $validated, $photoSlot);
+            $booking->move($photoSlot, $studioId, $date, $time, $attrs);
+        }
+
+        return redirect()->route('admin.customers.show', $customer)
+            ->with('success', '前撮り情報を更新しました。');
+    }
+
+    private function photoSlotRules(bool $detailsUndecided): array
+    {
         $rules = [
             'details_undecided' => 'boolean',
-            'shop_id' => $detailsUndecided ? 'required|exists:shops,id' : 'nullable|exists:shops,id',
+            'shop_id' => ($detailsUndecided ? 'required' : 'nullable').'|exists:shops,id',
             'assignment_label' => 'nullable|string|max:255',
             'user_id' => 'nullable|exists:users,id',
             'plan_id' => 'nullable|exists:plans,id',
             'remarks' => 'nullable|string',
         ];
-
         if (! $detailsUndecided) {
-            $rules['photo_slot_id'] = 'required|exists:photo_slots,id';
+            // 新しい画面はスタジオ・日付・時刻を送る。旧画面（ShowLegacy）は枠の ID を送る
+            $rules['photo_slot_id'] = 'nullable|required_without:shoot_time|exists:photo_slots,id';
+            $rules['photo_studio_id'] = 'nullable|required_without:photo_slot_id|integer';
+            $rules['shoot_date'] = 'nullable|required_without:photo_slot_id|date_format:Y-m-d';
+            $rules['shoot_time'] = 'nullable|required_without:photo_slot_id|date_format:H:i';
         }
 
-        $validated = $request->validate($rules);
+        return $rules;
+    }
 
-        $updateData = [
+    private function photoSlotAttrs(array $validated): array
+    {
+        return [
+            'shop_id' => $validated['shop_id'] ?? null,
             'assignment_label' => $validated['assignment_label'] ?? null,
             'user_id' => $validated['user_id'] ?? null,
             'plan_id' => $validated['plan_id'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
         ];
+    }
 
-        if ($detailsUndecided) {
-            // 詳細未決定に変更: 会場・日時をnullにして仮枠に
-            $updateData['details_undecided'] = true;
-            $updateData['photo_studio_id'] = null;
-            $updateData['shoot_date'] = null;
-            $updateData['shoot_time'] = null;
-            $photoSlot->update($updateData);
-            if (isset($validated['shop_id']) && $validated['shop_id']) {
-                $photoSlot->shops()->sync([$validated['shop_id']]);
-            } else {
-                $photoSlot->shops()->detach();
-            }
+    /**
+     * 入れる先（スタジオ・日付・時刻）を決め、スタジオが選べるか確かめる
+     *
+     * @return array{0: int, 1: string, 2: string}
+     */
+    private function resolvePhotoSlotTarget(Request $request, array $validated, ?PhotoSlot $current = null): array
+    {
+        if (! empty($validated['shoot_time'])) {
+            $studioId = (int) $validated['photo_studio_id'];
+            $date = $validated['shoot_date'];
+            $time = $validated['shoot_time'];
         } else {
-            $targetSlotId = (int) ($validated['photo_slot_id'] ?? 0);
-            $targetSlot = PhotoSlot::findOrFail($targetSlotId);
-
-            // 選択枠が自分自身の場合はそのまま更新
-            if ($targetSlot->id === $photoSlot->id) {
-                $photoSlot->update($updateData);
-                if (isset($validated['shop_id']) && $validated['shop_id']) {
-                    $photoSlot->shops()->sync([$validated['shop_id']]);
-                } else {
-                    $photoSlot->shops()->detach();
-                }
-            } else {
-                // 別枠を選択: 既に他顧客がいる場合はエラー
-                if ($targetSlot->customer_id !== null) {
-                    return back()->withErrors([
-                        'photo_slot_id' => 'この前撮り枠は既に他の顧客に割り当てられています。',
-                    ]);
-                }
-
-                // 対象枠に顧客を移行
-                $targetSlot->update(array_merge($updateData, [
-                    'customer_id' => $customer->id,
-                    'details_undecided' => false,
-                ]));
-                if (isset($validated['shop_id']) && $validated['shop_id']) {
-                    $targetSlot->shops()->sync([$validated['shop_id']]);
-                } else {
-                    $targetSlot->shops()->detach();
-                }
-
-                // 元の枠（詳細未決定など）を削除
-                $photoSlot->delete();
+            $slot = PhotoSlot::findOrFail($validated['photo_slot_id']);
+            if ($slot->details_undecided || ! $slot->shoot_date || ! $slot->shoot_time) {
+                throw ValidationException::withMessages(['photo_slot_id' => 'この枠は日時が決まっていません。']);
             }
+            $studioId = (int) $slot->photo_studio_id;
+            $date = Carbon::parse($slot->shoot_date)->toDateString();
+            $time = substr($slot->shoot_time, 0, 5);
         }
 
-        return redirect()->route('admin.customers.show', $customer)
-            ->with('success', '前撮り情報を更新しました。');
+        $studio = PhotoStudio::find($studioId);
+        $keepsCurrentStudio = $current && (int) $current->photo_studio_id === $studioId;
+        if (! $studio || ! $studio->isVisibleTo($request->user()) || (! $studio->is_active && ! $keepsCurrentStudio)) {
+            throw ValidationException::withMessages(['photo_studio_id' => 'このスタジオは選べません。']);
+        }
+
+        return [$studioId, $date, $time];
     }
 
     /**

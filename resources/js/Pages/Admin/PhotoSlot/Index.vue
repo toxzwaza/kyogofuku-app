@@ -8,8 +8,23 @@
           前撮り管理
         </h2>
         <div class="flex items-center gap-2">
+          <div class="inline-flex rounded-soft border border-brand-border overflow-hidden text-sm" role="group" aria-label="表示の切り替え">
+            <button
+              type="button"
+              class="px-3 py-2"
+              :class="view === 'grid' ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2'"
+              @click="setView('grid')"
+            >表</button>
+            <button
+              type="button"
+              class="px-3 py-2 border-l border-brand-border"
+              :class="view === 'list' ? 'bg-brand-primary text-white' : 'bg-brand-surface text-brand-text hover:bg-brand-surface-2'"
+              @click="setView('list')"
+            >リスト</button>
+          </div>
           <!-- モバイル/タブレット：検索条件モーダルを開く -->
           <button
+            v-if="view === 'list'"
             type="button"
             class="lg:hidden inline-flex items-center gap-1 px-3 py-2 rounded-soft border border-brand-border text-sm text-brand-text bg-brand-surface hover:bg-brand-surface-2"
             @click="mobileSearchOpen = true"
@@ -19,7 +34,7 @@
           </button>
           <ActionButton
             variant="create"
-            label="新規追加"
+            label="枠をまとめて作る"
             :href="route('admin.photo-slots.create')"
           />
         </div>
@@ -31,6 +46,14 @@
       class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200"
     >
       {{ $page.props.success }}
+    </div>
+
+    <div
+      v-if="notice"
+      class="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-200 flex items-start justify-between gap-3"
+    >
+      <span>{{ notice }}</span>
+      <button type="button" class="text-green-700 hover:text-green-900" aria-label="閉じる" @click="notice = ''"><X :size="16" /></button>
     </div>
 
     <div
@@ -46,6 +69,15 @@
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <!-- 表の画面（選んだスタジオの1か月・登録済みの枠だけ） -->
+        <MonthGrid
+          v-if="view === 'grid'"
+          ref="gridRef"
+          :studios="photoStudios"
+          @book="openBooking"
+          @manage="openManage"
+        />
+        <template v-else>
         <!-- モバイル：半透明の黒背景。中央モーダルの外に検索結果がうっすら見える -->
         <div
           v-if="mobileSearchOpen"
@@ -131,21 +163,23 @@
               </div>
               <div>
                 <label class="block text-xs font-medium text-brand-text mb-1"
-                  >日付範囲（開始）</label
+                  >期間（開始）</label
                 >
                 <input
                   v-model="filters.start_date"
                   type="date"
+                  @change="applyPeriod"
                   class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                 />
               </div>
               <div>
                 <label class="block text-xs font-medium text-brand-text mb-1"
-                  >日付範囲（終了）</label
+                  >期間（終了）</label
                 >
                 <input
                   v-model="filters.end_date"
                   type="date"
+                  @change="applyPeriod"
                   class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                 />
               </div>
@@ -290,46 +324,6 @@
                       </svg>
                       編集
                     </button>
-                    <button
-                      v-if="!hasScheduleForDate(date, dateGroup)"
-                      @click.stop="createScheduleForDate(date, dateGroup)"
-                      class="ml-2 px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 flex items-center gap-1"
-                      :disabled="creatingSchedule"
-                    >
-                      <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      登録
-                    </button>
-                    <span
-                      v-else
-                      class="ml-2 px-3 py-1 bg-gray-200 text-brand-text-muted text-sm rounded-md flex items-center gap-1"
-                    >
-                      <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      登録済
-                    </span>
                   </div>
                 </div>
 
@@ -394,6 +388,7 @@
                             <!-- 時刻 -->
                             <td class="px-2 py-2 tabular-nums font-semibold text-brand-text whitespace-nowrap">
                               {{ formatTime(slot.shoot_time) }}
+                              <span v-if="seatSummaryOf(slot)" class="ml-1 text-[11px] font-normal text-brand-text-muted" title="この時刻の予約数／定員">{{ seatSummaryOf(slot).booked }}/{{ seatSummaryOf(slot).capacity }}</span>
                             </td>
 
                             <!-- スタジオ -->
@@ -479,6 +474,22 @@
                                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                                 </button>
                                 <button
+                                  v-if="!slot.customer && canManageSeat(slot)"
+                                  @click="openBookingFromSlot(slot)"
+                                  class="px-2 py-1 rounded-soft-sm text-xs font-medium text-brand-primary hover:bg-ai-100"
+                                  title="お客様を選んで予約を入れる"
+                                >
+                                  予約
+                                </button>
+                                <button
+                                  v-if="canManageSeat(slot)"
+                                  @click="openManageFromSlot(slot)"
+                                  class="px-2 py-1 rounded-soft-sm text-xs font-medium text-brand-text-muted hover:bg-sumi-100"
+                                  title="この時刻に1枠足す・定員を変える"
+                                >
+                                  枠の数
+                                </button>
+                                <button
                                   v-else
                                   @click="confirmDelete(slot)"
                                   class="p-1.5 rounded-soft-sm hover:bg-akane-100 text-akane-600"
@@ -501,6 +512,7 @@
             </div>
           </div>
         </div>
+        </template>
       </div>
     </div>
 
@@ -562,9 +574,26 @@
             <div class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                  <label
-                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
+                  <label class="block text-xs font-semibold text-brand-text-muted tracking-wide mb-2">
+                    スタジオ <span class="text-red-500">*</span>
+                  </label>
+                  <select
+                    v-model="editForm.photo_studio_id"
+                    required
+                    @change="onEditStudioChange"
+                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                   >
+                    <option value="">選択してください</option>
+                    <option v-for="studio in photoStudios" :key="studio.id" :value="studio.id">
+                      {{ studio.name }}
+                    </option>
+                  </select>
+                  <div v-if="editForm.errors.photo_studio_id" class="mt-1 text-sm text-red-600">
+                    {{ editForm.errors.photo_studio_id }}
+                  </div>
+                </div>
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
+                  <label class="block text-xs font-semibold text-brand-text-muted tracking-wide mb-2">
                     担当店舗
                   </label>
                   <select
@@ -573,118 +602,57 @@
                     class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                   >
                     <option value="">選択してください</option>
-                    <option
-                      v-for="shop in shops"
-                      :key="shop.id"
-                      :value="shop.id"
-                    >
+                    <option v-for="shop in editShopOptions" :key="shop.id" :value="shop.id">
                       {{ shop.name }}
                     </option>
                   </select>
-                  <div
-                    v-if="editForm.errors.shop_id"
-                    class="mt-1 text-sm text-red-600"
-                  >
-                    {{ editForm.errors.shop_id }}
+                  <div v-if="editForm.errors.shop_ids" class="mt-1 text-sm text-red-600">
+                    {{ editForm.errors.shop_ids }}
                   </div>
                 </div>
-                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                  <label
-                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
-                  >
-                    会場 <span class="text-red-500">*</span>
+                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border md:col-span-2">
+                  <label class="block text-xs font-semibold text-brand-text-muted tracking-wide mb-2">
+                    撮影日・時刻 <span class="text-red-500">*</span>
                   </label>
-                  <select
-                    v-model="editForm.selected_studio_id"
-                    required
-                    :disabled="!editForm.shop_id"
-                    @change="onEditStudioChange"
-                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
-                  >
-                    <option value="">選択してください</option>
-                    <option
-                      v-for="studio in availableEditStudios"
-                      :key="studio.id"
-                      :value="studio.id"
+                  <div v-if="!editForm.photo_studio_id" class="text-xs text-brand-text-muted">まずスタジオを選んでください</div>
+                  <div v-else-if="editAvailabilityLoading" class="text-xs text-brand-text-muted">空き状況を読み込み中…</div>
+                  <template v-else>
+                    <select
+                      v-model="editForm.shoot_date"
+                      required
+                      @change="onEditDateChange"
+                      class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm"
                     >
-                      {{ studio.name }}
-                    </option>
-                  </select>
-                  <p
-                    v-if="!editForm.shop_id"
-                    class="mt-1 text-xs text-brand-text-muted"
-                  >
-                    まず担当店舗を選択してください
-                  </p>
-                  <div
-                    v-if="editForm.errors.selected_studio_id"
-                    class="mt-1 text-sm text-red-600"
-                  >
-                    {{ editForm.errors.selected_studio_id }}
-                  </div>
-                </div>
-                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                  <label
-                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
-                  >
-                    撮影日 <span class="text-red-500">*</span>
-                  </label>
-                  <select
-                    v-model="editForm.selected_date"
-                    required
-                    :disabled="!editForm.selected_studio_id"
-                    @change="onEditDateChange"
-                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
-                  >
-                    <option value="">選択してください</option>
-                    <option
-                      v-for="date in availableEditDates"
-                      :key="date"
-                      :value="date"
-                    >
-                      {{ formatDateJa(date) }}
-                    </option>
-                  </select>
-                  <p
-                    v-if="!editForm.selected_studio_id"
-                    class="mt-1 text-xs text-brand-text-muted"
-                  >
-                    まず担当店舗と会場を選択してください
-                  </p>
-                </div>
-                <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
-                  <label
-                    class="block text-xs font-semibold text-brand-text-muted uppercase tracking-wide mb-2"
-                  >
-                    撮影時間 <span class="text-red-500">*</span>
-                  </label>
-                  <select
-                    v-model="editForm.photo_slot_id"
-                    required
-                    :disabled="!editForm.selected_date"
-                    @change="onEditPhotoSlotChange"
-                    class="w-full rounded-lg border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary text-sm disabled:bg-brand-surface-2 disabled:cursor-not-allowed"
-                  >
-                    <option value="">選択してください</option>
-                    <option
-                      v-for="slot in availableEditTimeSlots"
-                      :key="slot.id"
-                      :value="slot.id"
-                    >
-                      {{ formatTime(slot.shoot_time) }}
-                    </option>
-                  </select>
-                  <p
-                    v-if="!editForm.selected_date"
-                    class="mt-1 text-xs text-brand-text-muted"
-                  >
-                    まず担当店舗、会場、撮影日を選択してください
-                  </p>
-                  <div
-                    v-if="editForm.errors.photo_slot_id"
-                    class="mt-1 text-sm text-red-600"
-                  >
-                    {{ editForm.errors.photo_slot_id }}
+                      <option value="">撮影日を選択してください</option>
+                      <option v-for="date in editDateOptions" :key="date" :value="date">
+                        {{ formatDateJaWithWeekday(date) }}
+                      </option>
+                    </select>
+                    <p v-if="editDateOptions.length === 0" class="mt-1 text-xs text-brand-text-muted">
+                      このスタジオには、今日から180日以内に空いている枠がありません
+                    </p>
+                    <div v-if="editForm.shoot_date" class="mt-3 flex flex-wrap gap-2">
+                      <button
+                        v-for="t in editTimeOptions"
+                        :key="t.time"
+                        type="button"
+                        :disabled="t.free === 0"
+                        class="px-3 py-1.5 rounded-soft border text-sm tabular-nums transition-colors"
+                        :class="editForm.shoot_time === t.time
+                          ? 'bg-brand-primary border-brand-primary text-white'
+                          : t.free === 0
+                            ? 'bg-sumi-100 border-brand-border text-brand-text-subtle cursor-not-allowed'
+                            : 'bg-brand-surface border-brand-border text-brand-text hover:border-brand-primary'"
+                        @click="editForm.shoot_time = t.time"
+                      >
+                        {{ t.time }}
+                        <span class="ml-1 text-xs opacity-80">{{ t.free === 0 ? '満員' : `空き${t.free}` }}</span>
+                      </button>
+                      <span v-if="editTimeOptions.length === 0" class="text-xs text-brand-text-muted">この日に枠がありません</span>
+                    </div>
+                  </template>
+                  <div v-for="k in ['shoot_date', 'shoot_time', 'photo_slot_id']" :key="k">
+                    <div v-if="editForm.errors[k]" class="mt-1 text-sm text-red-600">{{ editForm.errors[k] }}</div>
                   </div>
                 </div>
                 <div class="bg-brand-surface-2 rounded-lg p-4 border border-brand-border">
@@ -832,7 +800,7 @@
               この前撮り枠を削除してもよろしいですか？
             </p>
             <p class="text-xs text-red-600 mb-6">
-              ※ Googleカレンダーのイベントも削除されます。この操作は取り消せません。
+              ※ この操作は取り消せません。
             </p>
             <div class="flex justify-end space-x-3">
               <button
@@ -876,8 +844,8 @@
               <span class="font-semibold">{{ selectedSlot.customer.name }}</span> さんの紐付けを解除します。
             </p>
             <p class="text-xs text-orange-600 mb-6">
-              ※ 枠自体は残ります（未予約状態に戻る）。Googleカレンダーは「未予約」表示・グレーに変わります。<br>
-              削除する場合は、解除した後に「削除」ボタンから実行してください。
+              ※ 枠自体は残ります（空き枠に戻ります）。この予約の予定と Google カレンダーの予定は消えます。<br>
+              枠をなくす場合は、解除した後に「削除」ボタンから実行してください。
             </p>
             <div class="flex justify-end space-x-3">
               <button
@@ -1089,6 +1057,27 @@
         </div>
       </div>
     </transition>
+
+    <!-- 予約・枠の数の小さい画面 -->
+    <BookingDialog
+      v-model:open="booking.open"
+      :studio="booking.studio"
+      :date="booking.date"
+      :time="booking.time"
+      :shops="shops"
+      :plans="plans"
+      @booked="afterChange"
+    />
+    <SeatManageDialog
+      v-model:open="seatManage.open"
+      :studio="seatManage.studio"
+      :date="seatManage.date"
+      :time="seatManage.time"
+      :capacity="seatManage.capacity"
+      :booked="seatManage.booked"
+      :max-capacity="maxCapacity"
+      @changed="afterChange"
+    />
   </AdminLayout>
 </template>
 
@@ -1101,6 +1090,9 @@ import axios from "axios";
 import { Search, X } from "lucide-vue-next";
 import { formatDateJa, formatDateJaWithWeekday } from "@/utils/dateFormat";
 import { useScrollLock } from "@/composables/useScrollLock.js";
+import MonthGrid from "@/Components/PhotoSlot/MonthGrid.vue";
+import BookingDialog from "@/Components/PhotoSlot/BookingDialog.vue";
+import SeatManageDialog from "@/Components/PhotoSlot/SeatManageDialog.vue";
 
 // モバイル/タブレット：検索条件を中央モーダルで開く（PCは上部に常時表示）
 const mobileSearchOpen = ref(false);
@@ -1111,10 +1103,53 @@ const props = defineProps({
   photoStudios: Array,
   shops: Array,
   plans: Array,
-  users: Array,
-  availablePhotoSlots: Array,
-  scheduledSlotIds: Array,
+  filters: { type: Object, default: () => ({}) },
+  maxCapacity: { type: Number, default: 10 },
 });
+
+// 表／リストの切り替え（表が既定。選んだほうをこの端末に覚える）
+const VIEW_KEY = "photoSlotIndex.view";
+const readView = () => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid";
+  } catch (e) {
+    return "grid";
+  }
+};
+const view = ref(readView());
+const setView = (v) => {
+  view.value = v;
+  try { localStorage.setItem(VIEW_KEY, v); } catch (e) { /* 覚えられなくても動く */ }
+};
+
+// 予約・枠の数の小さい画面（表とリストの両方から使う）
+const gridRef = ref(null);
+const notice = ref("");
+const booking = ref({ open: false, studio: null, date: "", time: "" });
+const seatManage = ref({ open: false, studio: null, date: "", time: "", capacity: 0, booked: 0 });
+
+const reloadGrid = () => gridRef.value?.reload();
+const afterChange = (message) => {
+  if (message) notice.value = message;
+  reloadGrid();
+  router.reload({ only: ["photoSlots"], preserveScroll: true });
+};
+const openBooking = ({ studio, date, time }) => {
+  booking.value = { open: true, studio, date, time };
+};
+const openManage = ({ studio, date, time, capacity, booked }) => {
+  seatManage.value = { open: true, studio, date, time, capacity, booked };
+};
+const slotTarget = (slot) => ({
+  studio: slot.studio,
+  date: String(slot.shoot_date).substring(0, 10),
+  time: formatTime(slot.shoot_time),
+});
+const openBookingFromSlot = (slot) => openBooking(slotTarget(slot));
+const openManageFromSlot = (slot) => {
+  const sum = seatSummaryOf(slot) || { capacity: 0, booked: 0 };
+  openManage({ ...slotTarget(slot), capacity: sum.capacity, booked: sum.booked });
+};
 
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
@@ -1125,24 +1160,35 @@ const selectedDateGroupSlots = ref([]);
 const selectedDateKey = ref("");
 const editShopUsers = ref([]);
 const expandedDates = ref(new Set());
-const creatingSchedule = ref(false);
-const creatingSlotSchedule = ref(null); // 個別時間枠のスケジュール作成中フラグ
-const dateScheduleStatus = ref(new Map()); // 日付ごとのスケジュール登録状況
 
-// 絞り込み条件
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+// 絞り込み条件（期間はサーバーで絞る。ほかは画面の中で絞る）
 const filters = ref({
   shop_id: "",
   studio_id: "",
   reservation_status: "",
-  start_date: "",
-  end_date: "",
+  start_date: props.filters?.from || "",
+  end_date: props.filters?.to || "",
 });
 
+// 期間を変えたらサーバーから読み直す
+const applyPeriod = () => {
+  router.get(
+    route("admin.photo-slots.index"),
+    { from: filters.value.start_date || undefined, to: filters.value.end_date || undefined },
+    { preserveState: true, preserveScroll: true, replace: true, only: ["photoSlots", "filters"] }
+  );
+};
+
 const editForm = useForm({
-  photo_slot_id: "",
   shop_id: "",
-  selected_studio_id: "",
-  selected_date: "",
+  photo_studio_id: "",
+  shoot_date: "",
+  shoot_time: "",
   assignment_label: null,
   user_id: null,
   plan_id: null,
@@ -1333,6 +1379,25 @@ const getShopBadgeClass = (shopName) => {
 const countReserved = (slots) => slots.filter((s) => s.customer).length;
 const countAvailable = (slots) => slots.filter((s) => !s.customer).length;
 
+// 同じスタジオ・日付・時刻の席の数（予約数/定員）
+const seatSummary = computed(() => {
+  const map = {};
+  for (const s of props.photoSlots ?? []) {
+    if (!s.shoot_date || !s.shoot_time || s.details_undecided) continue;
+    const key = `${s.studio?.id}|${String(s.shoot_date).substring(0, 10)}|${formatTime(s.shoot_time)}`;
+    if (!map[key]) map[key] = { booked: 0, capacity: 0 };
+    map[key].capacity++;
+    if (s.customer) map[key].booked++;
+  }
+  return map;
+});
+const seatSummaryOf = (slot) => {
+  if (!slot.shoot_date || !slot.shoot_time || slot.details_undecided) return null;
+  return seatSummary.value[`${slot.studio?.id}|${String(slot.shoot_date).substring(0, 10)}|${formatTime(slot.shoot_time)}`] || null;
+};
+const isPastSlot = (slot) => !slot.shoot_date || String(slot.shoot_date).substring(0, 10) < todayStr();
+const canManageSeat = (slot) => !!(slot.studio && slot.shoot_date && slot.shoot_time && !slot.details_undecided && !isPastSlot(slot));
+
 // 年・月タブ用
 const selectedYears = ref(new Set());
 const selectedMonths = ref(new Set());
@@ -1432,11 +1497,11 @@ const resetFilters = () => {
     shop_id: "",
     studio_id: "",
     reservation_status: "",
-    start_date: "",
+    start_date: todayStr(),
     end_date: "",
   };
-  // 年・月タブはデフォルト（今年・今月）に戻す
   applyDefaultYearMonth();
+  applyPeriod();
 };
 
 const formatTime = (time) => {
@@ -1451,149 +1516,87 @@ const formatTime = (time) => {
 // 編集モーダルを開く
 const openEditModal = (slot) => {
   selectedSlot.value = slot;
-
-  // フォームに現在の値を設定
-  editForm.photo_slot_id = slot.id;
-  editForm.shop_id =
-    slot.shops && slot.shops.length > 0 ? slot.shops[0].id : "";
-  editForm.selected_studio_id = slot.studio?.id || "";
-  editForm.selected_date = slot.shoot_date || "";
+  editForm.clearErrors();
+  editForm.shop_id = slot.shops && slot.shops.length > 0 ? slot.shops[0].id : "";
+  editForm.photo_studio_id = slot.studio?.id || "";
+  editForm.shoot_date = slot.shoot_date ? String(slot.shoot_date).substring(0, 10) : "";
+  editForm.shoot_time = slot.shoot_time ? formatTime(slot.shoot_time) : "";
   editForm.assignment_label = slot.assignment_label || null;
   editForm.user_id = slot.user?.id || null;
   editForm.plan_id = slot.plan?.id || null;
   editForm.remarks = slot.remarks || "";
 
-  // 店舗が選択されている場合はユーザーを取得
   if (editForm.shop_id) {
     loadEditShopUsers(editForm.shop_id);
   }
-
+  loadEditAvailability();
   showEditModal.value = true;
 };
 
-// 利用可能な会場（スタジオ）を取得（担当店舗でフィルタリング）
-const availableEditStudios = computed(() => {
-  if (!props.availablePhotoSlots || props.availablePhotoSlots.length === 0) {
-    return props.photoStudios || [];
+// 編集：選んだスタジオの空き状況（この席自身は空きとして数える）
+const editAvailability = ref([]);
+const editAvailabilityLoading = ref(false);
+const loadEditAvailability = async () => {
+  editAvailability.value = [];
+  if (!editForm.photo_studio_id) return;
+  editAvailabilityLoading.value = true;
+  try {
+    const res = await axios.get(route("admin.photo-slots.availability"), {
+      params: { studio: editForm.photo_studio_id, exclude_slot: selectedSlot.value?.id },
+    });
+    editAvailability.value = res.data.dates || [];
+  } catch (e) {
+    editAvailability.value = [];
+  } finally {
+    editAvailabilityLoading.value = false;
   }
-  if (!editForm.shop_id) {
-    return [];
-  }
-  const studios = new Map();
-  const shopId = Number(editForm.shop_id);
-  props.availablePhotoSlots.forEach((slot) => {
-    if (
-      slot.studio &&
-      slot.shops &&
-      slot.shops.some((shop) => shop.id === shopId) &&
-      !studios.has(slot.studio.id)
-    ) {
-      studios.set(slot.studio.id, slot.studio);
-    }
-  });
-  // 現在選択中のスタジオも含める
-  if (editForm.selected_studio_id) {
-    const currentStudio = props.photoStudios?.find(
-      (s) => s.id == editForm.selected_studio_id
-    );
-    if (currentStudio) {
-      studios.set(currentStudio.id, currentStudio);
-    }
-  }
-  return Array.from(studios.values()).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+};
+
+const editStudio = computed(() => (props.photoStudios || []).find((s) => s.id == editForm.photo_studio_id) || null);
+
+// 担当店舗：スタジオと同じ店舗グループの店舗だけ
+const editShopOptions = computed(() =>
+  (props.shops || []).filter((s) => !editStudio.value?.shop_group || s.group_key === editStudio.value.shop_group)
+);
+
+// 撮影日：空きのある日（いまの日付は空きがなくても出す）
+const editDateOptions = computed(() => {
+  const dates = editAvailability.value
+    .filter((d) => d.times.some((t) => t.free > 0))
+    .map((d) => d.date);
+  if (editForm.shoot_date && !dates.includes(editForm.shoot_date)) dates.push(editForm.shoot_date);
+  return dates.sort();
 });
 
-// 選択された会場の利用可能な日付を取得（担当店舗でフィルタリング）
-const availableEditDates = computed(() => {
-  if (
-    !editForm.selected_studio_id ||
-    !editForm.shop_id ||
-    !props.availablePhotoSlots
-  ) {
-    return [];
-  }
-  const dates = new Set();
-  const shopId = Number(editForm.shop_id);
-  props.availablePhotoSlots.forEach((slot) => {
-    if (
-      slot.studio?.id == editForm.selected_studio_id &&
-      slot.shops &&
-      slot.shops.some((shop) => shop.id === shopId)
-    ) {
-      dates.add(slot.shoot_date);
-    }
-  });
-  // 現在選択中の日付も含める
-  if (editForm.selected_date) {
-    dates.add(editForm.selected_date);
-  }
-  return Array.from(dates).sort();
+// 撮影時刻：その日の枠（空きがない時刻は選べない）
+const editTimeOptions = computed(() => {
+  const day = editAvailability.value.find((d) => d.date === editForm.shoot_date);
+  return day ? day.times : [];
 });
 
-// 選択された会場と日付の利用可能な時間枠を取得（担当店舗でフィルタリング）
-const availableEditTimeSlots = computed(() => {
-  if (
-    !editForm.selected_studio_id ||
-    !editForm.selected_date ||
-    !editForm.shop_id ||
-    !props.availablePhotoSlots
-  ) {
-    return [];
+const onEditStudioChange = () => {
+  editForm.shoot_date = "";
+  editForm.shoot_time = "";
+  if (editForm.shop_id && !editShopOptions.value.some((s) => s.id == editForm.shop_id)) {
+    editForm.shop_id = "";
+    editShopUsers.value = [];
+    editForm.user_id = null;
   }
-  const shopId = Number(editForm.shop_id);
-  const slots = props.availablePhotoSlots.filter((slot) => {
-    return (
-      slot.studio?.id == editForm.selected_studio_id &&
-      slot.shoot_date === editForm.selected_date &&
-      slot.shops &&
-      slot.shops.some((shop) => shop.id === shopId)
-    );
-  });
-  // 現在選択中のスロットも含める
-  if (selectedSlot.value && selectedSlot.value.id) {
-    const currentSlot = {
-      id: selectedSlot.value.id,
-      shoot_time: selectedSlot.value.shoot_time,
-    };
-    if (!slots.find((s) => s.id === currentSlot.id)) {
-      slots.push(currentSlot);
-    }
-  }
-  return slots.sort((a, b) =>
-    (a.shoot_time ?? "").localeCompare(b.shoot_time ?? "")
-  );
-});
+  loadEditAvailability();
+};
+
+const onEditDateChange = () => {
+  editForm.shoot_time = "";
+};
 
 // 編集フォームの店舗変更時の処理
 const onEditShopChange = async () => {
-  editForm.selected_studio_id = "";
-  editForm.selected_date = "";
-  editForm.photo_slot_id = "";
-
   if (editForm.shop_id) {
     await loadEditShopUsers(editForm.shop_id);
   } else {
     editShopUsers.value = [];
     editForm.user_id = null;
   }
-};
-
-// 編集フォームの会場変更時の処理
-const onEditStudioChange = () => {
-  editForm.selected_date = "";
-  editForm.photo_slot_id = "";
-};
-
-// 編集フォームの日付変更時の処理
-const onEditDateChange = () => {
-  editForm.photo_slot_id = "";
-};
-
-// 編集フォームの時間枠変更時の処理
-const onEditPhotoSlotChange = () => {
-  // 必要に応じて処理を追加
 };
 
 // 編集用の店舗ユーザーを取得
@@ -1620,29 +1623,27 @@ const loadEditShopUsers = async (shopId) => {
   }
 };
 
-// 前撮り枠を更新
+// 前撮り枠を更新（スタジオ・日付・時刻で送る。予約がある席は空いている席へ移る）
 const updatePhotoSlot = () => {
   if (!selectedSlot.value) return;
-
-  const formData = {
-    ...editForm.data(),
-    shop_ids: editForm.shop_id ? [editForm.shop_id] : [],
-    assignment_label: editForm.assignment_label || null,
-    user_id: editForm.user_id || null,
-    plan_id: editForm.plan_id || null,
-  };
-
-  delete formData.selected_studio_id;
-  delete formData.selected_date;
-
   editForm
-    .transform(() => formData)
+    .transform((data) => ({
+      photo_studio_id: data.photo_studio_id || null,
+      shoot_date: data.shoot_date || null,
+      shoot_time: data.shoot_time || null,
+      shop_ids: data.shop_id ? [data.shop_id] : [],
+      assignment_label: data.assignment_label || null,
+      user_id: data.user_id || null,
+      plan_id: data.plan_id || null,
+      remarks: data.remarks || null,
+    }))
     .put(route("admin.photo-slots.update", selectedSlot.value.id), {
       preserveScroll: true,
       onSuccess: () => {
         showEditModal.value = false;
         editForm.reset();
         selectedSlot.value = null;
+        reloadGrid();
       },
     });
 };
@@ -1737,82 +1738,6 @@ const updateDateGroup = () => {
         selectedDateKey.value = "";
       },
     });
-};
-
-// 日付グループにスケジュールが登録されているか確認
-const hasScheduleForDate = (date, dateGroup) => {
-  // dateScheduleStatusにキャッシュがあればそれを使用
-  if (dateScheduleStatus.value.has(date)) {
-    return dateScheduleStatus.value.get(date);
-  }
-  // 日付グループ内のいずれかの枠がスケジュール登録済みかチェック
-  const scheduledIds = props.scheduledSlotIds || [];
-  return dateGroup.some((slot) => scheduledIds.includes(slot.id));
-};
-
-// 日付グループのスケジュールを作成
-const createScheduleForDate = async (date, dateGroup) => {
-  if (creatingSchedule.value) return;
-  if (!dateGroup || dateGroup.length === 0) return;
-
-  creatingSchedule.value = true;
-
-  try {
-    const firstSlot = dateGroup[0];
-    const response = await axios.post(
-      route("admin.photo-slots.create-schedule"),
-      {
-        photo_slot_id: firstSlot.id,
-      }
-    );
-
-    if (response.data.success) {
-      dateScheduleStatus.value.set(date, true);
-      alert("カレンダーにスケジュールを追加しました。");
-    }
-  } catch (error) {
-    console.error("スケジュール作成エラー:", error);
-    alert("スケジュールの作成に失敗しました。");
-  } finally {
-    creatingSchedule.value = false;
-  }
-};
-
-// 個別時間枠がスケジュール登録済みか確認
-const isSlotScheduled = (slotId) => {
-  return props.scheduledSlotIds && props.scheduledSlotIds.includes(slotId);
-};
-
-// 個別時間枠のスケジュールを作成
-const createSlotSchedule = async (slot) => {
-  if (creatingSlotSchedule.value === slot.id) return;
-  if (!slot.customer || !slot.user) {
-    alert("顧客または担当者が設定されていないため、スケジュールを登録できません。");
-    return;
-  }
-
-  creatingSlotSchedule.value = slot.id;
-
-  try {
-    const response = await axios.post(
-      route("admin.photo-slots.create-slot-schedule"),
-      {
-        photo_slot_id: slot.id,
-      }
-    );
-
-    if (response.data.success) {
-      alert("担当者のスケジュールに登録しました。");
-      // ページをリロードして最新の状態を反映
-      router.reload();
-    }
-  } catch (error) {
-    console.error("スケジュール作成エラー:", error);
-    const errorMessage = error.response?.data?.message || "スケジュールの作成に失敗しました。";
-    alert(errorMessage);
-  } finally {
-    creatingSlotSchedule.value = null;
-  }
 };
 </script>
 

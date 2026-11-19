@@ -1,423 +1,372 @@
 <template>
-    <Head title="前撮り枠追加" />
+    <Head title="前撮り枠をまとめて作る" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">前撮り枠追加</h2>
-                <ActionButton variant="back" label="前撮り管理に戻る" :href="route('admin.photo-slots.index')" />
-            </div>
-        </template>
+    <AdminLayout :breadcrumb="[{ label: '前撮り' }, { label: '前撮り一覧', href: route('admin.photo-slots.index') }, { label: '枠をまとめて作る' }]">
+        <UiPageHeader
+            title="前撮り枠をまとめて作る"
+            description="スタジオと期間を選んでプレビューし、日ごとに直してから登録します。時刻はスタジオの営業時間から30分ごとに作ります。もうある枠は作りません。"
+        >
+            <template #actions>
+                <UiButton variant="ghost" :href="route('admin.photo-slots.index')">前撮り一覧に戻る</UiButton>
+            </template>
+        </UiPageHeader>
 
-        <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <form @submit.prevent="addToPendingList">
-                            <div class="space-y-4">
-                                <div class="mb-4">
-                                    <h3 class="text-sm font-medium text-brand-text">個別追加</h3>
-                                    <p class="text-xs text-brand-text-muted mt-1">枠を追加してから保存ボタンで一括登録します</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-1">
-                                        スタジオ <span class="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        v-model="form.photo_studio_id"
-                                        required
-                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                                    >
-                                        <option value="">選択してください</option>
-                                        <option
-                                            v-for="studio in photoStudios"
-                                            :key="studio.id"
-                                            :value="studio.id"
-                                        >
-                                            {{ studio.name }}
-                                        </option>
-                                    </select>
-                                    <div v-if="form.errors.photo_studio_id" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.photo_studio_id }}
-                                    </div>
-                                </div>
+        <div class="space-y-6">
+            <!-- 1. 条件 -->
+            <UiCard padding="md">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <UiFormField label="スタジオ" required :error="errors.photo_studio_id">
+                            <UiSelect v-model="cond.photo_studio_id" :options="studioOptions" placeholder="選んでください" />
+                        </UiFormField>
+                        <div v-if="studio" class="rounded-md bg-brand-surface-2 px-3 py-2 text-sm">
+                            <template v-if="studio.has_hours">
+                                <p class="text-xs text-brand-text-muted mb-0.5">営業時間（スタジオのマスタ）</p>
+                                <p v-for="g in studio.summary" :key="g.days">
+                                    <span class="font-medium">{{ g.days }}</span>：{{ shortTime(g.start) }}〜{{ shortTime(g.last) }} の {{ g.count }}枠
+                                </p>
+                                <p class="text-xs text-brand-text-muted mt-0.5">定員 {{ studio.default_capacity }}人</p>
+                            </template>
+                            <p v-else class="text-brand-danger">
+                                営業時間が未登録です。
+                                <Link :href="route('admin.photo-studios.edit', studio.id)" class="underline">スタジオのマスタ</Link>で登録してください。
+                            </p>
+                        </div>
+                        <p v-if="!studios.length" class="text-sm text-brand-danger">
+                            選べるスタジオがありません。<Link :href="route('admin.photo-studios.index')" class="underline">スタジオのマスタ</Link>を確認してください。
+                        </p>
+                    </div>
+                    <div class="space-y-4">
+                        <UiFormField label="期間" required :hint="`最大${maxDays}日`" :error="errors.start_date || errors.end_date">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <UiInput v-model="cond.start_date" type="date" size="sm" class="w-40" />
+                                <span class="text-brand-text-muted">〜</span>
+                                <UiInput v-model="cond.end_date" type="date" size="sm" class="w-40" />
+                                <UiButton size="sm" variant="ghost" @click="setMonth(0)">今月</UiButton>
+                                <UiButton size="sm" variant="ghost" @click="setMonth(1)">来月</UiButton>
+                            </div>
+                        </UiFormField>
+                        <UiFormField label="除外する曜日">
+                            <div class="flex flex-wrap gap-1.5">
+                                <button v-for="wd in WEEKDAY_ORDER" :key="wd" type="button"
+                                    :class="chipClass(cond.exclude_weekdays.includes(wd), 'exclude')"
+                                    @click="toggle(cond.exclude_weekdays, wd)">{{ WEEKDAY_NAMES[wd] }}</button>
+                            </div>
+                        </UiFormField>
+                        <UiFormField label="除外する日" :error="errors.exclude_dates">
+                            <div class="flex items-center gap-2">
+                                <UiInput v-model="excludeInput" type="date" size="sm" class="w-40" />
+                                <UiButton size="sm" variant="subtle" :disabled="!excludeInput" @click="addExcludeDate">追加</UiButton>
+                            </div>
+                            <div v-if="cond.exclude_dates.length" class="mt-2 flex flex-wrap gap-1.5">
+                                <button v-for="d in cond.exclude_dates" :key="d" type="button"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-brand-surface-2 border border-brand-border text-xs"
+                                    @click="toggle(cond.exclude_dates, d)">{{ formatDay(d) }} <X :size="12" /></button>
+                            </div>
+                        </UiFormField>
+                    </div>
+                </div>
+                <div class="mt-6 flex items-center justify-end gap-3">
+                    <span v-if="stale && preview" class="text-xs text-amber-700">条件が変わりました。もう一度プレビューしてください。</span>
+                    <UiButton variant="primary" :loading="previewing" :disabled="!canPreview" @click="runPreview">
+                        <Eye :size="16" class="mr-1" />プレビュー
+                    </UiButton>
+                </div>
+            </UiCard>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-2">
-                                        担当店舗
-                                    </label>
-                                    <div class="space-y-2 border border-brand-border rounded-md p-4 bg-brand-surface-2">
-                                        <label
-                                            v-for="shop in shops"
-                                            :key="shop.id"
-                                            class="flex items-center space-x-2 cursor-pointer hover:bg-brand-surface-2 p-2 rounded-md transition-colors"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                :value="shop.id"
-                                                v-model="form.shop_ids"
-                                                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
-                                            />
-                                            <span class="text-sm text-brand-text">{{ shop.name }}</span>
-                                        </label>
-                                        <p v-if="shops.length === 0" class="text-sm text-brand-text-muted">
-                                            店舗が登録されていません
-                                        </p>
-                                    </div>
-                                    <div v-if="form.errors.shop_ids" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.shop_ids }}
-                                    </div>
-                                </div>
+            <!-- 2. プレビューと直し -->
+            <UiCard v-if="preview" padding="md">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-sm font-semibold">作る枠（{{ studioName }}）</h3>
+                        <p class="text-xs text-brand-text-muted">
+                            チェックを外した日は作りません。時刻をクリックすると定員を変えたり外したりできます。灰色の時刻はもうある枠です。
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <UiButton size="sm" variant="ghost" @click="setAll(true)">全部の日を選ぶ</UiButton>
+                        <UiButton size="sm" variant="ghost" @click="setAll(false)">全部外す</UiButton>
+                    </div>
+                </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-1">
-                                        撮影日 <span class="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        v-model="form.shoot_date"
-                                        type="date"
-                                        required
-                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                                    />
-                                    <div v-if="form.errors.shoot_date" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.shoot_date }}
-                                    </div>
-                                </div>
+                <!-- 全部の日にかける -->
+                <div class="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-sm">
+                    <span class="text-xs font-medium text-brand-text-muted">選んだ日すべてに：</span>
+                    <div class="w-28"><UiSelect v-model="bulkOp.time" :options="allTimes" size="sm" /></div>
+                    <span>を</span>
+                    <UiButton size="sm" variant="subtle" @click="applyAll('remove')">外す</UiButton>
+                    <UiButton size="sm" variant="subtle" @click="applyAll('add')">足す</UiButton>
+                    <span class="mx-1 text-brand-text-subtle">／</span>
+                    <span>定員を</span>
+                    <div class="w-20"><UiSelect v-model="bulkOp.capacity" :options="capacityOptions" size="sm" /></div>
+                    <UiButton size="sm" variant="subtle" @click="applyAll('capacity')">にする</UiButton>
+                    <span class="text-xs text-brand-text-subtle">（定員は、時刻を選ばずに全部の時刻へ）</span>
+                </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-1">
-                                        撮影時間 <span class="text-red-500">*</span>
-                                    </label>
-                                    
-                                    <!-- 時間ボタン（8:00-16:00、30分間隔） -->
-                                    <div class="mb-4">
-                                        <p class="text-sm text-brand-text-muted mb-2">時間を選択してください（クリックで選択/解除）</p>
-                                        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                                            <button
-                                                v-for="time in timeSlots"
-                                                :key="time"
-                                                type="button"
-                                                @click="toggleTimeSlot(time)"
-                                                :class="[
-                                                    'px-3 py-2 text-sm font-medium rounded-md border-2 transition-all',
-                                                    selectedTimes.includes(time)
-                                                        ? 'bg-brand-primary text-white border-indigo-600 opacity-100'
-                                                        : 'bg-brand-surface-2 text-brand-text-muted border-brand-border opacity-50 hover:opacity-75'
-                                                ]"
-                                            >
-                                                {{ time }}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- カスタム時間入力 -->
-                                    <div class="border-t border-brand-border pt-4">
-                                        <p class="text-sm text-brand-text-muted mb-2">その他の時間を追加</p>
-                                        <div class="space-y-2">
-                                            <div
-                                                v-for="(time, index) in customTimes"
-                                                :key="index"
-                                                class="flex items-center space-x-2"
-                                            >
-                                                <input
-                                                    v-model="customTimes[index]"
-                                                    type="time"
-                                                    class="flex-1 rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                                                    placeholder="HH:mm"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    @click="removeCustomTime(index)"
-                                                    class="px-3 py-2 text-sm font-medium text-red-600 hover:text-red-800"
-                                                >
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
+                <div class="divide-y divide-brand-border rounded-md border border-brand-border">
+                    <div v-for="row in rows" :key="row.date" class="flex flex-wrap items-start gap-3 px-3 py-2"
+                        :class="selectable(row) ? (row.checked ? '' : 'bg-brand-surface-2/60') : 'bg-brand-surface-2 text-brand-text-subtle'">
+                        <label class="flex items-center gap-2 w-32 shrink-0 pt-1">
+                            <input v-if="selectable(row)" v-model="row.checked" type="checkbox"
+                                class="rounded border-brand-border text-brand-primary focus:ring-brand-primary" />
+                            <span v-else class="inline-block w-4" />
+                            <span class="tabular-nums font-medium" :class="weekdayClass(row.weekday)">{{ formatDay(row.date) }}</span>
+                        </label>
+                        <div class="w-28 shrink-0 pt-1 text-xs text-brand-text-muted">
+                            <template v-if="row.hours">
+                                {{ shortTime(row.hours.start) }}〜{{ shortTime(row.hours.end) }}
+                                <span v-if="row.hours.source === 'weekday'" class="block">（曜日の営業時間）</span>
+                            </template>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p v-if="!selectable(row)" class="pt-1 text-xs">{{ statusLabel(row) }}</p>
+                            <div v-else class="flex flex-wrap items-center gap-1.5" :class="!row.checked && 'opacity-50'">
+                                <template v-for="t in rowTimes(row)" :key="t.time">
+                                    <span v-if="t.existing" class="inline-flex items-center px-2 py-0.5 rounded border border-transparent bg-brand-surface-2 text-xs text-brand-text-subtle"
+                                        :title="`作成済み（${t.seats}席）`">{{ shortTime(t.time) }}</span>
+                                    <div v-else class="relative">
+                                        <button type="button"
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs bg-ai-50 border-brand-primary text-brand-primary"
+                                            :class="t.outside && 'border-dashed'"
+                                            :title="t.outside ? '営業時間の外' : ''"
+                                            @click="openChip(row, t.time)">
+                                            {{ shortTime(t.time) }}<span v-if="t.capacity !== 1" class="opacity-70">×{{ t.capacity }}</span>
+                                        </button>
+                                        <div v-if="editing.date === row.date && editing.time === t.time"
+                                            class="absolute z-20 mt-1 left-0 w-56 rounded-md border border-brand-border bg-brand-surface p-2 shadow-lg">
+                                            <p class="text-xs text-brand-text-muted mb-1">{{ shortTime(t.time) }} の定員</p>
+                                            <div class="grid grid-cols-5 gap-1 mb-2">
+                                                <button v-for="n in maxCapacity" :key="n" type="button"
+                                                    class="rounded border px-1 py-0.5 text-xs"
+                                                    :class="n === t.capacity ? 'bg-brand-primary text-white border-brand-primary' : 'border-brand-border'"
+                                                    @click="setCapacity(row, t.time, n)">{{ n }}</button>
                                             </div>
-                                            <button
-                                                type="button"
-                                                @click="addCustomTime"
-                                                class="w-full px-4 py-2 text-sm font-medium text-brand-primary bg-indigo-50 rounded-md hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                                            >
-                                                + カスタム時間を追加
-                                            </button>
+                                            <div class="flex justify-between">
+                                                <button type="button" class="text-xs text-brand-danger" @click="removeTime(row, t.time)">この時刻を外す</button>
+                                                <button type="button" class="text-xs text-brand-text-muted" @click="closeChip">閉じる</button>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <!-- 選択された時間のプレビュー -->
-                                    <div v-if="allSelectedTimes.length > 0" class="mt-4 p-3 bg-brand-surface-2 rounded-md">
-                                        <p class="text-sm font-medium text-brand-text mb-2">選択された時間（{{ allSelectedTimes.length }}件）:</p>
-                                        <div class="flex flex-wrap gap-2">
-                                            <span
-                                                v-for="(time, index) in allSelectedTimes"
-                                                :key="index"
-                                                class="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded-full"
-                                            >
-                                                {{ time }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div v-if="form.errors.shoot_times" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.shoot_times }}
-                                    </div>
-                                    <div v-if="form.errors['shoot_times.0']" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors['shoot_times.0'] }}
-                                    </div>
-                                </div>
-
-
-                                <div class="flex justify-end space-x-4 pt-4">
-                                    <Link
-                                        :href="route('admin.photo-slots.index')"
-                                        class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
-                                    >
-                                        キャンセル
-                                    </Link>
-                                    <button
-                                        type="submit"
-                                        :disabled="!canAddToPending"
-                                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                    >
-                                        追加
-                                    </button>
-                                </div>
+                                </template>
+                                <select class="rounded-md border-brand-border text-xs py-0.5 pl-1.5 pr-6"
+                                    :value="''" @change="addTime(row, $event.target.value); $event.target.value = ''">
+                                    <option value="">＋時刻</option>
+                                    <option v-for="tm in addableTimes(row)" :key="tm" :value="tm">{{ shortTime(tm) }}</option>
+                                </select>
                             </div>
-                        </form>
-
-                        <!-- 追加済み前撮り枠リスト -->
-                        <div v-if="pendingSlotGroups.length > 0" class="mt-8 border-t pt-6">
-                            <h3 class="text-lg font-medium text-brand-text mb-4">
-                                追加済み前撮り枠（{{ pendingSlotGroups.length }}グループ）
-                            </h3>
-                            <div class="space-y-3">
-                                <div
-                                    v-for="(group, index) in pendingSlotGroups"
-                                    :key="index"
-                                    class="flex items-center justify-between p-4 bg-brand-surface-2 rounded-lg border border-brand-border"
-                                >
-                                    <div class="flex-1 grid grid-cols-4 gap-4">
-                                        <div>
-                                            <span class="text-xs text-brand-text-muted">スタジオ</span>
-                                            <p class="text-sm font-medium text-brand-text">
-                                                {{ getStudioName(group.photo_studio_id) }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <span class="text-xs text-brand-text-muted">撮影日</span>
-                                            <p class="text-sm font-medium text-brand-text">
-                                                {{ group.shoot_date }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <span class="text-xs text-brand-text-muted">撮影時間</span>
-                                            <p class="text-sm font-medium text-brand-text">
-                                                {{ group.shoot_times.join(', ') }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <span class="text-xs text-brand-text-muted">担当店舗</span>
-                                            <p class="text-sm font-medium text-brand-text">
-                                                {{ getShopNames(group.shop_ids) }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        @click="removeFromPendingList(index)"
-                                        class="ml-4 px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md"
-                                    >
-                                        削除
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- 保存ボタン -->
-                            <div class="flex justify-end space-x-4 mt-6 pt-4 border-t">
-                                <Link
-                                    :href="route('admin.photo-slots.index')"
-                                    class="px-4 py-2 border border-brand-border rounded-md text-brand-text hover:bg-brand-surface-2"
-                                >
-                                    キャンセル
-                                </Link>
-                                <button
-                                    type="button"
-                                    @click="submit"
-                                    :disabled="isSubmitting"
-                                    class="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:bg-gray-400"
-                                >
-                                    {{ isSubmitting ? '保存中...' : '保存（' + totalSlotCount + '件）' }}
-                                </button>
-                            </div>
+                        </div>
+                        <div class="w-20 shrink-0 pt-1 text-right text-xs tabular-nums text-brand-text-muted">
+                            <template v-if="selectable(row) && row.checked">{{ row.slots.length }}枠・{{ seatsOf(row) }}席</template>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                <UiAlert v-if="errors.days" variant="danger" class="mt-4">{{ errors.days }}</UiAlert>
+                <UiAlert v-if="totalSeats > maxSeats" variant="danger" class="mt-4">
+                    一度に作れるのは{{ maxSeats }}席までです（今 {{ totalSeats }}席）。期間を分けてください。
+                </UiAlert>
+
+                <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
+                    <span class="text-sm">{{ selectedRows.length }}日分・{{ totalTimes }}枠・<span class="font-semibold">{{ totalSeats }}席</span>を作ります</span>
+                    <UiButton variant="primary" :loading="saving"
+                        :disabled="stale || !selectedRows.length || totalSeats > maxSeats" @click="submit">
+                        <Plus :size="16" class="mr-1" />登録する
+                    </UiButton>
+                </div>
+            </UiCard>
         </div>
     </AdminLayout>
 </template>
 
 <script setup>
+import { computed, reactive, ref, watch } from 'vue';
+import axios from 'axios';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import ActionButton from '@/Components/ActionButton.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { UiPageHeader, UiCard, UiButton, UiFormField, UiInput, UiSelect, UiAlert } from '@/Components/UI';
+import { Eye, Plus, X } from 'lucide-vue-next';
+import { WEEKDAY_NAMES, WEEKDAY_ORDER, timeOptions, timesBetween, shortTime, toMinutes } from '@/utils/photoSlotTime';
 
 const props = defineProps({
-    photoStudios: Array,
-    shops: Array,
-    photoSlotsWithShops: Array,
-    userShops: Array,
+    studios: { type: Array, default: () => [] },
+    maxDays: { type: Number, default: 93 },
+    maxSeats: { type: Number, default: 3000 },
+    maxCapacity: { type: Number, default: 10 },
+    initialStudioId: { type: Number, default: null },
 });
 
-const form = useForm({
-    photo_studio_id: '',
-    shoot_date: '',
-    shoot_times: [],
-    shop_ids: [],
+// ---- 条件 ----
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const monthRange = (offset) => {
+    const now = new Date();
+    return [ymd(new Date(now.getFullYear(), now.getMonth() + offset, 1)), ymd(new Date(now.getFullYear(), now.getMonth() + offset + 1, 0))];
+};
+const [nextStart, nextEnd] = monthRange(1);
+const firstStudio = props.studios.find((s) => s.id === props.initialStudioId) || (props.studios.length === 1 ? props.studios[0] : null);
+const cond = reactive({
+    photo_studio_id: firstStudio ? firstStudio.id : '',
+    start_date: nextStart,
+    end_date: nextEnd,
+    exclude_weekdays: [],
+    exclude_dates: [],
+});
+const excludeInput = ref('');
+const setMonth = (offset) => {
+    const [s, e] = monthRange(offset);
+    cond.start_date = s;
+    cond.end_date = e;
+};
+const toggle = (list, value) => {
+    const i = list.indexOf(value);
+    if (i >= 0) list.splice(i, 1);
+    else list.push(value);
+};
+const addExcludeDate = () => {
+    if (excludeInput.value && !cond.exclude_dates.includes(excludeInput.value)) {
+        cond.exclude_dates.push(excludeInput.value);
+        cond.exclude_dates.sort();
+    }
+    excludeInput.value = '';
+};
+
+const studioOptions = computed(() => props.studios.map((s) => ({ value: s.id, label: s.has_hours ? s.name : `${s.name}（営業時間が未登録）` })));
+const studio = computed(() => props.studios.find((s) => String(s.id) === String(cond.photo_studio_id)) || null);
+const studioName = ref('');
+const canPreview = computed(() => !!studio.value && studio.value.has_hours && cond.start_date && cond.end_date);
+
+// ---- プレビュー ----
+const preview = ref(null);
+const rows = ref([]);
+const defaultCapacity = ref(1);
+const stale = ref(false);
+const previewing = ref(false);
+const saving = ref(false);
+const errors = ref({});
+watch(cond, () => { stale.value = true; }, { deep: true });
+
+const flatErrors = (errs) => {
+    if (!errs) return null;
+    const out = {};
+    Object.entries(errs).forEach(([k, v]) => { out[k.split('.')[0]] ??= Array.isArray(v) ? v[0] : v; });
+    return out;
+};
+
+const runPreview = async () => {
+    previewing.value = true;
+    errors.value = {};
+    closeChip();
+    try {
+        const { data } = await axios.post(route('admin.photo-slots.bulk.preview'), cond);
+        defaultCapacity.value = data.default_capacity || 1;
+        studioName.value = studio.value?.name || '';
+        rows.value = data.days.map((d) => {
+            const hourTimes = d.hours ? timesBetween(d.hours.start, d.hours.end) : [];
+            return {
+                ...d,
+                hourTimes,
+                checked: d.status === 'create',
+                slots: d.times.map((time) => ({ time, capacity: defaultCapacity.value })),
+            };
+        });
+        preview.value = data;
+        stale.value = false;
+    } catch (e) {
+        errors.value = flatErrors(e.response?.data?.errors) || { photo_studio_id: e.response?.data?.message || 'プレビューに失敗しました。' };
+    } finally {
+        previewing.value = false;
+    }
+};
+
+// 作れる日：営業時間のある「作る」日と、作成済みだけの日（時刻を足せば作れる）
+const selectable = (row) => row.status === 'create' || row.status === 'existing';
+const statusLabel = (row) => ({
+    past: '過去の日',
+    excluded: '除外',
+    no_hours: 'この曜日は営業時間がありません',
+}[row.status] || '');
+const sortTimes = (list) => list.sort((a, b) => toMinutes(a.time) - toMinutes(b.time));
+
+const rowTimes = (row) => {
+    const list = [
+        ...row.existing_times.map((time) => ({ time, existing: true, seats: row.existing_seats[time] })),
+        ...row.slots.map((s) => ({ ...s, outside: !row.hourTimes.includes(s.time) })),
+    ];
+    return sortTimes(list);
+};
+const allTimes = timeOptions();
+const capacityOptions = computed(() => Array.from({ length: props.maxCapacity }, (_, i) => ({ value: i + 1, label: `${i + 1}人` })));
+const addableTimes = (row) => allTimes.filter((t) => !row.existing_times.includes(t) && !row.slots.some((s) => s.time === t));
+
+const addTime = (row, time) => {
+    if (!time || row.existing_times.includes(time) || row.slots.some((s) => s.time === time)) return;
+    row.slots.push({ time, capacity: defaultCapacity.value });
+    sortTimes(row.slots);
+    row.checked = true;
+};
+const removeTime = (row, time) => {
+    row.slots = row.slots.filter((s) => s.time !== time);
+    if (!row.slots.length) row.checked = false;
+    closeChip();
+};
+const setCapacity = (row, time, n) => {
+    const s = row.slots.find((x) => x.time === time);
+    if (s) s.capacity = n;
+    closeChip();
+};
+const editing = reactive({ date: null, time: null });
+const openChip = (row, time) => {
+    if (editing.date === row.date && editing.time === time) return closeChip();
+    editing.date = row.date;
+    editing.time = time;
+};
+const closeChip = () => { editing.date = null; editing.time = null; };
+
+const setAll = (value) => rows.value.forEach((r) => {
+    if (selectable(r)) r.checked = value && r.slots.length > 0;
 });
 
-// ログインユーザーの所属店舗をデフォルトで設定
-if (props.userShops && props.userShops.length > 0) {
-    form.shop_ids = props.userShops.map(shop => shop.id);
-}
-
-// 追加待ちの枠グループリスト
-const pendingSlotGroups = ref([]);
-const isSubmitting = ref(false);
-
-// 8:00から16:00まで30分間隔の時間スロットを生成
-const generateTimeSlots = () => {
-    const slots = [];
-    for (let hour = 8; hour <= 16; hour++) {
-        slots.push(`${String(hour).padStart(2, '0')}:00`);
-        if (hour < 16) {
-            slots.push(`${String(hour).padStart(2, '0')}:30`);
-        }
-    }
-    return slots;
-};
-
-const timeSlots = ref(generateTimeSlots());
-const selectedTimes = ref([]);
-const customTimes = ref(['']);
-
-// 時間スロットの選択/解除をトグル
-const toggleTimeSlot = (time) => {
-    const index = selectedTimes.value.indexOf(time);
-    if (index > -1) {
-        selectedTimes.value.splice(index, 1);
-    } else {
-        selectedTimes.value.push(time);
-    }
-};
-
-// カスタム時間を追加
-const addCustomTime = () => {
-    customTimes.value.push('');
-};
-
-// カスタム時間を削除
-const removeCustomTime = (index) => {
-    customTimes.value.splice(index, 1);
-};
-
-// すべての選択された時間（ボタン選択 + カスタム時間）
-const allSelectedTimes = computed(() => {
-    const times = [...selectedTimes.value];
-    customTimes.value.forEach(time => {
-        if (time && time.trim() !== '') {
-            if (!times.includes(time)) {
-                times.push(time);
-            }
+const bulkOp = reactive({ time: '12:00', capacity: 1 });
+const applyAll = (op) => {
+    rows.value.filter((r) => selectable(r) && r.checked).forEach((r) => {
+        if (op === 'remove') {
+            r.slots = r.slots.filter((s) => s.time !== bulkOp.time);
+            if (!r.slots.length) r.checked = false;
+        } else if (op === 'add') {
+            addTime(r, bulkOp.time);
+        } else if (op === 'capacity') {
+            r.slots.forEach((s) => { s.capacity = Number(bulkOp.capacity); });
         }
     });
-    return times.sort();
-});
-
-// 追加ボタンの有効/無効
-const canAddToPending = computed(() => {
-    return form.photo_studio_id && form.shoot_date && allSelectedTimes.value.length > 0;
-});
-
-// 追加済み枠の総数（保存ボタンの表示用）
-const totalSlotCount = computed(() => {
-    return pendingSlotGroups.value.reduce((sum, g) => sum + g.shoot_times.length, 0);
-});
-
-// スタジオ名を取得
-const getStudioName = (studioId) => {
-    if (!studioId) return '未選択';
-    const studio = props.photoStudios?.find(s => s.id === studioId);
-    return studio ? studio.name : '不明';
 };
 
-// 担当店舗名を取得（カンマ区切り）
-const getShopNames = (shopIds) => {
-    if (!shopIds || shopIds.length === 0) return 'なし';
-    const names = (shopIds || []).map(id => {
-        const shop = props.shops?.find(s => s.id === id);
-        return shop ? shop.name : null;
-    }).filter(Boolean);
-    return names.length > 0 ? names.join(', ') : 'なし';
+const selectedRows = computed(() => rows.value.filter((r) => selectable(r) && r.checked && r.slots.length));
+const seatsOf = (row) => row.slots.reduce((n, s) => n + Number(s.capacity), 0);
+const totalTimes = computed(() => selectedRows.value.reduce((n, r) => n + r.slots.length, 0));
+const totalSeats = computed(() => selectedRows.value.reduce((n, r) => n + seatsOf(r), 0));
+
+// ---- 表示 ----
+const formatDay = (d) => {
+    const dt = new Date(`${d}T00:00:00`);
+    return `${dt.getMonth() + 1}/${dt.getDate()}（${WEEKDAY_NAMES[dt.getDay()]}）`;
 };
+const weekdayClass = (wd) => (wd === 0 ? 'text-red-600' : wd === 6 ? 'text-blue-600' : '');
+const chipClass = (on, kind = 'include') => [
+    'inline-flex items-center gap-1 px-3 py-1 rounded-lg border text-sm cursor-pointer select-none transition-colors',
+    on
+        ? (kind === 'exclude' ? 'bg-akane-50 border-brand-danger text-brand-danger' : 'bg-ai-50 border-brand-primary text-brand-primary')
+        : 'bg-brand-surface border-brand-border text-brand-text-muted',
+];
 
-// リストに追加
-const addToPendingList = () => {
-    const times = allSelectedTimes.value;
-    if (!form.photo_studio_id) {
-        alert('スタジオを選択してください。');
-        return;
-    }
-    if (!form.shoot_date) {
-        alert('撮影日を入力してください。');
-        return;
-    }
-    if (times.length === 0) {
-        alert('少なくとも1つの時間枠を選択してください。');
-        return;
-    }
-
-    pendingSlotGroups.value.push({
-        photo_studio_id: parseInt(form.photo_studio_id),
-        shoot_date: form.shoot_date,
-        shoot_times: [...times],
-        shop_ids: Array.isArray(form.shop_ids) ? [...form.shop_ids] : [],
-    });
-};
-
-// リストから削除
-const removeFromPendingList = (index) => {
-    pendingSlotGroups.value.splice(index, 1);
-};
-
-// 一括保存
+// ---- 保存 ----
 const submit = () => {
-    if (pendingSlotGroups.value.length === 0) {
-        alert('追加された枠がありません。先に枠を追加してください。');
-        return;
-    }
-
-    isSubmitting.value = true;
-
-    const bulkForm = useForm({
-        slot_groups: pendingSlotGroups.value,
-    });
-
-    bulkForm.post(route('admin.photo-slots.store'), {
-        preserveState: false,
-        preserveScroll: false,
-        onSuccess: () => {
-            isSubmitting.value = false;
-        },
-        onError: () => {
-            isSubmitting.value = false;
-        },
-        onFinish: () => {
-            isSubmitting.value = false;
-        },
+    if (!confirm(`${studioName.value} に ${selectedRows.value.length}日分・${totalTimes.value}枠（${totalSeats.value}席）を登録します。よろしいですか？`)) return;
+    saving.value = true;
+    router.post(route('admin.photo-slots.bulk.store'), {
+        ...cond,
+        days: selectedRows.value.map((r) => ({ date: r.date, slots: r.slots.map((s) => ({ time: s.time, capacity: s.capacity })) })),
+    }, {
+        onError: (errs) => { errors.value = flatErrors(errs); },
+        onFinish: () => { saving.value = false; },
     });
 };
 </script>
-

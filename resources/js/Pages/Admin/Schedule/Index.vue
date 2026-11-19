@@ -712,7 +712,7 @@ function handleEventDrop(dropInfo) {
     axios.put(route('admin.schedules.update', dropInfo.event.id), scheduleData)
         .catch(error => {
             console.error('スケジュールの更新に失敗しました:', error);
-            alert('スケジュールの更新に失敗しました。');
+            alert(error.response?.data?.message || 'スケジュールの更新に失敗しました。');
             dropInfo.revert();
         });
 }
@@ -728,7 +728,7 @@ function handleEventResize(resizeInfo) {
     axios.put(route('admin.schedules.update', resizeInfo.event.id), scheduleData)
         .catch(error => {
             console.error('スケジュールの更新に失敗しました:', error);
-            alert('スケジュールの更新に失敗しました。');
+            alert(error.response?.data?.message || 'スケジュールの更新に失敗しました。');
             resizeInfo.revert();
         });
 }
@@ -818,7 +818,7 @@ function updateSchedule() {
         })
         .catch(error => {
             console.error('スケジュールの更新に失敗しました:', error);
-            alert('スケジュールの更新に失敗しました。');
+            alert(error.response?.data?.message || 'スケジュールの更新に失敗しました。');
         })
         .finally(() => {
             editForm.value.processing = false;

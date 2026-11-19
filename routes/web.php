@@ -41,6 +41,8 @@ use App\Http\Controllers\Admin\ShopController as AdminShopController;
 use App\Http\Controllers\Admin\SlideshowController as AdminSlideshowController;
 use App\Http\Controllers\Admin\TimeslotController as AdminTimeslotController;
 use App\Http\Controllers\Admin\TimeslotBulkController as AdminTimeslotBulkController;
+use App\Http\Controllers\Admin\PhotoSlotBulkController as AdminPhotoSlotBulkController;
+use App\Http\Controllers\Admin\PhotoSlotSeatController as AdminPhotoSlotSeatController;
 use App\Http\Controllers\Admin\TimeslotTemplateController as AdminTimeslotTemplateController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VenueController as AdminVenueController;
@@ -214,14 +216,19 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
 
     // 前撮り管理
     Route::get('/photo-slots', [AdminPhotoSlotController::class, 'index'])->name('photo-slots.index');
-    Route::get('/photo-slots/create', [AdminPhotoSlotController::class, 'create'])->name('photo-slots.create');
-    Route::post('/photo-slots', [AdminPhotoSlotController::class, 'store'])->name('photo-slots.store');
+    Route::get('/photo-slots/create', [AdminPhotoSlotBulkController::class, 'create'])->name('photo-slots.create');
+    Route::post('/photo-slots/bulk/preview', [AdminPhotoSlotBulkController::class, 'preview'])->name('photo-slots.bulk.preview');
+    Route::post('/photo-slots/bulk', [AdminPhotoSlotBulkController::class, 'store'])->name('photo-slots.bulk.store');
+    Route::get('/photo-slots/availability', [AdminPhotoSlotController::class, 'availability'])->name('photo-slots.availability');
+    Route::get('/photo-slots/grid', [AdminPhotoSlotController::class, 'grid'])->name('photo-slots.grid');
+    Route::post('/photo-slots/book', [AdminPhotoSlotController::class, 'book'])->name('photo-slots.book');
+    // 枠の管理（1枠足す・定員を変える・空き枠を消す）。権限機能で「前撮りの管理」にする予定
+    Route::post('/photo-slots/seats', [AdminPhotoSlotSeatController::class, 'store'])->name('photo-slots.seats.store');
+    Route::put('/photo-slots/capacity', [AdminPhotoSlotSeatController::class, 'capacity'])->name('photo-slots.capacity');
     Route::put('/photo-slots/bulk-update', [AdminPhotoSlotController::class, 'bulkUpdate'])->name('photo-slots.bulk-update');
-    Route::post('/photo-slots/create-schedule', [AdminPhotoSlotController::class, 'createSchedule'])->name('photo-slots.create-schedule');
-    Route::post('/photo-slots/create-slot-schedule', [AdminPhotoSlotController::class, 'createSlotSchedule'])->name('photo-slots.create-slot-schedule');
     Route::put('/photo-slots/{photoSlot}', [AdminPhotoSlotController::class, 'update'])->name('photo-slots.update');
     Route::patch('/photo-slots/{photoSlot}/release-customer', [AdminPhotoSlotController::class, 'releaseCustomer'])->name('photo-slots.release-customer');
-    Route::delete('/photo-slots/{photoSlot}', [AdminPhotoSlotController::class, 'destroy'])->name('photo-slots.destroy');
+    Route::delete('/photo-slots/{photoSlot}', [AdminPhotoSlotSeatController::class, 'destroy'])->name('photo-slots.destroy');
 
     // スタジオ管理
     Route::get('/photo-studios', [AdminPhotoStudioController::class, 'index'])->name('photo-studios.index');

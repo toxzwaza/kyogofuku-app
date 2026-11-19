@@ -1,102 +1,51 @@
 <template>
     <Head title="スタジオ編集" />
 
-    <AdminLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-brand-text leading-tight">スタジオ編集</h2>
-                <ActionButton variant="back" label="スタジオ一覧に戻る" :href="route('admin.photo-studios.index')" />
+    <AdminLayout :breadcrumb="[{ label: '前撮り' }, { label: 'スタジオ', href: route('admin.photo-studios.index') }, { label: photoStudio.name }]">
+        <UiPageHeader title="スタジオ編集" description="営業時間を変えても、もう作った枠は変わりません。これから作る枠に使われます。">
+            <template #actions>
+                <UiButton variant="ghost" :href="route('admin.photo-studios.index')">一覧に戻る</UiButton>
+            </template>
+        </UiPageHeader>
+
+        <form class="max-w-3xl space-y-5" @submit.prevent="submit">
+            <StudioForm :form="form" :group-options="groupOptions" />
+            <div class="flex justify-end">
+                <UiButton type="submit" variant="primary" :loading="form.processing">更新する</UiButton>
             </div>
-        </template>
-
-        <div class="py-12">
-            <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-brand-surface overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <form @submit.prevent="submit">
-                            <div class="space-y-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-1">
-                                        スタジオ名 <span class="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        v-model="form.name"
-                                        type="text"
-                                        required
-                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                                        placeholder="スタジオ名を入力"
-                                    />
-                                    <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.name }}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-1">
-                                        住所
-                                    </label>
-                                    <input
-                                        v-model="form.address"
-                                        type="text"
-                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                                        placeholder="住所を入力"
-                                    />
-                                    <div v-if="form.errors.address" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.address }}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-brand-text mb-1">
-                                        備考
-                                    </label>
-                                    <textarea
-                                        v-model="form.remarks"
-                                        rows="4"
-                                        class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
-                                        placeholder="備考を入力"
-                                    ></textarea>
-                                    <div v-if="form.errors.remarks" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.remarks }}
-                                    </div>
-                                </div>
-
-                                <div class="flex justify-end">
-                                    <ActionButton
-                                        variant="save"
-                                        type="submit"
-                                        :disabled="form.processing"
-                                    >
-                                        {{ form.processing ? '更新中...' : '更新' }}
-                                    </ActionButton>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </form>
     </AdminLayout>
 </template>
 
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import ActionButton from '@/Components/ActionButton.vue';
-import { Head } from '@inertiajs/vue3';
-import { useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
+import { UiPageHeader, UiButton } from '@/Components/UI';
+import StudioForm from '@/Components/PhotoSlot/StudioForm.vue';
 
 const props = defineProps({
-    photoStudio: Object,
+    photoStudio: { type: Object, required: true },
+    groupOptions: { type: Object, default: () => ({}) },
 });
 
+const s = props.photoStudio;
 const form = useForm({
-    name: props.photoStudio.name || '',
-    address: props.photoStudio.address || '',
-    remarks: props.photoStudio.remarks || '',
+    name: s.name || '',
+    address: s.address || '',
+    remarks: s.remarks || '',
+    shop_group: s.shop_group || '',
+    is_active: s.is_active,
+    default_start_time: s.default_start_time || '',
+    default_end_time: s.default_end_time || '',
+    default_capacity: s.default_capacity || 1,
+    weekday_hours: (s.weekday_hours || []).map((r) => ({ ...r })),
 });
 
 const submit = () => {
-    form.put(route('admin.photo-studios.update', props.photoStudio.id));
+    form.transform((d) => ({
+        ...d,
+        default_start_time: d.default_start_time || null,
+        default_end_time: d.default_end_time || null,
+    })).put(route('admin.photo-studios.update', s.id));
 };
 </script>
-
