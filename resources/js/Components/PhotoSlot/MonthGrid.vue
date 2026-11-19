@@ -8,11 +8,16 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next';
 
 const props = defineProps({
     studios: { type: Array, default: () => [] },
+    // 成人式お支度でも使うため、差し替えられるようにしている（既定は前撮り）
+    gridRoute: { type: String, default: 'admin.photo-slots.grid' },
+    storageKey: { type: String, default: 'photoSlotGrid.studioIds' },
+    placeLabel: { type: String, default: 'スタジオ' },
+    seatLabel: { type: String, default: '枠' },
 });
 const emit = defineEmits(['book', 'manage']);
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
-const STORAGE_KEY = 'photoSlotGrid.studioIds';
+const STORAGE_KEY = props.storageKey;
 
 const readStoredStudios = () => {
     try {
@@ -42,7 +47,7 @@ const load = async () => {
     loading.value = true;
     error.value = '';
     try {
-        const res = await axios.get(route('admin.photo-slots.grid'), {
+        const res = await axios.get(route(props.gridRoute), {
             params: { studio_ids: studioIds.value, month: month.value || undefined },
         });
         if (mine !== seq) return; // 古い応答は捨てる
@@ -131,7 +136,7 @@ const manage = (col, time) => {
         <!-- 操作：スタジオ（複数選択） -->
         <div class="px-4 py-3 border-b border-brand-border space-y-3">
             <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                <span class="text-xs font-medium text-brand-text-muted">スタジオ</span>
+                <span class="text-xs font-medium text-brand-text-muted">{{ placeLabel }}</span>
                 <label class="inline-flex items-center gap-1.5 cursor-pointer">
                     <input type="checkbox" :checked="allChecked" class="rounded border-brand-border text-brand-primary focus:ring-brand-primary" @change="toggleAll" />
                     <span>すべて</span>
@@ -181,11 +186,11 @@ const manage = (col, time) => {
             </div>
         </div>
 
-        <div v-if="!studios.length" class="p-8 text-center text-sm text-brand-text-muted">選べるスタジオがありません。</div>
-        <div v-else-if="!studioIds.length" class="p-8 text-center text-sm text-brand-text-muted">スタジオを1つ以上選んでください。</div>
+        <div v-if="!studios.length" class="p-8 text-center text-sm text-brand-text-muted">選べる{{ placeLabel }}がありません。</div>
+        <div v-else-if="!studioIds.length" class="p-8 text-center text-sm text-brand-text-muted">{{ placeLabel }}を1つ以上選んでください。</div>
         <div v-else-if="error" class="p-8 text-center text-sm text-red-600">{{ error }}</div>
         <div v-else-if="data && !data.columns.length" class="p-8 text-center text-sm text-brand-text-muted">
-            {{ monthLabel(data.month) }}は、選んだスタジオに登録済みの枠がありません。
+            {{ monthLabel(data.month) }}は、選んだ{{ placeLabel }}に登録済みの枠がありません。
         </div>
 
         <!-- 表：スマホでは横にスクロールし、時刻の列を固定する -->
@@ -224,7 +229,7 @@ const manage = (col, time) => {
                                         v-if="!col.is_past"
                                         type="button"
                                         class="p-0.5 rounded text-brand-text-muted hover:bg-brand-surface-2 hover:text-brand-primary"
-                                        title="1枠足す・定員を変える"
+                                        :title="`1${seatLabel}足す・定員を変える`"
                                         @click="manage(col, time)"
                                     >
                                         <Plus :size="14" />

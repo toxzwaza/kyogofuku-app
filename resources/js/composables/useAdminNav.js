@@ -71,6 +71,13 @@ export function useAdminNav() {
             ],
         },
         {
+            group: '成人式',
+            items: [
+                { label: 'お支度枠',   route: 'admin.seijin-prep-slots.index',  icon: Sparkles, activePatterns: ['admin.seijin-prep-slots.*'] },
+                { label: 'お支度場所', route: 'admin.seijin-prep-venues.index', icon: MapPin,   activePatterns: ['admin.seijin-prep-venues.*'], permission: 'isManager' },
+            ],
+        },
+        {
             group: 'ポイント・クーポン',
             items: [
                 { label: 'ポイント付与',   route: 'admin.referral.list',                 icon: Gift,      activePatterns: ['admin.referral.list'] },

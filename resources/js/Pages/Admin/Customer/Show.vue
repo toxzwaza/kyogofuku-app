@@ -142,6 +142,8 @@
               </template>
             </UiDetailSection>
 
+            <SeijinPrepPanel :customer-id="customer.id" :customer-shop-id="customer.shop_id" />
+
             <UiDetailSection title="連絡先" :icon="Phone" :cols="2">
               <UiDetailField label="電話番号" :value="customer.phone_number || '—'" :icon="Phone" mono />
               <UiDetailField label="メールアドレス" :value="customer.email || '—'" :icon="Mail" mono />
@@ -2614,6 +2616,7 @@ const tabs = [
     { id: 'credit',   label: 'クレジット' },
 ];
 import CustomerCreditPanel from '@/Components/Admin/CustomerCreditPanel.vue';
+import SeijinPrepPanel from '@/Components/SeijinPrep/CustomerPanel.vue';
 import CustomerSummaryPanel from '@/Components/Admin/CustomerSummaryPanel.vue';
 import CustomerReferralPanel from '@/Components/Admin/CustomerReferralPanel.vue';
 import ActionButton from '@/Components/ActionButton.vue';

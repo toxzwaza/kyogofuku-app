@@ -43,6 +43,10 @@ use App\Http\Controllers\Admin\TimeslotController as AdminTimeslotController;
 use App\Http\Controllers\Admin\TimeslotBulkController as AdminTimeslotBulkController;
 use App\Http\Controllers\Admin\PhotoSlotBulkController as AdminPhotoSlotBulkController;
 use App\Http\Controllers\Admin\PhotoSlotSeatController as AdminPhotoSlotSeatController;
+use App\Http\Controllers\Admin\SeijinPrepVenueController as AdminSeijinPrepVenueController;
+use App\Http\Controllers\Admin\SeijinPrepSlotController as AdminSeijinPrepSlotController;
+use App\Http\Controllers\Admin\SeijinPrepSeatController as AdminSeijinPrepSeatController;
+use App\Http\Controllers\Admin\SeijinPrepCustomerController as AdminSeijinPrepCustomerController;
 use App\Http\Controllers\Admin\TimeslotTemplateController as AdminTimeslotTemplateController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VenueController as AdminVenueController;
@@ -237,6 +241,27 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/photo-studios/{photoStudio}/edit', [AdminPhotoStudioController::class, 'edit'])->name('photo-studios.edit');
     Route::put('/photo-studios/{photoStudio}', [AdminPhotoStudioController::class, 'update'])->name('photo-studios.update');
     Route::delete('/photo-studios/{photoStudio}', [AdminPhotoStudioController::class, 'destroy'])->name('photo-studios.destroy');
+
+    // 成人式お支度（枠・お支度場所）。権限は今回設けない（docs/20261119_権限機能の整備_権限を設ける場所.md）
+    Route::get('/seijin-prep-slots', [AdminSeijinPrepSlotController::class, 'index'])->name('seijin-prep-slots.index');
+    Route::get('/seijin-prep-slots/grid', [AdminSeijinPrepSlotController::class, 'grid'])->name('seijin-prep-slots.grid');
+    Route::get('/seijin-prep-slots/csv', [AdminSeijinPrepSlotController::class, 'csv'])->name('seijin-prep-slots.csv');
+    Route::post('/seijin-prep-slots/book', [AdminSeijinPrepSlotController::class, 'book'])->name('seijin-prep-slots.book');
+    Route::post('/seijin-prep-slots/seats', [AdminSeijinPrepSeatController::class, 'store'])->name('seijin-prep-slots.seats.store');
+    Route::put('/seijin-prep-slots/capacity', [AdminSeijinPrepSeatController::class, 'capacity'])->name('seijin-prep-slots.capacity');
+    Route::post('/seijin-prep-slots/bulk', [AdminSeijinPrepSeatController::class, 'bulk'])->name('seijin-prep-slots.bulk');
+    Route::delete('/seijin-prep-slots/{seijinPrepSlot}', [AdminSeijinPrepSeatController::class, 'destroy'])->name('seijin-prep-slots.destroy');
+    Route::get('/seijin-prep-venues', [AdminSeijinPrepVenueController::class, 'index'])->name('seijin-prep-venues.index');
+    Route::get('/seijin-prep-venues/create', [AdminSeijinPrepVenueController::class, 'create'])->name('seijin-prep-venues.create');
+    Route::post('/seijin-prep-venues', [AdminSeijinPrepVenueController::class, 'store'])->name('seijin-prep-venues.store');
+    Route::get('/seijin-prep-venues/{seijinPrepVenue}/edit', [AdminSeijinPrepVenueController::class, 'edit'])->name('seijin-prep-venues.edit');
+    Route::put('/seijin-prep-venues/{seijinPrepVenue}', [AdminSeijinPrepVenueController::class, 'update'])->name('seijin-prep-venues.update');
+    Route::delete('/seijin-prep-venues/{seijinPrepVenue}', [AdminSeijinPrepVenueController::class, 'destroy'])->name('seijin-prep-venues.destroy');
+    Route::get('/customers/{customer}/seijin-prep', [AdminSeijinPrepCustomerController::class, 'show'])->name('customers.seijin-prep.show');
+    Route::get('/customers/{customer}/seijin-prep/dates', [AdminSeijinPrepCustomerController::class, 'dates'])->name('customers.seijin-prep.dates');
+    Route::get('/customers/{customer}/seijin-prep/times', [AdminSeijinPrepCustomerController::class, 'times'])->name('customers.seijin-prep.times');
+    Route::put('/customers/{customer}/seijin-prep', [AdminSeijinPrepCustomerController::class, 'save'])->name('customers.seijin-prep.save');
+    Route::delete('/customers/{customer}/seijin-prep', [AdminSeijinPrepCustomerController::class, 'destroy'])->name('customers.seijin-prep.destroy');
 
     // メディアライブラリ
     Route::get('/media', [AdminMediaFileController::class, 'index'])->name('media.index');
