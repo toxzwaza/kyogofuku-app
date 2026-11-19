@@ -210,7 +210,7 @@ class IncidentTest extends TestCase
         $this->actingAs($this->other)
             ->post(route('admin.incidents.comments.store', $record), ['body' => '店長と話して前日チェックにした'])
             ->assertRedirect()
-            ->assertSessionHas('success', '経過を追加しました。');
+            ->assertSessionHas('success', '対応記録を追加しました。');
 
         $this->actingAs($this->staff)
             ->get(route('admin.incidents.show', $record))

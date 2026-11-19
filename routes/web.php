@@ -191,6 +191,9 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         Route::get('/{incident}/edit', 'edit')->name('edit')->whereNumber('incident');
         Route::put('/{incident}', 'update')->name('update')->whereNumber('incident');
         Route::post('/{incident}/comments', 'storeComment')->name('comments.store')->whereNumber('incident');
+        Route::put('/{incident}/comments/{comment}', 'updateComment')->name('comments.update')->whereNumber(['incident', 'comment']);
+        Route::post('/{incident}/decisions', 'storeDecision')->name('decisions.store')->whereNumber('incident');
+        Route::put('/{incident}/status', 'updateStatus')->name('status.update')->whereNumber('incident');
     });
 
     // イベント一覧

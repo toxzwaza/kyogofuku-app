@@ -32,13 +32,31 @@ class Incident extends Model
 
     public const GROUPS = ['okayama' => '岡山グループ', 'fukui' => '福井グループ'];
 
+    /** ステータス（未対応→議題→対応済み）。対応済みにするのは決定事項の登録だけ */
+    public const STATUS_OPEN = 'open';
+    public const STATUS_AGENDA = 'agenda';
+    public const STATUS_RESOLVED = 'resolved';
+
+    public const STATUSES = [
+        self::STATUS_OPEN     => '未対応',
+        self::STATUS_AGENDA   => '議題',
+        self::STATUS_RESOLVED => '対応済み',
+    ];
+
     protected $fillable = [
         'group_key', 'occurred_on', 'shop_name', 'category', 'kind',
         'title', 'what', 'action', 'consult', 'created_by',
     ];
 
+    // status・status_changed_by・status_changed_at はサーバーだけが入れる（fillable に入れない）
+
+    protected $attributes = [
+        'status' => self::STATUS_OPEN,
+    ];
+
     protected $casts = [
-        'occurred_on' => 'date:Y-m-d',
+        'occurred_on'       => 'date:Y-m-d',
+        'status_changed_at' => 'datetime',
     ];
 
     public function creator()
@@ -49,6 +67,22 @@ class Incident extends Model
     public function comments()
     {
         return $this->hasMany(IncidentComment::class)->orderBy('created_at')->orderBy('id');
+    }
+
+    public function statusChanger()
+    {
+        return $this->belongsTo(User::class, 'status_changed_by');
+    }
+
+    public function scopeInStatus(Builder $q, ?string $status): Builder
+    {
+        return isset(self::STATUSES[$status]) ? $q->where('status', $status) : $q;
+    }
+
+    /** ステータスの順番（後ろに戻すときは理由が要る） */
+    public static function statusRank(string $status): int
+    {
+        return (int) array_search($status, array_keys(self::STATUSES), true);
     }
 
     public function scopeInTab(Builder $q, ?string $tab): Builder

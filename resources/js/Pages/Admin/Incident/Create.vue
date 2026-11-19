@@ -130,7 +130,7 @@
                     />
                     <p v-if="errs[current]" class="text-xs text-brand-danger">{{ errs[current] }}</p>
                     <div v-if="current === 'action' && !flow.action.opt">
-                        <UiButton variant="ghost" size="sm" @click="markNotYet">まだ対応していない（未対応）</UiButton>
+                        <UiButton variant="ghost" size="sm" @click="markNotYet">その場では対応していない</UiButton>
                     </div>
                 </div>
 
@@ -245,7 +245,7 @@ const checkStep = (key) => {
     if (key === 'title' && !form.title.trim()) localErrs.title = '件名を入れてください。';
     if (key === 'what' && !form.what.trim()) localErrs.what = `${flow.value.what.nm}を書いてください。`;
     if (key === 'action' && flow.value.action && !flow.value.action.opt && !form.action.trim()) {
-        localErrs.action = 'その場でした対応を書くか、「未対応」を押してください。';
+        localErrs.action = 'その場でした対応を書くか、「その場では対応していない」を押してください。';
     }
     return Object.keys(localErrs).length === 0;
 };
@@ -275,7 +275,7 @@ const goTo = (i) => {
 };
 
 const markNotYet = () => {
-    form.action = '未対応';
+    form.action = 'その場では対応していない';
     next();
 };
 

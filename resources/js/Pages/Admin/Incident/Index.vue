@@ -39,6 +39,25 @@
             </button>
         </div>
 
+        <!-- ステータス（会議では「議題」で絞り込むと、その日の議題の一覧になる） -->
+        <div class="flex flex-wrap gap-1.5 mb-3" role="group" aria-label="ステータスで絞り込む">
+            <button
+                v-for="s in statusChips"
+                :key="s.id"
+                type="button"
+                :aria-pressed="form.st === s.id"
+                class="inline-flex items-center gap-1.5 rounded-full border px-3 min-h-[40px] md:min-h-[34px] text-sm transition-colors"
+                :class="form.st === s.id
+                    ? 'border-brand-primary bg-brand-primary/10 text-brand-primary font-semibold'
+                    : 'border-brand-border bg-brand-surface text-brand-text-muted hover:text-brand-text'"
+                @click="setStatus(s.id)"
+            >
+                <span v-if="s.dot" class="w-2 h-2 rounded-full" :class="s.dot" />
+                {{ s.label }}
+                <span class="text-[11px] tabular-nums">{{ s.count }}</span>
+            </button>
+        </div>
+
         <!-- 絞り込み -->
         <div class="grid grid-cols-2 md:grid-cols-[1fr_140px_140px_170px] lg:grid-cols-[1fr_160px_160px_180px] gap-2 mb-4">
             <div class="col-span-2 md:col-span-1">
@@ -62,7 +81,7 @@
         >
             <template #cell-title="{ row }">
                 <div class="min-w-0">
-                    <div class="font-medium text-brand-text">{{ row.title }}</div>
+                    <div class="font-medium text-brand-text"><StatusBadge :value="row.status" size="sm" class="mr-1.5 align-[1px]" />{{ row.title }}</div>
                     <div class="text-xs text-brand-text-muted truncate max-w-[520px]">{{ row.excerpt }}</div>
                 </div>
             </template>
@@ -76,6 +95,7 @@
 
             <template #mobile-card="{ row }">
                 <div class="flex flex-wrap gap-1.5 mb-1.5">
+                    <StatusBadge :value="row.status" />
                     <KindBadge :value="row.category" type="category" />
                     <KindBadge :value="row.kind" />
                 </div>
@@ -94,14 +114,16 @@ import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { UiPageHeader, UiButton, UiDataTable, UiInput, UiSelect } from '@/Components/UI';
 import KindBadge from '@/Components/Incident/KindBadge.vue';
+import StatusBadge from '@/Components/Incident/StatusBadge.vue';
 import { Plus, Search } from 'lucide-vue-next';
-import { TABS, dateLabel } from '@/composables/useIncidentFlow.js';
+import { TABS, STATUS, dateLabel } from '@/composables/useIncidentFlow.js';
 import { useDebounceFn } from '@/composables/useDebounceFn.js';
 
 const props = defineProps({
     incidents: Object,
     filters: Object,
     tabCounts: Object,
+    statusCounts: { type: Object, default: () => ({}) },
     options: Object,
     group: String,
     groups: { type: Array, default: () => [] },
@@ -123,7 +145,19 @@ const form = reactive({
     cat: props.filters.cat || '',
     shop: props.filters.shop || '',
     kind: props.filters.kind || '',
+    st: props.filters.st || '',
 });
+
+const DOT = { open: 'bg-akane-500', agenda: 'bg-natane-500', resolved: 'bg-uguisu-500' };
+const statusChips = computed(() => [
+    { id: '', label: 'すべて', count: props.statusCounts.all ?? 0 },
+    ...Object.entries(STATUS).map(([id, s]) => ({ id, label: s.label, count: props.statusCounts[id] ?? 0, dot: DOT[id] })),
+]);
+
+const setStatus = (id) => {
+    form.st = id;
+    apply();
+};
 
 const apply = () => {
     const params = Object.fromEntries(Object.entries(form).filter(([k, v]) => v && !(k === 'tab' && v === 'all')));

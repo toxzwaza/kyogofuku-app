@@ -92,7 +92,7 @@ export function flowFor(kind) {
         action: {
             nm: 'その場でした対応',
             q: 'その場でした対応を書いてください',
-            sub: 'まだ何もしていなければ「未対応」を押してください。',
+            sub: 'まだ何もしていなければ「その場では対応していない」を押してください。会議で話し合ったことは、共有したあとに詳細画面から記録できます。',
             ph: '例：浜店から同じ色の重ね衿を取り寄せ、30分遅れで撮影した。',
             opt: false,
         },
@@ -135,7 +135,19 @@ export function dateTimeLabel(s) {
     return m ? `${+m[2]}/${+m[3]} ${m[4]}` : String(s || '');
 }
 
-export const isNotYet = (kind, action) => {
-    const f = flowFor(kind);
-    return !!f.action && !f.action.opt && /^未対応/.test(String(action || '').trim());
+/**
+ * ステータス（2026-11-19〜）。未対応→議題→対応済み。対応済みにするのは決定事項の登録だけ。
+ * 旧来の「その場でした対応」が「未対応」かどうかの表示（isNotYet）は、このステータスに置き換えた。
+ */
+export const STATUS = {
+    open:     { label: '未対応',   variant: 'danger',  hint: 'まだ話し合っていません' },
+    agenda:   { label: '議題',     variant: 'warning', hint: '会議で話し合う予定です' },
+    resolved: { label: '対応済み', variant: 'success', hint: '決定事項が登録されています' },
+};
+
+/** 記録の種類 */
+export const RECORD_TYPE = {
+    record:   { label: '対応記録', variant: 'neutral' },
+    decision: { label: '決定事項', variant: 'success' },
+    status:   { label: '状態の変更', variant: 'neutral' },
 };

@@ -46,7 +46,7 @@
                         v-if="flow.action"
                         :label="flow.action.nm"
                         :required="!flow.action.opt"
-                        :hint="flow.action.opt ? '任意' : 'まだ何もしていなければ「未対応」と書いてください。'"
+                        :hint="flow.action.opt ? '任意' : 'まだ何もしていなければ「その場では対応していない」と書いてください。'"
                         :error="form.errors.action"
                     >
                         <UiTextarea v-model="form.action" :rows="4" :placeholder="flow.action.ph" :error="!!form.errors.action" />

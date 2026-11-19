@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
 use App\Models\IncidentComment;
+use App\Models\IncidentCommentRevision;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 /**
@@ -18,6 +21,8 @@ use Inertia\Inertia;
  * - 店舗グループ（岡山／福井）ごとに分けて共有する。記録のグループは記録した人のグループ。
  * - 一般スタッフ・店舗管理者は自分のグループだけ。勤怠管理者・システム管理者は両グループを切り替えて見る。
  * - 直せるのは、記録した本人と、店舗管理者以上（グループ内すべて）。
+ * - ステータス（未対応→議題→対応済み）と記録（対応記録・決定事項・状態の変更）はグループの全員が足せる。
+ *   対応済みにするのは決定事項の登録だけ。入力者と時刻はサーバーで入れる。記録は消せず、本人が当日だけ直せる（2026-11-19）。
  * 要件書：_Company/02_京呉服平田/10_プロジェクト/20261026_業務マニュアル導入/成果物/20261113_要件書_事案記録・対応マニュアル.md
  */
 class IncidentController extends Controller
@@ -36,9 +41,10 @@ class IncidentController extends Controller
             'shop' => (string) $request->query('shop', ''),
             'kind' => (string) $request->query('kind', ''),
             'q'    => trim((string) $request->query('q', '')),
+            'st'   => isset(Incident::STATUSES[$request->query('st')]) ? (string) $request->query('st') : '',
         ];
 
-        $query = (clone $base)->inTab($tab)
+        $query = (clone $base)->inTab($tab)->inStatus($filters['st'])
             ->when($filters['cat'] !== '', fn ($q) => $q->where('category', $filters['cat']))
             ->when($filters['shop'] !== '', fn ($q) => $q->where('shop_name', $filters['shop']))
             ->when($filters['kind'] !== '', fn ($q) => $q->where('kind', $filters['kind']))
@@ -62,6 +68,7 @@ class IncidentController extends Controller
                 'title'       => $i->title,
                 'excerpt'     => Str::limit(preg_replace('/\s+/u', ' ', $i->what), 60),
                 'creator'     => $i->creator?->name,
+                'status'      => $i->status,
             ]);
 
         $tabCounts = [];
@@ -69,10 +76,18 @@ class IncidentController extends Controller
             $tabCounts[$key] = (clone $base)->inTab($key)->count();
         }
 
+        // ステータスの件数は、いま選んでいるタブの中で数える
+        $statusCounts = (clone $base)->inTab($tab)
+            ->selectRaw('status, count(*) as c')->groupBy('status')->pluck('c', 'status');
+        $statusCounts = collect(Incident::STATUSES)->map(fn ($_, $k) => (int) ($statusCounts[$k] ?? 0))
+            ->put('all', (int) $statusCounts->sum());
+
         return Inertia::render('Admin/Incident/Index', [
             'incidents' => $incidents,
             'filters'   => $filters,
             'tabCounts' => $tabCounts,
+            'statusCounts' => $statusCounts,
+            'statuses'  => Incident::STATUSES,
             'options'   => [
                 'categories' => (clone $base)->distinct()->orderBy('category')->pluck('category'),
                 'shops'      => (clone $base)->distinct()->orderBy('shop_name')->pluck('shop_name'),
@@ -120,7 +135,7 @@ class IncidentController extends Controller
         $user = $request->user();
         $this->authorizeView($user, $incident);
 
-        $incident->load(['creator:id,name', 'comments.user:id,name']);
+        $incident->load(['creator:id,name', 'statusChanger:id,name', 'comments.user:id,name', 'comments.revisions.editor:id,name']);
 
         return Inertia::render('Admin/Incident/Show', [
             'incident' => [
@@ -136,13 +151,27 @@ class IncidentController extends Controller
                 'consult'     => $incident->consult,
                 'creator'     => $incident->creator?->name,
                 'created_at'  => $incident->created_at?->format('Y-m-d H:i'),
+                'status'      => $incident->status,
+                'status_changed_by' => $incident->statusChanger?->name,
+                'status_changed_at' => $incident->status_changed_at?->format('Y-m-d H:i'),
                 'comments'    => $incident->comments->map(fn (IncidentComment $c) => [
-                    'id'         => $c->id,
-                    'user'       => $c->user?->name,
-                    'body'       => $c->body,
-                    'created_at' => $c->created_at?->format('Y-m-d H:i'),
+                    'id'          => $c->id,
+                    'type'        => $c->type,
+                    'from_status' => $c->from_status,
+                    'to_status'   => $c->to_status,
+                    'user'        => $c->user?->name,
+                    'body'        => $c->body,
+                    'created_at'  => $c->created_at?->format('Y-m-d H:i'),
+                    'edited_at'   => $c->edited_at?->format('Y-m-d H:i'),
+                    'editable'    => $c->editableBy($user),
+                    'revisions'   => $c->revisions->map(fn (IncidentCommentRevision $r) => [
+                        'body'       => $r->body,
+                        'editor'     => $r->editor?->name,
+                        'created_at' => $r->created_at?->format('Y-m-d H:i'),
+                    ])->values(),
                 ])->values(),
             ],
+            'statuses'  => Incident::STATUSES,
             'canEdit'   => $this->canEdit($user, $incident),
             'groupName' => Incident::GROUPS[$incident->group_key] ?? $incident->group_key,
         ]);
@@ -189,14 +218,130 @@ class IncidentController extends Controller
         $user = $request->user();
         $this->authorizeView($user, $incident);
 
-        $data = $request->validate(['body' => 'required|string|max:2000'], [], ['body' => '経過']);
+        $data = $request->validate(['body' => 'required|string|max:2000'], [], ['body' => '対応記録']);
 
-        $incident->comments()->create(['user_id' => $user->id, 'body' => trim($data['body'])]);
+        $this->addComment($incident, $user, IncidentComment::TYPE_RECORD, trim($data['body']));
 
-        return redirect()->route('admin.incidents.show', $incident)->with('success', '経過を追加しました。');
+        return redirect()->route('admin.incidents.show', $incident)->with('success', '対応記録を追加しました。');
+    }
+
+    /** 決定事項を登録して対応済みにする（グループの全員） */
+    public function storeDecision(Request $request, Incident $incident)
+    {
+        $user = $request->user();
+        $this->authorizeView($user, $incident);
+
+        $data = $request->validate(['body' => 'required|string|max:2000'], [], ['body' => '決定事項']);
+        $body = trim($data['body']);
+
+        DB::transaction(function () use ($incident, $user, $body) {
+            $locked = Incident::whereKey($incident->id)->lockForUpdate()->firstOrFail();
+            $this->addComment($locked, $user, IncidentComment::TYPE_DECISION, $body);
+            if ($locked->status !== Incident::STATUS_RESOLVED) {
+                $this->changeStatus($locked, $user, Incident::STATUS_RESOLVED, '');
+            }
+        });
+
+        return redirect()->route('admin.incidents.show', $incident)->with('success', '決定事項を登録し、対応済みにしました。');
+    }
+
+    /** 状態を未対応・議題に変える（対応済みにするのは決定事項の登録だけ）。前に戻すときは理由が要る */
+    public function updateStatus(Request $request, Incident $incident)
+    {
+        $user = $request->user();
+        $this->authorizeView($user, $incident);
+
+        $to = (string) $request->input('status');
+        $request->validate([
+            'status' => ['required', Rule::in([Incident::STATUS_OPEN, Incident::STATUS_AGENDA])],
+            'reason' => [
+                Rule::requiredIf(fn () => Incident::statusRank($to) < Incident::statusRank($incident->status)),
+                'nullable', 'string', 'max:2000',
+            ],
+        ], [
+            'reason.required' => '前の状態に戻すときは、理由を書いてください。',
+        ], ['status' => '状態', 'reason' => '理由']);
+
+        $changed = DB::transaction(function () use ($incident, $user, $to, $request) {
+            $locked = Incident::whereKey($incident->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status === $to) {
+                return false;
+            }
+            // 理由の要否は、ロックした最新の状態で決める（同時に対応済みにされた場合も理由を求める）
+            $reason = trim((string) $request->input('reason', ''));
+            if ($reason === '' && Incident::statusRank($to) < Incident::statusRank($locked->status)) {
+                throw ValidationException::withMessages(['reason' => '前の状態に戻すときは、理由を書いてください。']);
+            }
+            $this->changeStatus($locked, $user, $to, $reason);
+
+            return true;
+        });
+
+        return redirect()->route('admin.incidents.show', $incident)
+            ->with($changed ? 'success' : 'error', $changed ? '「'.Incident::STATUSES[$to].'」にしました。' : 'すでに「'.Incident::STATUSES[$to].'」です。');
+    }
+
+    /** 記録を直す（本人が当日だけ）。直す前の本文を残す */
+    public function updateComment(Request $request, Incident $incident, IncidentComment $comment)
+    {
+        $user = $request->user();
+        $this->authorizeView($user, $incident);
+        abort_unless((int) $comment->incident_id === (int) $incident->id, 404);
+        abort_unless($comment->editableBy($user), 403, '直せるのは、記録した本人がその日のうちだけです。');
+
+        $data = $request->validate(['body' => 'required|string|max:2000'], [], ['body' => '本文']);
+        $body = trim($data['body']);
+
+        DB::transaction(function () use ($comment, $user, $body) {
+            // 最新の本文をロックして読み直す（同時に直したときも、直す前の文をすべて残す）
+            $locked = IncidentComment::whereKey($comment->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->editableBy($user), 403, '直せるのは、記録した本人がその日のうちだけです。');
+            if ($body === $locked->body) {
+                return;
+            }
+
+            $rev = new IncidentCommentRevision();
+            $rev->incident_comment_id = $locked->id;
+            $rev->body = $locked->body;
+            $rev->edited_by = $user->id;
+            $rev->save();
+
+            $locked->body = $body;
+            $locked->edited_at = now();
+            $locked->save();
+        });
+
+        return redirect()->route('admin.incidents.show', $incident)->with('success', '記録を直しました。');
     }
 
     /* ---------------------------------------------------------------- */
+
+    /** 記録を足す。入力者と時刻はサーバーで入れる */
+    private function addComment(Incident $incident, User $user, string $type, string $body, ?string $from = null, ?string $to = null): IncidentComment
+    {
+        $c = new IncidentComment();
+        $c->incident_id = $incident->id;
+        $c->user_id = $user->id;
+        $c->type = $type;
+        $c->from_status = $from;
+        $c->to_status = $to;
+        $c->body = $body;
+        $c->save();
+
+        return $c;
+    }
+
+    /** 状態を変えて、その記録を残す（トランザクションの中で呼ぶ） */
+    private function changeStatus(Incident $incident, User $user, string $to, string $reason): void
+    {
+        $from = $incident->status;
+        $incident->status = $to;
+        $incident->status_changed_by = $user->id;
+        $incident->status_changed_at = now();
+        $incident->save();
+
+        $this->addComment($incident, $user, IncidentComment::TYPE_STATUS, $reason, $from, $to);
+    }
 
     private function validated(Request $request): array
     {
