@@ -36,6 +36,7 @@ class User extends Authenticatable
         'password',
         'theme_color',
         'attendance_role',
+        'can_edit_credit',
         'work_attribute_id',
         'break_mode',
         'scheduled_break_minutes',
@@ -59,6 +60,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'scheduled_break_minutes' => 'integer',
+        'can_edit_credit' => 'boolean',
     ];
 
     /** 休憩が所定固定方式か（休憩打刻を使わず所定分を控除する） */
@@ -216,5 +218,14 @@ class User extends Authenticatable
     public function canManageUsers(): bool
     {
         return $this->isSystemAdmin();
+    }
+
+    /**
+     * クレジット（支払一覧）の登録・修正・支払済チェックができるか。
+     * 閲覧は全スタッフ。入力はスタッフ編集画面で付け外しする can_edit_credit で決める。
+     */
+    public function canEditCredit(): bool
+    {
+        return (bool) $this->can_edit_credit;
     }
 }

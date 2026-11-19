@@ -114,6 +114,21 @@
                                 </div>
 
                                 <div>
+                                    <label class="block text-sm font-medium text-brand-text mb-1">クレジットの入力</label>
+                                    <label class="inline-flex items-center gap-2 text-sm text-brand-text">
+                                        <input
+                                            v-model="form.can_edit_credit"
+                                            type="checkbox"
+                                            class="rounded border-brand-border text-brand-primary focus:ring-brand-primary"
+                                        />
+                                        クレジットの登録・修正・支払済チェックができる
+                                    </label>
+                                    <p class="mt-1 text-sm text-brand-text-muted">
+                                        チェックがない人も、クレジットの閲覧はできます。
+                                    </p>
+                                </div>
+
+                                <div>
                                     <label class="block text-sm font-medium text-brand-text mb-1">勤務属性</label>
                                     <select
                                         v-model="form.work_attribute_id"
@@ -236,6 +251,7 @@ const form = useForm({
     login_id: props.user.login_id || '',
     theme_color: props.user.theme_color || '',
     attendance_role: props.user.attendance_role || '',
+    can_edit_credit: !!props.user.can_edit_credit,
     work_attribute_id: props.user.work_attribute_id ?? '',
     break_mode: props.user.break_mode || 'manual',
     scheduled_break_minutes: props.user.scheduled_break_minutes ?? null,

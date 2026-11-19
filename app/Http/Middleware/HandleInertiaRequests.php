@@ -40,6 +40,7 @@ class HandleInertiaRequests extends Middleware
                     'isSystemAdmin'       => $user->isSystemAdmin(),
                     'canManageUsers'      => $user->canManageUsers(),
                     'isManager'           => $user->isManager(),
+                    'canEditCredit'       => $user->canEditCredit(),
                 ]) : null,
             ],
             'ziggy' => function () use ($request) {

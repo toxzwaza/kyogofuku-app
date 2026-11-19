@@ -1108,6 +1108,11 @@
                         </div>
                     </template>
 
+                    <!-- クレジットタブ（旧：Dropbox の支払一覧表） -->
+                    <template #credit>
+                        <CustomerCreditPanel :customer-id="customer.id" />
+                    </template>
+
                     <!-- ポイント・ギフトタブ -->
                     <template #referral>
                         <CustomerReferralPanel :customer-id="customer.id" :referral="referral" :distributable-coupons="distributableCoupons" />
@@ -2607,14 +2612,18 @@ import {
     ClipboardList,
 } from 'lucide-vue-next';
 
-const activeTab = ref('overview');
+// ?tab=credit などで開くタブを指定できる（クレジット一覧からの遷移用）
+const initialTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+const activeTab = ref(['overview', 'info', 'photos', 'comm', 'referral', 'credit'].includes(initialTab) ? initialTab : 'overview');
 const tabs = [
     { id: 'overview', label: '概要' },
     { id: 'info',     label: '詳細情報' },
     { id: 'photos',   label: '写真・アンケート' },
     { id: 'comm',     label: '連絡・メモ' },
     { id: 'referral', label: 'ポイント・ギフト' },
+    { id: 'credit',   label: 'クレジット' },
 ];
+import CustomerCreditPanel from '@/Components/Admin/CustomerCreditPanel.vue';
 import CustomerSummaryPanel from '@/Components/Admin/CustomerSummaryPanel.vue';
 import CustomerReferralPanel from '@/Components/Admin/CustomerReferralPanel.vue';
 import ActionButton from '@/Components/ActionButton.vue';

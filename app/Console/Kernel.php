@@ -41,6 +41,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('referral:mature')->dailyAt('03:00');
         $schedule->command('referral:expire')->dailyAt('03:15');
 
+        // クレジット：信販会社の分の過ぎた月を支払済に（画面を開いたときにも同じ処理が走る）
+        $schedule->command('credit:settle')->dailyAt('03:30');
+
         // 今日のケアリスト（A9）：営業時間中に毎時再生成
         $schedule->command('care:generate')->hourlyAt(5)->between('7:00', '20:00');
     }

@@ -34,6 +34,11 @@ class Customer extends Model
         return $this->belongsTo(CeremonyArea::class);
     }
 
+    public function creditContracts()
+    {
+        return $this->hasMany(CreditContract::class);
+    }
+
     public function shop()
     {
         return $this->belongsTo(Shop::class);

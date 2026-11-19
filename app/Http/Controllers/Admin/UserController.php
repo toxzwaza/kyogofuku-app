@@ -108,6 +108,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'theme_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'attendance_role' => 'nullable|in:shop_manager,attendance_manager,system_admin',
+            'can_edit_credit' => 'nullable|boolean',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
@@ -123,6 +124,7 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
             'theme_color' => $validated['theme_color'] ?? null,
             'attendance_role' => $validated['attendance_role'] ?? null,
+            'can_edit_credit' => (bool) ($validated['can_edit_credit'] ?? false),
             'work_attribute_id' => $validated['work_attribute_id'] ?? null,
             'break_mode' => $validated['break_mode'],
             'scheduled_break_minutes' => $validated['break_mode'] === User::BREAK_MODE_FIXED
@@ -185,6 +187,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
             'theme_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'attendance_role' => 'nullable|in:shop_manager,attendance_manager,system_admin',
+            'can_edit_credit' => 'nullable|boolean',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
             'main_shop_id' => 'nullable|exists:shops,id',
@@ -205,6 +208,11 @@ class UserController extends Controller
                 ? ($validated['scheduled_break_minutes'] ?? 0)
                 : null,
         ]);
+
+        // 旧UIの編集画面には項目が無いので、送られてきたときだけ変える
+        if ($request->has('can_edit_credit')) {
+            $user->update(['can_edit_credit' => (bool) $validated['can_edit_credit']]);
+        }
 
         if ($request->filled('password')) {
             $user->update([

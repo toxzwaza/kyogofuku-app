@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\TimeslotTemplateController as AdminTimeslotTempla
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VenueController as AdminVenueController;
 use App\Http\Controllers\Admin\WorkAttributeController as AdminWorkAttributeController;
+use App\Http\Controllers\Admin\CreditController as AdminCreditController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BladeLpController;
 use App\Http\Controllers\BladeReservationController;
@@ -342,6 +343,17 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/shops/{shop}/edit', [AdminShopController::class, 'edit'])->name('shops.edit');
     Route::put('/shops/{shop}', [AdminShopController::class, 'update'])->name('shops.update');
     Route::delete('/shops/{shop}', [AdminShopController::class, 'destroy'])->name('shops.destroy');
+
+    // クレジット支払管理（閲覧は全スタッフ。登録・修正は can_edit_credit のみ）
+    Route::get('/credits', [AdminCreditController::class, 'index'])->name('credits.index');
+    Route::get('/credits/monthly', [AdminCreditController::class, 'monthly'])->name('credits.monthly');
+    Route::post('/credits/payments/paid', [AdminCreditController::class, 'markPaid'])->name('credits.payments.paid');
+    Route::get('/credits/create', [AdminCreditController::class, 'create'])->name('credits.create');
+    Route::post('/credits', [AdminCreditController::class, 'store'])->name('credits.store');
+    Route::get('/credits/{creditContract}/edit', [AdminCreditController::class, 'edit'])->name('credits.edit');
+    Route::put('/credits/{creditContract}', [AdminCreditController::class, 'update'])->name('credits.update');
+    Route::post('/credits/{creditContract}/regenerate', [AdminCreditController::class, 'regenerate'])->name('credits.regenerate');
+    Route::get('/customers/{customer}/credits', [AdminCreditController::class, 'forCustomer'])->name('customers.credits');
 
     // 顧客管理
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');

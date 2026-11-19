@@ -6,6 +6,7 @@ import {
     Store, Settings,
     Clock, History, CheckCircle2, Briefcase, DollarSign, Calculator, AlarmClock,
     FileText, Sparkles, BookOpen, LifeBuoy, MonitorSmartphone, Gift, Megaphone, BarChart3,
+    CreditCard, CalendarRange,
 } from 'lucide-vue-next';
 
 /**
@@ -41,6 +42,13 @@ export function useAdminNav() {
                 { label: '不明メッセージ', route: 'admin.line-unknown-inbox.index',  icon: HelpCircle,    activePatterns: ['admin.line-unknown-inbox.*'], permission: 'isManager' },
                 { label: '顧客タグ',       route: 'admin.customer-tags.index',       icon: Tag,           activePatterns: ['admin.customer-tags.*'], permission: 'isManager' },
                 { label: '制約テンプレート', route: 'admin.constraint-templates.index', icon: Lock,        activePatterns: ['admin.constraint-templates.*'], permission: 'isManager' },
+            ],
+        },
+        {
+            group: 'クレジット',
+            items: [
+                { label: 'クレジット一覧', route: 'admin.credits.index',   icon: CreditCard,    activePatterns: ['admin.credits.index', 'admin.credits.create', 'admin.credits.edit'] },
+                { label: '今月の支払確認', route: 'admin.credits.monthly', icon: CalendarRange, activePatterns: ['admin.credits.monthly'] },
             ],
         },
         {
