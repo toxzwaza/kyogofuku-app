@@ -294,7 +294,8 @@ const submit = () => {
         })).put(route('admin.credits.update', props.contract.id), { preserveScroll: true });
     } else {
         if (customerMode.value === 'new') form.customer_id = null;
-        form.post(route('admin.credits.store'));
+        // 登録後は同じ画面（Form.vue）のまま編集画面に移るため、入力欄が登録前の空のまま残る。読み込み直して予定を出す
+        form.post(route('admin.credits.store'), { onSuccess: () => { window.location.reload(); } });
     }
 };
 
