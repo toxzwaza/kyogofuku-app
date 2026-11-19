@@ -58,7 +58,7 @@ class ImportCreditFromJson extends Command
         '自社から組換え' => '自社',
     ];
 
-    private const TAG_NAME = 'クレジット';
+    public const TAG_NAME = 'クレジット';
 
     private array $companyCache = [];
 
