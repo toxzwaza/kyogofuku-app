@@ -3,7 +3,7 @@
  *
  * 名前・住所・電話はすべて架空（決まった種から作るので、開くたびに同じ並びになる）。
  * 実データは入れない。変更（DM 状態・テンプレート）はこのタブを開いている間だけ覚える。
- * 関数の形は httpAdapter.js と同じ。本物につなぐときは MeiboController::DATA_SOURCE を 'http' にする。
+ * 関数の形は dbAdapter.js と同じ。本物（この DB の meibo_* の表）につなぐときは env MEIBO_DATA_SOURCE=db にする。
  */
 import { DM_STATUSES, R11_SOURCE_CODE, hasR11, DEFAULT_LABEL_FORM } from './constants.js';
 
@@ -177,6 +177,12 @@ export const dummyAdapter = {
 
     personIds(f = {}) {
         return wait({ ids: filterPersons(f).map((p) => p.id) });
+    },
+
+    /** 選んだ人の件数と、うち R11 成人名簿の人の数 */
+    summary(ids = []) {
+        const rows = ids.map((id) => byId.get(id)).filter(Boolean);
+        return wait({ count: rows.length, r11: rows.filter((p) => hasR11(p.source_versions)).length });
     },
 
     /** ラベルの見本用。ids の先頭から limit 件 */

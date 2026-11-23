@@ -264,10 +264,26 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::put('/customers/{customer}/seijin-prep', [AdminSeijinPrepCustomerController::class, 'save'])->name('customers.seijin-prep.save');
     Route::delete('/customers/{customer}/seijin-prep', [AdminSeijinPrepCustomerController::class, 'destroy'])->name('customers.seijin-prep.destroy');
 
-    // 名簿（成人式 DM 名簿）。いまは画面だけ（データは画面側のダミー）。店舗管理者以上（コントローラで確認）
+    // 名簿（成人式 DM 名簿）。店舗管理者以上（コントローラで確認）。操作ログ（LogActivity）からは外している
     Route::get('/meibo', [AdminMeiboController::class, 'index'])->name('meibo.index');
     Route::get('/meibo/labels', [AdminMeiboController::class, 'labels'])->name('meibo.labels');
     Route::get('/meibo/dashboard', [AdminMeiboController::class, 'dashboard'])->name('meibo.dashboard');
+    // 画面が読む・書くデータ（MEIBO_DATA_SOURCE=db のときだけ開く。別の API サーバーではなくこのアプリのルート）
+    Route::prefix('meibo/data')->name('meibo.data.')->group(function () {
+        Route::get('/options', [AdminMeiboController::class, 'options'])->name('options');
+        Route::get('/persons', [AdminMeiboController::class, 'persons'])->name('persons.index');
+        Route::get('/persons/ids', [AdminMeiboController::class, 'personIds'])->name('persons.ids');
+        Route::get('/persons/by-ids', [AdminMeiboController::class, 'personsByIds'])->name('persons.by-ids');
+        Route::post('/persons/summary', [AdminMeiboController::class, 'personsSummary'])->name('persons.summary');
+        Route::get('/persons/{person}', [AdminMeiboController::class, 'person'])->whereNumber('person')->name('persons.show');
+        Route::patch('/persons/{person}', [AdminMeiboController::class, 'updateDm'])->whereNumber('person')->name('persons.update');
+        Route::get('/templates', [AdminMeiboController::class, 'templates'])->name('templates.index');
+        Route::post('/templates', [AdminMeiboController::class, 'storeTemplate'])->name('templates.store');
+        Route::put('/templates/{template}', [AdminMeiboController::class, 'updateTemplate'])->whereNumber('template')->name('templates.update');
+        Route::delete('/templates/{template}', [AdminMeiboController::class, 'destroyTemplate'])->whereNumber('template')->name('templates.destroy');
+        Route::get('/stats', [AdminMeiboController::class, 'stats'])->name('stats');
+        Route::get('/map', [AdminMeiboController::class, 'map'])->name('map');
+    });
 
     // メディアライブラリ
     Route::get('/media', [AdminMediaFileController::class, 'index'])->name('media.index');
