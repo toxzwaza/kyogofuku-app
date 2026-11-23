@@ -1,7 +1,7 @@
 <template>
     <Head title="名簿ダッシュボード" />
 
-    <AdminLayout :breadcrumb="[{ label: '名簿' }, { label: '名簿ダッシュボード' }]">
+    <AdminLayout :breadcrumb="[{ label: '名簿一覧', href: route('admin.meibo.index') }, { label: '名簿ダッシュボード' }]">
         <UiPageHeader title="名簿ダッシュボード" description="名簿の総数・DM状態・成人式年と都道府県の内訳・地域の分布を見ます。">
             <template #actions>
                 <UiButton variant="ghost" :href="route('admin.meibo.index')">

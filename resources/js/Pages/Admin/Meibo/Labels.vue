@@ -1,7 +1,7 @@
 <template>
     <Head title="ラベル発行" />
 
-    <AdminLayout :breadcrumb="[{ label: '名簿' }, { label: 'ラベル発行' }]">
+    <AdminLayout :breadcrumb="[{ label: '名簿一覧', href: route('admin.meibo.index') }, { label: 'ラベル発行' }]">
         <UiPageHeader title="ラベル発行" description="名簿一覧で選んだ人の宛名ラベル（A4・1枚10面／A-One 66732 相当）を作ります。">
             <template #actions>
                 <UiButton variant="ghost" :href="route('admin.meibo.index')">
@@ -33,25 +33,14 @@
             <p class="mt-3 text-sm text-brand-text-muted">ラベルを作る人がまだ選ばれていません。名簿一覧でチェックを付けてください。</p>
             <UiButton class="mt-4" variant="primary" :href="route('admin.meibo.index')">名簿一覧へ</UiButton>
         </div>
+        <div v-if="!count" class="mt-6 max-w-2xl">
+            <LabelTemplates :api="api" :form="form" @apply="applyTemplate" />
+        </div>
 
         <div v-else class="grid grid-cols-1 lg:grid-cols-[minmax(0,26rem)_1fr] gap-6 items-start">
             <!-- 設定 -->
             <div class="space-y-4">
-                <UiCard padding="sm">
-                    <div class="flex items-end gap-2">
-                        <UiFormField label="テンプレート" class="flex-1">
-                            <UiSelect v-model="templateId" :options="templateOptions" placeholder="選んでください" />
-                        </UiFormField>
-                        <UiButton variant="ghost" @click="openSave">
-                            <template #leading><Save :size="14" /></template>
-                            保存
-                        </UiButton>
-                        <UiButton v-if="templateId" variant="ghost" aria-label="このテンプレートを削除" title="このテンプレートを削除" @click="removeTemplate">
-                            <Trash2 :size="14" />
-                        </UiButton>
-                    </div>
-                    <p class="mt-2 text-xs text-brand-text-subtle">福井発送・岡山発送など、差出人と宛名の決まった組み合わせを呼び出せます。</p>
-                </UiCard>
+                <LabelTemplates :api="api" :form="form" @apply="applyTemplate" />
 
                 <UiCard padding="sm">
                     <h2 class="font-serif text-base mb-3">差出人</h2>
@@ -127,16 +116,6 @@
             </UiCard>
         </div>
 
-        <!-- テンプレート保存 -->
-        <UiDialog v-model:open="saveOpen" title="テンプレートを保存" size="sm">
-            <UiFormField label="テンプレート名" hint="同じ名前があれば上書きします。">
-                <UiInput v-model="saveName" placeholder="例：福井発送" />
-            </UiFormField>
-            <template #footer>
-                <UiButton variant="ghost" @click="saveOpen = false">キャンセル</UiButton>
-                <UiButton variant="primary" :loading="saving" :disabled="!saveName.trim()" @click="saveTemplate">保存</UiButton>
-            </template>
-        </UiDialog>
     </AdminLayout>
 </template>
 
@@ -144,10 +123,11 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { UiPageHeader, UiButton, UiCard, UiSelect, UiInput, UiFormField, UiDialog } from '@/Components/UI';
+import { UiPageHeader, UiButton, UiCard, UiInput, UiFormField } from '@/Components/UI';
 import DummyNotice from '@/Components/Meibo/DummyNotice.vue';
 import LabelFace from '@/Components/Meibo/LabelFace.vue';
-import { ArrowLeft, Printer, Save, FileDown, Trash2 } from 'lucide-vue-next';
+import LabelTemplates from '@/Components/Meibo/LabelTemplates.vue';
+import { ArrowLeft, Printer, FileDown } from 'lucide-vue-next';
 import { useMeiboApi, num, hasR11, DEFAULT_LABEL_FORM } from '@/services/meibo';
 import { useMeiboSelection } from '@/composables/useMeiboSelection.js';
 import { useToast } from '@/composables/useToast.js';
@@ -167,26 +147,18 @@ const ADDRESSEE = [
 const TEMPLATE_FIELDS = Object.keys(DEFAULT_LABEL_FORM);
 
 const form = reactive({ ...DEFAULT_LABEL_FORM });
-const templates = ref([]);
-const templateId = ref('');
 const previewRows = ref([]);
 const r11Count = ref(0);
 const generating = ref(false);
 
 const count = computed(() => selection.count.value);
 const sheets = computed(() => Math.ceil(count.value / 10));
-const templateOptions = computed(() => templates.value.map((t) => ({ value: String(t.id), label: t.name })));
 const noGuardianCount = computed(() => previewRows.value.filter((r) => !r.guardian_name).length);
 const canGenerate = computed(() => count.value > 0 && form.sender_zip && form.sender_address && form.sender_company);
 
-watch(templateId, (id) => {
-    const t = templates.value.find((x) => String(x.id) === String(id));
-    if (!t) return;
+// テンプレートを押したら、その中身をフォームに入れる
+const applyTemplate = (t) => {
     TEMPLATE_FIELDS.forEach((k) => { form[k] = k === 'with_family' ? !!t[k] : (t[k] ?? ''); });
-});
-
-const loadTemplates = async () => {
-    try { templates.value = await api.templates(); } catch { templates.value = []; }
 };
 
 const loadPreview = async () => {
@@ -205,43 +177,6 @@ const loadPreview = async () => {
 };
 
 watch(() => selection.count.value, loadPreview);
-
-const saveOpen = ref(false);
-const saveName = ref('');
-const saving = ref(false);
-const openSave = () => {
-    saveName.value = templates.value.find((t) => String(t.id) === String(templateId.value))?.name || '';
-    saveOpen.value = true;
-};
-const saveTemplate = async () => {
-    saving.value = true;
-    try {
-        const name = saveName.value.trim();
-        const payload = Object.fromEntries(TEMPLATE_FIELDS.map((k) => [k, form[k]]));
-        const saved = await api.saveTemplate({ name, ...payload });
-        await loadTemplates();
-        templateId.value = String(saved.id);
-        saveOpen.value = false;
-        toast.success(`テンプレート「${name}」を保存しました。`);
-    } catch (e) {
-        toast.danger(`保存できませんでした：${e.message}`);
-    } finally {
-        saving.value = false;
-    }
-};
-
-const removeTemplate = async () => {
-    const t = templates.value.find((x) => String(x.id) === String(templateId.value));
-    if (!t || !window.confirm(`テンプレート「${t.name}」を削除しますか？`)) return;
-    try {
-        await api.deleteTemplate(t.id);
-        templateId.value = '';
-        await loadTemplates();
-        toast.success(`テンプレート「${t.name}」を削除しました。`);
-    } catch (e) {
-        toast.danger(`削除できませんでした：${e.message}`);
-    }
-};
 
 const generate = async () => {
     generating.value = true;
@@ -265,9 +200,5 @@ const generate = async () => {
     }
 };
 
-onMounted(async () => {
-    await loadTemplates();
-    if (templates.value.length) templateId.value = String(templates.value[0].id);
-    loadPreview();
-});
+onMounted(loadPreview);
 </script>

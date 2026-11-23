@@ -8,6 +8,11 @@ const BASE = '/admin/meibo/api';
 const clean = (params) => Object.fromEntries(
     Object.entries(params || {}).filter(([, v]) => v !== '' && v != null),
 );
+// 409 をダミーと同じ形（code: 'name_taken'）のエラーにそろえる
+const nameTaken = (e) => {
+    if (e.response?.status === 409) throw Object.assign(new Error(e.response.data?.message || 'テンプレート名がすでにあります'), { code: 'name_taken' });
+    throw e;
+};
 const get = (url, params) => axios.get(BASE + url, { params: clean(params) }).then((r) => r.data);
 
 export const httpAdapter = {
@@ -20,7 +25,10 @@ export const httpAdapter = {
     updateDM: (id, dmStatus, dmNote) =>
         axios.patch(`${BASE}/persons/${id}`, { dm_status: dmStatus, dm_note: dmNote }).then((r) => r.data),
     templates: () => get('/templates'),
-    saveTemplate: (t) => axios.post(`${BASE}/templates`, t).then((r) => r.data),
+    // 追加：同じ名前があれば 409（画面で上書きの確認をしてから updateTemplate を呼ぶ）
+    createTemplate: (t) => axios.post(`${BASE}/templates`, t).then((r) => r.data).catch(nameTaken),
+    // 編集（上書き）：ほかのテンプレートと同じ名前にすると 409
+    updateTemplate: (id, t) => axios.put(`${BASE}/templates/${id}`, t).then((r) => r.data).catch(nameTaken),
     deleteTemplate: (id) => axios.delete(`${BASE}/templates/${id}`).then((r) => r.data),
     labels: async (body) => {
         const r = await axios.post(`${BASE}/labels`, body, { responseType: 'blob' });
