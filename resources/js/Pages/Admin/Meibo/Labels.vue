@@ -90,6 +90,10 @@
                     <template #leading><FileDown :size="16" /></template>
                     ラベルPDFを作る（{{ num(count) }}件）
                 </UiButton>
+                <p class="text-xs text-brand-text-muted">
+                    PDF は郵便番号 → カナ → 氏名の順に並びます。DM 状態に関わらず、選んだ人は全員印刷します。
+                    <template v-if="count >= 5000">{{ num(count) }}件は作るのに 1 分ほどかかることがあります。</template>
+                </p>
             </div>
 
             <!-- 見本 -->
@@ -182,9 +186,7 @@ const generate = async () => {
     try {
         const { blob, count: made } = await api.labels({ ids: selection.list.value, ...form });
         if (!blob) {
-            toast.info(api.isDummy
-                ? `ダミーのため PDF は作りません（${num(made)}件分の指定は受け付けました）。本物の名簿につないだあとに作れます。`
-                : `ラベルPDFの作成は次の段階で使えるようになります（${num(made)}件分の指定は受け付けました）。`, { duration: 6000 });
+            toast.info(`ダミーのため PDF は作りません（${num(made)}件分の指定は受け付けました）。本物の名簿につないだあとに作れます。`, { duration: 6000 });
             return;
         }
         const url = URL.createObjectURL(blob);

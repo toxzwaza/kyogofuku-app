@@ -11,4 +11,7 @@ return [
 
     // 全選択で一度に選べる上限
     'select_limit' => 50000,
+
+    // meibo:import の前に自動で取るバックアップ（storage/app/private/meibo_backup/）を残す日数。古いものは取り込みのたびに消す
+    'backup_keep_days' => (int) env('MEIBO_BACKUP_KEEP_DAYS', 30),
 ];

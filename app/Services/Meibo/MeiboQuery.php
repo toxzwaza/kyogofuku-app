@@ -181,6 +181,47 @@ class MeiboQuery
         ];
     }
 
+    /**
+     * ラベルの並び（郵便番号 → カナ → 氏名）にした id。選んだ人のうち名簿にいる人だけ。
+     * 並べ替えは DB の照合順に任せたいので、表全体の id を並び順で読み（id だけなので 5 万件でも軽い）、
+     * 選んだ id だけを残す（数万件の id を IN に並べない）。
+     *
+     * @param  int[]  $ids
+     * @return int[]
+     */
+    public function labelOrder(array $ids): array
+    {
+        $want = array_fill_keys($ids, true);
+        $out = [];
+        foreach (DB::table('meibo_persons')->orderBy('zip')->orderBy('kana')->orderBy('name')->orderBy('id')->select('id')->cursor() as $r) {
+            if (isset($want[$r->id])) {
+                $out[] = (int) $r->id;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * ラベルに使う項目だけを、$orderedIds の順に 1 人ずつ返す（1,000 人ずつ読む。全員を一度に持たない）。
+     *
+     * @param  int[]  $orderedIds
+     */
+    public function labelRows(array $orderedIds, int $chunk = 1000): \Generator
+    {
+        foreach (array_chunk($orderedIds, $chunk) as $part) {
+            $rows = DB::table('meibo_persons')
+                ->whereIn('id', $part)
+                ->get(['id', 'master_code', 'name', 'guardian_name', 'pref', 'zip', 'address'])
+                ->keyBy('id');
+            foreach ($part as $id) {
+                if ($r = $rows->get($id)) {
+                    yield (array) $r;
+                }
+            }
+        }
+    }
+
     /** 住所の先頭から市区町村を取り出す（地図のふきだし用。名簿管理システムの _city と同じ） */
     public static function city(?string $addr): string
     {

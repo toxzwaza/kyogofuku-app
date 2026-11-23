@@ -281,6 +281,8 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         Route::post('/templates', [AdminMeiboController::class, 'storeTemplate'])->name('templates.store');
         Route::put('/templates/{template}', [AdminMeiboController::class, 'updateTemplate'])->whereNumber('template')->name('templates.update');
         Route::delete('/templates/{template}', [AdminMeiboController::class, 'destroyTemplate'])->whereNumber('template')->name('templates.destroy');
+        // ラベル PDF（選んだ人の id を POST。応答は PDF、件数は X-Label-Count）
+        Route::post('/labels', [AdminMeiboController::class, 'labelsPdf'])->name('labels');
         Route::get('/stats', [AdminMeiboController::class, 'stats'])->name('stats');
         Route::get('/map', [AdminMeiboController::class, 'map'])->name('map');
     });

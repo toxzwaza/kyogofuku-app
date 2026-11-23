@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Meibo\MeiboDmLog;
 use App\Models\Meibo\MeiboLabelTemplate;
 use App\Models\Meibo\MeiboPerson;
+use App\Services\Meibo\LabelPdf;
 use App\Services\Meibo\MeiboQuery;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -190,27 +191,131 @@ class MeiboController extends Controller
     /** 操作ログには要約だけ（誰が・どの番号の人の状態を何から何へ）。氏名・住所・備考の文は残さない */
     private function logDmChange(Request $request, MeiboPerson $p, string $from, string $to, bool $noteChanged): void
     {
+        $this->logSummary(
+            $request,
+            'update',
+            'admin.meibo.data.persons.update',
+            $from === $to
+                ? "名簿 {$p->master_code} の DM 備考を変更"
+                : "名簿 {$p->master_code} の DM 状態を変更（{$from}→{$to}）" . ($noteChanged ? '・備考も変更' : ''),
+            ['dm_status' => $to, 'dm_note_changed' => $noteChanged],
+            ['dm_status' => $from],
+            $p->id,
+        );
+    }
+
+    /** 名簿の操作ログ（要約だけ。氏名・住所・検索語は入れない）。残せなくても本体の処理は止めない */
+    private function logSummary(Request $request, string $action, string $routeName, string $description, array $new = [], ?array $old = null, ?int $resourceId = null): void
+    {
         try {
             $user = $request->user();
             ActivityLog::create([
                 'user_id' => $user->id,
                 'shop_id' => $user->shops()->first()?->id,
-                'action_type' => 'update',
+                'action_type' => $action,
                 'resource_type' => 'MeiboPerson',
-                'resource_id' => $p->id,
-                'route_name' => 'admin.meibo.data.persons.update',
+                'resource_id' => $resourceId,
+                'route_name' => $routeName,
                 'url' => route('admin.meibo.index'),
                 'method' => $request->method(),
-                'description' => $from === $to
-                    ? "名簿 {$p->master_code} の DM 備考を変更"
-                    : "名簿 {$p->master_code} の DM 状態を変更（{$from}→{$to}）" . ($noteChanged ? '・備考も変更' : ''),
-                'old_values' => ['dm_status' => $from],
-                'new_values' => ['dm_status' => $to, 'dm_note_changed' => $noteChanged],
+                'description' => $description,
+                'old_values' => $old,
+                'new_values' => $new,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ]);
         } catch (\Throwable $e) {
-            Log::error('名簿の DM 変更ログを残せませんでした', ['error' => $e->getMessage(), 'person_id' => $p->id]);
+            Log::error('名簿の操作ログを残せませんでした', ['error' => $e->getMessage(), 'route' => $routeName]);
+        }
+    }
+
+    // ---------------------------------------------------------------- ラベル PDF
+
+    /**
+     * 選んだ人の宛名ラベル（A4・10 面／A-One 66732 相当）を PDF で返す。件数は X-Label-Count。
+     *
+     * - 選んだ人は DM 状態に関わらず印刷する（画面で選んだことを尊重する。名簿管理システムと同じ）
+     * - 並びは 郵便番号 → カナ → 氏名（DB の照合順で並べる）
+     * - 件数の上限は設けない。数万件でも落ちないよう、1 人ずつ描き（行を溜めない）、
+     *   ページは縮めて持ち、できた PDF は一時ファイルから流して消す
+     */
+    public function labelsPdf(Request $request)
+    {
+        $this->ensureDb();
+        $v = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'sender_zip' => ['nullable', 'string', 'max:10'],
+            'sender_address' => ['nullable', 'string', 'max:255'],
+            'sender_company' => ['nullable', 'string', 'max:100'],
+            'addressee' => ['nullable', Rule::in(['self', 'guardian'])],
+            'with_family' => ['nullable', 'boolean'],
+            'tantou' => ['nullable', 'string', 'max:60'],
+        ], [
+            'ids.required' => 'ラベルを作る人を選んでください',
+            'ids.min' => 'ラベルを作る人を選んでください',
+        ]);
+        $ids = MeiboQuery::cleanIds($v['ids'], PHP_INT_MAX);
+        if (! $ids) {
+            return response()->json(['message' => 'ラベルを作る人を選んでください'], 422);
+        }
+
+        @set_time_limit(0);
+        self::ensureMemory('512M');
+
+        $ordered = $this->query->labelOrder($ids);
+        if (! $ordered) {
+            return response()->json(['message' => '選んだ人が名簿に見つかりません（対象 0 件）'], 422);
+        }
+
+        $pdf = new LabelPdf([
+            'sender' => [
+                'zip' => $v['sender_zip'] ?? null,
+                'address' => $v['sender_address'] ?? null,
+                'company' => $v['sender_company'] ?? null,
+            ],
+            'addressee' => $v['addressee'] ?? 'self',
+            'with_family' => (bool) ($v['with_family'] ?? false),
+            'tantou' => trim((string) ($v['tantou'] ?? '')),
+        ]);
+        foreach ($this->query->labelRows($ordered) as $row) {
+            $pdf->add($row);
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'meibo_labels_');
+        try {
+            $pdf->save($path);
+        } catch (\Throwable $e) {
+            @unlink($path);
+            throw $e;
+        }
+        $this->logSummary($request, 'export', 'admin.meibo.data.labels', "名簿のラベルを発行（{$pdf->count()}件）", ['count' => $pdf->count()]);
+
+        return response()->download($path, 'labels.pdf', [
+            'Content-Type' => 'application/pdf',
+            'X-Label-Count' => (string) $pdf->count(),
+            'Cache-Control' => 'no-store, private',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /** memory_limit が $min より小さいときだけ上げる（-1＝無制限はそのまま） */
+    private static function ensureMemory(string $min): void
+    {
+        $toBytes = function (string $v): int {
+            $v = trim($v);
+            if ($v === '-1') {
+                return PHP_INT_MAX;
+            }
+            $n = (int) $v;
+
+            return match (strtolower(substr($v, -1))) {
+                'g' => $n * 1024 ** 3,
+                'm' => $n * 1024 ** 2,
+                'k' => $n * 1024,
+                default => $n,
+            };
+        };
+        if ($toBytes((string) ini_get('memory_limit')) < $toBytes($min)) {
+            @ini_set('memory_limit', $min);
         }
     }
 
