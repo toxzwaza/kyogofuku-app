@@ -129,6 +129,10 @@ let templates = [
     { id: 2, name: '岡山発送', ...DEFAULT_LABEL_FORM, sender_zip: '', sender_address: '' },
 ];
 
+const TEMPLATE_KEYS = Object.keys(DEFAULT_LABEL_FORM);
+const pickTemplate = (t) => Object.fromEntries(TEMPLATE_KEYS.filter((k) => k in t).map((k) => [k, k === 'with_family' ? !!t[k] : String(t[k] ?? '')]));
+const templateNameTaken = (name) => Object.assign(new Error(`「${name}」という名前のテンプレートがすでにあります`), { code: 'name_taken' });
+
 const wait = (v) => new Promise((resolve) => setTimeout(() => resolve(structuredCloneSafe(v)), 120));
 const structuredCloneSafe = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
 const toListItem = ({ lat, lng, ...rest }) => rest;
@@ -210,11 +214,28 @@ export const dummyAdapter = {
         return wait([...templates].sort((a, b) => a.id - b.id));
     },
 
-    saveTemplate(t) {
-        const cur = templates.find((x) => x.name === t.name);
-        if (cur) Object.assign(cur, t, { id: cur.id });
-        else templates.push({ ...t, id: ++tplSeq });
-        return wait(templates.find((x) => x.name === t.name));
+    /**
+     * テンプレートを追加する。同じ名前があれば断る（画面で上書きの確認をしてから updateTemplate を呼ぶ）。
+     * 本物の API では 409 を返す想定。
+     */
+    createTemplate(t) {
+        const name = String(t.name || '').trim();
+        if (!name) return Promise.reject(new Error('テンプレート名を入れてください'));
+        if (templates.some((x) => x.name === name)) return Promise.reject(templateNameTaken(name));
+        const row = { ...DEFAULT_LABEL_FORM, ...pickTemplate(t), name, id: ++tplSeq };
+        templates.push(row);
+        return wait(row);
+    },
+
+    /** テンプレートを書き換える（名前を変えるときも、ほかのテンプレートと同じ名前にはできない） */
+    updateTemplate(id, t) {
+        const cur = templates.find((x) => x.id === Number(id));
+        if (!cur) return Promise.reject(new Error('テンプレートが見つかりません'));
+        const name = String(t.name ?? cur.name).trim();
+        if (!name) return Promise.reject(new Error('テンプレート名を入れてください'));
+        if (templates.some((x) => x.name === name && x.id !== cur.id)) return Promise.reject(templateNameTaken(name));
+        Object.assign(cur, pickTemplate(t), { name, id: cur.id });
+        return wait(cur);
     },
 
     deleteTemplate(id) {

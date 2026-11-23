@@ -7,7 +7,7 @@ import {
     Clock, History, CheckCircle2, Briefcase, DollarSign, Calculator, AlarmClock,
     FileText, Sparkles, BookOpen, LifeBuoy, MonitorSmartphone, Gift, Megaphone, BarChart3,
     CreditCard, CalendarRange, NotebookPen, PenLine,
-    BookUser, Printer, ChartPie,
+    BookUser,
 } from 'lucide-vue-next';
 
 /**
@@ -114,9 +114,8 @@ export function useAdminNav() {
             group: '名簿',
             permission: 'isManager',
             items: [
-                { label: '名簿一覧',       route: 'admin.meibo.index',     icon: BookUser, activePatterns: ['admin.meibo.index'] },
-                { label: 'ラベル発行',     route: 'admin.meibo.labels',    icon: Printer,  activePatterns: ['admin.meibo.labels'] },
-                { label: '名簿ダッシュボード', route: 'admin.meibo.dashboard', icon: ChartPie, activePatterns: ['admin.meibo.dashboard'] },
+                // ラベル発行・名簿ダッシュボードは名簿一覧の上のボタンから開く。開いている間も「名簿一覧」を選択中にする
+                { label: '名簿一覧',       route: 'admin.meibo.index',     icon: BookUser, activePatterns: ['admin.meibo.*'] },
             ],
         },
         {

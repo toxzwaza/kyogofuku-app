@@ -2,7 +2,8 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "test:js": "node --experimental-detect-module --test tests/js/"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^1.0.0",
