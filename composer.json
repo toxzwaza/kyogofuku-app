@@ -17,6 +17,7 @@
         "laravel/tinker": "^2.7",
         "league/flysystem-aws-s3-v3": "^3.0",
         "staudenmeir/eloquent-eager-limit": "^1.7",
+        "tecnickcom/tcpdf": "^6.7",
         "tightenco/ziggy": "^1.0",
         "zbateson/mail-mime-parser": "^3.0"
     },

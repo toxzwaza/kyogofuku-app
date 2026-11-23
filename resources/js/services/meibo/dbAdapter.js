@@ -37,8 +37,20 @@ export const dbAdapter = {
     // 編集（上書き）：ほかのテンプレートと同じ名前にすると 409
     updateTemplate: (id, t) => send('put', `/templates/${id}`, t),
     deleteTemplate: (id) => send('delete', `/templates/${id}`),
-    // ラベルPDF（TCPDF）は次の段階。いまは件数だけ返す
-    labels: async ({ ids = [] } = {}) => ({ count: ids.length, blob: null }),
+    // ラベルPDF：選んだ人の id と差出人・宛名などを POST。応答は PDF（件数は X-Label-Count）
+    labels: async ({ ids = [], ...opts } = {}) => {
+        try {
+            const r = await axios.post(`${BASE}/labels`, { ids, ...opts }, { responseType: 'blob', timeout: 0 });
+            return { blob: r.data, count: Number(r.headers['x-label-count'] ?? ids.length) };
+        } catch (e) {
+            // エラーの本文も blob で返るので、JSON に読み直してから文にする
+            const data = e.response?.data;
+            if (data instanceof Blob) {
+                try { e.response.data = JSON.parse(await data.text()); } catch { e.response.data = null; }
+            }
+            return toError(e);
+        }
+    },
     stats: () => get('/stats'),
     map: (params) => get('/map', params),
 };
