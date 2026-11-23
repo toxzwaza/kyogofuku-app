@@ -128,7 +128,7 @@ import DummyNotice from '@/Components/Meibo/DummyNotice.vue';
 import LabelFace from '@/Components/Meibo/LabelFace.vue';
 import LabelTemplates from '@/Components/Meibo/LabelTemplates.vue';
 import { ArrowLeft, Printer, FileDown } from 'lucide-vue-next';
-import { useMeiboApi, num, hasR11, DEFAULT_LABEL_FORM } from '@/services/meibo';
+import { useMeiboApi, num, DEFAULT_LABEL_FORM } from '@/services/meibo';
 import { useMeiboSelection } from '@/composables/useMeiboSelection.js';
 import { useToast } from '@/composables/useToast.js';
 
@@ -169,10 +169,9 @@ const loadPreview = async () => {
     } catch (e) {
         toast.danger(`見本を読み込めませんでした：${e.message}`);
     }
-    // R11 の件数は見本ではなく対象全体で数える（ダミーは全員を引ける。本物では API で数を返す予定）
+    // R11 の件数は見本ではなく対象全体で数える（全選択の 5 万件でも URL に載せないよう、本物は POST で数を返す）
     try {
-        const all = await api.personsByIds(ids, ids.length);
-        r11Count.value = all.filter((r) => hasR11(r.source_versions)).length;
+        r11Count.value = (await api.summary(ids)).r11;
     } catch { r11Count.value = 0; }
 };
 
@@ -183,7 +182,9 @@ const generate = async () => {
     try {
         const { blob, count: made } = await api.labels({ ids: selection.list.value, ...form });
         if (!blob) {
-            toast.info(`ダミーのため PDF は作りません（${num(made)}件分の指定は受け付けました）。本物の名簿につないだあとに作れます。`, { duration: 6000 });
+            toast.info(api.isDummy
+                ? `ダミーのため PDF は作りません（${num(made)}件分の指定は受け付けました）。本物の名簿につないだあとに作れます。`
+                : `ラベルPDFの作成は次の段階で使えるようになります（${num(made)}件分の指定は受け付けました）。`, { duration: 6000 });
             return;
         }
         const url = URL.createObjectURL(blob);

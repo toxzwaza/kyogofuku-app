@@ -43,6 +43,12 @@ class LogActivity
             return;
         }
 
+        // 名簿（成人式 DM 名簿）は個人情報で、検索語（氏名など）が URL に入るため汎用ログに残さない。
+        // DM 状態の変更だけ MeiboController が要約を記録する
+        if ($request->routeIs('admin.meibo.*')) {
+            return;
+        }
+
         // 成功レスポンスのみ記録（エラーは記録しない）
         if ($response->getStatusCode() >= 400) {
             return;
