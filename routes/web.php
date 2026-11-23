@@ -44,6 +44,7 @@ use App\Http\Controllers\Admin\TimeslotBulkController as AdminTimeslotBulkContro
 use App\Http\Controllers\Admin\PhotoSlotBulkController as AdminPhotoSlotBulkController;
 use App\Http\Controllers\Admin\PhotoSlotSeatController as AdminPhotoSlotSeatController;
 use App\Http\Controllers\Admin\SeijinPrepVenueController as AdminSeijinPrepVenueController;
+use App\Http\Controllers\Admin\MeiboController as AdminMeiboController;
 use App\Http\Controllers\Admin\SeijinPrepSlotController as AdminSeijinPrepSlotController;
 use App\Http\Controllers\Admin\SeijinPrepSeatController as AdminSeijinPrepSeatController;
 use App\Http\Controllers\Admin\SeijinPrepCustomerController as AdminSeijinPrepCustomerController;
@@ -262,6 +263,11 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::get('/customers/{customer}/seijin-prep/times', [AdminSeijinPrepCustomerController::class, 'times'])->name('customers.seijin-prep.times');
     Route::put('/customers/{customer}/seijin-prep', [AdminSeijinPrepCustomerController::class, 'save'])->name('customers.seijin-prep.save');
     Route::delete('/customers/{customer}/seijin-prep', [AdminSeijinPrepCustomerController::class, 'destroy'])->name('customers.seijin-prep.destroy');
+
+    // 名簿（成人式 DM 名簿）。いまは画面だけ（データは画面側のダミー）。店舗管理者以上（コントローラで確認）
+    Route::get('/meibo', [AdminMeiboController::class, 'index'])->name('meibo.index');
+    Route::get('/meibo/labels', [AdminMeiboController::class, 'labels'])->name('meibo.labels');
+    Route::get('/meibo/dashboard', [AdminMeiboController::class, 'dashboard'])->name('meibo.dashboard');
 
     // メディアライブラリ
     Route::get('/media', [AdminMediaFileController::class, 'index'])->name('media.index');

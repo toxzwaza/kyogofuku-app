@@ -7,6 +7,7 @@ import {
     Clock, History, CheckCircle2, Briefcase, DollarSign, Calculator, AlarmClock,
     FileText, Sparkles, BookOpen, LifeBuoy, MonitorSmartphone, Gift, Megaphone, BarChart3,
     CreditCard, CalendarRange, NotebookPen, PenLine,
+    BookUser, Printer, ChartPie,
 } from 'lucide-vue-next';
 
 /**
@@ -23,6 +24,7 @@ import {
  *  - 'canManageAttendance'… 店舗管理者以上（勤怠の承認・管理）。
  *  - 'isAttendanceManager'… 勤怠管理者以上。
  *  - 'isSystemAdmin'      … システム管理者のみ。
+ * グループに permission を付けると、そのグループ全体が条件付きになる（名簿など）。
  * 一般ユーザーに公開するのは permission 未指定の項目のみ。
  */
 export function useAdminNav() {
@@ -105,6 +107,16 @@ export function useAdminNav() {
                 { label: '会社カレンダー', route: 'admin.attendance.company-calendar.index', icon: Calendar, activePatterns: ['admin.attendance.company-calendar.*'], permission: 'isAttendanceManager' },
                 { label: '給与閾値',       route: 'admin.attendance.payroll-settings.edit',  icon: DollarSign, activePatterns: ['admin.attendance.payroll-settings.*'], permission: 'isAttendanceManager' },
                 { label: '給与シミュレーター', route: 'admin.attendance.payroll-simulator.index', icon: Calculator, activePatterns: ['admin.attendance.payroll-simulator.*'], permission: 'isAttendanceManager' },
+            ],
+        },
+        {
+            // 成人式 DM 名簿（顧客になる前の方の個人情報のため店舗管理者以上）
+            group: '名簿',
+            permission: 'isManager',
+            items: [
+                { label: '名簿一覧',       route: 'admin.meibo.index',     icon: BookUser, activePatterns: ['admin.meibo.index'] },
+                { label: 'ラベル発行',     route: 'admin.meibo.labels',    icon: Printer,  activePatterns: ['admin.meibo.labels'] },
+                { label: '名簿ダッシュボード', route: 'admin.meibo.dashboard', icon: ChartPie, activePatterns: ['admin.meibo.dashboard'] },
             ],
         },
         {
