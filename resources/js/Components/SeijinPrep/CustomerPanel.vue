@@ -1,5 +1,6 @@
 <script setup>
 // お客様の詳細：成人式お支度（お支度場所／他店お支度／未定、時刻の枠、希望時刻、備考）
+// 福井の場所は時刻を持たない番号枠（日を選ぶと、その日の次の番号に入る）。メイク有無が必須で、希望時刻は入力しない
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import axios from 'axios';
 import { UiButton, UiBadge, UiDialog } from '@/Components/UI';
@@ -40,7 +41,7 @@ onMounted(load);
 
 // 編集
 const editing = ref(false);
-const form = reactive({ mode: 'venue', venue_id: '', prep_date: '', prep_time: '', preferred_time: '', remarks: '', shop_id: '' });
+const form = reactive({ mode: 'venue', venue_id: '', prep_date: '', prep_time: '', has_makeup: null, preferred_time: '', remarks: '', shop_id: '' });
 const errors = ref({});
 const saving = ref(false);
 const dates = ref([]);
@@ -58,6 +59,11 @@ const guide = computed(() => {
     }
     return g?.default || '';
 });
+// 福井の場所（番号枠）か
+const numbered = computed(() => form.mode === 'venue' && !!venue.value?.numbered);
+// 福井の登録（場所が福井、または他店・未定で担当店舗が福井の店）では希望時刻を入力しない
+const isFukui = computed(() => (form.mode === 'venue' && venue.value) ? !!venue.value.numbered : groupOf.value === 'fukui');
+const dayInfo = computed(() => (numbered.value ? times.value[0] || null : null));
 const shopOptions = computed(() => shops.value.filter(s => form.mode !== 'venue' || !venue.value?.shop_group || s.group_key === venue.value.shop_group));
 
 const startEdit = () => {
@@ -67,6 +73,7 @@ const startEdit = () => {
         venue_id: p?.venue_id || '',
         prep_date: p?.prep_date || '',
         prep_time: p?.prep_time || '',
+        has_makeup: p?.has_makeup ?? null,
         preferred_time: p?.preferred_time || '',
         remarks: p?.remarks || '',
         shop_id: p?.shop_id || props.customerShopId || '',
@@ -108,9 +115,11 @@ const save = async () => {
         const res = await axios.put(route('admin.customers.seijin-prep.save', props.customerId), {
             mode: form.mode,
             venue_id: form.mode === 'venue' ? form.venue_id || null : null,
-            prep_date: form.mode === 'venue' && form.prep_time ? form.prep_date || null : null,
-            prep_time: form.mode === 'venue' && form.prep_time ? form.prep_time : null,
-            preferred_time: form.preferred_time || null,
+            prep_date: form.mode === 'venue' && (numbered.value || form.prep_time) ? form.prep_date || null : null,
+            prep_time: form.mode === 'venue' && !numbered.value && form.prep_time ? form.prep_time : null,
+            has_makeup: numbered.value ? form.has_makeup : null,
+            // 福井では送らない（サーバーが今の値を残す）
+            preferred_time: isFukui.value ? null : form.preferred_time || null,
             remarks: form.remarks || null,
             shop_id: form.shop_id || null,
         });
@@ -173,11 +182,17 @@ const inputCls = 'w-full rounded-md border-brand-border text-sm focus:border-bra
                 <div class="flex flex-wrap items-center gap-2">
                     <UiBadge :variant="prep.mode === 'venue' ? 'primary' : prep.mode === 'other' ? 'warning' : 'neutral'">{{ modeLabel[prep.mode] }}</UiBadge>
                     <span v-if="prep.venue_name" class="font-semibold">{{ prep.venue_name }}</span>
-                    <span v-if="prep.prep_date && prep.prep_time" class="tabular-nums">{{ formatDateJaWithWeekday(prep.prep_date) }} {{ prep.prep_time }}（レーン{{ prep.seat_no }}）</span>
+                    <template v-if="prep.numbered">
+                        <span v-if="prep.prep_date" class="tabular-nums">{{ formatDateJaWithWeekday(prep.prep_date) }}・番号 {{ prep.seat_no }}</span>
+                        <UiBadge v-else variant="warning">日未定</UiBadge>
+                    </template>
+                    <span v-else-if="prep.prep_date && prep.prep_time" class="tabular-nums">{{ formatDateJaWithWeekday(prep.prep_date) }} {{ prep.prep_time }}（レーン{{ prep.seat_no }}）</span>
                     <UiBadge v-else-if="prep.mode === 'venue'" variant="warning">時刻未定</UiBadge>
                 </div>
                 <dl class="mt-2 grid gap-1 sm:grid-cols-2 text-xs">
-                    <div><dt class="inline text-brand-text-muted">希望時刻：</dt><dd class="inline">{{ prep.preferred_time || '—' }}</dd></div>
+                    <div v-if="prep.numbered"><dt class="inline text-brand-text-muted">メイク有無：</dt><dd class="inline">{{ prep.has_makeup === null ? '未選択' : prep.has_makeup ? 'あり' : 'なし' }}</dd></div>
+                    <div v-if="!prep.numbered || prep.preferred_time"><dt class="inline text-brand-text-muted">希望時刻：</dt><dd class="inline">{{ prep.preferred_time || '—' }}</dd></div>
+                    <div v-if="prep.original_prep_time"><dt class="inline text-brand-text-muted">元の時刻：</dt><dd class="inline tabular-nums">{{ prep.original_prep_time }}</dd></div>
                     <div><dt class="inline text-brand-text-muted">担当店舗：</dt><dd class="inline">{{ shops.find(s => s.id === prep.shop_id)?.name || '—' }}</dd></div>
                     <div class="sm:col-span-2"><dt class="inline text-brand-text-muted">備考：</dt><dd class="inline whitespace-pre-wrap">{{ prep.remarks || '—' }}</dd></div>
                 </dl>
@@ -212,7 +227,17 @@ const inputCls = 'w-full rounded-md border-brand-border text-sm focus:border-bra
                     <p v-if="form.venue_id && !dates.length" class="mt-1 text-xs text-brand-text-muted">この場所にはまだ枠がありません（場所だけで登録できます）。</p>
                     <p v-if="errors.prep_date" class="mt-1 text-xs text-brand-danger">{{ errors.prep_date }}</p>
                 </div>
-                <div>
+                <!-- 福井：時刻の代わりに、その日の枠の埋まり具合 -->
+                <div v-if="numbered" data-test="numbered-day">
+                    <label class="block text-xs font-medium text-brand-text-muted mb-1">番号</label>
+                    <p v-if="!form.prep_date" class="py-2 text-xs text-brand-text-muted">日を選ぶと、その日の次の番号に入ります。</p>
+                    <p v-else-if="dayInfo" class="py-2 tabular-nums" :class="!dayInfo.mine && dayInfo.booked >= dayInfo.capacity ? 'text-brand-danger' : ''">
+                        {{ dayInfo.mine ? `今の番号 ${prep?.seat_no ?? ''}` : dayInfo.booked >= dayInfo.capacity ? '満員' : `番号 ${dayInfo.booked + 1} に入ります` }}
+                        <span class="text-xs text-brand-text-muted">（{{ dayInfo.booked }}/{{ dayInfo.capacity }}枠）</span>
+                    </p>
+                    <p v-if="errors.prep_time" class="mt-1 text-xs text-brand-danger">{{ errors.prep_time }}</p>
+                </div>
+                <div v-else>
                     <label class="block text-xs font-medium text-brand-text-muted mb-1">時刻</label>
                     <select v-model="form.prep_time" :class="inputCls" :disabled="!form.prep_date">
                         <option value="">未定</option>
@@ -224,11 +249,30 @@ const inputCls = 'w-full rounded-md border-brand-border text-sm focus:border-bra
                 </div>
             </div>
 
+            <fieldset v-if="numbered" data-test="makeup">
+                <legend class="block text-xs font-medium text-brand-text-muted mb-1">メイク有無 <span class="text-red-500">*</span></legend>
+                <div class="flex gap-4">
+                    <label class="inline-flex items-center gap-1.5">
+                        <input v-model="form.has_makeup" type="radio" name="has_makeup" :value="true" class="text-brand-primary focus:ring-brand-primary" />
+                        あり
+                    </label>
+                    <label class="inline-flex items-center gap-1.5">
+                        <input v-model="form.has_makeup" type="radio" name="has_makeup" :value="false" class="text-brand-primary focus:ring-brand-primary" />
+                        なし
+                    </label>
+                </div>
+                <p v-if="errors.has_makeup" class="mt-1 text-xs text-brand-danger">{{ errors.has_makeup }}</p>
+            </fieldset>
+
             <div class="grid gap-3 sm:grid-cols-2">
-                <div>
+                <div v-if="!isFukui">
                     <label class="block text-xs font-medium text-brand-text-muted mb-1">希望時刻</label>
                     <input v-model="form.preferred_time" type="text" maxlength="50" placeholder="例：7時台・8:00より前" :class="inputCls" />
                     <p v-if="errors.preferred_time" class="mt-1 text-xs text-brand-danger">{{ errors.preferred_time }}</p>
+                </div>
+                <div v-else-if="form.preferred_time">
+                    <span class="block text-xs font-medium text-brand-text-muted mb-1">希望時刻（前の登録の値・福井では入力しません）</span>
+                    <p class="py-2">{{ form.preferred_time }}</p>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-brand-text-muted mb-1">担当店舗</label>

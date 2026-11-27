@@ -8,6 +8,7 @@ use App\Models\SeijinPrepSlot;
 use App\Models\SeijinPrepVenue;
 use App\Models\Shop;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +22,10 @@ use Illuminate\Validation\ValidationException;
  *   2. お支度場所の行（番号の小さい順。同じ場所の席の操作を1つずつ進める。SeijinPrepSeatController も同じ）
  *   3. 席の行
  * 見える範囲（ほかの店舗グループの登録か）の確認は、1 のあと同じトランザクションの中で行う。
+ *
+ * 福井の場所（SeijinPrepVenue::isNumbered）は時刻を持たない「日＋番号」の枠。番号は入った順（若い番号＝早く成約した人）で、
+ * 抜けた人がいると後ろの人の番号を詰める（renumber）。番号枠の行は prep_time が空なので一意制約に掛からず、
+ * 同じ場所の行のロックで直列にしている。
  */
 class SeijinPrepService
 {
@@ -39,7 +44,7 @@ class SeijinPrepService
     /**
      * お客様の登録を作る・変える。
      *
-     * @param  array{venue_id:?int,is_other_store:bool,prep_date:?string,prep_time:?string,preferred_time:?string,remarks:?string,shop_id:?int}  $data
+     * @param  array{venue_id:?int,is_other_store:bool,prep_date:?string,prep_time:?string,preferred_time:?string,remarks:?string,shop_id:?int,has_makeup?:?bool}  $data
      */
     public function save(Customer $customer, array $data, ?User $user): SeijinPrepSlot
     {
@@ -50,40 +55,48 @@ class SeijinPrepService
         if ($data['is_other_store'] && $venue) {
             throw ValidationException::withMessages(['venue_id' => '他店お支度のときは、お支度場所は選べません。']);
         }
-        $wantsSeat = ! empty($data['prep_date']) && ! empty($data['prep_time']);
-        if ($wantsSeat && ! $venue) {
+        $numbered = (bool) $venue?->isNumbered();
+        // 番号枠（福井）は日だけで入れる。時刻の枠（岡山）は日と時刻
+        $wantsSeat = ! empty($data['prep_date']) && ($numbered || ! empty($data['prep_time']));
+        if (! empty($data['prep_date']) && ! empty($data['prep_time']) && ! $venue) {
             throw ValidationException::withMessages(['venue_id' => '時刻の枠に入れるときは、お支度場所を選んでください。']);
+        }
+        $hasMakeup = $data['has_makeup'] ?? null;
+        if ($numbered && $hasMakeup === null) {
+            throw ValidationException::withMessages(['has_makeup' => 'メイク有無を選んでください。']);
         }
 
         $this->assertShopAllowed($data['shop_id'] ?? null, $venue, $user);
+        // 福井では希望時刻を入力しない（今の値は残す）
+        $keepPreferredTime = $this->isFukuiEntry($venue, $data['shop_id'] ?? null);
 
         $fields = [
             'is_other_store' => (bool) $data['is_other_store'],
+            'has_makeup' => $hasMakeup === null ? null : (bool) $hasMakeup,
             'preferred_time' => $data['preferred_time'] ?? null,
             'remarks' => $data['remarks'] ?? null,
             'shop_id' => $data['shop_id'] ?? null,
         ];
 
-        [$row, $before] = DB::transaction(function () use ($customer, $venue, $wantsSeat, $data, $fields, $user) {
+        [$row, $before] = DB::transaction(function () use ($customer, $venue, $wantsSeat, $numbered, $data, $fields, $user, $keepPreferredTime) {
             $current = $this->lockCurrent($customer, $user, $wantsSeat ? $venue : null);
             $before = $current ? $this->describe($current) : null;
+            if ($keepPreferredTime) {
+                $fields['preferred_time'] = $current?->preferred_time;
+            }
 
             if ($wantsSeat) {
-                $time = substr($data['prep_time'], 0, 5);
-                $seats = SeijinPrepSlot::query()
-                    ->where('seijin_prep_venue_id', $venue->id)
-                    ->whereDate('prep_date', $data['prep_date'])
-                    ->where('prep_time', $time.':00')
-                    ->orderBy('seat_no')
-                    ->lockForUpdate()
-                    ->get();
+                $time = $numbered ? null : substr($data['prep_time'], 0, 5);
+                $seats = $this->seatsQuery($venue, $data['prep_date'], $time)->orderBy('seat_no')->lockForUpdate()->get();
+                $field = $numbered ? 'prep_date' : 'prep_time';
+                $when = $numbered ? $data['prep_date'] : "{$data['prep_date']} {$time}";
                 if ($seats->isEmpty()) {
-                    throw ValidationException::withMessages(['prep_time' => 'この時刻には枠がありません。先に枠を作ってください。']);
+                    throw ValidationException::withMessages([$field => ($numbered ? 'この日には枠がありません。' : 'この時刻には枠がありません。').'先に枠を作ってください。']);
                 }
-                // もうその時刻の席に入っているなら、席はそのまま
+                // もうその枠の席に入っているなら、席はそのまま。番号枠は詰めてあるので、空きの一番小さい番号＝最後尾
                 $target = $current && $seats->contains('id', $current->id) ? $current : $seats->whereNull('customer_id')->first();
                 if (! $target) {
-                    throw ValidationException::withMessages(['prep_time' => "{$data['prep_date']} {$time} は満員です（定員 {$seats->count()}人）。定員を増やしてから入れてください。"]);
+                    throw ValidationException::withMessages([$field => "{$when} は満員です（定員 {$seats->count()}人）。定員を増やしてから入れてください。"]);
                 }
                 if ($current && $current->id !== $target->id) {
                     $this->vacateOrDelete($current);
@@ -156,6 +169,17 @@ class SeijinPrepService
         return $current ? SeijinPrepSlot::with('venue')->whereKey($current->id)->lockForUpdate()->first() : null;
     }
 
+    /** 福井の登録か：お支度場所が福井、または場所がなく（他店・未定）担当店舗が福井の店 */
+    public function isFukuiEntry(?SeijinPrepVenue $venue, ?int $shopId): bool
+    {
+        if ($venue) {
+            return $venue->isNumbered();
+        }
+        $group = $shopId ? Shop::withoutGlobalScope('visibleGroup')->whereKey($shopId)->value('group_key') : null;
+
+        return SeijinPrepVenue::isNumberedGroup($group);
+    }
+
     /** 担当店舗は、操作する人に見える店で、お支度場所に店舗グループがあればそのグループの店だけ */
     private function assertShopAllowed(?int $shopId, ?SeijinPrepVenue $venue, ?User $user): void
     {
@@ -172,15 +196,48 @@ class SeijinPrepService
         }
     }
 
-    /** 席なら空きに戻し、席でない登録なら行を消す */
+    /** 席なら空きに戻し、席でない登録なら行を消す。番号枠なら後ろの人の番号を詰める */
     public function vacateOrDelete(SeijinPrepSlot $row): void
     {
         if ($row->isSeat()) {
             $row->update([
-                'customer_id' => null, 'is_other_store' => false, 'preferred_time' => null, 'remarks' => null, 'shop_id' => null,
+                'customer_id' => null, 'is_other_store' => false, 'has_makeup' => null, 'preferred_time' => null,
+                'remarks' => null, 'shop_id' => null, 'original_prep_time' => null,
             ]);
+            if ($row->isNumberedSeat()) {
+                $this->renumber((int) $row->seijin_prep_venue_id, Carbon::parse($row->prep_date)->toDateString());
+            }
         } else {
             $row->delete();
+        }
+    }
+
+    /** その場所・日（時刻の枠なら時刻も）の席。番号枠は時刻が空の行 */
+    public function seatsQuery(SeijinPrepVenue $venue, string $date, ?string $time)
+    {
+        $query = SeijinPrepSlot::query()->where('seijin_prep_venue_id', $venue->id)->whereDate('prep_date', $date);
+
+        return $time === null ? $query->whereNull('prep_time') : $query->where('prep_time', substr($time, 0, 5).':00');
+    }
+
+    /**
+     * 番号枠の番号を振り直す：入っている人を今の番号の順に 1 から、空き席はその後ろ。
+     * 呼ぶ側で、その場所の行を押さえておくこと。
+     */
+    public function renumber(int $venueId, string $date): void
+    {
+        $rows = SeijinPrepSlot::query()
+            ->where('seijin_prep_venue_id', $venueId)
+            ->whereDate('prep_date', $date)
+            ->whereNull('prep_time')
+            ->orderBy('seat_no')->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+        $ordered = $rows->whereNotNull('customer_id')->concat($rows->whereNull('customer_id'))->values();
+        foreach ($ordered as $i => $r) {
+            if ($r->seat_no !== $i + 1) {
+                $r->update(['seat_no' => $i + 1]);
+            }
         }
     }
 
@@ -194,9 +251,12 @@ class SeijinPrepService
             return '未定';
         }
         if (! $row->isSeat()) {
-            return "{$row->venue->name}・時刻未定";
+            return $row->venue->isNumbered() ? "{$row->venue->name}・日未定" : "{$row->venue->name}・時刻未定";
         }
-        $date = \Illuminate\Support\Carbon::parse($row->prep_date)->toDateString();
+        $date = Carbon::parse($row->prep_date)->toDateString();
+        if ($row->isNumberedSeat()) {
+            return "{$row->venue->name}・{$date}・番号{$row->seat_no}";
+        }
 
         return "{$row->venue->name}・{$date} ".substr($row->prep_time, 0, 5)."・レーン{$row->seat_no}";
     }

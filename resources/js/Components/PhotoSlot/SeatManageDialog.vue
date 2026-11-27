@@ -19,6 +19,8 @@ const props = defineProps({
     fields: { type: Object, default: () => ({ place: 'photo_studio_id', date: 'shoot_date', time: 'shoot_time' }) },
     seatLabel: { type: String, default: '枠' },
     bookedLabel: { type: String, default: '予約' },
+    // 成人式お支度の福井（番号枠）：時刻がなく、その日の枠数を変える
+    numbered: { type: Boolean, default: false },
 });
 const emit = defineEmits(['update:open', 'changed']);
 
@@ -32,7 +34,9 @@ watch(() => props.open, (open) => {
     error.value = '';
 });
 
-const target = () => ({ [props.fields.place]: props.studio.id, [props.fields.date]: props.date, [props.fields.time]: props.time });
+const target = () => (props.numbered
+    ? { [props.fields.place]: props.studio.id, [props.fields.date]: props.date }
+    : { [props.fields.place]: props.studio.id, [props.fields.date]: props.date, [props.fields.time]: props.time });
 const messageOf = (e, fallback) => {
     const errors = e.response?.data?.errors;
     return errors ? Object.values(errors).flat().join(' ') : (e.response?.data?.message || fallback);
@@ -79,30 +83,30 @@ const changeCapacity = async () => {
 </script>
 
 <template>
-    <UiDialog :open="open" :title="`${seatLabel}の数を変える`" size="sm" @update:open="emit('update:open', $event)">
+    <UiDialog :open="open" :title="numbered ? '枠数を変える' : `${seatLabel}の数を変える`" size="sm" @update:open="emit('update:open', $event)">
         <div class="space-y-4 text-sm">
             <div class="rounded-soft bg-brand-surface-2 px-3 py-2">
                 <div class="font-semibold">{{ studio?.name }}</div>
-                <div class="tabular-nums">{{ date ? formatDateJaWithWeekday(date) : '' }} {{ time }}</div>
+                <div class="tabular-nums">{{ date ? formatDateJaWithWeekday(date) : '' }} {{ numbered ? '' : time }}</div>
                 <div class="mt-1 text-xs text-brand-text-muted">
-                    <template v-if="capacity > 0">いま：{{ bookedLabel }} {{ booked }}／定員 {{ capacity }}</template>
-                    <template v-else>この時刻には枠がありません</template>
+                    <template v-if="capacity > 0">いま：{{ bookedLabel }} {{ booked }}／{{ numbered ? '枠数' : '定員' }} {{ capacity }}</template>
+                    <template v-else>{{ numbered ? 'この日' : 'この時刻' }}には枠がありません</template>
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-medium text-brand-text-muted mb-1">定員（1〜{{ maxCapacity }}人）</label>
+                <label class="block text-xs font-medium text-brand-text-muted mb-1">{{ numbered ? `枠数（1〜${maxCapacity}）` : `定員（1〜${maxCapacity}人）` }}</label>
                 <div class="flex items-center gap-2">
                     <input v-model.number="next" type="number" :min="Math.max(1, booked)" :max="maxCapacity" class="w-24 rounded-md border-brand-border text-sm tabular-nums focus:border-brand-primary focus:ring-brand-primary" />
                     <UiButton size="sm" :loading="saving" :disabled="!next || next === capacity" @click="changeCapacity">
-                        {{ capacity > 0 ? '定員を変える' : '枠を作る' }}
+                        {{ capacity > 0 ? (numbered ? '枠数を変える' : '定員を変える') : '枠を作る' }}
                     </UiButton>
                 </div>
                 <p class="mt-1 text-xs text-brand-text-muted">減らすときは、番号の大きい空き{{ seatLabel }}から消します。{{ bookedLabel }}の入っている{{ seatLabel }}は消しません。</p>
             </div>
 
             <div v-if="capacity > 0 && capacity < maxCapacity" class="border-t border-brand-border pt-3">
-                <UiButton variant="ghost" size="sm" :loading="saving" @click="addOne">この時刻に1{{ seatLabel }}足す</UiButton>
+                <UiButton variant="ghost" size="sm" :loading="saving" @click="addOne">{{ numbered ? 'この日' : 'この時刻' }}に1{{ seatLabel }}足す</UiButton>
             </div>
 
             <p v-if="error" class="rounded-soft bg-red-50 border border-red-200 px-3 py-2 text-red-700">{{ error }}</p>

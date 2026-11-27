@@ -2,7 +2,7 @@
     <Head title="成人式お支度枠" />
 
     <AdminLayout :breadcrumb="[{ label: '成人式' }, { label: 'お支度枠' }]">
-        <UiPageHeader title="成人式お支度枠" description="お支度場所×日×時刻の枠（定員＝レーン数）。定員を超えては入れられません。時刻が決まる前のお客様は「場所だけ」で登録し、下の一覧に出ます。">
+        <UiPageHeader title="成人式お支度枠" description="お支度場所×日×時刻の枠（定員＝レーン数）。定員を超えては入れられません。時刻が決まる前のお客様は「場所だけ」で登録し、下の一覧に出ます。福井の美容室は時刻ではなく「日＋番号（1, 2, 3…・早く成約した人ほど若い番号）」で管理します。">
             <template #actions>
                 <UiButton variant="ghost" :href="route('admin.seijin-prep-venues.index')">お支度場所</UiButton>
                 <UiButton variant="ghost" :to="route('admin.seijin-prep-slots.csv')">
@@ -36,7 +36,8 @@
                             <div class="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-brand-text-muted">
                                 <UiBadge :variant="v.kind === 'own' ? 'primary' : 'neutral'">{{ kindLabels[v.kind] || v.kind }}</UiBadge>
                                 <span>{{ groupLabels[v.shop_group] || 'グループ未設定' }}</span>
-                                <span>{{ v.slot_interval_minutes }}分刻み</span>
+                                <UiBadge v-if="v.numbered" variant="warning">番号で管理</UiBadge>
+                                <span v-else>{{ v.slot_interval_minutes }}分刻み</span>
                                 <span v-if="!v.is_active">（無効）</span>
                             </div>
                         </div>
@@ -52,7 +53,7 @@
                             <dd class="text-base font-semibold tabular-nums">{{ v.booked }}</dd>
                         </div>
                         <div class="rounded py-1.5" :class="v.unscheduled ? 'bg-amber-50' : 'bg-brand-surface-2'">
-                            <dt class="text-[11px] text-brand-text-muted">時刻未定</dt>
+                            <dt class="text-[11px] text-brand-text-muted">{{ v.numbered ? '日未定' : '時刻未定' }}</dt>
                             <dd class="text-base font-semibold tabular-nums" :class="{ 'text-amber-700': v.unscheduled }">{{ v.unscheduled }}</dd>
                         </div>
                     </dl>
@@ -82,7 +83,7 @@
 
         <!-- 時刻がまだ決まっていないお客様 -->
         <section class="mt-8">
-            <h2 class="text-sm font-semibold text-brand-text mb-2">時刻がまだ決まっていないお客様（{{ unscheduled.length }}人）</h2>
+            <h2 class="text-sm font-semibold text-brand-text mb-2">時刻（福井は日）がまだ決まっていないお客様（{{ unscheduled.length }}人）</h2>
             <div class="mb-2 flex flex-wrap items-center gap-2 text-xs">
                 <span class="text-brand-text-muted">絞り込み：</span>
                 <button v-for="f in filterOptions" :key="f.value" type="button"
@@ -124,7 +125,8 @@
             :time="seatManage.time"
             :capacity="seatManage.capacity"
             :booked="seatManage.booked"
-            :max-capacity="maxCapacity"
+            :max-capacity="seatManage.maxCapacity"
+            :numbered="seatManage.numbered"
             seats-route="admin.seijin-prep-slots.seats.store"
             capacity-route="admin.seijin-prep-slots.capacity"
             :fields="{ place: 'seijin_prep_venue_id', date: 'prep_date', time: 'prep_time' }"
@@ -141,7 +143,10 @@
                 <UiFormField label="日" required :error="bulk.errors.prep_date" hint="成人式の当日（市町村で日が違うときは、日ごとに作ってください）">
                     <UiInput v-model="bulk.date" type="date" :min="today" />
                 </UiFormField>
-                <div class="grid grid-cols-3 gap-3">
+                <UiFormField v-if="bulkVenue?.numbered" label="枠数" required :error="bulk.errors.capacity" :hint="`番号 1〜枠数 の枠を作ります（最大 ${maxNumberedCapacity}）。もう枠のある日には作れません。`">
+                    <UiInput v-model.number="bulk.capacity" type="number" min="1" :max="maxNumberedCapacity" />
+                </UiFormField>
+                <div v-else class="grid grid-cols-3 gap-3">
                     <UiFormField label="最初の時刻" required :error="bulk.errors.start_time">
                         <UiSelect v-model="bulk.start" :options="bulkTimes" />
                     </UiFormField>
@@ -152,14 +157,17 @@
                         <UiSelect v-model="bulk.capacity" :options="capacityOptions" />
                     </UiFormField>
                 </div>
-                <p v-if="bulkPreview" class="rounded-md bg-brand-surface-2 px-3 py-2">
+                <p v-if="bulkVenue?.numbered && bulk.capacity > 0" class="rounded-md bg-brand-surface-2 px-3 py-2">
+                    番号 1〜{{ bulk.capacity }} の {{ bulk.capacity }}人分。
+                </p>
+                <p v-else-if="bulkPreview" class="rounded-md bg-brand-surface-2 px-3 py-2">
                     {{ bulkPreview.count }}時刻（{{ bulk.start }}〜{{ bulk.end }}・{{ bulkVenue?.slot_interval_minutes }}分刻み）× {{ bulk.capacity }}レーン ＝ {{ bulkPreview.count * bulk.capacity }}人分。もう枠のある時刻は飛ばします。
                 </p>
                 <p v-if="bulk.message" class="rounded-soft bg-red-50 border border-red-200 px-3 py-2 text-red-700">{{ bulk.message }}</p>
             </div>
             <template #footer>
                 <UiButton variant="ghost" @click="bulk.open = false">キャンセル</UiButton>
-                <UiButton :loading="bulk.saving" :disabled="!bulkPreview || !bulk.date" @click="submitBulk">作る</UiButton>
+                <UiButton :loading="bulk.saving" :disabled="!bulk.date || (bulkVenue?.numbered ? !(bulk.capacity > 0) : !bulkPreview)" @click="submitBulk">作る</UiButton>
             </template>
         </UiDialog>
     </AdminLayout>
@@ -185,6 +193,7 @@ const props = defineProps({
     groupLabels: { type: Object, default: () => ({}) },
     kindLabels: { type: Object, default: () => ({}) },
     maxCapacity: { type: Number, default: 20 },
+    maxNumberedCapacity: { type: Number, default: 200 },
 });
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -204,10 +213,14 @@ const afterChange = (message) => {
 
 // 月の表から
 const booking = ref({ open: false, venue: null, date: '', time: '' });
-const seatManage = ref({ open: false, studio: null, date: '', time: '', capacity: 0, booked: 0 });
-const openBooking = ({ studio, date, time }) => { booking.value = { open: true, venue: studio, date, time }; };
+const seatManage = ref({ open: false, studio: null, date: '', time: '', capacity: 0, booked: 0, numbered: false, maxCapacity: props.maxCapacity });
+// 福井（番号枠）の行は「番号」なので、時刻は送らない
+const openBooking = ({ studio, date, time }) => { booking.value = { open: true, venue: studio, date, time: studio.numbered ? '' : time }; };
 const openManage = ({ studio, date, time, capacity, booked }) => {
-    seatManage.value = { open: true, studio, date, time, capacity, booked };
+    seatManage.value = {
+        open: true, studio, date, time: studio.numbered ? '' : time, capacity, booked,
+        numbered: !!studio.numbered, maxCapacity: studio.max_capacity || props.maxCapacity,
+    };
 };
 
 // 時刻未定の一覧
@@ -264,13 +277,15 @@ const submitBulk = async () => {
     bulk.errors = {};
     bulk.message = '';
     try {
-        const res = await axios.post(route('admin.seijin-prep-slots.bulk'), {
-            seijin_prep_venue_id: bulk.venueId,
-            prep_date: bulk.date,
-            start_time: bulk.start,
-            end_time: bulk.end,
-            capacity: bulk.capacity,
-        });
+        const res = await axios.post(route('admin.seijin-prep-slots.bulk'), bulkVenue.value?.numbered
+            ? { seijin_prep_venue_id: bulk.venueId, prep_date: bulk.date, capacity: bulk.capacity }
+            : {
+                seijin_prep_venue_id: bulk.venueId,
+                prep_date: bulk.date,
+                start_time: bulk.start,
+                end_time: bulk.end,
+                capacity: bulk.capacity,
+            });
         bulk.open = false;
         afterChange(res.data?.message || '枠を作りました。');
     } catch (e) {

@@ -43,6 +43,7 @@ class SeijinPrepCustomerController extends Controller
                 'kind_label' => SeijinPrepVenue::KIND_LABELS[$v->kind] ?? $v->kind,
                 'shop_group' => $v->shop_group,
                 'interval' => $v->interval(),
+                'numbered' => $v->isNumbered(), // 福井：時刻なしの番号枠
                 'is_active' => (bool) $v->is_active,
             ])->values(),
             'shops' => Shop::query()->where('is_active', true)->orderBy('id')->get(['id', 'name', 'group_key']),
@@ -51,7 +52,7 @@ class SeijinPrepCustomerController extends Controller
     }
 
     /**
-     * 時刻の空き（場所と日を選んだときに、選べる時刻を出す）
+     * 時刻の空き（場所と日を選んだときに、選べる時刻を出す）。番号枠（福井）はその日の枠を 1 つ（time は null）で返す
      */
     public function times(Request $request, Customer $customer)
     {
@@ -67,10 +68,11 @@ class SeijinPrepCustomerController extends Controller
             ->whereDate('prep_date', $v['prep_date'])
             ->seats()
             ->orderBy('prep_time')->orderBy('seat_no')
+            ->when($venue->isNumbered(), fn ($q) => $q->whereNull('prep_time'), fn ($q) => $q->whereNotNull('prep_time'))
             ->get(['id', 'prep_time', 'customer_id'])
-            ->groupBy(fn ($s) => PhotoStudioHours::hm($s->prep_time))
+            ->groupBy(fn ($s) => PhotoStudioHours::hm($s->prep_time) ?? '')
             ->map(fn ($g, $time) => [
-                'time' => $time,
+                'time' => $time === '' ? null : $time,
                 'capacity' => $g->count(),
                 'booked' => $g->whereNotNull('customer_id')->count(),
                 'mine' => $g->contains('customer_id', $customer->id),
@@ -106,23 +108,30 @@ class SeijinPrepCustomerController extends Controller
             'mode' => 'required|in:venue,other,undecided',
             'venue_id' => 'nullable|required_if:mode,venue|integer',
             'prep_date' => 'nullable|date_format:Y-m-d|required_with:prep_time',
-            'prep_time' => 'nullable|date_format:H:i|required_with:prep_date',
+            'prep_time' => 'nullable|date_format:H:i',
+            'has_makeup' => 'nullable|boolean',
             'preferred_time' => 'nullable|string|max:50',
             'remarks' => 'nullable|string|max:2000',
             'shop_id' => 'nullable|integer|exists:shops,id',
         ], [
             'venue_id.required_if' => 'お支度場所を選んでください。',
             'prep_date.required_with' => '時刻を選ぶときは日も選んでください。',
-            'prep_time.required_with' => '日を選ぶときは時刻も選んでください。',
         ]);
         $isVenue = $v['mode'] === 'venue';
+        $venue = $isVenue ? SeijinPrepVenue::find($v['venue_id']) : null;
+        $numbered = (bool) $venue?->isNumbered();
+        if ($numbered) {
+            $v['prep_time'] = null; // 福井は時刻を持たない
+        } elseif (! empty($v['prep_date']) && empty($v['prep_time'])) {
+            throw ValidationException::withMessages(['prep_time' => '日を選ぶときは時刻も選んでください。']);
+        }
         if ($isVenue && ! empty($v['prep_date'])) {
             $current = SeijinPrepSlot::where('customer_id', $customer->id)->first();
             // 過去の日は、今いる席（場所・日・時刻が同じ）のまま保存するときだけ通す
             $sameSeat = $current && $current->isSeat()
                 && (int) $current->seijin_prep_venue_id === (int) $v['venue_id']
                 && Carbon::parse($current->prep_date)->toDateString() === $v['prep_date']
-                && PhotoStudioHours::hm($current->prep_time) === $v['prep_time'];
+                && PhotoStudioHours::hm($current->prep_time) === ($v['prep_time'] ?? null);
             if (! $sameSeat && Carbon::parse($v['prep_date'])->lt(Carbon::today())) {
                 throw ValidationException::withMessages(['prep_date' => '過去の日の枠には入れられません。']);
             }
@@ -133,6 +142,8 @@ class SeijinPrepCustomerController extends Controller
             'is_other_store' => $v['mode'] === 'other',
             'prep_date' => $isVenue ? ($v['prep_date'] ?? null) : null,
             'prep_time' => $isVenue ? ($v['prep_time'] ?? null) : null,
+            // メイク有無は福井の場所に登録するときだけ（必須。確かめるのはサービス）
+            'has_makeup' => $numbered && array_key_exists('has_makeup', $v) && $v['has_makeup'] !== null ? (bool) $v['has_makeup'] : null,
             'preferred_time' => $v['preferred_time'] ?? null,
             'remarks' => $v['remarks'] ?? null,
             'shop_id' => $v['shop_id'] ?? $customer->shop_id,
@@ -159,6 +170,9 @@ class SeijinPrepCustomerController extends Controller
             'prep_date' => $row->prep_date ? Carbon::parse($row->prep_date)->toDateString() : null,
             'prep_time' => PhotoStudioHours::hm($row->prep_time),
             'seat_no' => $row->isSeat() ? $row->seat_no : null,
+            'numbered' => (bool) $row->venue?->isNumbered(),
+            'has_makeup' => $row->has_makeup,
+            'original_prep_time' => PhotoStudioHours::hm($row->original_prep_time),
             'preferred_time' => $row->preferred_time,
             'remarks' => $row->remarks,
             'shop_id' => $row->shop_id,

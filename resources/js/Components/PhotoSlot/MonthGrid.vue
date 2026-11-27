@@ -243,7 +243,7 @@ const manage = (col, time) => {
                                             class="block truncate rounded px-1 py-0.5 bg-uguisu-100 text-uguisu-900 hover:underline"
                                             :title="[seat.customer.name, seat.shops.join('・'), seat.user, seat.plan].filter(Boolean).join(' / ')"
                                         >
-                                            {{ seat.customer.name }}
+                                            <span v-if="seat.no" class="tabular-nums">{{ seat.no }}. </span>{{ seat.customer.name }}
                                         </Link>
                                         <button
                                             v-else-if="!col.is_past"
@@ -251,9 +251,9 @@ const manage = (col, time) => {
                                             class="block w-full text-left rounded px-1 py-0.5 border border-dashed border-brand-border text-brand-text-muted hover:border-brand-primary hover:text-brand-primary"
                                             @click="book(col, time)"
                                         >
-                                            空き
+                                            <span v-if="seat.no" class="tabular-nums">{{ seat.no }}. </span>空き
                                         </button>
-                                        <span v-else class="block px-1 py-0.5 text-brand-text-subtle">空き</span>
+                                        <span v-else class="block px-1 py-0.5 text-brand-text-subtle"><span v-if="seat.no" class="tabular-nums">{{ seat.no }}. </span>空き</span>
                                     </li>
                                 </ul>
                             </template>
