@@ -74,6 +74,7 @@
           v-if="view === 'grid'"
           ref="gridRef"
           :studios="photoStudios"
+          print-route="admin.photo-slots.print"
           @book="openBooking"
           @manage="openManage"
         />

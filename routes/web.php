@@ -226,6 +226,7 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Route::post('/photo-slots/bulk', [AdminPhotoSlotBulkController::class, 'store'])->name('photo-slots.bulk.store');
     Route::get('/photo-slots/availability', [AdminPhotoSlotController::class, 'availability'])->name('photo-slots.availability');
     Route::get('/photo-slots/grid', [AdminPhotoSlotController::class, 'grid'])->name('photo-slots.grid');
+    Route::get('/photo-slots/print', [AdminPhotoSlotController::class, 'print'])->name('photo-slots.print');
     Route::post('/photo-slots/book', [AdminPhotoSlotController::class, 'book'])->name('photo-slots.book');
     // 枠の管理（1枠足す・定員を変える・空き枠を消す）。権限機能で「前撮りの管理」にする予定
     Route::post('/photo-slots/seats', [AdminPhotoSlotSeatController::class, 'store'])->name('photo-slots.seats.store');

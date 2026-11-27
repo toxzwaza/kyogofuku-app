@@ -4,7 +4,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { Link } from '@inertiajs/vue3';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, Plus, Printer } from 'lucide-vue-next';
 
 const props = defineProps({
     studios: { type: Array, default: () => [] },
@@ -13,6 +13,8 @@ const props = defineProps({
     storageKey: { type: String, default: 'photoSlotGrid.studioIds' },
     placeLabel: { type: String, default: 'スタジオ' },
     seatLabel: { type: String, default: '枠' },
+    // 期間を指定した印刷の画面（前撮りだけ。渡したときだけ「印刷」を出す）
+    printRoute: { type: String, default: null },
 });
 const emit = defineEmits(['book', 'manage']);
 
@@ -86,6 +88,18 @@ const monthLabel = (ym) => {
     const [y, m] = ym.split('-');
     return `${y}年${Number(m)}月`;
 };
+
+// 印刷の画面へ：今見ている月の1日〜末日・選んでいるスタジオから始める（期間は印刷の画面で変えられる）
+const printHref = computed(() => {
+    if (!props.printRoute || !data.value?.month) return null;
+    const [y, m] = data.value.month.split('-').map(Number);
+    const last = new Date(y, m, 0).getDate();
+    return route(props.printRoute, {
+        from: `${data.value.month}-01`,
+        to: `${data.value.month}-${String(last).padStart(2, '0')}`,
+        studio_ids: studioIds.value,
+    });
+});
 
 const cellOf = (col, time) => data.value?.cells?.[col.key]?.[time] || null;
 
@@ -161,6 +175,16 @@ const manage = (col, time) => {
                 <input type="month" :value="month || ''" class="rounded-md border-brand-border text-sm focus:border-brand-primary focus:ring-brand-primary" aria-label="月を選ぶ" @change="pickMonth" />
                 <span class="text-sm font-semibold tabular-nums text-brand-text">{{ monthLabel(data?.month) }}</span>
                 <span v-if="loading" class="text-xs text-brand-text-muted">読み込み中…</span>
+                <a
+                    v-if="printHref && studioIds.length"
+                    :href="printHref"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-soft border border-brand-border text-sm hover:bg-brand-surface-2"
+                    title="期間を指定して印刷する（別のタブで開きます）"
+                >
+                    <Printer :size="15" />印刷
+                </a>
                 <div class="ml-auto flex items-center gap-3 text-xs text-brand-text-muted">
                     <span class="inline-flex items-center gap-1"><span class="w-3 h-3 border border-brand-border bg-white"></span>空きあり</span>
                     <span class="inline-flex items-center gap-1"><span class="w-3 h-3 border border-brand-border bg-uguisu-50"></span>満員</span>
