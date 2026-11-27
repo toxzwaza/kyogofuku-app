@@ -52,6 +52,8 @@ class EventReservation extends Model
         'cancel_flg',
         'customer_id',
         'utm_source',
+        'utm_medium',
+        'utm_campaign',
         'form_data',
     ];
 

@@ -5,6 +5,7 @@ namespace App\Http\Support;
 use App\Models\Event;
 use App\Services\Event\EventPublicPageService;
 use App\Services\LpDesign\LpThemeResolver;
+use App\Support\LpBrand;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,7 +22,7 @@ class EventInertiaViewFactory
      */
     public function showResponse(Event $event, array $extraProps = []): Response
     {
-        $payload = array_merge($this->pageService->buildShowPayload($event), $extraProps);
+        $payload = array_merge($this->pageService->buildShowPayload($event), ['lpBrand' => LpBrand::propsForEvent($event)], $extraProps);
         $lpSeo = $this->seoBuilder->build($event);
         // LCP対策: FV画像（1枚目）をpreload
         $firstImage = $payload['images'][0] ?? null;
@@ -47,7 +48,7 @@ class EventInertiaViewFactory
             abort(404);
         }
 
-        $payload = array_merge($this->pageService->buildShowPayload($event), $extraProps);
+        $payload = array_merge($this->pageService->buildShowPayload($event), ['lpBrand' => LpBrand::propsForEvent($event)], $extraProps);
         $payload['lpThemeCssVars'] = $this->themeResolver->resolveCssVarsForEvent($event);
         $component = config("lp_designs.templates.{$slug}.inertia_reserve");
 

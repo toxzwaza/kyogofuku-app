@@ -432,6 +432,7 @@
 
         <footer class="footer">
             <p class="footer-brand">京呉服平田 </p>
+            <p v-if="lpBrand?.siteUrl" class="footer-link"><a :href="lpBrand.siteUrl" style="color: inherit">{{ lpBrand.name }} 公式サイト</a></p>
             <p class="footer-copy">&copy; {{ year }} 京呉服平田</p>
         </footer>
 
@@ -447,6 +448,11 @@
                 <p v-if="event.ended_message_text" style="margin-top: 1rem; color: #dc2626; white-space: pre-line">
                     {{ event.ended_message_text }}
                 </p>
+                <!-- 終了後に来た人を通年の店舗予約・公式サイトへ案内する -->
+                <div v-if="lpBrand && (lpBrand.storeReservationUrl || lpBrand.siteUrl)" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem">
+                    <a v-if="lpBrand.storeReservationUrl" :href="lpBrand.storeReservationUrl" style="display: block; border-radius: 9999px; padding: 0.75rem 1.5rem; font-weight: 600; color: #fff; background-color: #c0567a; text-decoration: none">店舗での来店予約はこちら</a>
+                    <a v-if="lpBrand.siteUrl" :href="lpBrand.siteUrl" style="display: block; border-radius: 9999px; padding: 0.75rem 1.5rem; font-weight: 600; color: #374151; border: 1px solid #c0567a; text-decoration: none">{{ lpBrand.name }} 公式サイトへ</a>
+                </div>
             </div>
         </div>
     </div>
@@ -477,6 +483,8 @@ const props = defineProps({
     successFormData: { type: Object, default: null },
     ctaButtonPositions: { type: Array, default: () => [] },
     lpThemeCssVars: { type: Object, default: () => ({}) },
+    // ブランド（好一／平田）の表示用の値。正本は config/brands.php
+    lpBrand: { type: Object, default: null },
 });
 
 const rootRef = ref(null);
@@ -543,7 +551,8 @@ function goReserve() {
     // LINE友達紹介経由（line_ref / referred_by_name）のクエリを予約ページへ引き継ぐ
     const params = new URLSearchParams(window.location.search);
     const query = {};
-    for (const key of ['line_ref', 'referred_by_name']) {
+    // utm_* も引き継ぎ、予約に流入元（GBP・HP・広告）が残るようにする
+    for (const key of ['line_ref', 'referred_by_name', 'utm_source', 'utm_medium', 'utm_campaign']) {
         const v = params.get(key);
         if (v) query[key] = v;
     }

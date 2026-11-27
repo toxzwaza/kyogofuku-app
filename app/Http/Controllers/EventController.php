@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Support\EventInertiaViewFactory;
 use App\Models\Event;
+use App\Support\UtmTracker;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -34,8 +35,7 @@ class EventController extends Controller
             abort(404);
         }
 
-        $utmSource = $request->input('utm_source') ?: 'NONE';
-        $request->session()->put('event_utm_sources.'.$event->id, $utmSource);
+        UtmTracker::capture($request, $event->id);
 
         return $this->eventInertia->showResponse($event);
     }
@@ -50,10 +50,10 @@ class EventController extends Controller
             return $event;
         }
 
-        // LINE友達紹介経由のクエリ（line_ref / referred_by_name）はリダイレクト先へ引き継ぐ
-        // （LPテンプレ未設定イベント等で紹介コンテキストが消えるのを防ぐ）
+        // LINE友達紹介経由のクエリ（line_ref / referred_by_name）と流入元（utm_*）はリダイレクト先へ引き継ぐ
+        // （LPテンプレ未設定イベント等で紹介コンテキスト・流入元が消えるのを防ぐ）
         $referralQuery = array_filter(
-            $request->only(['line_ref', 'referred_by_name']),
+            $request->only(['line_ref', 'referred_by_name', 'utm_source', 'utm_medium', 'utm_campaign']),
             fn ($v) => $v !== null && $v !== ''
         );
 
@@ -71,8 +71,7 @@ class EventController extends Controller
             return redirect()->route('event.show', ['slug' => $event->slug] + $referralQuery);
         }
 
-        $utmSource = $request->input('utm_source') ?: 'NONE';
-        $request->session()->put('event_utm_sources.'.$event->id, $utmSource);
+        UtmTracker::capture($request, $event->id);
 
         return $this->eventInertia->reserveResponse($event);
     }

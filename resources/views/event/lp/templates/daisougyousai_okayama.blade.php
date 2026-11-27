@@ -3,6 +3,8 @@
 @section('title', '大創業祭｜京呉服 好一 岡山店・城東店')
 @section('description', 'タンスのきもの、まるごと整理。京呉服 好一 大創業祭、岡山店 5/28(木)〜5/30(土)・城東店 5/31(日)〜6/1(月) で開催。事前持込で着物丸洗い3,300円、しみ抜き・汗取りを特別価格でご提供。')
 
+@php($dsBrand = \App\Support\LpBrand::get('kouichi')) {{-- 電話番号の正本は config/brands.php --}}
+
 @php
     $imgBase = asset('images/lp/daisougyousai_okayama');
 
@@ -741,7 +743,7 @@ a { color: var(--ds-akane); }
 {{-- ============== Sticky CTA（モバイル時のみ表示） ============== --}}
 <div class="ds-sticky-cta">
     <a href="#reserve" class="ds-sticky-cta__web">WEBで予約</a>
-    <a href="tel:086-242-1529" class="ds-sticky-cta__phone">お電話で予約</a>
+    <a href="tel:{{ $dsBrand['tel_link'] }}" class="ds-sticky-cta__phone">お電話で予約</a>
 </div>
 
 {{-- ============== ヘッダ ============== --}}
@@ -771,9 +773,9 @@ a { color: var(--ds-akane); }
                 <a href="#reserve" class="ds-cta-button">
                     <span class="ds-cta-button__label">WEBで予約する</span>
                 </a>
-                <a href="tel:086-242-1529" class="ds-cta-button ds-cta-button--phone">
+                <a href="tel:{{ $dsBrand['tel_link'] }}" class="ds-cta-button ds-cta-button--phone">
                     <span class="ds-cta-button__label">お電話で予約する</span>
-                    <span class="ds-cta-button__num">086-242-1529</span>
+                    <span class="ds-cta-button__num">{{ $dsBrand['tel'] }}</span>
                 </a>
                 <small class="ds-hero__cta-note">▼ 30秒で完了 ／ 事前予約優先でご案内</small>
             </div>
@@ -1061,9 +1063,9 @@ a { color: var(--ds-akane); }
             <a href="#reserve" class="ds-cta-button">
                 <span class="ds-cta-button__label">WEBで予約する</span>
             </a>
-            <a href="tel:086-242-1529" class="ds-cta-button ds-cta-button--phone">
+            <a href="tel:{{ $dsBrand['tel_link'] }}" class="ds-cta-button ds-cta-button--phone">
                 <span class="ds-cta-button__label">お電話で予約する</span>
-                <span class="ds-cta-button__num">086-242-1529</span>
+                <span class="ds-cta-button__num">{{ $dsBrand['tel'] }}</span>
             </a>
         </div>
     </div>

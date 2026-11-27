@@ -9,6 +9,9 @@ use App\Models\EventTimeslot;
 use App\Models\Referral;
 use App\Services\EventReservationScheduleBootstrapService;
 use App\Services\ReservationConfirmationMailer;
+use App\Support\LpBrand;
+use App\Support\ReservationTracking;
+use App\Support\UtmTracker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -268,8 +271,7 @@ class EventReservationController extends Controller
             'heard_from' => $request->heard_from,
             'inquiry_message' => $request->inquiry_message,
             'privacy_agreed' => $request->has('privacy_agreed') ? $request->privacy_agreed : false,
-            'utm_source' => $request->input('utm_source') ?? $request->session()->get('event_utm_sources.'.$event->id),
-        ]);
+        ] + UtmTracker::forReservation($request, $event->id));
 
         // リレーションをロード（LINE通知・スケジュール自動作成で使用）
         $reservation->load(['event', 'venue']);
@@ -315,6 +317,11 @@ class EventReservationController extends Controller
                     'event_id' => $event->id,
                 ]);
             }
+        }
+
+        // 予約完了の計測（完了ページで dataLayer へ。管理画面からの登録は数えない）
+        if (! $fromAdmin) {
+            ReservationTracking::flash($request, $event, $reservation);
         }
 
         // 管理画面からの登録の場合は予約一覧画面へリダイレクト
@@ -364,6 +371,7 @@ class EventReservationController extends Controller
             return view($thanksView, [
                 'event' => $event,
                 'formData' => $request->session()->get('blade_lp_form_data.'.$event->id, []),
+                'reservationTracking' => ReservationTracking::pull($request, $event),
             ]);
         }
 
@@ -418,6 +426,9 @@ class EventReservationController extends Controller
             'canReserve' => false,
             'showSuccess' => true, // 成功ページを表示するフラグ
             'successFormData' => $formData, // 送信データ
+            'lpBrand' => LpBrand::propsForEvent($event),
+            // 予約直後の1回だけ dataLayer へ送る値（再読み込みでは null）
+            'reservationTracking' => ReservationTracking::pull($request, $event),
         ]);
     }
 

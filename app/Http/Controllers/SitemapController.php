@@ -9,7 +9,7 @@ class SitemapController extends Controller
 {
     /**
      * 公開中かつ終了していないイベントLPのsitemap.xmlを返す。
-     * テスト用イベント（タイトルに「テスト」を含む）は除外。
+     * テスト用イベント（タイトルに「テスト」を含む）と問い合わせフォーム（form_type=contact）は除外。
      */
     public function index()
     {
@@ -20,6 +20,8 @@ class SitemapController extends Controller
                     $q->whereNull('end_at')->orWhere('end_at', '>=', now()->startOfDay());
                 })
                 ->where('title', 'not like', '%テスト%')
+                // 問い合わせフォームは索引に入れない（noindex）ので載せない
+                ->where('form_type', '!=', 'contact')
                 ->orderBy('id')
                 ->get(['slug', 'updated_at']);
 
