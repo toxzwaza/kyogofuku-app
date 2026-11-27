@@ -206,7 +206,7 @@ class EventController extends Controller
             'start_at' => 'nullable|date',
             'end_at' => 'nullable|date|after_or_equal:start_at',
             'is_public' => 'boolean',
-            'gtm_tag_id' => 'nullable|exists:gtm_tags,id',
+            'gtm_tag_id' => ['nullable', 'exists:gtm_tags,id', $this->gtmTagKindRule()],
             'success_text' => 'nullable|string|max:255|regex:/^[a-zA-Z0-9_-]+$/',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
@@ -354,13 +354,30 @@ class EventController extends Controller
             'event' => $event,
             'allVenues' => $allVenues,
             'allShops' => $allShops,
-            'gtmTags' => GtmTag::options(),
+            'gtmTags' => GtmTag::options($event->gtm_tag_id),
             'allDocuments' => $allDocuments,
             'utmSources' => $utmSources,
             'utm_dist' => $utmDist,
             'utm_members' => $utmMembers,
             'backUrl' => route('admin.events.index', session('admin.events.index_query', [])),
         ]);
+    }
+
+    /**
+     * イベントで選べるのは kind = event のタグだけ（社内共通・HP用は台帳のみ）。
+     * 保存済みのタグ（$currentId）はそのまま保存できるようにする
+     */
+    private function gtmTagKindRule(?int $currentId = null): \Closure
+    {
+        return function ($attribute, $value, $fail) use ($currentId) {
+            if (! $value || (int) $value === $currentId) {
+                return;
+            }
+            $kind = GtmTag::whereKey($value)->value('kind');
+            if ($kind !== null && $kind !== 'event') {
+                $fail('このGTMタグはイベントでは選べません（種類がイベント以外）。');
+            }
+        };
     }
 
     /**
@@ -439,7 +456,7 @@ class EventController extends Controller
             'start_at' => 'nullable|date',
             'end_at' => 'nullable|date|after_or_equal:start_at',
             'is_public' => 'boolean',
-            'gtm_tag_id' => 'nullable|exists:gtm_tags,id',
+            'gtm_tag_id' => ['nullable', 'exists:gtm_tags,id', $this->gtmTagKindRule($event->gtm_tag_id)],
             'success_text' => 'nullable|string|max:255|regex:/^[a-zA-Z0-9_-]+$/',
             'ended_message_text' => 'nullable|string|max:1000',
             'utm_analytics_enabled' => 'boolean',

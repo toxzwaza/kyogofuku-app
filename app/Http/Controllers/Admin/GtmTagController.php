@@ -11,7 +11,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 /**
- * GTMタグのマスタ管理（管理会社・GTM ID・メモ・紐付け店舗）
+ * GTMタグのマスタ管理（管理会社・担当・GTM ID・種類・用途・確度・メモ・紐付け店舗）
  */
 class GtmTagController extends Controller
 {
@@ -23,15 +23,25 @@ class GtmTagController extends Controller
 
         $gtmTags = GtmTag::with(['shops' => fn ($q) => $q->withoutGlobalScope('visibleGroup')->select('shops.id', 'shops.name')])
             ->withCount('events')
+            ->orderByRaw('company_name IS NULL')
             ->orderBy('company_name')
             ->orderBy('gtm_id')
             ->get()
             ->map(fn (GtmTag $t) => [
                 'id' => $t->id,
                 'company_name' => $t->company_name,
+                'contact_person' => $t->contact_person,
+                'contact' => $t->contact,
+                'contact_masked' => GtmTag::maskContact($t->contact),
                 'gtm_id' => $t->gtm_id,
+                'kind' => $t->kind,
+                'purpose' => $t->purpose,
+                'used_on' => $t->used_on,
+                'confidence' => $t->confidence,
+                'confirmed_at' => $t->confirmed_at?->format('Y-m-d'),
                 'memo' => $t->memo,
                 'is_active' => $t->is_active,
+                'is_unconfirmed' => $t->isUnconfirmed(),
                 'shop_ids' => $t->shops->pluck('id')->values()->all(),
                 'shop_names' => $t->shops->pluck('name')->values()->all(),
                 'events_count' => $t->events_count,
@@ -40,6 +50,9 @@ class GtmTagController extends Controller
         return Inertia::render($this->viewFor('Admin/GtmTag/Index'), [
             'gtmTags' => $gtmTags,
             'shops' => Shop::withoutGlobalScope('visibleGroup')->where('is_active', true)->orderBy('id')->get(['id', 'name']),
+            'kinds' => GtmTag::KINDS,
+            'confidences' => GtmTag::CONFIDENCES,
+            'companyGtmId' => config('services.company_gtm_id'),
         ]);
     }
 
@@ -96,7 +109,14 @@ class GtmTagController extends Controller
 
         $validated = $request->validate([
             'company_name' => 'nullable|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
+            'contact' => 'nullable|string|max:255',
             'gtm_id' => ['required', 'string', 'regex:/^GTM-[A-Z0-9]{4,12}$/', Rule::unique('gtm_tags', 'gtm_id')->ignore($gtmTag?->id)],
+            'kind' => ['nullable', Rule::in(array_keys(GtmTag::KINDS))],
+            'purpose' => 'nullable|string|max:2000',
+            'used_on' => 'nullable|string|max:2000',
+            'confidence' => ['nullable', Rule::in(GtmTag::CONFIDENCES)],
+            'confirmed_at' => 'nullable|date',
             'memo' => 'nullable|string|max:2000',
             'is_active' => 'boolean',
             'shop_ids' => 'nullable|array',
@@ -109,6 +129,7 @@ class GtmTagController extends Controller
         $shopIds = $validated['shop_ids'] ?? [];
         unset($validated['shop_ids']);
         $validated['is_active'] = $validated['is_active'] ?? true;
+        $validated['kind'] = $validated['kind'] ?? 'event';
 
         return [$validated, $shopIds];
     }
