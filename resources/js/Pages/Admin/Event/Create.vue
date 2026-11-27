@@ -81,7 +81,7 @@
 
                                 <div>
                                     <label class="block text-sm font-medium text-brand-text mb-1">URLエイリアス</label>
-                                    <p class="mt-1 text-xs text-brand-text-muted mb-2">同じイベントに複数のURLでアクセスさせたい場合に登録します。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
+                                    <p class="mt-1 text-xs text-brand-text-muted mb-2">ここに登録したURL（/event/エイリアス）で来た人を、このイベントのURLへ転送（301・恒久）します。utm などのクエリは引き継ぎます。終了・非公開にした旧 LP のスラッグも登録できます（旧 LP から新しい LP へまとめるとき）。英数字、ハイフン(-)、アンダースコア(_)のみ使用可能です。</p>
                                     <div
                                         v-for="(alias, index) in form.slug_aliases"
                                         :key="index"

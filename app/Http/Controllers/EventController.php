@@ -92,13 +92,15 @@ class EventController extends Controller
                 ->first();
 
             if ($eventByAlias) {
+                // 旧URL（エイリアス）→ 今のURL へ恒久的に転送（301）。utm などのクエリはそのまま引き継ぐ
+                // （検索・広告・GBP・チラシの QR に残った古い LP の URL を、今の LP にまとめるため）
                 $url = route($canonicalRouteName, ['slug' => (string) $eventByAlias->slug]);
                 $query = request()->query();
                 if (!empty($query)) {
                     $url .= '?'.http_build_query($query);
                 }
 
-                return redirect($url);
+                return redirect($url, 301);
             }
 
             abort(404);
