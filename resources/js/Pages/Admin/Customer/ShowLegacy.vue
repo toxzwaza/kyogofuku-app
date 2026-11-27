@@ -2533,6 +2533,7 @@ import ConstraintBodyWithChecks from '@/Components/ConstraintBodyWithChecks.vue'
 import CustomerLineSection from '@/Components/Admin/CustomerLineSection.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
+import { countedPhotoSlots, photoSlotLabel } from '@/utils/photoSlotDuplicate';
 
 const props = defineProps({
     customer: Object,
@@ -3652,6 +3653,23 @@ const updatePhotoSlot = () => {
 
 // 前撮り情報追加
 const storePhotoSlot = () => {
+    // 二重登録の確認：もう登録が1件あれば、そこから移すか聞く（2件以上・同じ時刻はサーバーの説明をそのまま出す）
+    let replaceId = null;
+    const counted = countedPhotoSlots(props.customer.photoSlots);
+    const target = photoSlotForm.details_undecided ? null : availableTimeSlots.value.find((t) => t.id === Number(photoSlotForm.photo_slot_id));
+    const sameAsTarget = (c) => (photoSlotForm.details_undecided
+        ? c.details_undecided
+        : !!target && !c.details_undecided && Number(c.photo_studio_id) === Number(target.studio?.id)
+            && String(c.shoot_date).slice(0, 10) === String(target.shoot_date).slice(0, 10)
+            && String(c.shoot_time).slice(0, 5) === String(target.shoot_time).slice(0, 5));
+    if (counted.length === 1 && !sameAsTarget(counted[0])) {
+        const to = photoSlotForm.details_undecided ? '日時未定' : photoSlotLabel(target ? { ...target, studio: null } : null);
+        const what = counted[0].details_undecided ? '日時未定の登録は消えます' : '枠は空きに戻ります';
+        if (!window.confirm(`この方は ${photoSlotLabel(counted[0])} に登録済みです。${to} に変更しますか？\n（変更すると、元の${what}）`)) {
+            return;
+        }
+        replaceId = counted[0].id;
+    }
     // フォームデータを変換（空文字列をnullに変換、不要なフィールドを削除）
     photoSlotForm.transform((data) => {
         const transformed = { ...data };
@@ -3666,6 +3684,7 @@ const storePhotoSlot = () => {
         if (transformed.details_undecided) {
             delete transformed.photo_slot_id;
         }
+        transformed.replace_photo_slot_id = replaceId;
         return transformed;
     }).post(route('admin.customers.photo-slots.store', props.customer.id), {
         preserveScroll: true,
