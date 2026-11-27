@@ -1,0 +1,2 @@
+HTTP/1.1 302 Found
+X-Powered-By: PHP/8.2.35

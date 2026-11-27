@@ -1,0 +1,45 @@
+id bigint(20) unsigned NO
+event_id bigint(20) unsigned NO
+document_id bigint(20) unsigned YES
+name varchar(255) NO
+email varchar(255) NO
+phone varchar(255) NO
+status varchar(255) NO 未対応
+status_updated_by_user_id bigint(20) unsigned YES
+request_method varchar(255) YES
+postal_code varchar(255) YES
+venue_id bigint(20) unsigned YES
+has_visited_before tinyint(1) NO 0
+address varchar(255) YES
+birth_date date YES
+seijin_year int(11) YES
+referred_by_name varchar(255) YES
+line_referral_id bigint(20) unsigned YES
+reservation_datetime varchar(255) YES
+furigana varchar(255) YES
+school_name varchar(255) YES
+koichi_furisode_used tinyint(1) YES
+graduation_ceremony_year smallint(6) YES
+graduation_ceremony_month tinyint(3) unsigned YES
+graduation_ceremony_date date YES
+visitor_count smallint(5) unsigned YES
+companion_types longtext YES
+companion_hakama_usage tinyint(1) YES
+staff_name varchar(255) YES
+admin_assignee varchar(255) YES
+entrance_ticket_send_status varchar(32) NO 未送付
+visit_reasons longtext YES
+parking_usage varchar(255) YES
+parking_car_count int(11) YES
+heard_from varchar(255) YES
+considering_plans longtext YES
+inquiry_message text YES
+form_data longtext YES
+privacy_agreed tinyint(1) NO 0
+cancel_flg tinyint(1) NO 0
+customer_id bigint(20) unsigned YES
+utm_source varchar(255) YES
+utm_medium varchar(255) YES
+utm_campaign varchar(255) YES
+created_at timestamp YES
+updated_at timestamp YES

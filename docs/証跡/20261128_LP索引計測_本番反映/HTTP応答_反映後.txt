@@ -1,0 +1,4 @@
+/ 302
+/login 200
+/event/reservation_store_kouichi 200
+/event/reservation_gCmsuEa6zX 200

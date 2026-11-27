@@ -1,0 +1,2 @@
+HTTP/1.1 302 Found
+Strict-Transport-Security: max-age=31536000
