@@ -16,6 +16,7 @@ use App\Services\PhotoSlot\PhotoStudioHours;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 /**
@@ -96,13 +97,126 @@ class PhotoSlotController extends Controller
 
         $start = Carbon::createFromFormat('Y-m-d', ($validated['month'] ?? Carbon::today()->format('Y-m')).'-01')->startOfDay();
         $end = $start->copy()->endOfMonth();
+        $studioInfo = $this->studioInfo($studios);
+        ['columns' => $columns, 'times' => $times, 'cells' => $cellList] = $this->buildGrid($studios, $start->toDateString(), $end->toDateString());
+
+        // 今月以降で枠のある月（すぐ移れるように）
+        $months = PhotoSlot::query()
+            ->whereIn('photo_studio_id', $studioIds)
+            ->where('details_undecided', false)
+            ->where('shoot_date', '>=', Carbon::today()->startOfMonth()->toDateString())
+            ->whereNotNull('shoot_time')
+            ->get(['shoot_date', 'customer_id'])
+            ->groupBy(fn ($s) => Carbon::parse($s->shoot_date)->format('Y-m'))
+            ->map(fn ($g, $ym) => ['month' => $ym, 'capacity' => $g->count(), 'booked' => $g->whereNotNull('customer_id')->count()])
+            ->sortKeys()
+            ->values();
+
+        return response()->json([
+            'studios' => $studioInfo->values(),
+            'month' => $start->format('Y-m'),
+            'prev_month' => $start->copy()->subMonthNoOverflow()->format('Y-m'),
+            'next_month' => $start->copy()->addMonthNoOverflow()->format('Y-m'),
+            'months' => $months,
+            'columns' => $columns,
+            'times' => $times,
+            'cells' => (object) $cellList,
+            'max_capacity' => PhotoStudio::MAX_CAPACITY,
+        ]);
+    }
+
+    /**
+     * 期間を指定した印刷：選んだスタジオの「開始日〜終了日」（月をまたいでよい）。
+     * 1日ずつ「行＝時刻・列＝スタジオ」の表にして、ブラウザの印刷で出す（日の途中では切らない）。
+     * 見えるのは自分の店舗グループのスタジオだけ（表・一覧と同じ）。
+     */
+    public function print(Request $request)
+    {
+        $validated = $request->validate([
+            'from' => 'nullable|date_format:Y-m-d',
+            'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+            'studio_ids' => 'nullable|array',
+            'studio_ids.*' => 'integer',
+        ], [
+            'to.after_or_equal' => '終了日は開始日と同じ日か、それより後にしてください。',
+        ]);
+
+        $from = Carbon::createFromFormat('Y-m-d', $validated['from'] ?? Carbon::today()->toDateString())->startOfDay();
+        $to = isset($validated['to'])
+            ? Carbon::createFromFormat('Y-m-d', $validated['to'])->startOfDay()
+            : $from->copy()->endOfMonth()->startOfDay();
+        if ($from->diffInDays($to) >= self::PRINT_MAX_DAYS) {
+            throw ValidationException::withMessages(['to' => '印刷できる期間は '.self::PRINT_MAX_DAYS.' 日までです。']);
+        }
+
+        $allStudios = PhotoStudio::query()->visibleToUser($request->user())->orderBy('name')->get();
+        $requested = $validated['studio_ids'] ?? null;
+        $studios = $requested === null
+            ? $allStudios->where('is_active', true)->values()
+            : $allStudios->whereIn('id', array_map('intval', $requested))->values();
+
+        $days = [];
+        if ($studios->isNotEmpty()) {
+            $grid = $this->buildGrid($studios, $from->toDateString(), $to->toDateString());
+            foreach ($grid['columns'] as $col) {
+                $date = $col['date'];
+                $days[$date] ??= ['date' => $date, 'weekday' => $col['weekday'], 'columns' => [], 'times' => [], 'booked' => 0, 'capacity' => 0];
+                $days[$date]['columns'][] = $col;
+                foreach ($grid['cells'][$col['key']] as $time => $cell) {
+                    $days[$date]['times'][$time] = true;
+                    $days[$date]['booked'] += $cell['booked'];
+                    $days[$date]['capacity'] += $cell['capacity'];
+                }
+            }
+            foreach ($days as &$day) {
+                $day['times'] = array_keys($day['times']);
+                sort($day['times']);
+                $day['cells'] = (object) array_intersect_key($grid['cells'], array_flip(array_column($day['columns'], 'key')));
+            }
+            unset($day);
+        }
+
+        return Inertia::render('Admin/PhotoSlot/Print', [
+            'studios' => $this->studioInfo($allStudios)->values(),
+            'selectedStudioIds' => $studios->pluck('id')->values(),
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'days' => array_values($days),
+            'maxDays' => self::PRINT_MAX_DAYS,
+            'printedAt' => Carbon::now()->format('Y/n/j G:i'),
+        ]);
+    }
+
+    /** 印刷できる日数の上限（1年分） */
+    private const PRINT_MAX_DAYS = 366;
+
+    private function studioInfo($studios)
+    {
+        return $studios->mapWithKeys(fn (PhotoStudio $s) => [$s->id => [
+            'id' => $s->id,
+            'name' => trim($s->name),
+            'shop_group' => $s->shop_group,
+            'default_capacity' => (int) $s->default_capacity,
+            'is_active' => (bool) $s->is_active,
+        ]]);
+    }
+
+    /**
+     * 表のデータ（表の画面と印刷で共通）：期間内の登録済みの枠を「日付×スタジオ」の列・時刻の行・席のマスにまとめる。
+     *
+     * @return array{columns: array<int, array>, times: array<int, string>, cells: array<string, array>}
+     */
+    private function buildGrid($studios, string $fromDate, string $toDate): array
+    {
+        $studioIds = $studios->pluck('id')->all();
+        $studioInfo = $this->studioInfo($studios);
         $today = Carbon::today()->toDateString();
 
         $slots = PhotoSlot::query()
             ->with(['customer:id,name', 'shops:id,name', 'user:id,name', 'plan:id,name'])
             ->whereIn('photo_studio_id', $studioIds)
             ->where('details_undecided', false)
-            ->whereBetween('shoot_date', [$start->toDateString(), $end->toDateString()])
+            ->whereBetween('shoot_date', [$fromDate, $toDate])
             ->whereNotNull('shoot_time')
             ->orderBy('shoot_date')
             ->orderBy('shoot_time')
@@ -128,13 +242,6 @@ class PhotoSlotController extends Controller
         ksort($times);
 
         // 列：日付順、同じ日はスタジオの名前順
-        $studioInfo = $studios->mapWithKeys(fn (PhotoStudio $s) => [$s->id => [
-            'id' => $s->id,
-            'name' => trim($s->name),
-            'shop_group' => $s->shop_group,
-            'default_capacity' => (int) $s->default_capacity,
-            'is_active' => (bool) $s->is_active,
-        ]]);
         $order = array_flip($studioIds);
         $keys = array_keys($cells);
         usort($keys, function ($a, $b) use ($order) {
@@ -166,29 +273,7 @@ class PhotoSlotController extends Controller
             }
         }
 
-        // 今月以降で枠のある月（すぐ移れるように）
-        $months = PhotoSlot::query()
-            ->whereIn('photo_studio_id', $studioIds)
-            ->where('details_undecided', false)
-            ->where('shoot_date', '>=', Carbon::today()->startOfMonth()->toDateString())
-            ->whereNotNull('shoot_time')
-            ->get(['shoot_date', 'customer_id'])
-            ->groupBy(fn ($s) => Carbon::parse($s->shoot_date)->format('Y-m'))
-            ->map(fn ($g, $ym) => ['month' => $ym, 'capacity' => $g->count(), 'booked' => $g->whereNotNull('customer_id')->count()])
-            ->sortKeys()
-            ->values();
-
-        return response()->json([
-            'studios' => $studioInfo->values(),
-            'month' => $start->format('Y-m'),
-            'prev_month' => $start->copy()->subMonthNoOverflow()->format('Y-m'),
-            'next_month' => $start->copy()->addMonthNoOverflow()->format('Y-m'),
-            'months' => $months,
-            'columns' => $columns,
-            'times' => array_keys($times),
-            'cells' => (object) $cellList,
-            'max_capacity' => PhotoStudio::MAX_CAPACITY,
-        ]);
+        return ['columns' => $columns, 'times' => array_keys($times), 'cells' => $cellList];
     }
 
     /**
