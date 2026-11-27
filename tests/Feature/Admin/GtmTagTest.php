@@ -309,11 +309,12 @@ class GtmTagTest extends TestCase
         $this->assertSame('既存イベントから自動登録', $shared->memo);
         $this->assertSame('event', $shared->kind);
 
-        // 入っている項目は上書きしない（空の確認日だけ入る）
+        // 入っている項目は上書きしない（確度が確認済でないので確認日も入れない）
         $manual->refresh();
         $this->assertSame('手入力の会社', $manual->company_name);
         $this->assertSame('低', $manual->confidence);
         $this->assertSame('福井の広告', $manual->purpose);
+        $this->assertNull($manual->confirmed_at);
 
         $this->assertSame('アンジュ', $anju->fresh()->company_name);
 

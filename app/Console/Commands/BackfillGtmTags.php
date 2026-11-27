@@ -74,6 +74,10 @@ class BackfillGtmTags extends Command
                         $changes[$col] = $def[$col];
                     }
                 }
+                // 確度を手で入れてあり確認済でない行には、確認日だけを入れない
+                if (isset($changes['confirmed_at']) && ($changes['confidence'] ?? $tag->confidence) !== GtmTag::CONFIRMED) {
+                    unset($changes['confirmed_at']);
+                }
                 if (array_key_exists('is_active', $def) && $tag->is_active !== $def['is_active']) {
                     $changes['is_active'] = $def['is_active'];
                 }
