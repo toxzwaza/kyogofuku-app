@@ -316,7 +316,10 @@ class GtmTagTest extends TestCase
         $this->assertSame('福井の広告', $manual->purpose);
         $this->assertNull($manual->confirmed_at);
 
-        $this->assertSame('アンジュ', $anju->fresh()->company_name);
+        $anju->refresh();
+        $this->assertSame('アンジュ', $anju->company_name);
+        $this->assertFalse($anju->is_active);
+        $this->assertSame('使用していない（2026-11-28 確認）', $anju->memo);
 
         // マスタになかった ID は足す（種類・使用中も決める）
         $byId = GtmTag::all()->keyBy('gtm_id');
@@ -337,5 +340,43 @@ class GtmTagTest extends TestCase
         $this->artisan('gtm:backfill')->expectsOutputToContain('追加 0件・更新 0件・変更なし 9件')->assertSuccessful();
         $after = GtmTag::orderBy('id')->get()->map->only(['gtm_id', 'company_name', 'kind', 'purpose', 'used_on', 'confidence', 'memo', 'is_active'])->all();
         $this->assertSame($before, $after);
+    }
+
+    public function test_backfill_stops_anju_tag_without_changing_linked_events(): void
+    {
+        $user = $this->user();
+        $anju = GtmTag::create(['gtm_id' => 'GTM-5NP4QCSB', 'memo' => '既存イベントから自動登録']);
+        $event = $this->event(['gtm_tag_id' => $anju->id, 'gtm_id' => 'GTM-5NP4QCSB']);
+
+        $this->artisan('gtm:backfill')->assertSuccessful();
+
+        // 停止になる（メモは入っているので上書きしない）
+        $anju->refresh();
+        $this->assertFalse($anju->is_active);
+        $this->assertSame('既存イベントから自動登録', $anju->memo);
+
+        // 付けているイベントの LP 出力（events.gtm_id）は変わらない
+        $event->refresh();
+        $this->assertSame($anju->id, $event->gtm_tag_id);
+        $this->assertSame('GTM-5NP4QCSB', $event->gtm_id);
+
+        // イベント編集の選択肢に今の値が残る（停止の印つき）
+        $option = GtmTag::options($event->gtm_tag_id)->firstWhere('id', $anju->id);
+        $this->assertNotNull($option);
+        $this->assertFalse($option['is_active']);
+
+        // 今の値のまま保存しても消えない
+        $this->actingAs($user)->put(route('admin.events.update', $event), [
+            'title' => '変更後',
+            'slug' => $event->slug,
+            'form_type' => 'reservation',
+            'is_public' => true,
+            'gtm_tag_id' => $anju->id,
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $event->refresh();
+        $this->assertSame('変更後', $event->title);
+        $this->assertSame($anju->id, $event->gtm_tag_id);
+        $this->assertSame('GTM-5NP4QCSB', $event->gtm_id);
     }
 }

@@ -30,7 +30,7 @@ class BackfillGtmTags extends Command
             'GTM-5LWBZH47' => ['kind' => 'event', 'company_name' => 'BE FANG', 'purpose' => '好一の広告', 'used_on' => '好一HP（kyogofuku-kouichi.com）'] + $confirmed,
             'GTM-T2CT729C' => ['kind' => 'event', 'company_name' => 'BE FANG', 'purpose' => '福井の袴予約の広告'] + $confirmed,
             'GTM-5MSL9GRL' => ['kind' => 'event', 'company_name' => 'カラフル', 'purpose' => '福井の広告', 'used_on' => '福井HP（fukui.kyogofuku-hirata.jp）'] + $confirmed,
-            'GTM-5NP4QCSB' => ['kind' => 'event', 'company_name' => 'アンジュ'] + $confirmed,
+            'GTM-5NP4QCSB' => ['kind' => 'event', 'company_name' => 'アンジュ', 'memo' => '使用していない（2026-11-28 確認）', 'is_active' => false] + $confirmed,
             'GTM-N7BDKK6S' => ['kind' => 'event', 'company_name' => 'アンジュ', 'memo' => '使用していない（2026-11-28 確認）', 'is_active' => false] + $confirmed,
             'GTM-WHQZSR67' => ['kind' => 'company', 'company_name' => '自社', 'purpose' => '社内の計測（GA4・Clarity）', 'used_on' => 'Inertia版の全イベントLP（config services.company_gtm_id）'] + $confirmed,
             'GTM-MXSRMSXR' => ['kind' => 'site', 'company_name' => '自社', 'purpose' => 'HPの基本計測（GA4・Clarity）', 'used_on' => '好一HP（kyogofuku-kouichi.com）', 'confidence' => '中'],
