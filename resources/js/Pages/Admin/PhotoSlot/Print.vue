@@ -1,9 +1,11 @@
 <script setup>
 // 前撮り枠の印刷：期間（開始日〜終了日、月をまたいでよい）とスタジオを選び、ブラウザの印刷で出す。
 // 1日ずつ「行＝時刻・列＝スタジオ」の表にする。日の途中ではページを切らない（1日が1ページに入らないときだけ切り、見出しの行を次のページにも出す）。
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+// 1ページに何日分載せるかを選べる（A4 横は横に並べ、A4 縦は縦に積む）。入りきらない日は次のページへ送る。
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, Printer } from 'lucide-vue-next';
+import DayTable from '@/Components/PhotoSlot/PrintDayTable.vue';
 
 const props = defineProps({
     studios: { type: Array, default: () => [] },
@@ -12,6 +14,8 @@ const props = defineProps({
     to: { type: String, required: true },
     days: { type: Array, default: () => [] },
     maxDays: { type: Number, default: 366 },
+    perPage: { type: Number, default: 1 },
+    perPageOptions: { type: Array, default: () => [1, 2, 3, 4, 6] },
     printedAt: { type: String, default: '' },
 });
 
@@ -33,6 +37,7 @@ const store = (key, value) => {
 const form = ref({ from: props.from, to: props.to, studio_ids: [...props.selectedStudioIds] });
 const orientation = ref(readStored(ORIENTATION_KEY, 'landscape') === 'portrait' ? 'portrait' : 'landscape');
 const showDetail = ref(readStored(DETAIL_KEY, '1') === '1');
+const perPage = ref(props.perPageOptions.includes(props.perPage) ? props.perPage : 1);
 const loading = ref(false);
 
 const errors = computed(() => usePage().props.errors || {});
@@ -43,7 +48,7 @@ const toggleAll = () => {
 
 const show = () => {
     if (!form.value.studio_ids.length) return;
-    router.get(route('admin.photo-slots.print'), form.value, {
+    router.get(route('admin.photo-slots.print'), { ...form.value, per_page: perPage.value }, {
         preserveScroll: true,
         onStart: () => { loading.value = true; },
         onFinish: () => { loading.value = false; },
@@ -66,10 +71,90 @@ const applyPageStyle = () => {
     }
     pageStyle.textContent = `@page { size: A4 ${orientation.value}; margin: 10mm 8mm 12mm; @bottom-center { content: counter(page) " / " counter(pages); font-size: 9pt; color: #555; } }`;
 };
-onMounted(applyPageStyle);
 onBeforeUnmount(() => { pageStyle?.remove(); pageStyle = null; });
 watch(orientation, (v) => { store(ORIENTATION_KEY, v); applyPageStyle(); });
 watch(showDetail, (v) => store(DETAIL_KEY, v ? '1' : '0'));
+
+// 1ページの日数を変えたら URL にも残す（読み直し・ブックマークで同じまとめ方になる）
+watch(perPage, (v) => {
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', String(v));
+        window.history.replaceState(window.history.state, '', url);
+    } catch (e) { /* URL を変えられなくても動く */ }
+});
+
+// ---- ページ割り ----
+// 用紙から余白（上10・左右8・下12mm）を引いた、印刷できる広さ（mm）
+const PAGE_MM = { landscape: { w: 281, h: 188 }, portrait: { w: 194, h: 275 } };
+// 何日分をいくつの列に並べるか：横は横に並べる（4・6日は2段）、縦は縦に積む（4・6日は2列）
+const COLUMNS = {
+    landscape: { 1: 1, 2: 2, 3: 3, 4: 2, 6: 3 },
+    portrait: { 1: 1, 2: 1, 3: 1, 4: 2, 6: 2 },
+};
+const GAP_MM = 3;      // 日と日の間
+const SAFETY_MM = 2;   // 画面と印刷の文字の差のゆとり
+const PX_PER_MM = 96 / 25.4;
+
+const gridCols = computed(() => COLUMNS[orientation.value][perPage.value] ?? 1);
+// 2日分以上は文字と余白を少し詰める
+const dense = computed(() => perPage.value >= 2);
+
+const measureEl = ref(null);
+const pages = ref(props.days.map((_, i) => ({ items: [i], overflow: false, sent: false })));
+
+// 画面に見えない所で各日の表の高さを測り、上から順に「指定の日数まで・ページの高さに入るまで」詰める。
+// 入らない日は次のページへ送る。1日だけでも入らない日は、その日だけのページにして表の途中で切る（見出しの行は次のページにも出る）。
+const paginate = async () => {
+    await nextTick();
+    const el = measureEl.value;
+    if (!el || !props.days.length) {
+        pages.value = [];
+        return;
+    }
+    const mm = (node) => (node ? node.getBoundingClientRect().height / PX_PER_MM : 0);
+    const heights = [...el.querySelectorAll('[data-measure-day]')].map(mm);
+    const header = el.querySelector('[data-measure-header]');
+    const headerMm = mm(header) + parseFloat(getComputedStyle(header).marginBottom || 0) / PX_PER_MM;
+    const avail = PAGE_MM[orientation.value].h - headerMm - SAFETY_MM;
+    const cols = gridCols.value;
+    const n = perPage.value;
+
+    const heightOf = (items) => {
+        let total = 0;
+        for (let r = 0; r < items.length; r += cols) {
+            total += Math.max(...items.slice(r, r + cols).map(i => heights[i])) + (r > 0 ? GAP_MM : 0);
+        }
+        return total;
+    };
+
+    const result = [];
+    let cur = [];
+    props.days.forEach((_, i) => {
+        if (cur.length < n && (cur.length === 0 || heightOf([...cur, i]) <= avail)) {
+            cur.push(i);
+            return;
+        }
+        result.push({ items: cur, sent: cur.length < n });
+        cur = [i];
+    });
+    if (cur.length) result.push({ items: cur, sent: false });
+    result.forEach((p) => {
+        p.overflow = p.items.length === 1 && heights[p.items[0]] > avail;
+        if (p.overflow) p.sent = false; // 1日で入りきらない日は別に知らせる
+    });
+    pages.value = result;
+};
+
+const sentCount = computed(() => pages.value.filter(p => p.sent).length);
+const overflowDays = computed(() => pages.value.filter(p => p.overflow).map(p => props.days[p.items[0]]));
+
+onMounted(() => {
+    applyPageStyle();
+    paginate();
+    document.fonts?.ready?.then(paginate);
+});
+watch([orientation, perPage, showDetail, () => props.days], paginate);
 
 const dateLabel = (date) => {
     const [y, m, d] = date.split('-').map(Number);
@@ -79,21 +164,12 @@ const dayLabel = (day) => {
     const [, m, d] = day.date.split('-').map(Number);
     return `${m}/${d}（${WEEKDAYS[day.weekday]}）`;
 };
-const weekdayClass = (w) => (w === 0 ? 'is-sun' : w === 6 ? 'is-sat' : '');
 
 const selectedNames = computed(() => props.studios
     .filter(s => props.selectedStudioIds.includes(s.id))
     .map(s => s.name)
     .join('・'));
 const totals = computed(() => props.days.reduce((t, d) => ({ booked: t.booked + d.booked, capacity: t.capacity + d.capacity }), { booked: 0, capacity: 0 }));
-
-const cellOf = (day, col, time) => day.cells?.[col.key]?.[time] || null;
-const shopsOf = (day, col) => {
-    const names = new Set();
-    Object.values(day.cells?.[col.key] || {}).forEach(c => c.seats.forEach(s => s.shops.forEach(n => names.add(n))));
-    return [...names].join('・');
-};
-const seatDetail = (seat) => [seat.shops.join('・'), seat.user, seat.plan].filter(Boolean).join(' / ');
 </script>
 
 <template>
@@ -129,6 +205,12 @@ const seatDetail = (seat) => [seat.shops.join('・'), seat.user, seat.plan].filt
 
                     <div class="flex items-center gap-3 text-sm ml-auto">
                         <label class="inline-flex items-center gap-1.5">
+                            <span class="text-xs text-sumi-600">1ページに</span>
+                            <select v-model.number="perPage" class="rounded-md border-sumi-300 text-sm py-1.5" data-test="per-page">
+                                <option v-for="n in perPageOptions" :key="n" :value="n">{{ n }}日分</option>
+                            </select>
+                        </label>
+                        <label class="inline-flex items-center gap-1.5">
                             <span class="text-xs text-sumi-600">用紙</span>
                             <select v-model="orientation" class="rounded-md border-sumi-300 text-sm py-1.5">
                                 <option value="landscape">A4 横</option>
@@ -163,110 +245,104 @@ const seatDetail = (seat) => [seat.shops.join('・'), seat.user, seat.plan].filt
                     </label>
                 </div>
 
-                <p v-if="errors.from || errors.to" class="text-sm text-red-600">{{ errors.to || errors.from }}</p>
+                <p v-if="errors.from || errors.to || errors.per_page" class="text-sm text-red-600">{{ errors.to || errors.from || errors.per_page }}</p>
                 <p v-else-if="!form.studio_ids.length" class="text-sm text-red-600">スタジオを1つ以上選んでください。</p>
                 <p v-else-if="dirty" class="text-sm text-ai-700">期間・スタジオを変えました。「表示」を押すと下のプレビューが変わります。</p>
-                <p v-else class="text-xs text-sumi-600">
-                    1日ずつ表にします。日の途中ではページを切りません。期間は {{ maxDays }} 日まで。
-                </p>
+                <template v-else>
+                    <p class="text-xs text-sumi-600">
+                        1日ずつ表にし、1ページに{{ perPage }}日分まで{{ perPage > 1 ? (gridCols > 1 ? '並べます' : '縦に積みます') : '載せます' }}。日の途中ではページを切りません。期間は {{ maxDays }} 日まで。
+                        <span v-if="days.length" class="ml-2 font-semibold text-sumi-800">全 {{ pages.length }} ページ<template v-if="overflowDays.length">（1日で入りきらない日の続きの分は増えます）</template></span>
+                    </p>
+                    <p v-if="sentCount" class="text-xs text-amber-700">
+                        枠が多く{{ perPage }}日分が入りきらないページが {{ sentCount }} ページあります。入りきらない日は次のページへ送りました。
+                    </p>
+                    <p v-if="overflowDays.length" class="text-xs text-amber-700">
+                        {{ overflowDays.map(dayLabel).join('・') }} は1日で1ページに入りきらないため、その日だけ表の途中で次のページに続けます（見出しの行は次のページにも出ます）。
+                    </p>
+                </template>
             </div>
         </div>
 
-        <!-- プレビュー＝印刷するもの -->
-        <div class="py-6 print:py-0">
-            <div class="sheet mx-auto bg-white shadow print:shadow-none" :class="orientation">
-                <header class="sheet-header">
-                    <div class="flex items-baseline justify-between gap-4">
-                        <h2 class="text-base font-bold">
-                            前撮り枠　{{ dateLabel(from) }} 〜 {{ dateLabel(to) }}
-                        </h2>
-                        <span class="text-[9pt] text-sumi-600 whitespace-nowrap">印刷 {{ printedAt }}</span>
+        <!-- プレビュー＝印刷するもの（1枚ずつ紙に見せる） -->
+        <div class="py-6 print:py-0 space-y-2 print:space-y-0">
+            <p v-if="!days.length" class="sheet mx-auto bg-white shadow py-10 text-center text-sm text-sumi-600" :class="orientation">
+                この期間は、選んだスタジオに登録済みの枠がありません。
+            </p>
+            <template v-for="(page, pi) in pages" :key="pi">
+                <div class="sheet mx-auto bg-white shadow print:shadow-none" :class="[orientation, { dense }]" data-test="page">
+                    <header class="sheet-header">
+                        <div class="flex items-baseline justify-between gap-4">
+                            <h2 class="text-base font-bold">
+                                前撮り枠　{{ dateLabel(from) }} 〜 {{ dateLabel(to) }}
+                            </h2>
+                            <span class="text-[9pt] text-sumi-600 whitespace-nowrap">印刷 {{ printedAt }}</span>
+                        </div>
+                        <div class="text-[9pt] text-sumi-700">
+                            スタジオ：{{ selectedNames || '（なし）' }}
+                            <span class="ml-3">予約 {{ totals.booked }}／定員 {{ totals.capacity }}（{{ days.length }}日）</span>
+                        </div>
+                    </header>
+                    <div
+                        class="page-grid"
+                        :class="{ 'is-block': gridCols === 1 || page.overflow }"
+                        :style="{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }"
+                    >
+                        <section v-for="i in page.items" :key="days[i].date" class="day" :class="{ 'may-split': page.overflow }">
+                            <DayTable :day="days[i]" :show-detail="showDetail" :dense="dense" />
+                        </section>
                     </div>
-                    <div class="text-[9pt] text-sumi-700">
-                        スタジオ：{{ selectedNames || '（なし）' }}
-                        <span v-if="days.length" class="ml-3">予約 {{ totals.booked }}／定員 {{ totals.capacity }}（{{ days.length }}日）</span>
-                    </div>
-                </header>
-
-                <p v-if="!days.length" class="py-10 text-center text-sm text-sumi-600">
-                    この期間は、選んだスタジオに登録済みの枠がありません。
+                </div>
+                <p class="print:hidden text-center text-xs text-sumi-500">
+                    {{ pi + 1 }} / {{ pages.length }} ページ
+                    <span v-if="page.sent">（{{ perPage }}日分が入りきらないので、次の日は次のページへ）</span>
+                    <span v-if="page.overflow">（1日で入りきらないので、印刷では表の途中で次のページに続きます）</span>
                 </p>
+            </template>
+        </div>
 
-                <section v-for="day in days" :key="day.date" class="day">
-                    <table class="day-table">
-                        <colgroup>
-                            <col class="time-col-w" />
-                            <col v-for="col in day.columns" :key="col.key" />
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th :colspan="day.columns.length + 1" class="day-head">
-                                    <span :class="weekdayClass(day.weekday)">{{ dayLabel(day) }}</span>
-                                    <span class="day-count">予約 {{ day.booked }}／定員 {{ day.capacity }}</span>
-                                </th>
-                            </tr>
-                            <tr>
-                                <th class="time-col">時刻</th>
-                                <th v-for="col in day.columns" :key="col.key" class="studio-head">
-                                    <div>{{ col.studio.name }}</div>
-                                    <div v-if="shopsOf(day, col)" class="studio-shops">{{ shopsOf(day, col) }}</div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="time in day.times" :key="time">
-                                <th class="time-col">{{ time }}</th>
-                                <td v-for="col in day.columns" :key="col.key + time" :class="cellOf(day, col, time) ? '' : 'no-slot'">
-                                    <ul v-if="cellOf(day, col, time)">
-                                        <li v-for="seat in cellOf(day, col, time).seats" :key="seat.id" :class="seat.customer ? 'booked' : 'vacant'">
-                                            <template v-if="seat.customer">
-                                                <span class="name">{{ seat.customer.name }}</span>
-                                                <span v-if="showDetail && seatDetail(seat)" class="detail">{{ seatDetail(seat) }}</span>
-                                                <span v-if="showDetail && seat.remarks" class="detail">備考：{{ seat.remarks }}</span>
-                                            </template>
-                                            <template v-else>空き</template>
-                                        </li>
-                                    </ul>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </section>
+        <!-- ページ割りのための見えない測り場（印刷には出さない） -->
+        <div class="measure print:hidden" aria-hidden="true">
+            <div ref="measureEl" class="sheet" :class="[orientation, { dense }]">
+                <header class="sheet-header" data-measure-header>
+                    <div class="flex items-baseline justify-between gap-4">
+                        <h2 class="text-base font-bold">前撮り枠　{{ dateLabel(from) }} 〜 {{ dateLabel(to) }}</h2>
+                        <span class="text-[9pt] whitespace-nowrap">印刷 {{ printedAt }}</span>
+                    </div>
+                    <div class="text-[9pt]">スタジオ：{{ selectedNames || '（なし）' }}<span class="ml-3">予約 {{ totals.booked }}／定員 {{ totals.capacity }}（{{ days.length }}日）</span></div>
+                </header>
+                <div class="page-grid measure-grid" :style="{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }">
+                    <section v-for="day in days" :key="day.date" class="day" data-measure-day>
+                        <DayTable :day="day" :show-detail="showDetail" :dense="dense" />
+                    </section>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-/* 画面ではA4の紙に見せる（幅は用紙から余白を引いた分） */
-.sheet { padding: 10mm 8mm; }
-.sheet.landscape { width: 297mm; }
-.sheet.portrait { width: 210mm; }
+/* 画面ではA4の紙に見せる（余白も印刷と同じ：上10・左右8・下12mm） */
+.sheet { padding: 10mm 8mm 12mm; box-sizing: border-box; }
+.sheet.landscape { width: 297mm; min-height: 210mm; }
+.sheet.portrait { width: 210mm; min-height: 297mm; }
 
 .sheet-header { margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 1.5px solid #333; }
 
-.day { margin-bottom: 4mm; break-inside: avoid; page-break-inside: avoid; }
-.day-table { width: 100%; border-collapse: collapse; font-size: 9pt; table-layout: fixed; }
-.day-table thead { display: table-header-group; }
-.day-table tr { break-inside: avoid; page-break-inside: avoid; }
-.day-table th, .day-table td { border: 1px solid #888; padding: 1mm 1.5mm; vertical-align: top; }
-.day-head { text-align: left; font-size: 10.5pt; background: #e8e8e8; }
-.day-count { margin-left: 4mm; font-size: 8.5pt; font-weight: normal; color: #444; }
-.is-sat { color: #1d4ed8; }
-.is-sun { color: #b91c1c; }
-.time-col-w { width: 14mm; }
-.time-col { text-align: center; background: #f3f3f3; font-variant-numeric: tabular-nums; }
-.studio-head { text-align: left; background: #f8f8f8; font-weight: 600; }
-.studio-shops { font-size: 7.5pt; font-weight: normal; color: #555; }
-.no-slot { background: #ececec; }
-.day-table ul { margin: 0; padding: 0; list-style: none; }
-.day-table li + li { border-top: 1px dotted #bbb; margin-top: 0.5mm; padding-top: 0.5mm; }
-.booked .name { font-weight: 600; }
-.booked .detail { display: block; font-size: 7.5pt; color: #444; }
-.vacant { color: #888; }
+.page-grid { display: grid; gap: 3mm; align-items: start; }
+.page-grid.is-block { display: block; }
+.day { break-inside: avoid; page-break-inside: avoid; }
+.page-grid.is-block .day + .day { margin-top: 3mm; }
+.day.may-split { break-inside: auto; page-break-inside: auto; }
+
+/* 測り場：同じ幅で見えない所に置く */
+.measure { position: absolute; left: -10000px; top: 0; visibility: hidden; pointer-events: none; }
+.measure .sheet { min-height: 0; }
 
 @media print {
-    .sheet, .sheet.landscape, .sheet.portrait { width: auto; padding: 0; }
+    .sheet, .sheet.landscape, .sheet.portrait { width: auto; min-height: 0; padding: 0; margin: 0; }
+    .sheet { break-after: page; page-break-after: always; }
+    .sheet:last-of-type { break-after: auto; page-break-after: auto; }
+    .measure { display: none; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>

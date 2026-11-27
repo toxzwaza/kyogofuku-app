@@ -137,7 +137,9 @@ class PhotoSlotController extends Controller
             'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
             'studio_ids' => 'nullable|array',
             'studio_ids.*' => 'integer',
+            'per_page' => 'nullable|integer|in:'.implode(',', self::PRINT_PER_PAGE_OPTIONS),
         ], [
+            'per_page.in' => '1ページに載せる日数は '.implode('・', self::PRINT_PER_PAGE_OPTIONS).' 日から選んでください。',
             'to.after_or_equal' => '終了日は開始日と同じ日か、それより後にしてください。',
         ]);
 
@@ -183,12 +185,23 @@ class PhotoSlotController extends Controller
             'to' => $to->toDateString(),
             'days' => array_values($days),
             'maxDays' => self::PRINT_MAX_DAYS,
+            'perPage' => (int) ($validated['per_page'] ?? self::PRINT_PER_PAGE_DEFAULT),
+            'perPageOptions' => self::PRINT_PER_PAGE_OPTIONS,
             'printedAt' => Carbon::now()->format('Y/n/j G:i'),
         ]);
     }
 
     /** 印刷できる日数の上限（1年分） */
     private const PRINT_MAX_DAYS = 366;
+
+    /**
+     * 1ページに載せる日数の選択肢と初期値（初期値は1日1ページ）。
+     * A4 横は横に並べ（4・6日は2段）、A4 縦は縦に積む（4・6日は2列）。
+     * 7日以上は1日の幅または高さが 40mm ほどになり、スタジオ名・お客様名が読めないので出さない。
+     */
+    private const PRINT_PER_PAGE_OPTIONS = [1, 2, 3, 4, 6];
+
+    private const PRINT_PER_PAGE_DEFAULT = 1;
 
     private function studioInfo($studios)
     {

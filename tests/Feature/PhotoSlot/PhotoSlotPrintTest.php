@@ -154,4 +154,34 @@ class PhotoSlotPrintTest extends TestCase
         $this->print(['from' => '2027-01-01', 'to' => '2028-01-01'])  // 366日
             ->assertOk();
     }
+
+    public function test_1ページの日数は指定しないとき1日(): void
+    {
+        $this->print(['from' => '2027-07-31', 'to' => '2027-08-01'])
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('perPage', 1)
+                ->where('perPageOptions', [1, 2, 3, 4, 6])
+            );
+    }
+
+    public function test_1ページの日数を指定できる(): void
+    {
+        foreach ([1, 2, 3, 4, 6] as $n) {
+            $this->print(['from' => '2027-07-31', 'to' => '2027-08-01', 'per_page' => $n])
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->where('perPage', $n)
+                    ->has('days', 2) // 日数を変えても載る日は同じ（まとめ方は画面で決める）
+                );
+        }
+    }
+
+    public function test_選べない日数はエラー(): void
+    {
+        foreach ([0, 5, 7, 'abc'] as $n) {
+            $this->print(['from' => '2027-07-31', 'to' => '2027-08-01', 'per_page' => $n])
+                ->assertSessionHasErrors('per_page');
+        }
+    }
 }
