@@ -1,0 +1,4 @@
+# curl -sI（2026-11-28 03:34 JST・反映前）
+/event/reservation_store_hama   HTTP/1.1 200 OK
+/event/reservation_iah6KIRiHv   HTTP/1.1 404 Not Found
+/event/hakama-rental-2025       HTTP/1.1 404 Not Found
