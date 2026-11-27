@@ -13,12 +13,13 @@ class SeijinPrepSlot extends Model
 {
     protected $fillable = [
         'seijin_prep_venue_id', 'prep_date', 'prep_time', 'seat_no', 'customer_id',
-        'is_other_store', 'preferred_time', 'remarks', 'shop_id',
+        'is_other_store', 'has_makeup', 'preferred_time', 'remarks', 'shop_id', 'original_prep_time',
     ];
 
     protected $casts = [
         'seat_no' => 'integer',
         'is_other_store' => 'boolean',
+        'has_makeup' => 'boolean',
     ];
 
     public function venue()
@@ -36,15 +37,24 @@ class SeijinPrepSlot extends Model
         return $this->belongsTo(Shop::class)->withoutGlobalScope('visibleGroup');
     }
 
-    /** 時刻の枠の席か（場所だけ・他店・未定の登録ではない） */
+    /**
+     * 枠の席か（場所だけ・他店・未定の登録ではない）。
+     * 時刻の枠（岡山）は日・時刻あり、番号枠（福井）は日あり・時刻なし。席でない登録は日がない。
+     */
     public function isSeat(): bool
     {
-        return $this->prep_date !== null && $this->prep_time !== null;
+        return $this->prep_date !== null;
+    }
+
+    /** 番号枠（福井）の席か */
+    public function isNumberedSeat(): bool
+    {
+        return $this->prep_date !== null && $this->prep_time === null;
     }
 
     public function scopeSeats(Builder $query): Builder
     {
-        return $query->whereNotNull('seijin_prep_slots.prep_date')->whereNotNull('seijin_prep_slots.prep_time');
+        return $query->whereNotNull('seijin_prep_slots.prep_date');
     }
 
     /** 時刻の枠に入っていない登録（場所だけ・他店・未定） */

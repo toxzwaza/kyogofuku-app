@@ -67,7 +67,13 @@ class SeijinPrepVenueController extends Controller
     public function update(Request $request, SeijinPrepVenue $seijinPrepVenue)
     {
         abort_unless($seijinPrepVenue->isVisibleTo($request->user()), 404);
-        $seijinPrepVenue->update($this->validated($request));
+        $data = $this->validated($request);
+        // 時刻の枠（岡山）と番号枠（福井）は行の形が違うので、枠のある場所はまたいで店舗グループを変えない
+        if ($seijinPrepVenue->isNumbered() !== SeijinPrepVenue::isNumberedGroup($data['shop_group'])
+            && $seijinPrepVenue->slots()->seats()->exists()) {
+            throw ValidationException::withMessages(['shop_group' => 'この場所には枠があるため、時刻で管理する店舗グループと番号で管理する店舗グループ（福井）のあいだでは変えられません。']);
+        }
+        $seijinPrepVenue->update($data);
 
         return redirect()->route('admin.seijin-prep-venues.index')->with('success', 'お支度場所を更新しました。');
     }
@@ -91,11 +97,19 @@ class SeijinPrepVenueController extends Controller
             'kindOptions' => SeijinPrepVenue::KIND_LABELS,
             'intervals' => SeijinPrepVenue::INTERVALS,
             'maxCapacity' => SeijinPrepVenue::MAX_CAPACITY,
+            'maxNumberedCapacity' => SeijinPrepVenue::MAX_NUMBERED_CAPACITY,
+            'numberedGroups' => SeijinPrepVenue::NUMBERED_GROUPS,
         ];
     }
 
     private function validated(Request $request): array
     {
+        $numbered = SeijinPrepVenue::isNumberedGroup($request->input('shop_group'));
+        if ($numbered) {
+            // 福井は時刻で管理しないので、時刻の欄は使わない
+            $request->merge(['default_start_time' => null, 'default_end_time' => null]);
+        }
+        $maxCapacity = $numbered ? SeijinPrepVenue::MAX_NUMBERED_CAPACITY : SeijinPrepVenue::MAX_CAPACITY;
         $v = $request->validate([
             'name' => 'required|string|max:255',
             'kind' => ['required', Rule::in(array_keys(SeijinPrepVenue::KIND_LABELS))],
@@ -108,7 +122,7 @@ class SeijinPrepVenueController extends Controller
             'slot_interval_minutes' => ['required', 'integer', Rule::in(SeijinPrepVenue::INTERVALS)],
             'default_start_time' => 'nullable|date_format:H:i|required_with:default_end_time',
             'default_end_time' => 'nullable|date_format:H:i|required_with:default_start_time',
-            'default_capacity' => 'required|integer|min:1|max:'.SeijinPrepVenue::MAX_CAPACITY,
+            'default_capacity' => 'required|integer|min:1|max:'.$maxCapacity,
         ], [], [
             'name' => '名前',
             'kind' => '種類',
@@ -116,7 +130,7 @@ class SeijinPrepVenueController extends Controller
             'slot_interval_minutes' => '枠の刻み',
             'default_start_time' => '開始時刻',
             'default_end_time' => '終了時刻',
-            'default_capacity' => '既定の定員',
+            'default_capacity' => $numbered ? '既定の枠数' : '既定の定員',
         ]);
 
         $interval = (int) $v['slot_interval_minutes'];
@@ -177,6 +191,7 @@ class SeijinPrepVenueController extends Controller
             'default_start_time' => PhotoStudioHours::hm($v->default_start_time),
             'default_end_time' => PhotoStudioHours::hm($v->default_end_time),
             'default_capacity' => (int) $v->default_capacity,
+            'numbered' => $v->isNumbered(),
         ];
     }
 }

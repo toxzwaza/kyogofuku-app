@@ -1,5 +1,6 @@
 <script setup>
 // 成人式お支度：空いている枠（レーン）に、お客様を選んで入れる小さい画面（月の表から使う）
+// 福井（番号枠）では時刻がなく、その日の次の番号に入る。メイク有無が必須で、希望時刻は入力しない
 import { computed, ref, watch } from 'vue';
 import axios from 'axios';
 import { UiDialog, UiButton } from '@/Components/UI';
@@ -7,9 +8,9 @@ import { formatDateJaWithWeekday } from '@/utils/dateFormat';
 
 const props = defineProps({
     open: { type: Boolean, default: false },
-    venue: { type: Object, default: null }, // { id, name, shop_group }
+    venue: { type: Object, default: null }, // { id, name, shop_group, numbered }
     date: { type: String, default: '' },
-    time: { type: String, default: '' },
+    time: { type: String, default: '' }, // 番号枠では空
     shops: { type: Array, default: () => [] },
     guides: { type: Object, default: () => ({}) },
 });
@@ -21,6 +22,8 @@ const searching = ref(false);
 const customer = ref(null);
 const shopId = ref('');
 const preferredTime = ref('');
+const hasMakeup = ref(null); // 福井：初期は未選択
+const numbered = computed(() => !!props.venue?.numbered);
 const remarks = ref('');
 const saving = ref(false);
 const error = ref('');
@@ -37,6 +40,7 @@ watch(() => props.open, (open) => {
     customer.value = null;
     shopId.value = shopOptions.value.length === 1 ? shopOptions.value[0].id : '';
     preferredTime.value = '';
+    hasMakeup.value = null;
     remarks.value = '';
     error.value = '';
 });
@@ -62,6 +66,7 @@ const search = async () => {
 const close = () => emit('update:open', false);
 const submit = async () => {
     if (!customer.value) { error.value = 'お客様を選んでください。'; return; }
+    if (numbered.value && hasMakeup.value === null) { error.value = 'メイク有無を選んでください。'; return; }
     saving.value = true;
     error.value = '';
     try {
@@ -69,12 +74,13 @@ const submit = async () => {
             customer_id: customer.value.id,
             seijin_prep_venue_id: props.venue.id,
             prep_date: props.date,
-            prep_time: props.time,
+            prep_time: numbered.value ? null : props.time,
+            has_makeup: numbered.value ? hasMakeup.value : null,
             shop_id: shopId.value || null,
-            preferred_time: preferredTime.value || null,
+            preferred_time: numbered.value ? null : preferredTime.value || null,
             remarks: remarks.value || null,
         });
-        emit('booked', `${customer.value.name} さんを ${props.venue.name} ${props.date} ${props.time} に入れました。`);
+        emit('booked', `${customer.value.name} さんを ${props.venue.name} ${props.date} ${numbered.value ? '' : props.time} に入れました。`);
         close();
     } catch (e) {
         const errors = e.response?.data?.errors;
@@ -90,9 +96,9 @@ const submit = async () => {
         <div class="space-y-4 text-sm">
             <div class="rounded-soft bg-brand-surface-2 px-3 py-2">
                 <div class="font-semibold">{{ venue?.name }}</div>
-                <div class="tabular-nums">{{ date ? formatDateJaWithWeekday(date) : '' }} {{ time }}</div>
+                <div class="tabular-nums">{{ date ? formatDateJaWithWeekday(date) : '' }} {{ numbered ? '（次の番号に入ります）' : time }}</div>
             </div>
-            <p class="text-xs text-brand-text-muted">すでにお支度の登録（場所だけ・ほかの時刻）があるお客様は、この枠に移ります。</p>
+            <p class="text-xs text-brand-text-muted">すでにお支度の登録（場所だけ・ほかの{{ numbered ? '日' : '時刻' }}）があるお客様は、この枠に移ります。</p>
 
             <div>
                 <label class="block text-xs font-medium text-brand-text-muted mb-1">お客様 <span class="text-red-500">*</span></label>
@@ -126,7 +132,14 @@ const submit = async () => {
                         <option v-for="s in shopOptions" :key="s.id" :value="s.id">{{ s.name }}</option>
                     </select>
                 </div>
-                <div>
+                <fieldset v-if="numbered">
+                    <legend class="block text-xs font-medium text-brand-text-muted mb-1">メイク有無 <span class="text-red-500">*</span></legend>
+                    <div class="flex gap-4 py-2">
+                        <label class="inline-flex items-center gap-1.5"><input v-model="hasMakeup" type="radio" name="booking_has_makeup" :value="true" class="text-brand-primary focus:ring-brand-primary" />あり</label>
+                        <label class="inline-flex items-center gap-1.5"><input v-model="hasMakeup" type="radio" name="booking_has_makeup" :value="false" class="text-brand-primary focus:ring-brand-primary" />なし</label>
+                    </div>
+                </fieldset>
+                <div v-else>
                     <label class="block text-xs font-medium text-brand-text-muted mb-1">希望時刻</label>
                     <input v-model="preferredTime" type="text" maxlength="50" placeholder="例：7時台" class="w-full rounded-md border-brand-border text-sm focus:border-brand-primary focus:ring-brand-primary" />
                 </div>

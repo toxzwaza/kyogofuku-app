@@ -9,7 +9,12 @@ const props = defineProps({
     kindOptions: { type: Object, default: () => ({}) },
     intervals: { type: Array, default: () => [30] },
     maxCapacity: { type: Number, default: 20 },
+    maxNumberedCapacity: { type: Number, default: 200 },
+    numberedGroups: { type: Array, default: () => ['fukui'] },
 });
+
+// 福井は時刻で管理せず「日＋番号」の枠にする（刻み・時刻の欄は使わない）
+const numbered = computed(() => props.numberedGroups.includes(props.form.shop_group));
 
 const toOptions = (obj) => Object.entries(obj).map(([value, label]) => ({ value, label }));
 const groupSelectOptions = computed(() => toOptions(props.groupOptions));
@@ -73,6 +78,15 @@ const preview = computed(() => {
 
         <UiCard>
             <h3 class="text-sm font-semibold text-brand-text mb-1">枠の作り方（既定）</h3>
+            <template v-if="numbered">
+                <p class="text-xs text-brand-text-muted mb-4">
+                    この店舗グループは時刻で管理しません。日ごとに枠数（人数）だけを作り、枠は「1, 2, 3…」の番号で並びます（早く入った人ほど若い番号。取り消しが出ると後ろの番号が詰まります）。
+                </p>
+                <UiFormField label="既定の枠数（1日）" required :error="form.errors.default_capacity" :hint="`1〜${maxNumberedCapacity}`" class="sm:w-48">
+                    <UiInput v-model.number="form.default_capacity" type="number" min="1" :max="maxNumberedCapacity" :error="!!form.errors.default_capacity" />
+                </UiFormField>
+            </template>
+            <template v-else>
             <p class="text-xs text-brand-text-muted mb-4">
                 枠を1日分まとめて作るときの最初の値です（作るときに直せます）。終了時刻は「最後の枠の時刻」です。定員はレーン数（同じ時刻にお支度できる人数）です。
             </p>
@@ -93,6 +107,7 @@ const preview = computed(() => {
             <p v-if="preview" class="mt-4 rounded-md bg-brand-surface-2 px-4 py-2 text-sm">
                 1日に {{ preview.count }}時刻 × {{ form.default_capacity }}レーン ＝ <span class="font-semibold">{{ preview.seats }}人</span> まで
             </p>
+            </template>
         </UiCard>
     </div>
 </template>

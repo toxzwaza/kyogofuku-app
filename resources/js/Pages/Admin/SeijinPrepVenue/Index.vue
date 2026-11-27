@@ -23,13 +23,14 @@
                 <span class="text-xs">{{ groupLabels[value] || '未設定' }}</span>
             </template>
             <template #cell-frame="{ row }">
-                <span class="text-xs tabular-nums">
+                <span v-if="row.numbered" class="text-xs tabular-nums">番号で管理・1日 {{ row.default_capacity }}枠</span>
+                <span v-else class="text-xs tabular-nums">
                     {{ row.slot_interval_minutes }}分刻み・{{ row.default_capacity }}レーン
                     <template v-if="row.default_start_time">（{{ row.default_start_time }}〜{{ row.default_end_time }}）</template>
                 </span>
             </template>
             <template #cell-counts="{ row }">
-                <span class="text-xs tabular-nums">枠 {{ row.booked }}/{{ row.capacity }}・時刻未定 {{ row.unscheduled }}人</span>
+                <span class="text-xs tabular-nums">枠 {{ row.booked }}/{{ row.capacity }}・{{ row.numbered ? '日未定' : '時刻未定' }} {{ row.unscheduled }}人</span>
             </template>
             <template #cell-is_active="{ value }">
                 <UiBadge :variant="value ? 'success' : 'neutral'">{{ value ? '有効' : '無効' }}</UiBadge>

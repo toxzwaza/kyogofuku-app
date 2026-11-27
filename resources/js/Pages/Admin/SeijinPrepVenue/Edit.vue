@@ -9,7 +9,7 @@
         </UiPageHeader>
 
         <form class="max-w-3xl space-y-5" @submit.prevent="submit">
-            <VenueForm :form="form" :group-options="groupOptions" :kind-options="kindOptions" :intervals="intervals" :max-capacity="maxCapacity" />
+            <VenueForm :form="form" :group-options="groupOptions" :kind-options="kindOptions" :intervals="intervals" :max-capacity="maxCapacity" :max-numbered-capacity="maxNumberedCapacity" :numbered-groups="numberedGroups" />
             <div class="flex justify-end">
                 <UiButton type="submit" variant="primary" :loading="form.processing">保存する</UiButton>
             </div>
@@ -29,6 +29,8 @@ const props = defineProps({
     kindOptions: { type: Object, default: () => ({}) },
     intervals: { type: Array, default: () => [30] },
     maxCapacity: { type: Number, default: 20 },
+    maxNumberedCapacity: { type: Number, default: 200 },
+    numberedGroups: { type: Array, default: () => ['fukui'] },
 });
 
 const v = props.venue;

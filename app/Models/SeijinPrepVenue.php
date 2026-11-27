@@ -15,6 +15,12 @@ class SeijinPrepVenue extends Model
 
     public const KIND_LABELS = ['own' => '自社会場', 'salon' => '提携美容室'];
 
+    /** 番号枠（日＋番号）の1日あたりの定員の上限。seat_no が unsignedTinyInteger なので 255 未満 */
+    public const MAX_NUMBERED_CAPACITY = 200;
+
+    /** 時刻で管理せず「日＋番号（1, 2, 3…）」で枠を持つ店舗グループ（11/21 打ち合わせ：福井） */
+    public const NUMBERED_GROUPS = ['fukui'];
+
     /** 枠の刻み（分）の選択肢 */
     public const INTERVALS = [10, 15, 20, 30, 40, 60];
 
@@ -66,6 +72,23 @@ class SeijinPrepVenue extends Model
         $groups = PhotoStudio::visibleGroupsFor($user);
 
         return $groups === null || $this->shop_group === null || in_array($this->shop_group, $groups, true);
+    }
+
+    /** 時刻で管理せず、日ごとの番号（若い番号＝早く成約した人）で枠を持つ場所か */
+    public function isNumbered(): bool
+    {
+        return self::isNumberedGroup($this->shop_group);
+    }
+
+    public static function isNumberedGroup(?string $group): bool
+    {
+        return $group !== null && in_array($group, self::NUMBERED_GROUPS, true);
+    }
+
+    /** 1枠（時刻の枠／番号枠なら1日）あたりの定員の上限 */
+    public function maxCapacity(): int
+    {
+        return $this->isNumbered() ? self::MAX_NUMBERED_CAPACITY : self::MAX_CAPACITY;
     }
 
     public function interval(): int
