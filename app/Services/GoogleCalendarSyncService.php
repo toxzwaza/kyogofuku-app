@@ -297,15 +297,50 @@ class GoogleCalendarSyncService
         return trim((string) $id);
     }
 
+    /** Google Calendar のイベント colorId（1–11） */
+    public const COLOR_TANGERINE = '6';  // オレンジ：振袖の確認中・返信待ち
+    public const COLOR_TOMATO = '11';    // 赤：振袖の対応完了済み
+    public const COLOR_GRAPHITE = '8';   // グレー：振袖のその他・前撮りの空き枠
+    public const COLOR_BASIL = '10';     // 緑：袴の予約
+    public const COLOR_BLUEBERRY = '9';  // 青：前撮りの予約済み枠
+
     /**
-     * 予約ステータスに対応する Google Calendar イベント colorId（1–11）
+     * 予約に対応する Google Calendar イベント colorId（1–11）
+     * 袴は状態にかかわらず緑（状態は件名の先頭で見せる）。振袖は状態で色を変える。
      */
-    protected function calendarColorIdForReservationStatus(?string $status): string
+    public function calendarColorIdForReservation(?string $status, bool $isHakama): string
     {
+        if ($isHakama) {
+            return self::COLOR_BASIL;
+        }
+
         return match ($status) {
-            '確認中', '返信待ち' => '6',
-            '対応完了済み' => '11',
-            default => '8',
+            '確認中', '返信待ち' => self::COLOR_TANGERINE,
+            '対応完了済み' => self::COLOR_TOMATO,
+            default => self::COLOR_GRAPHITE,
+        };
+    }
+
+    /**
+     * 前撮り枠の colorId：予約済みは青、空きはグレー
+     */
+    public function calendarColorIdForPhotoSlot(bool $booked): string
+    {
+        return $booked ? self::COLOR_BLUEBERRY : self::COLOR_GRAPHITE;
+    }
+
+    /**
+     * 袴の予約の件名の先頭に付ける状態（色が緑だけで状態が分からないため）。未対応・その他は付けない
+     */
+    public function calendarSummaryPrefixForReservation(?string $status, bool $isHakama): string
+    {
+        if (!$isHakama) {
+            return '';
+        }
+
+        return match ($status) {
+            '確認中', '返信待ち', '対応完了済み' => "【{$status}】",
+            default => '',
         };
     }
 
@@ -433,10 +468,15 @@ class GoogleCalendarSyncService
 
         // 予約由来のスケジュールの場合、予約詳細URLを追加・ステータスに応じた色
         if ($schedule->event_reservation_id) {
-            $schedule->loadMissing('reservation');
+            $schedule->loadMissing('reservation.event');
             $reservation = $schedule->reservation;
             if ($reservation) {
-                $event->setColorId($this->calendarColorIdForReservationStatus($reservation->status));
+                $isHakama = (bool) $reservation->event?->isHakamaReservation();
+                $event->setColorId($this->calendarColorIdForReservation($reservation->status, $isHakama));
+                $prefix = $this->calendarSummaryPrefixForReservation($reservation->status, $isHakama);
+                if ($prefix !== '') {
+                    $event->setSummary($prefix . $schedule->title);
+                }
             }
 
             $reservationUrl = URL::route('admin.reservations.show', $schedule->event_reservation_id, ['absolute' => true]);
@@ -458,14 +498,13 @@ class GoogleCalendarSyncService
             $studioName = $slot?->studio?->name ? trim($slot->studio->name) : '会場未定';
 
             if ($customer) {
-                // 予約済み: セージ（緑）+ 顧客情報
+                // 予約済み: ブルーベリー（青）+ 顧客情報
                 $event->setSummary("[前撮り] {$customer->name}（{$studioName}）");
-                $event->setColorId('2');
             } else {
-                // 未予約: グラファイト（薄いグレー）
+                // 未予約: グラファイト（グレー）
                 $event->setSummary("[前撮り] 未予約（{$studioName}）");
-                $event->setColorId('8');
             }
+            $event->setColorId($this->calendarColorIdForPhotoSlot((bool) $customer));
 
             $descriptionParts[] = '';
             $descriptionParts[] = '【スタジオ】' . $studioName;
