@@ -66,9 +66,7 @@ use App\Http\Controllers\LineMessagingWebhookController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\PostalCodeController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\S3TestController;
 use App\Http\Controllers\SesInboundMailController;
-use App\Http\Controllers\SesTestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 
@@ -82,14 +80,6 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('/debug-gd', function () {
-    return [
-        'php_version' => PHP_VERSION,
-        'gd_loaded' => extension_loaded('gd'),
-        'gd_info' => function_exists('gd_info') ? gd_info() : null,
-    ];
-});
-
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -98,10 +88,6 @@ Route::get('/', function () {
 Route::get('/device/status', [DeviceController::class, 'status'])->middleware('throttle:60,1')->name('device.status');
 Route::post('/device/register', [DeviceController::class, 'register'])->middleware('throttle:20,1')->name('device.register');
 Route::post('/device/unregister', [DeviceController::class, 'unregister'])->middleware('throttle:20,1')->name('device.unregister');
-
-Route::get('/s3-test', [S3TestController::class, 'index'])->name('s3-test.index');
-Route::post('/s3-test', [S3TestController::class, 'store'])->name('s3-test.store');
-Route::get('/s3-test/signed-url', [S3TestController::class, 'signedUrl'])->name('s3-test.signed-url');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 Route::get('/dashboard/recent-reservations', [DashboardController::class, 'recentReservations'])->middleware(['auth', 'verified'])->name('dashboard.recent-reservations');
@@ -652,13 +638,6 @@ Route::get('/line/liff/mypage', [\App\Http\Controllers\LineMyPageLiffController:
 Route::post('/line/liff/my-points/data', [\App\Http\Controllers\LineMyPageLiffController::class, 'points'])->name('line.liff.my-points.data');
 Route::post('/line/liff/mypage/data', [\App\Http\Controllers\LineMyPageLiffController::class, 'mypage'])->name('line.liff.mypage.data');
 Route::post('/line/liff/unlink', [\App\Http\Controllers\LineMyPageLiffController::class, 'unlink'])->name('line.liff.unlink');
-
-Route::get('/test-line', function () {
-    app()->call('App\Http\Controllers\LineTestController@test');
-});
-
-// Amazon SES テスト
-Route::get('/test-ses-mail', [SesTestController::class, 'send']);
 
 // SES受信メール　API
 Route::post('/inbound-mail', [SesInboundMailController::class, 'handle']);
