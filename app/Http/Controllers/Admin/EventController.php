@@ -191,8 +191,10 @@ class EventController extends Controller
                         $fail('エイリアスはメインのスラッグと同じにできません。');
                         return;
                     }
-                    if (Event::where('slug', $value)->exists()) {
-                        $fail('このエイリアスは既に他のイベントのスラッグとして使用されています。');
+                    // 非公開イベント（終了した旧 LP など）の slug は、今の LP の別URLとして使える
+                    // （公開イベントの slug が先に見つかるので、公開中のイベントとはぶつからない）
+                    if (Event::where('slug', $value)->where('is_public', true)->exists()) {
+                        $fail('このエイリアスは既に公開中の他のイベントのスラッグとして使用されています。');
                         return;
                     }
                     if (Event::whereJsonContains('slug_aliases', $value)->exists()) {
@@ -441,8 +443,10 @@ class EventController extends Controller
                         $fail('エイリアスはメインのスラッグと同じにできません。');
                         return;
                     }
-                    if (Event::where('slug', $value)->where('id', '!=', $event->id)->exists()) {
-                        $fail('このエイリアスは既に他のイベントのスラッグとして使用されています。');
+                    // 非公開イベント（終了した旧 LP など）の slug は、今の LP の別URLとして使える
+                    // （公開イベントの slug が先に見つかるので、公開中のイベントとはぶつからない）
+                    if (Event::where('slug', $value)->where('id', '!=', $event->id)->where('is_public', true)->exists()) {
+                        $fail('このエイリアスは既に公開中の他のイベントのスラッグとして使用されています。');
                         return;
                     }
                     if (Event::where('id', '!=', $event->id)->whereJsonContains('slug_aliases', $value)->exists()) {
