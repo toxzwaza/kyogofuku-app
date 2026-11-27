@@ -10,7 +10,14 @@
             <option value="">設定しない</option>
             <option v-for="t in options" :key="t.id" :value="t.id">{{ label(t) }}</option>
         </select>
+        <dl v-if="selected && (selected.contact_person || selected.purpose)" class="mt-1 text-xs text-brand-text-muted grid grid-cols-[auto,1fr] gap-x-2">
+            <template v-if="selected.contact_person"><dt>担当</dt><dd>{{ selected.contact_person }}</dd></template>
+            <template v-if="selected.purpose"><dt>用途</dt><dd class="whitespace-pre-line">{{ selected.purpose }}</dd></template>
+        </dl>
         <p v-if="selected?.memo" class="mt-1 text-xs text-brand-text-muted whitespace-pre-line">{{ selected.memo }}</p>
+        <p v-if="selected && isUnconfirmed(selected)" class="mt-1 text-xs text-amber-700">
+            このタグは管理会社が{{ selected.company_name ? `確認できていません（確度：${selected.confidence || '未設定'}）` : '登録されていません' }}。GTMタグ管理で確認してください。
+        </p>
         <p v-if="selected && !selected.is_active" class="mt-1 text-xs text-amber-700">
             選択中のタグは無効化されています。LPには引き続き出力されます。
         </p>
@@ -42,13 +49,18 @@ const matchesShops = (t) => !t.shop_ids.length || t.shop_ids.some((id) => props.
 const selected = computed(() => props.gtmTags.find((t) => t.id === Number(props.modelValue)) || null);
 
 // 開催店舗外・無効化済みでも、選択中のタグは選択肢に残す（保存済みの値が消えないように）
-const options = computed(() => props.gtmTags.filter((t) => (t.is_active && matchesShops(t)) || t.id === selected.value?.id));
+// 選べるのは kind = event のタグだけ（社内共通・HP用は台帳のみ）
+const options = computed(() =>
+    props.gtmTags.filter((t) => ((t.kind ?? 'event') === 'event' && t.is_active && matchesShops(t)) || t.id === selected.value?.id)
+);
 
 const selectedOutsideShops = computed(() => selected.value && !matchesShops(selected.value));
 
+const isUnconfirmed = (t) => !t.company_name || t.confidence !== '確認済';
+
+// 「会社 ／ GTM ID ／ 店舗」の順。会社が空なら「会社未登録」
 const label = (t) => {
-    const parts = [t.gtm_id];
-    if (t.company_name) parts.push(t.company_name);
+    const parts = [t.company_name || '会社未登録', t.gtm_id];
     if (t.shop_names.length) parts.push(t.shop_names.join('・'));
     return parts.join(' ／ ') + (t.is_active ? '' : '（無効）');
 };
