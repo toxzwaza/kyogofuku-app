@@ -924,16 +924,19 @@ class CustomerController extends Controller
         $detailsUndecided = $request->boolean('details_undecided');
         $validated = $request->validate($this->photoSlotRules($detailsUndecided));
         $attrs = $this->photoSlotAttrs($validated);
+        // もう登録のある人を移すと確認したとき、その登録の ID（なければ二重登録として止める）
+        $request->validate(['replace_photo_slot_id' => 'nullable|integer']);
+        $replaceId = $request->filled('replace_photo_slot_id') ? (int) $request->input('replace_photo_slot_id') : null;
 
         if ($detailsUndecided) {
-            $booking->setUndecided($customer, $attrs);
+            $booking->setUndecided($customer, $attrs, $replaceId, $request->user());
         } else {
             [$studioId, $date, $time] = $this->resolvePhotoSlotTarget($request, $validated);
-            $booking->assign($customer, $studioId, $date, $time, $attrs);
+            $booking->assign($customer, $studioId, $date, $time, $attrs, $replaceId, $request->user());
         }
 
         return redirect()->route('admin.customers.show', $customer)
-            ->with('success', '前撮り情報を追加しました。');
+            ->with('success', $replaceId ? '前撮り情報を変更しました（元の枠は空きに戻しました）。' : '前撮り情報を追加しました。');
     }
 
     /**

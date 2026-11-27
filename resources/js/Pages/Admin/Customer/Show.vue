@@ -2005,7 +2005,7 @@
                     </div>
 
                     <!-- コンテンツ（スクロール可能） -->
-                    <form @submit.prevent="storePhotoSlot" class="overflow-y-auto flex-1 px-6 py-5">
+                    <form @submit.prevent="storePhotoSlot()" class="overflow-y-auto flex-1 px-6 py-5">
                         <div class="space-y-4">
                             <div class="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
                                 <label class="flex items-center cursor-pointer">
@@ -2144,8 +2144,34 @@
                             </div>
                         </div>
 
+                        <!-- 二重登録の確認 -->
+                        <div v-if="photoSlotDuplicate" class="mt-4 p-4 bg-amber-50 border border-amber-300 rounded-lg text-sm text-amber-900" role="alertdialog">
+                            <p class="font-semibold">この方は {{ photoSlotDuplicate.existingLabel }} に登録済みです。</p>
+                            <p class="mt-1">{{ photoSlotDuplicate.target }} に変更しますか？</p>
+                            <p class="mt-1 text-xs">変更すると、元の{{ photoSlotDuplicate.existing.details_undecided ? '日時未定の登録は消えます' : '枠は空きに戻ります' }}。</p>
+                        </div>
+
                         <!-- フッター -->
-                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
+                        <div v-if="photoSlotDuplicate" class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
+                            <button
+                                type="button"
+                                @click="photoSlotDuplicate = null"
+                                :disabled="photoSlotForm.processing"
+                                class="px-4 py-2 border border-brand-border rounded-md text-sm font-medium text-brand-text hover:bg-brand-surface-2"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                type="button"
+                                @click="storePhotoSlot(photoSlotDuplicate.existing.id)"
+                                :disabled="photoSlotForm.processing"
+                                class="px-4 py-2 bg-brand-primary text-white rounded-md text-sm font-medium hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span v-if="photoSlotForm.processing">変更中...</span>
+                                <span v-else>変更する</span>
+                            </button>
+                        </div>
+                        <div v-else class="flex justify-end space-x-3 mt-6 pt-4 border-t border-brand-border">
                             <button
                                 type="button"
                                 @click="showAddPhotoSlotModal = false"
@@ -2628,6 +2654,7 @@ import CustomerLineSection from '@/Components/Admin/CustomerLineSection.vue';
 import QuestionnaireBlock from '@/Components/Questionnaire/QuestionnaireBlock.vue';
 import { SEIJIN_PREPARATION_VENUE_OPTIONS } from '@/constants/seijinPreparationVenues.js';
 import { formatDateJa, formatDateInputValueJa } from '@/utils/dateFormat';
+import { countedPhotoSlots, photoSlotLabel, targetLabel } from '@/utils/photoSlotDuplicate';
 
 const props = defineProps({
     customer: Object,
@@ -3822,8 +3849,32 @@ const updatePhotoSlot = () => {
     });
 };
 
+// 前撮り：二重登録の確認（もう登録のある人に追加しようとしたとき）。OK なら今の登録から移す
+const photoSlotDuplicate = ref(null); // { existing, target }
+watch(
+    () => [showAddPhotoSlotModal.value, photoSlotForm.details_undecided, photoSlotForm.selected_studio_id, photoSlotForm.selected_date, photoSlotForm.selected_time],
+    () => { photoSlotDuplicate.value = null; }
+);
+
 // 前撮り情報追加
-const storePhotoSlot = () => {
+const storePhotoSlot = (replaceId = null) => {
+    if (replaceId === null) {
+        const counted = countedPhotoSlots(props.customer.photoSlots);
+        const f = photoSlotForm;
+        const isSame = (s) => f.details_undecided
+            ? s.details_undecided
+            : (!s.details_undecided && Number(s.photo_studio_id) === Number(f.selected_studio_id)
+                && String(s.shoot_date).slice(0, 10) === f.selected_date && String(s.shoot_time).slice(0, 5) === f.selected_time);
+        // 1件だけなら確認を出す（2件以上・同じ時刻はサーバーの説明をそのまま出す）
+        if (counted.length === 1 && !isSame(counted[0])) {
+            photoSlotDuplicate.value = {
+                existing: counted[0],
+                existingLabel: photoSlotLabel(counted[0]),
+                target: f.details_undecided ? '日時未定' : targetLabel(f.selected_date, f.selected_time),
+            };
+            return;
+        }
+    }
     // フォームデータを変換（空文字列をnullに変換、不要なフィールドを削除）
     photoSlotForm.transform((data) => {
         const transformed = { ...data };
@@ -3841,11 +3892,13 @@ const storePhotoSlot = () => {
         delete transformed.selected_studio_id;
         delete transformed.selected_date;
         delete transformed.selected_time;
+        transformed.replace_photo_slot_id = replaceId;
         return transformed;
     }).post(route('admin.customers.photo-slots.store', props.customer.id), {
         preserveScroll: true,
         onSuccess: () => {
             showAddPhotoSlotModal.value = false;
+            photoSlotDuplicate.value = null;
             photoSlotForm.reset();
             // リセット後、デフォルト店舗を再設定
             if (props.userShops && props.userShops.length > 0) {
@@ -3853,6 +3906,7 @@ const storePhotoSlot = () => {
             }
         },
         onError: (errors) => {
+            photoSlotDuplicate.value = null;
             console.error('前撮り情報追加エラー:', errors);
         },
     });

@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 import axios from 'axios';
 import { UiDialog, UiButton } from '@/Components/UI';
 import { formatDateJaWithWeekday } from '@/utils/dateFormat';
+import { targetLabel as slotTargetLabel } from '@/utils/photoSlotDuplicate';
 
 const props = defineProps({
     open: { type: Boolean, default: false },
@@ -26,6 +27,8 @@ const remarks = ref('');
 const users = ref([]);
 const saving = ref(false);
 const error = ref('');
+// 二重登録の確認（サーバーが 409 で返した今の登録）。OK なら replace_photo_slot_id を付けて送り直す
+const duplicate = ref(null);
 
 // スタジオと同じ店舗グループの店舗だけ（グループのないスタジオはどの店舗でもよい）
 const shopOptions = computed(() =>
@@ -42,6 +45,7 @@ watch(() => props.open, (open) => {
     planId.value = '';
     remarks.value = '';
     error.value = '';
+    duplicate.value = null;
     loadUsers();
 });
 
@@ -79,10 +83,14 @@ const loadUsers = async () => {
     }
 };
 watch(shopId, loadUsers);
+// お客様を選び直したら確認は取り消す
+watch(customer, () => { duplicate.value = null; });
+
+const targetLabel = computed(() => `${slotTargetLabel(props.date, props.time)} ${props.studio?.name || ''}`.trim());
 
 const close = () => emit('update:open', false);
 
-const submit = async () => {
+const submit = async (replaceId = null) => {
     if (!customer.value) {
         error.value = 'お客様を選んでください。';
         return;
@@ -99,16 +107,29 @@ const submit = async () => {
             user_id: userId.value || null,
             plan_id: planId.value || null,
             remarks: remarks.value || null,
+            replace_photo_slot_id: replaceId,
         });
-        emit('booked', `${customer.value.name} さんの予約を入れました（${props.date} ${props.time}）。`);
+        const moved = replaceId ? `（元の ${duplicate.value?.existing?.[0]?.label} は空きに戻しました）` : '';
+        emit('booked', `${customer.value.name} さんの予約を入れました（${props.date} ${props.time}）${moved}。`);
+        duplicate.value = null;
         close();
     } catch (e) {
+        const dup = e.response?.status === 409 ? e.response.data?.duplicate : null;
+        if (dup?.reason === 'confirm') {
+            // 確認を出す（ここではまだ何も変わっていない）
+            duplicate.value = dup;
+            return;
+        }
+        duplicate.value = null;
         const errors = e.response?.data?.errors;
         error.value = errors ? Object.values(errors).flat().join(' ') : (e.response?.data?.message || '予約を入れられませんでした。');
     } finally {
         saving.value = false;
     }
 };
+
+const confirmMove = () => submit(duplicate.value.existing[0].id);
+const cancelMove = () => { duplicate.value = null; };
 </script>
 
 <template>
@@ -173,10 +194,23 @@ const submit = async () => {
             </div>
 
             <p v-if="error" class="rounded-soft bg-red-50 border border-red-200 px-3 py-2 text-red-700">{{ error }}</p>
+
+            <!-- 二重登録の確認 -->
+            <div v-if="duplicate" class="rounded-soft border border-amber-300 bg-amber-50 px-3 py-3 text-amber-900" role="alertdialog">
+                <p class="font-semibold">この方は {{ duplicate.existing[0].label }} に登録済みです。</p>
+                <p class="mt-1">{{ targetLabel }} に変更しますか？</p>
+                <p class="mt-1 text-xs">変更すると、元の{{ duplicate.existing[0].undecided ? '日時未定の登録は消えます' : '枠は空きに戻ります' }}。</p>
+            </div>
         </div>
         <template #footer>
-            <UiButton variant="ghost" @click="close">キャンセル</UiButton>
-            <UiButton :loading="saving" :disabled="!customer" @click="submit">予約を入れる</UiButton>
+            <template v-if="duplicate">
+                <UiButton variant="ghost" :disabled="saving" @click="cancelMove">キャンセル</UiButton>
+                <UiButton :loading="saving" @click="confirmMove">変更する</UiButton>
+            </template>
+            <template v-else>
+                <UiButton variant="ghost" @click="close">キャンセル</UiButton>
+                <UiButton :loading="saving" :disabled="!customer" @click="submit()">予約を入れる</UiButton>
+            </template>
         </template>
     </UiDialog>
 </template>

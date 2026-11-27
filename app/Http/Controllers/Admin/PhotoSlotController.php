@@ -248,6 +248,8 @@ class PhotoSlotController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'plan_id' => 'nullable|exists:plans,id',
             'remarks' => 'nullable|string',
+            // もう登録のある人を移すと確認したとき、その登録の ID（なければ二重登録として止める）
+            'replace_photo_slot_id' => 'nullable|integer',
         ], [
             'customer_id.required' => 'お客様を選んでください。',
         ]);
@@ -268,7 +270,9 @@ class PhotoSlotController extends Controller
                 'user_id' => $validated['user_id'] ?? null,
                 'plan_id' => $validated['plan_id'] ?? null,
                 'remarks' => $validated['remarks'] ?? null,
-            ]
+            ],
+            isset($validated['replace_photo_slot_id']) ? (int) $validated['replace_photo_slot_id'] : null,
+            $request->user()
         );
 
         return response()->json(['success' => true, 'photo_slot_id' => $slot->id]);
