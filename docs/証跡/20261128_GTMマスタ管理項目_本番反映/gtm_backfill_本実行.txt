@@ -1,0 +1,12 @@
+2026-11-28 01:26:49 JST
+更新 GTM-5LWBZH47：company_name=BE FANG / purpose=好一の広告 / used_on=好一HP（kyogofuku-kouichi.com） / confidence=確認済 / confirmed_at=2026-11-28
+更新 GTM-T2CT729C：company_name=BE FANG / purpose=福井の袴予約の広告 / confidence=確認済 / confirmed_at=2026-11-28
+更新 GTM-5MSL9GRL：company_name=カラフル / purpose=福井の広告 / used_on=福井HP（fukui.kyogofuku-hirata.jp） / confidence=確認済 / confirmed_at=2026-11-28
+更新 GTM-5NP4QCSB：company_name=アンジュ / confidence=確認済 / confirmed_at=2026-11-28 / is_active=false
+更新 GTM-N7BDKK6S：company_name=アンジュ / confidence=確認済 / confirmed_at=2026-11-28 / is_active=false
+追加 GTM-WHQZSR67：kind=company / company_name=自社 / purpose=社内の計測（GA4・Clarity） / used_on=Inertia版の全イベントLP（config services.company_gtm_id） / confidence=確認済 / confirmed_at=2026-11-28 / is_active=true / memo=gtm:backfill で登録
+追加 GTM-MXSRMSXR：kind=site / company_name=自社 / purpose=HPの基本計測（GA4・Clarity） / used_on=好一HP（kyogofuku-kouichi.com） / confidence=中 / is_active=true / memo=gtm:backfill で登録
+追加 GTM-PXPJTD9K：kind=site / company_name=自社 / purpose=HPの基本計測（GA4・Clarity） / used_on=福井HP（fukui.kyogofuku-hirata.jp） / confidence=中 / is_active=true / memo=gtm:backfill で登録
+追加 GTM-P573JPFV：kind=site / company_name=自社 / purpose=HPの基本計測（GA4・Clarity） / used_on=本社HP（kyogofuku-hirata.jp） / confidence=中 / is_active=true / memo=gtm:backfill で登録
+追加 4件・更新 5件・変更なし 0件
+exit=0
