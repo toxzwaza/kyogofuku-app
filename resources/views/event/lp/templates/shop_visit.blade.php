@@ -22,8 +22,9 @@
     $brandJp = $isHirata ? '京呉服 平田' : '京呉服 好一';
     $brandEn = $isHirata ? 'KYOGOFUKU HIRATA' : 'KYOGOFUKU KOUICHI';
 
-    // 代表店舗の電話番号（CTA用）：福井=福井店、岡山=岡山店
-    $ctaPhone = $isHirata ? '0776-34-1529' : '086-242-1529';
+    // 代表店舗の電話番号（CTA用）：福井=福井店、岡山=岡山店（正本は config/brands.php）
+    $svBrand = \App\Support\LpBrand::get($isHirata ? 'hirata' : 'kouichi');
+    $ctaPhone = $svBrand['tel'];
 
     // 振袖プレビュー：固定の7枚（運用で追加の振袖画像を増やしたい場合は配列を編集）
     $previewImages = [
@@ -1007,6 +1008,9 @@
 <footer class="sv-footer">
     <div class="sv-wrap">
         <p class="sv-footer__brand">{{ $brandJp }}</p>
+        @if(!empty($svBrand['site_url']))
+        <p style="margin:0 0 8px;"><a href="{{ $svBrand['site_url'] }}" style="color:inherit;">公式サイト</a>@if(!empty($svBrand['shop_url'])) ｜ <a href="{{ $svBrand['shop_url'] }}" style="color:inherit;">店舗情報</a>@endif</p>
+        @endif
         <p style="margin:0;">© {{ date('Y') }} all rights reserved.</p>
     </div>
 </footer>

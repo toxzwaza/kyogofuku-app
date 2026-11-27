@@ -80,15 +80,15 @@ class HandleInertiaRequests extends Middleware
 
         $routeName = $route->getName();
 
-        // 対象ルートのみ処理
-        if (! in_array($routeName, ['event.show', 'event.reserve', 'event.reserve.success'])) {
+        // 対象ルートのみ処理（予約ページ event.reserve.page を直接開いた場合も代理店 GTM を出す）
+        if (! in_array($routeName, ['event.show', 'event.reserve.page', 'event.reserve', 'event.reserve.success'])) {
             return null;
         }
 
         try {
             $event = null;
 
-            if ($routeName === 'event.show') {
+            if (in_array($routeName, ['event.show', 'event.reserve.page'], true)) {
                 // slugパラメータからイベントを取得
                 $slug = $route->parameter('slug');
                 if ($slug) {

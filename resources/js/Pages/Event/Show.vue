@@ -27,7 +27,7 @@
 
         <!-- 固定ヘッダー（左ロゴ・右ハンバーガー） -->
         <header v-show="!showReservationForm" class="lp-header">
-            <a href="#" class="lp-header__logo" :aria-label="brand.name">
+            <a :href="brand.siteUrl || '#'" class="lp-header__logo" :aria-label="`${brand.name} 公式サイト`">
                 <img :src="brand.logo" :alt="brand.name" />
             </a>
             <button
@@ -66,9 +66,24 @@
                         TELお問い合わせ
                         <span class="lp-menu__arrow">›</span>
                     </a>
-                    <a class="lp-menu__item" href="https://lin.ee/R7RUNlX" target="_blank" rel="noopener" @click="menuOpen = false">
+                    <a class="lp-menu__item" :href="brand.lineUrl" target="_blank" rel="noopener" @click="menuOpen = false">
                         <span class="lp-menu__icon"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 5.737 2 10.345c0 4.13 3.58 7.59 8.414 8.244.328.07.774.216.887.496.102.253.067.65.033.906l-.144.86c-.044.253-.202.99.867.54 1.07-.45 5.77-3.4 7.872-5.82C21.49 13.95 22 12.22 22 10.344 22 5.737 17.523 2 12 2z"/></svg></span>
                         LINE友達登録
+                        <span class="lp-menu__arrow">›</span>
+                    </a>
+                    <a v-if="brand.shopUrl" class="lp-menu__item" :href="brand.shopUrl" @click="menuOpen = false">
+                        <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/></svg></span>
+                        店舗情報
+                        <span class="lp-menu__arrow">›</span>
+                    </a>
+                    <a v-if="brand.rentalUrl" class="lp-menu__item" :href="brand.rentalUrl" @click="menuOpen = false">
+                        <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l2 4-3 14h16L17 7l2-4-7 3-7-3z"/></svg></span>
+                        レンタル
+                        <span class="lp-menu__arrow">›</span>
+                    </a>
+                    <a v-if="brand.siteUrl" class="lp-menu__item" :href="brand.siteUrl" @click="menuOpen = false">
+                        <span class="lp-menu__icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg></span>
+                        {{ brand.name }} 公式サイト
                         <span class="lp-menu__arrow">›</span>
                     </a>
                 </div>
@@ -299,6 +314,11 @@
                     このイベントは{{ endDate }}をもって終了いたしました。
                 </p>
                 <p v-if="event.ended_message_text" class="mt-4 text-base text-red-600 whitespace-pre-line">{{ event.ended_message_text }}</p>
+                <!-- 終了後に来た人（検索・広告・GBP）が迷わないよう、通年の店舗予約と公式サイトへ案内する -->
+                <div v-if="brand.storeReservationUrl || brand.siteUrl" class="mt-6 flex flex-col gap-3">
+                    <a v-if="brand.storeReservationUrl" :href="brand.storeReservationUrl" class="event-ended-link event-ended-link--primary block rounded-full px-6 py-3 font-semibold text-white" style="background-color:#c0567a;">店舗での来店予約はこちら</a>
+                    <a v-if="brand.siteUrl" :href="brand.siteUrl" class="event-ended-link block rounded-full border px-6 py-3 font-semibold text-gray-700" style="border-color:#c0567a;">{{ brand.name }} 公式サイトへ</a>
+                </div>
             </div>
         </div>
 
@@ -472,6 +492,16 @@ const props = defineProps({
     ctaButtonPositions: {
         type: Array,
         default: () => [],
+    },
+    // ブランド（好一／平田）の表示用の値。正本は config/brands.php（App\Support\LpBrand）
+    lpBrand: {
+        type: Object,
+        default: null,
+    },
+    // 予約完了の計測用データ（完了直後の1回だけサーバーから渡る。個人情報は含まない）
+    reservationTracking: {
+        type: Object,
+        default: null,
     },
 });
 
@@ -810,7 +840,32 @@ const BRANDS = {
     },
 };
 const isFukuiEvent = computed(() => (props.shops || []).some((shop) => (shop?.name || '').includes('福井')));
-const brand = computed(() => (isFukuiEvent.value ? BRANDS.hirata : BRANDS.kouichi));
+// サーバーの lpBrand（config/brands.php）を優先し、無いときだけ従来の判定に戻す
+const brand = computed(() => {
+    const fallback = isFukuiEvent.value ? BRANDS.hirata : BRANDS.kouichi;
+    if (!props.lpBrand) {
+        return { ...fallback, lineUrl: 'https://lin.ee/R7RUNlX' };
+    }
+    return {
+        ...fallback,
+        ...Object.fromEntries(Object.entries(props.lpBrand).filter(([, v]) => v !== null && v !== '')),
+    };
+});
+
+// 予約完了を GTM（dataLayer）に送る。サーバーが1回だけ渡すので再読み込みでは二重に数えない
+const pushedReservationIds = new Set();
+watch(
+    () => props.reservationTracking,
+    (tracking) => {
+        if (typeof window === 'undefined' || !tracking || pushedReservationIds.has(tracking.reservation_id)) {
+            return;
+        }
+        pushedReservationIds.add(tracking.reservation_id);
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ ...tracking });
+    },
+    { immediate: true },
+);
 
 // 予約フォーム表示中はメニューを閉じ、背面スクロールをロック
 watch(() => showReservationForm.value, (open) => {

@@ -9,8 +9,17 @@
     <link rel="manifest" href="/build/manifest.webmanifest">
 
     <title inertia>{{ isset($lpSeo) ? $lpSeo['title'] : (config('app.name') !== 'Laravel' ? config('app.name') : '京呉服平田・好一 イベント予約') }}</title>
-    @if (request()->is('login') || request()->is('admin*'))
-    <meta name="robots" content="noindex, nofollow">
+    @php
+        // 索引の制御：ログイン・管理画面は noindex, nofollow。
+        // 予約専用ページ・送信完了ページ、問い合わせフォーム・終了したイベント（$lpSeo['robots']）は noindex, follow
+        $metaRobots = (request()->is('login') || request()->is('admin*'))
+            ? 'noindex, nofollow'
+            : (request()->routeIs('event.reserve.page', 'event.reserve.success')
+                ? 'noindex, follow'
+                : ($lpSeo['robots'] ?? null));
+    @endphp
+    @if ($metaRobots)
+    <meta name="robots" content="{{ $metaRobots }}">
     @endif
 
     @isset($lpSeo)
@@ -121,7 +130,11 @@
         @if($lpSeo['summary']['description'])
         <p style="margin-top: 8px;">{{ $lpSeo['summary']['description'] }}</p>
         @endif
-        <p style="margin-top: 8px; color: #999;">主催: 京呉服 好一（岡山の振袖専門店）｜ご来店のご予約はページ内の「WEB来店予約」から承ります。</p>
+        @if(!empty($lpSeo['summary']['isContact']))
+        <p style="margin-top: 8px; color: #999;">{{ $lpSeo['summary']['organizer'] }}｜<a href="{{ $lpSeo['summary']['siteUrl'] }}" style="color: #999;">公式サイト</a></p>
+        @else
+        <p style="margin-top: 8px; color: #999;">主催: {{ $lpSeo['summary']['organizer'] }}｜ご来店のご予約はページ内の「WEB来店予約」から承ります。｜<a href="{{ $lpSeo['summary']['siteUrl'] }}" style="color: #999;">公式サイト</a></p>
+        @endif
     </section>
     @endisset
 </body>

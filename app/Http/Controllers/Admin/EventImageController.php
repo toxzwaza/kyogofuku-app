@@ -202,7 +202,7 @@ class EventImageController extends Controller
             $image->toWebp(80)->save($tmpPath);
             $content = file_get_contents($tmpPath);
             @unlink($tmpPath);
-            Storage::disk('s3_public')->put($webpPath, $content);
+            Storage::disk('s3_public')->put($webpPath, $content, \App\Support\S3PublicUpload::immutableOptions());
             return $webpPath;
         } catch (\Exception $e) {
             \Log::error('WebP変換エラー (S3 events/' . $eventId . '): ' . $e->getMessage());

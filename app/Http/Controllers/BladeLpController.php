@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Support\UtmTracker;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -25,8 +26,8 @@ class BladeLpController extends Controller
             abort(404);
         }
 
-        $utmSource = $request->input('utm_source') ?: 'NONE';
-        $request->session()->put('event_utm_sources.'.$event->id, $utmSource);
+        UtmTracker::capture($request, $event->id);
+        $utmSource = $request->session()->get(UtmTracker::legacyKey($event->id));
 
         $isEnded = $event->end_at && Carbon::today()->gt($event->end_at);
 

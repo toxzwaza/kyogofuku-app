@@ -72,6 +72,9 @@ return [
             'root' => 'public',
             'visibility' => 'private',
             'directory_separator' => '/',
+            // ランダムな名前で保存する画像（上書きしない）に付ける Cache-Control。空にすると付けない
+            // 決まった名前で上書きする画像（CTA・LP 背景など）には付けない（古い画像が残るため）
+            'immutable_cache_control' => env('S3_PUBLIC_IMMUTABLE_CACHE_CONTROL', 'public, max-age=31536000, immutable'),
         ],
 
     ],

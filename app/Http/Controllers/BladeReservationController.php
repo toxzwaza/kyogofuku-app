@@ -9,6 +9,8 @@ use App\Services\BladeLp\FormSchemaValidator;
 use App\Services\BladeLp\LineNotifier;
 use App\Services\EventReservationScheduleBootstrapService;
 use App\Services\ReservationConfirmationMailer;
+use App\Support\ReservationTracking;
+use App\Support\UtmTracker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -127,9 +129,7 @@ class BladeReservationController extends Controller
             'reservation_datetime' => $reservationDatetime,
             'venue_id'             => $venueId,
             'form_data'            => $validated,
-            'utm_source'           => $request->input('utm_source')
-                ?? $request->session()->get('event_utm_sources.'.$event->id),
-        ]);
+        ] + UtmTracker::forReservation($request, $event->id));
 
         // Google カレンダー連携（既存 EventReservationController と同じ Service を呼ぶ）
         // reservation_datetime（visit_slot から導出）の予定のみ作成。bring_date は連携しない。
@@ -166,6 +166,8 @@ class BladeReservationController extends Controller
         }
 
         $request->session()->put('blade_lp_form_data.'.$event->id, $validated);
+        // 予約完了の計測（完了ページで dataLayer へ）
+        ReservationTracking::flash($request, $event, $reservation);
 
         // Vue 版と同じ event.reserve.success ルートにリダイレクトする。
         // success() 側で usesBladeLp() を判定して Blade テンプレを返す。

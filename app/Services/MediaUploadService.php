@@ -67,7 +67,7 @@ class MediaUploadService
             $fileSize = strlen($content);
             @unlink($tmpPath);
 
-            Storage::disk('s3_public')->put($webpPath, $content);
+            Storage::disk('s3_public')->put($webpPath, $content, \App\Support\S3PublicUpload::immutableOptions());
 
             $mediaFile = MediaFile::create([
                 'original_filename' => $originalFilename,

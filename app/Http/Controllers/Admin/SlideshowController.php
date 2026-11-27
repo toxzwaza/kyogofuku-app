@@ -196,7 +196,7 @@ class SlideshowController extends Controller
             $image->toWebp(80)->save($tmpPath);
             $content = file_get_contents($tmpPath);
             @unlink($tmpPath);
-            Storage::disk('s3_public')->put($webpPath, $content);
+            Storage::disk('s3_public')->put($webpPath, $content, \App\Support\S3PublicUpload::immutableOptions());
             return $webpPath;
         } catch (\Exception $e) {
             Log::error('WebP変換エラー (S3 slideshows/' . $slideshowId . '): ' . $e->getMessage());
@@ -270,7 +270,7 @@ class SlideshowController extends Controller
             $webpContent = file_get_contents($webpTmp);
             @unlink($tmpPath);
             @unlink($webpTmp);
-            Storage::disk('s3_public')->put($webpPath, $webpContent);
+            Storage::disk('s3_public')->put($webpPath, $webpContent, \App\Support\S3PublicUpload::immutableOptions());
             $image->update(['storage_disk' => 's3', 'path' => $webpPath]);
             Storage::disk('public')->delete($image->path);
         } catch (\Exception $e) {

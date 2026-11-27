@@ -182,8 +182,12 @@ class EventPublicPageService
             ->values()
             ->toArray();
 
+        // 公開ページには使える予約枠だけを 'timeslots' で渡す。
+        // event に読み込まれた全予約枠（過去分を含む）は画面で使っていないので外し、ページを軽くする（A9）
+        $eventForPage = (clone $event)->unsetRelation('timeslots');
+
         return [
-            'event' => $event,
+            'event' => $eventForPage,
             'images' => $images,
             'slideshowPositions' => $slideshowPositions,
             'slideshows' => $slideshows,
