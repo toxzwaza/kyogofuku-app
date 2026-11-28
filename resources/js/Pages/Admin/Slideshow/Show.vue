@@ -143,7 +143,7 @@
                                         @change="handleFileChange"
                                         class="w-full rounded-md border-brand-border shadow-sm focus:border-brand-primary focus:ring-brand-primary"
                                     />
-                                    <p class="mt-1 text-sm text-brand-text-muted">複数の画像を選択できます（JPEG, PNG, JPG, GIF、最大10MB）</p>
+                                    <p class="mt-1 text-sm text-brand-text-muted">複数の画像を選択できます（JPEG, PNG, JPG, GIF, WebP、最大10MB）</p>
                                     <div v-if="imageForm.errors.images" class="mt-1 text-sm text-red-600">{{ imageForm.errors.images }}</div>
 
                                     <!-- プレビュー -->

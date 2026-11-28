@@ -125,7 +125,7 @@ class SlideshowController extends Controller
     {
         $validated = $request->validate([
             'images' => 'required|array|min:1',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'alt' => 'nullable|string|max:255',
         ]);
 
