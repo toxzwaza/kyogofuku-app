@@ -1,0 +1,6 @@
+# 2026-11-28 03:34 JST 反映前（events の id・slug・is_public・updated_at・slug_aliases だけ）
+{"id":2,"slug":"hakama-rental-2025","is_public":false,"updated_at":"2025-12-22T23:52:14.000000Z","slug_aliases_raw":null}
+{"id":12,"slug":"reservation_iah6KIRiHv","is_public":false,"updated_at":"2026-01-23T01:13:09.000000Z","slug_aliases_raw":null}
+{"id":19,"slug":"reservation_store_hama","is_public":true,"updated_at":"2026-11-27T15:35:23.000000Z","slug_aliases_raw":null}
+reservation_iah6KIRiHv in aliases of: []
+hakama-rental-2025 in aliases of: []

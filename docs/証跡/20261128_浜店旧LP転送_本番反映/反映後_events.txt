@@ -1,0 +1,4 @@
+# 2026-11-28 03:36 JST 反映後（イベント id=19 の slug_aliases だけを書き換え）
+before=null
+validation=ok   # Admin/EventController@update の slug_aliases の検証（PR #19）と同じ規則
+after="[\"reservation_iah6KIRiHv\",\"hakama-rental-2025\"]" updated_at=2026-11-28 00:35:23（変わっていない）

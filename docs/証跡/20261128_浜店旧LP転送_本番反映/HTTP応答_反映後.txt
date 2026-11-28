@@ -1,0 +1,25 @@
+# curl -sI（2026-11-28 03:36 JST・反映後）
+== /event/reservation_iah6KIRiHv
+HTTP/1.1 301 Moved Permanently
+Location: https://kyogofuku-event.com/event/reservation_store_hama
+== /event/hakama-rental-2025
+HTTP/1.1 301 Moved Permanently
+Location: https://kyogofuku-event.com/event/reservation_store_hama
+== /event/reservation_iah6KIRiHv?utm_source=test
+HTTP/1.1 301 Moved Permanently
+Location: https://kyogofuku-event.com/event/reservation_store_hama?utm_source=test
+== /event/hakama-rental-2025?utm_source=test&utm_medium=qr
+HTTP/1.1 301 Moved Permanently
+Location: https://kyogofuku-event.com/event/reservation_store_hama?utm_source=test&utm_medium=qr
+== /event/reservation_store_hama
+HTTP/1.1 200 OK
+== /event/reservation_store_hama?utm_source=test
+HTTP/1.1 200 OK
+== /event/reservation_iah6KIRiHv/reserve
+HTTP/1.1 301 Moved Permanently
+Location: https://kyogofuku-event.com/event/reservation_store_hama/reserve
+== /login
+HTTP/1.1 200 OK
+== 転送を追った最終（GET -L）
+/event/reservation_iah6KIRiHv -> 200 https://kyogofuku-event.com/event/reservation_store_hama (redirects=1)
+/event/hakama-rental-2025?utm_source=test -> 200 https://kyogofuku-event.com/event/reservation_store_hama?utm_source=test (redirects=1)
