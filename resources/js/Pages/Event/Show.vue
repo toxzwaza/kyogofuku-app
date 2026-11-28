@@ -139,6 +139,8 @@
                                 <img
                                     :src="item.data.path"
                                     :alt="item.data.alt || event.title"
+                                    :width="item.data.width || undefined"
+                                    :height="item.data.height || undefined"
                                     class="w-full object-cover md:mx-auto"
                                     :loading="gIndex === 0 && index === 0 ? 'eager' : 'lazy'"
                                     :fetchpriority="gIndex === 0 && index === 0 ? 'high' : undefined"
@@ -149,6 +151,8 @@
                                 v-else
                                 :src="item.data.path"
                                 :alt="item.data.alt || event.title"
+                                :width="item.data.width || undefined"
+                                :height="item.data.height || undefined"
                                 class="w-full object-cover md:mx-auto"
                                 :loading="gIndex === 0 && index === 0 ? 'eager' : 'lazy'"
                                 :fetchpriority="gIndex === 0 && index === 0 ? 'high' : undefined"

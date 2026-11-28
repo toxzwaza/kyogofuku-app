@@ -4,6 +4,7 @@ namespace App\Services\Event;
 
 use App\Models\Event;
 use App\Models\EventReservation;
+use App\Support\LpNewOne;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -181,6 +182,13 @@ class EventPublicPageService
             ->pluck('position')
             ->values()
             ->toArray();
+
+        // 前の NEW ONE 画像（メディアライブラリ）を、店舗ごとの新しい画像（雑誌の表紙風）に差し替える
+        // （config/lp_new_one.php。DB は変えない。スライドショー・CTA の位置も付け直す）
+        $newOne = LpNewOne::apply($event, $images->values()->all(), $slideshowPositions, $ctaButtonPositions);
+        $images = $newOne['images'];
+        $slideshowPositions = $newOne['slideshowPositions'];
+        $ctaButtonPositions = $newOne['ctaButtonPositions'];
 
         // 公開ページには使える予約枠だけを 'timeslots' で渡す。
         // event に読み込まれた全予約枠（過去分を含む）は画面で使っていないので外し、ページを軽くする（A9）
